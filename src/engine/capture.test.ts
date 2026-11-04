@@ -1,13 +1,22 @@
 import { describe, expect, it } from 'vitest'
+import { applySessionResult } from './session'
 import { advanceWave, applyStatusCharge, captureChance, counterDamage, rerollWild, resolveCounter, throwBall, wildCatchChance } from './capture'
 import { createEngineContext, defaultContext, type EngineContext } from './context'
 import { createRng } from './rng'
 import type { EncounterState, PlayerState, WildPokemon } from './state'
 import { computeStats } from './stats'
-import { makeMon, makePlayer, T0 } from './test-helpers'
+import { makeMon, makePlayer, runSession, T0 } from './test-helpers'
+import type { WaveHit } from './state'
 import {
+  classicDamage,
   computeDamage,
+  damageFromHits,
+  hitDamage,
   hpFractionAfter,
+  STAB_MULT,
+  studyBallMaxLevelFor,
+  syncedLevel,
+  wildLevelRange,
   isStudyBallEligible,
   rollWaveSize,
   rollWild,
@@ -51,12 +60,111 @@ describe('type chart (GDD §9.3, §11.3)', () => {
     expect(typeEffectiveness('normal', ['ghost', 'poison'], chart, [{ from: 0, to: 0.5 }])).toBe(0.5) // infiltrator
   })
 
-  it('damage uses session energy × effectiveness with a 5% HP floor', () => {
+  it('legacy damage (old saves) uses session energy × effectiveness with a 5% HP floor', () => {
     const contributions = [{ uid: 'a', type: 'water' as const, amount: 30, amountVsLegendary: 39, effectivenessFloors: [] }]
     expect(computeDamage(contributions, ['fire'], false, ctx.chart)).toBe(60)
     expect(computeDamage(contributions, ['fire'], true, ctx.chart)).toBe(78)
     expect(hpFractionAfter(60, 100, cfg)).toBeCloseTo(0.4)
     expect(hpFractionAfter(1e6, 100, cfg)).toBe(cfg.capture.minHpFraction)
+  })
+})
+
+describe('capture damage: classic formula (GDD §11.3)', () => {
+  const base: WaveHit = {
+    uid: 'a',
+    target: 0,
+    move: 'water-gun',
+    type: 'water',
+    power: 40,
+    damageClass: 'special',
+    level: 20,
+    attack: 40,
+    stab: false,
+    units: 1,
+    unitsVsLegendary: 1,
+    effectivenessFloors: [],
+  }
+  const noSync = createEngineContext({ config: { capture: { levelSync: null, captureDamageScale: 1 } } })
+
+  it('((2L/5+2)·P·A/D/50+2) · STAB · effectiveness · scale · units', () => {
+    expect(classicDamage(50, 100, 100, 100)).toBeCloseTo(((2 * 50) / 5 + 2) * 100 / 50 + 2)
+    const st = { defense: 30, specialDefense: 20 }
+    const core = classicDamage(20, 40, 40, 20)
+    expect(hitDamage(base, st, 20, ['normal'], false, noSync)).toBeCloseTo(core)
+    expect(hitDamage({ ...base, damageClass: 'physical' }, st, 20, ['normal'], false, noSync)).toBeCloseTo(classicDamage(20, 40, 40, 30))
+    expect(hitDamage({ ...base, stab: true }, st, 20, ['normal'], false, noSync)).toBeCloseTo(core * STAB_MULT)
+    expect(hitDamage(base, st, 20, ['fire'], false, noSync)).toBeCloseTo(core * 2)
+    expect(hitDamage(base, st, 20, ['grass', 'dragon'], false, noSync)).toBeCloseTo(core * 0.25)
+    expect(hitDamage({ ...base, effectivenessFloors: [{ from: 0.5, to: 1 }] }, st, 20, ['grass'], false, noSync)).toBeCloseTo(core)
+    expect(hitDamage({ ...base, units: 3, unitsVsLegendary: 4 }, st, 20, ['normal'], false, noSync)).toBeCloseTo(core * 3)
+    expect(hitDamage({ ...base, units: 3, unitsVsLegendary: 4 }, st, 20, ['normal'], true, noSync)).toBeCloseTo(core * 4)
+    const half = createEngineContext({ config: { capture: { levelSync: null, captureDamageScale: 0.5 } } })
+    expect(hitDamage(base, st, 20, ['normal'], false, half)).toBeCloseTo(core * 0.5)
+  })
+
+  it('level sync: against a weaker wild the attacker fights at its level (Attack scaled)', () => {
+    const c = createEngineContext({ config: { capture: { levelSync: { ratio: 1, gap: 0 }, captureDamageScale: 1 } } })
+    expect(syncedLevel(40, 10, c.config)).toBe(10)
+    expect(syncedLevel(8, 10, c.config)).toBe(8)
+    expect(syncedLevel(40, 10, noSync.config)).toBe(40)
+    const st = { defense: 20, specialDefense: 20 }
+    const hit = { ...base, level: 40, attack: 80 }
+    expect(hitDamage(hit, st, 10, ['normal'], false, c)).toBeCloseTo(classicDamage(10, 40, 20, 20))
+  })
+
+  it('damageFromHits only counts the hits aimed at that slot, against the wild Def/SpDef', () => {
+    const w = wild('charmander', 15)
+    const stats = computeStats(w, ctx)
+    const hits = [base, { ...base, target: 1, units: 5 }, { ...base, damageClass: 'physical' as const, units: 2 }]
+    const expected = hitDamage(base, stats, 15, ['fire'], false, ctx) + hitDamage(hits[2]!, stats, 15, ['fire'], false, ctx)
+    expect(damageFromHits(hits, 0, w, false, ctx)).toBeCloseTo(expected)
+  })
+
+  it('session waves: every wild damage = its hits, units = actions (pace-neutral), floor 5%', () => {
+    const team = [makeMon('squirtle', 20, { uid: 'a' }), makeMon('charmander', 20, { uid: 'b' })]
+    const { result } = runSession(makePlayer(team), 50, 3)
+    expect(result.waves).toHaveLength(2)
+    for (const wave of result.waves) {
+      expect(wave.hits!.length).toBeGreaterThan(0)
+      wave.wilds.forEach((w, i) => {
+        expect(w.damage).toBeCloseTo(damageFromHits(wave.hits!, i, w, w.isLegendary, ctx))
+        expect(w.hpFraction).toBeCloseTo(hpFractionAfter(w.damage, w.maxHp, cfg))
+        expect(w.hpFraction).toBeGreaterThanOrEqual(cfg.capture.minHpFraction)
+      })
+      for (const h of wave.hits!) expect(h.target).toBeLessThan(wave.wilds.length)
+    }
+    // Pace-neutral: Σ units of a member = its actions × interval ratio (no captureEnergy mods here).
+    const unitsA = result.waves.flatMap((w) => w.hits!).filter((h) => h.uid === 'a').reduce((x, h) => x + h.units, 0)
+    expect(unitsA).toBeGreaterThan(0)
+    const plain = createEngineContext({ config: { capture: { damageReferenceSpeed: null } } })
+    const r2 = runSession(makePlayer(team, {}, plain), 50, 3, {}, plain).result
+    const actionsA = r2.members.find((m) => m.uid === 'a')!.actions
+    const unitsPlain = r2.waves.flatMap((w) => w.hits!).filter((h) => h.uid === 'a').reduce((x, h) => x + h.units, 0)
+    expect(unitsPlain).toBeCloseTo(actionsA)
+  })
+
+  it('no damage move: Normal, power 40, physical, × noDamageMoveEnergyFactor', () => {
+    const meta = makeMon('metapod', 12, { uid: 'm', equippedMoves: ['harden'], learnedMoves: ['harden'] })
+    const plain = createEngineContext({ config: { capture: { damageReferenceSpeed: null } } })
+    const { result } = runSession(makePlayer([meta], {}, plain), 25, 1, {}, plain)
+    const hits = result.waves[0]!.hits!
+    expect(hits.every((h) => h.type === 'normal' && h.power === 40 && h.damageClass === 'physical' && h.move === null)).toBe(true)
+    const units = hits.reduce((x, h) => x + h.units, 0)
+    expect(units).toBeCloseTo(result.members[0]!.actions * plain.config.actions.noDamageMoveEnergyFactor)
+  })
+
+  it('reroll: the new wild takes the hits aimed at its slot', () => {
+    const team = [makeMon('squirtle', 20, { uid: 'a' })]
+    const { result, state } = runSession(makePlayer(team), 25, 5)
+    const applied = applySessionResult(state, result)
+    if (!applied.ok) throw new Error(applied.error)
+    const s0 = applied.value.state
+    const s = { ...s0, encounter: { ...s0.encounter!, charges: [{ id: 'r1', kind: 'reroll' as const, sourceUid: 'a', source: 'roar' }] } }
+    const r = rerollWild(s, 'r1', { waveIndex: 0, wildIndex: 0 }, createRng(3))
+    if (!r.ok) throw new Error(r.error)
+    const wave = r.value.encounter!.waves[0]!
+    const w = wave.wilds[0]!
+    expect(w.damage).toBeCloseTo(damageFromHits(wave.hits!, 0, w, w.isLegendary, ctx))
   })
 })
 
@@ -77,6 +185,15 @@ describe('waves (GDD §10)', () => {
     expect(rollWaveSize(createRng(1), 1, 'super', 10, cfg)).toBe(6)
   })
 
+  it('league wave bonus is added before the league cap', () => {
+    const c = createEngineContext({
+      config: { encounters: { baseWaveSize: 4, waveSizeJitter: 0, minWaveSize: 3, leagueWaveBonus: { base: 0, super: 1, ultra: 2, master: 3 }, leagueMaxWaveSize: { base: 5, super: 6, ultra: 7, master: 8 } } } }).config
+    const sizes = (['base', 'super', 'ultra', 'master'] as const).map((l) => rollWaveSize(createRng(1), 1, l, 0, c))
+    expect(sizes).toEqual([4, 5, 6, 7])
+    expect(rollWaveSize(createRng(1), 1, 'master', 2, c)).toBe(8) // capped
+    expect(rollWaveSize(createRng(1), 0.2, 'super', 0, c)).toBe(4) // low focus −1
+  })
+
   it('evolved forms only appear at or above their evolution level', () => {
     const rng = createRng(4)
     const gen = { focus: 1, trainerLevel: 40, soundDominant: null, teamTypes: [], typeWeightMults: {}, syncNature: null }
@@ -88,12 +205,21 @@ describe('waves (GDD §10)', () => {
     }
   })
 
-  it('study ball eligibility: base form, not legendary, level ≤ 20', () => {
+  it('study ball eligibility: base form, not legendary, level ≤ max(studyBallMaxLevel, wild min + margin)', () => {
     const sp = (s: string) => ctx.speciesBySlug.get(s)!
-    expect(isStudyBallEligible(sp('pidgey'), 20, cfg)).toBe(true)
-    expect(isStudyBallEligible(sp('pidgey'), 21, cfg)).toBe(false)
+    const max1 = studyBallMaxLevelFor(1, cfg)
+    expect(max1).toBe(Math.max(cfg.encounters.studyBallMaxLevel, wildLevelRange(1, cfg).min + cfg.encounters.studyBallLevelMargin))
+    expect(isStudyBallEligible(sp('pidgey'), max1, cfg)).toBe(true)
+    expect(isStudyBallEligible(sp('pidgey'), max1 + 1, cfg)).toBe(false)
     expect(isStudyBallEligible(sp('pidgeotto'), 18, cfg)).toBe(false)
     expect(isStudyBallEligible(sp('mew'), 10, cfg)).toBe(false)
+    const c = createEngineContext({
+      config: { encounters: { studyBallMaxLevel: 20, studyBallLevelMargin: 10, wildLevelByTrainerLevel: [{ trainerLevel: 1, min: 2, max: 10 }, { trainerLevel: 40, min: 20, max: 50 }] } } }).config
+    expect(studyBallMaxLevelFor(1, c)).toBe(20)
+    expect(studyBallMaxLevelFor(40, c)).toBe(30)
+    expect(isStudyBallEligible(sp('pidgey'), 30, c, 40)).toBe(true)
+    expect(isStudyBallEligible(sp('pidgey'), 31, c, 40)).toBe(false)
+    expect(isStudyBallEligible(sp('pidgey'), 25, c)).toBe(false)
   })
 
   it('shiny guarantees by ball tier; legendaries never guaranteed', () => {
@@ -114,11 +240,20 @@ describe('waves (GDD §10)', () => {
 })
 
 describe('capture formula (GDD §11.2)', () => {
-  it('Mewtwo: ≈7.8% unprepared, ≈55% prepared (Ultra Ball)', () => {
+  it('Mewtwo with R = 30 (GDD example): ≈7.8% unprepared, ≈55% prepared (Ultra Ball)', () => {
+    const c30 = createEngineContext({ config: { capture: { legendaryMinCaptureRate: 30 } } }).config
     const mewtwo = ctx.speciesBySlug.get('mewtwo')!
-    expect(captureChance(mewtwo.captureRate, true, 1, 2, null, cfg)).toBeCloseTo(0.078, 3)
-    expect(captureChance(mewtwo.captureRate, true, 0.1, 2, 'sleep', cfg)).toBeCloseTo(0.549, 2)
+    expect(captureChance(mewtwo.captureRate, true, 1, 2, null, c30)).toBeCloseTo(0.078, 3)
+    expect(captureChance(mewtwo.captureRate, true, 0.1, 2, 'sleep', c30)).toBeCloseTo(0.549, 2)
     expect(captureChance(255, false, 0.05, 2, 'sleep', cfg)).toBe(1)
+  })
+
+  it('legendaries use max(captureRate, legendaryMinCaptureRate) from config', () => {
+    const mewtwo = ctx.speciesBySlug.get('mewtwo')!
+    const R = Math.max(mewtwo.captureRate, cfg.capture.legendaryMinCaptureRate)
+    expect(captureChance(mewtwo.captureRate, true, 1, 2, null, cfg)).toBeCloseTo((1 / 3) * (R / 255) * 2, 6)
+    const h = 0.1
+    expect(captureChance(mewtwo.captureRate, true, h, 2, 'sleep', cfg)).toBeCloseTo((1 - (2 * h) / 3) * (R / 255) * 2 * cfg.capture.statusMult.sleep, 6)
   })
 })
 

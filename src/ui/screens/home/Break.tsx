@@ -1,0 +1,137 @@
+import { useTranslation } from 'react-i18next'
+import { defaultContext, MINUTE_MS } from '../../../engine'
+import { Button, Panel, Platform, ProgressBar, Segmented, Sprite, Stage, toast } from '../../components'
+import { hintAnchor, useHintScreen } from '../../hints'
+import { cx } from '../../lib/cx'
+import { fmtCountdown, fmtPct } from '../../lib/format'
+import { useNames } from '../../lib/names'
+import { sfx } from '../../lib/sound'
+import { useNow } from '../../store/clock'
+import { useGame } from '../../store/game'
+import { usePlayer, useScene, useTeamViews } from '../../store/selectors'
+import { useState } from 'react'
+
+const cfg = defaultContext().config
+export const BREAK_OPTIONS = ['5', '10', '15'] as const
+/** How long after a claim the break is still offered (minutes of game time). */
+export const BREAK_OFFER_MINUTES = 60
+
+/** Is a pomodoro break on offer right now? One per session, soon after it. */
+export function useBreakOffer(): boolean {
+  const player = usePlayer()
+  const now = useNow()
+  const lastBreakFor = useGame((s) => s.lastBreakFor)
+  const last = player.history[player.history.length - 1]
+  return Boolean(last && last.minutes > 0 && !player.activeSession && !player.encounter && lastBreakFor !== last.id && now - last.claimedAt < BREAK_OFFER_MINUTES * MINUTE_MS)
+}
+
+/** Offer on Home after a session: rest for real and the team recovers Energy (GDD §5.3). */
+export function BreakOffer() {
+  const { t, i18n } = useTranslation()
+  const player = usePlayer()
+  const startBreak = useGame((s) => s.startBreak)
+  const skipBreak = useGame((s) => s.skipBreak)
+  const last = player.history[player.history.length - 1]
+  const suggested = last && last.minutes >= 75 ? '15' : last && last.minutes >= 50 ? '10' : '5'
+  const [choice, setChoice] = useState<string>(suggested)
+  return (
+    <Panel title={t('break.offerTitle')} help="home.break" {...hintAnchor('home.break')} className="outline-2 -outline-offset-2 outline-exp-400/60">
+      <p className="text-sm text-mist-300">{t('break.offerBody', { pct: fmtPct(cfg.energy.breakRecoverPct, i18n.language) })}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <Segmented
+          label={t('break.length')}
+          value={choice}
+          onChange={setChoice}
+          options={BREAK_OPTIONS.map((m) => ({ value: m, label: <span className="font-num text-2xl leading-none">{m}</span>, ariaLabel: t('common.minutes', { count: Number(m) }) }))}
+        />
+        <span className="text-sm text-mist-400">{t('common.min')}</span>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button icon="coffee" onClick={() => startBreak(Number(choice))}>
+          {t('break.start')}
+        </Button>
+        <Button variant="ghost" onClick={skipBreak}>
+          {t('break.skip')}
+        </Button>
+      </div>
+    </Panel>
+  )
+}
+
+/** The break itself: a calm countdown; finishing it heals the team. */
+export function Break() {
+  useHintScreen('break')
+  const { t, i18n } = useTranslation()
+  const names = useNames()
+  const now = useNow()
+  const player = usePlayer()
+  const b = useGame((s) => s.breakTimer)!
+  const endBreak = useGame((s) => s.endBreak)
+  const views = useTeamViews(player, now)
+  const scene = useScene(player, now)
+  const left = b.endsAt - now
+  const done = left <= 0
+  const total = b.minutes * MINUTE_MS
+  const pct = cfg.energy.breakRecoverPct
+
+  const finish = () => {
+    const rewarded = endBreak()
+    if (rewarded) {
+      sfx('heal')
+      toast.add({ title: t('break.healed', { pct: fmtPct(pct, i18n.language) }), type: 'success' })
+    } else toast.add({ title: t('break.ended'), type: 'info' })
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      <Stage time={scene.time} weather={scene.weather} variant="focus" className="h-64">
+        <div className="flex h-full items-end justify-center gap-6 px-6 pb-6">
+          {views.map((v) => (
+            <div key={v.pokemon.uid} className="relative flex w-28 flex-col items-center">
+              <Platform width={104} night={scene.time === 'night'} className="absolute bottom-0 brightness-75" />
+              <Sprite kind="showdown" slug={v.pokemon.speciesSlug} shiny={v.pokemon.isShiny} scale={2} flip alt={names.species(v.pokemon.speciesSlug)} className="relative mb-3 brightness-90" />
+            </div>
+          ))}
+        </div>
+      </Stage>
+
+      <section className="mx-auto flex w-full max-w-3xl flex-col items-center text-center" {...hintAnchor('break.timer')}>
+        <h1 className="text-xl text-mist-300">{done ? t('break.doneTitle') : t('break.title', { count: b.minutes })}</h1>
+        <p role="timer" aria-live="off" className={cx('mt-2 font-num text-timer tabular', done ? 'text-leaf-400' : 'text-mist-50')}>
+          {fmtCountdown(Math.max(0, left))}
+        </p>
+        <p className="mt-3 max-w-[52ch] text-mist-300">{done ? t('break.doneBody') : t('break.body')}</p>
+        <ProgressBar className="mt-8 w-full" size="lg" variant="volt" value={Math.min(total, total - left)} max={total} label={t('break.progress')} />
+
+        <ul className="mt-8 grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2 lg:grid-cols-3">
+          {views.map((v) => {
+            const after = Math.min(v.maxEnergy, v.energy + v.maxEnergy * pct)
+            return (
+              <li key={v.pokemon.uid} className="flex items-center gap-3 bg-dusk-800 p-3 shadow-frame">
+                <Sprite kind="icon" slug={v.pokemon.speciesSlug} alt="" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-display text-base">{names.species(v.pokemon.speciesSlug)}</span>
+                  <ProgressBar size="sm" variant="energy" value={after} from={v.energy} max={v.maxEnergy} label={t('pokemon.energyOf', { name: names.species(v.pokemon.speciesSlug) })} />
+                </span>
+                <span className="font-num text-lg leading-none text-leaf-400 tabular">+{Math.round(after - v.energy)}</span>
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="mt-10 flex flex-wrap justify-center gap-4">
+          {done ? (
+            <Button size="lg" icon="potion" onClick={finish} beacon data-sfx="none">
+              {t('break.collect', { pct: fmtPct(pct, i18n.language) })}
+            </Button>
+          ) : (
+            <Button size="lg" variant="ghost" icon="close" onClick={finish}>
+              {t('break.early')}
+            </Button>
+          )}
+        </div>
+        {!done && <p className="mt-3 max-w-[52ch] text-sm text-mist-400">{t('break.earlyNote')}</p>}
+      </section>
+    </div>
+  )
+}

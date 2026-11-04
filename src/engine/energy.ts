@@ -26,18 +26,30 @@ export function energyAt(state: PlayerState, p: OwnedPokemon, now: number, ctx: 
 }
 
 /**
+ * Is a Pokémon still asleep from Rest at `now`? The daily energy reset
+ * (05:00 local) wakes it up even if it never sat in a session.
+ */
+export function isAsleepAt(state: PlayerState, p: OwnedPokemon, now: number, ctx: EngineContext = defaultContext()): boolean {
+  if (!p.asleepNextSession) return false
+  const since = p.asleepSetAt ?? p.energy.updatedAt
+  const tz = state.profile.timezone
+  const h = ctx.config.energy.dailyResetHour
+  return now <= since || resetDayKeyOf(since, tz, h) === resetDayKeyOf(now, tz, h)
+}
+
+/**
  * Bring every Pokémon's energy up to `now`: full refill if the 05:00 local
  * reset happened since its last update; otherwise box members regenerate
  * `boxRecoverPctPerHour` of max per hour. Team members do not regenerate.
+ * Rest sleep also ends at the daily reset.
  */
 export function refreshEnergy(state: PlayerState, now: number, ctx: EngineContext = defaultContext()): PlayerState {
   const pokemon: Record<string, OwnedPokemon> = {}
   for (const [uid, p] of Object.entries(state.pokemon)) {
-    if (now <= p.energy.updatedAt) {
-      pokemon[uid] = p
-      continue
-    }
-    pokemon[uid] = { ...p, energy: { current: energyAt(state, p, now, ctx), updatedAt: now } }
+    let q = p
+    if (q.asleepNextSession && !isAsleepAt(state, q, now, ctx)) q = { ...q, asleepNextSession: false, asleepSetAt: null }
+    if (now > q.energy.updatedAt) q = { ...q, energy: { current: energyAt(state, q, now, ctx), updatedAt: now } }
+    pokemon[uid] = q
   }
   return { ...state, pokemon }
 }

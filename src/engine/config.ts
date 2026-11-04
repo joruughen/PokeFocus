@@ -130,6 +130,10 @@ export interface GameConfig {
     roamingSessions: number
     roamingChance: number
     studyBallMaxLevel: number
+    /** Study Ball max level = max(studyBallMaxLevel, wild range min + this). */
+    studyBallLevelMargin: number
+    /** Added to the base wave size by current league (still capped by leagueMaxWaveSize). */
+    leagueWaveBonus: Record<LeagueId, number>
     wildLevelByTrainerLevel: { trainerLevel: number; min: number; max: number }[]
     legendaryMinLevel: number
     /** Types favoured by the dominant sound profile (GDD §4.3). */
@@ -142,6 +146,17 @@ export interface GameConfig {
   }
   capture: {
     legendaryMinCaptureRate: number
+    /** Scale of the classic damage formula applied to wilds (GDD §11.3). */
+    captureDamageScale: number
+    /** Attacker level cap vs the wild: min(L, wildL · ratio + gap); null = off. */
+    levelSync: { ratio: number; gap: number } | null
+    /**
+     * Each action's damage × (its action interval ÷ the interval at this Speed),
+     * so Speed/pace raise points but not damage per minute; null = off.
+     */
+    damageReferenceSpeed: number | null
+    /** How each action picks its target in the wave: uniformly, or ∝ the wild's max HP. */
+    hitTargeting: 'uniform' | 'maxHp'
     minHpFraction: number
     maxFailedThrows: number
     balls: Record<BallSlug, { mult: number; shinyGuarantee: { maxStage: number; maxLevel: number } }>

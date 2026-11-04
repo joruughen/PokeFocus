@@ -215,7 +215,7 @@ M = Condición_de_tipo (1.0–1.5) × Vínculo (1.0–1.2) × Foco_efectivo × E
 | Recompensa | Fórmula base **[calibrar]** |
 |---|---|
 | Puntos de Equipo | Suma de los puntos de todas las acciones del equipo |
-| EXP (a cada miembro del equipo) | `24 · minutos · Foco_efectivo` → 600 EXP por sesión de 25 min con Foco 1.0 |
+| EXP (a cada miembro del equipo) | `29 · minutos · Foco_efectivo` → 725 EXP por sesión de 25 min con Foco 1.0 (calibrado para un Foco real ≈ 0.9) |
 | Polvo de Estudio (del jugador) | `10 · minutos · Foco` → 250 por sesión de 25 min |
 | Poké Balls | 2 por sesión completada |
 | Ball de Estudio | 1 por oleada (cada 25 min), solo para esa oleada (no acumulable, §11.1) |
@@ -544,15 +544,15 @@ Si un legendario o mítico **se escapa**, durante tus **3 sesiones siguientes** 
 ### 11.2 Fórmula de captura
 
 ```
-R = capture_rate de la especie (mínimo 30 para legendarios y míticos)  [calibrar]
+R = capture_rate de la especie (mínimo 13 para legendarios y míticos; calibrado con el simulador)
 h = vida restante como fracción = max(0.05, 1 − Daño / PS_salvaje)
 p = min(1, (1 − 2h/3) · (R / 255) · Ball · Estado)
 Estado: dormido ×2.5, paralizado ×1.5, ninguno ×1.0
 ```
 
-Ejemplo con Mewtwo (R ajustado = 30):
-- Sin preparación (vida completa, Ultra Ball): **≈ 7.8%** por lanzamiento.
-- Preparado (h = 0.1, Ultra Ball, dormido): **≈ 55%** por lanzamiento.
+Ejemplo con Mewtwo (R ajustado = 13):
+- Sin preparación (vida completa, Ultra Ball): **≈ 3.4%** por lanzamiento.
+- Preparado (h = 0.1, Ultra Ball, dormido): **≈ 24%** por lanzamiento (≈ 56% en 3 lanzamientos).
 
 ### 11.3 Daño: la Energía de la sesión
 
@@ -651,7 +651,8 @@ Conclusión: los caramelos **aceleran mucho a niveles bajos** (ponerse al día c
 |---|---|
 | 30 | — |
 | 40 | 25 |
-| 50 | 45 |
+| 50 | 36 |
+| 60 | 50 |
 | 60+ | Se amplía con cada pack de contenido **[calibrar]** |
 
 ### 12.6 Evolución
@@ -716,9 +717,9 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 | Liga | Puntos semanales (inicial) | Máximo de salvajes por grupo |
 |---|---|---|
 | Base | 0 | 5 |
-| Super | 8,000 | 6 |
-| Ultra | 20,000 | 7 |
-| Maestra | 45,000 | 8 |
+| Super | 6,000 | 6 |
+| Ultra | 60,000 | 7 |
+| Maestra | 95,000 | 8 |
 
 - **La liga se reinicia cada semana:** el lunes a las 00:00 todos vuelven a la liga **Base** y suben a medida que acumulan puntos esa semana. La **liga actual** (la que fija el máximo de salvajes por oleada) es la que llevas en la semana en curso.
 - Consecuencia buscada: a principio de semana las oleadas son más pequeñas y crecen a medida que estudias. Cada semana es una escalada nueva.
@@ -897,6 +898,12 @@ Reglas de diseño:
 2. Rellenar la **ficha de curación** de cada especie: rol buscado (p. ej. "cazador", "estudioso", "maratonista", "técnico"), stats base ajustados y motivo.
 3. Ejecutar el simulador: comprobar el "valor de estudio" de cada especie frente a su etapa y frente al resto del pack.
 4. Iterar hasta que ninguna especie quede fuera de banda.
+
+---
+
+## 20.2 Calibración aplicada
+
+Valores ajustados con el simulador (`npm run simulate`, informe en `docs/balance-report.md`): ligas 6,000 / 60,000 / 95,000; EXP 29/min; tope de nivel 50 con 36 especies (y 60 con 50); legendario 0.16% por hueco y captura mínima 13; rangos de nivel salvaje ampliados hasta 70; ajustes de Rendimiento en 10 especies (`data/overrides/species.json`).
 
 ---
 

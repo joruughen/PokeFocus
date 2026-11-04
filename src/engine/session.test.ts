@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completeBreak, refreshEnergy } from './energy'
+import { completeBreak, isAsleepAt, refreshEnergy } from './energy'
 import { createEngineContext, defaultContext, type EngineContext } from './context'
 import { currentLeague, leagueForPoints, weekKey } from './league'
 import { createRng } from './rng'
@@ -82,6 +82,26 @@ describe('energy during sessions (GDD §5.3)', () => {
     expect(after.ok && after.value.state.pokemon.a!.asleepNextSession).toBe(false)
   })
 
+  it('Rest sleep ends at the daily reset or after sitting out one completed session (boxed Pokémon)', () => {
+    const c = alwaysActivate('rest')
+    const p = makeMon('squirtle', 20, { uid: 'a', equippedMoves: ['rest'], learnedMoves: ['rest'] }, c)
+    const q = makeMon('pidgey', 20, { uid: 'b' }, c)
+    const first = runSession({ ...makePlayer([p], {}, c), pokemon: { a: p, b: q } }, 25, 1, {}, c)
+    const applied = applySessionResult(first.state, first.result, c)
+    if (!applied.ok) throw new Error(applied.error)
+    const asleep = applied.value.state
+    expect(asleep.pokemon.a!.asleepNextSession).toBe(true)
+    expect(isAsleepAt(asleep, asleep.pokemon.a!, T0 + 60 * MIN, c)).toBe(true)
+    // Boxed: next morning after 05:00 it wakes up.
+    const boxed = { ...asleep, team: ['b'] }
+    expect(isAsleepAt(boxed, boxed.pokemon.a!, Date.UTC(2026, 10, 4, 4, 59), c)).toBe(true)
+    expect(refreshEnergy(boxed, Date.UTC(2026, 10, 4, 5, 0), c).pokemon.a!.asleepNextSession).toBe(false)
+    // Boxed during a completed session (same day): it wakes up too.
+    const other = runSession(boxed, 25, 2, { startedAt: T0 + 60 * MIN }, c)
+    const after = applySessionResult(other.state, other.result, c)
+    expect(after.ok && after.value.state.pokemon.a!.asleepNextSession).toBe(false)
+  })
+
   it('Hydration avoids Rest sleep in rain', () => {
     const c = alwaysActivate('rest')
     const p = makeMon('vaporeon', 30, { uid: 'v', ability: 'hydration', equippedMoves: ['rest'], learnedMoves: ['rest'] }, c)
@@ -133,13 +153,19 @@ describe('rewards (GDD §3.2, §3.3, §4, §5.2)', () => {
     expect(capped.result.members[0]!.exp).toBe(0)
   })
 
-  it('base rewards: 600 EXP at focus 1 for 25 min (defense floor aside), 250 dust, 2 balls', () => {
+  it('base rewards: expPerMinute·25 EXP at focus 1, dustPerMinute·25 dust, pokeBallsPerSession balls', () => {
     const p = makeMon('pidgey', 20, { uid: 'a' })
     const { result } = runSession(makePlayer([p]), 25)
     expect(result.focus).toBe(1)
-    expect(result.members[0]!.exp).toBe(600)
-    expect(result.dust).toBe(250)
-    expect(result.pokeBalls).toBe(2)
+    expect(result.members[0]!.exp).toBe(Math.round(cfg.rewards.expPerMinute * 25))
+    expect(result.dust).toBe(Math.round(cfg.rewards.dustPerMinute * 25))
+    expect(result.pokeBalls).toBe(cfg.rewards.pokeBallsPerSession)
+    // Explicit config: the formula, not the tuning.
+    const c = createEngineContext({ config: { rewards: { expPerMinute: 24, dustPerMinute: 10, pokeBallsPerSession: 2 } } })
+    const fixed = runSession(makePlayer([makeMon('pidgey', 20, { uid: 'a' }, c)], {}, c), 25, 7, {}, c).result
+    expect(fixed.members[0]!.exp).toBe(600)
+    expect(fixed.dust).toBe(250)
+    expect(fixed.pokeBalls).toBe(2)
     expect(result.waves).toHaveLength(1)
   })
 
@@ -213,11 +239,17 @@ describe('session lifecycle (GDD §15)', () => {
 
 describe('leagues (GDD §14)', () => {
   it('thresholds and weekly reset on local Monday', () => {
+    const th = cfg.leagues.weeklyThresholds
     expect(leagueForPoints(0)).toBe('base')
-    expect(leagueForPoints(8000)).toBe('super')
-    expect(leagueForPoints(45000)).toBe('master')
-    expect(leagueForPoints(8000 * 4 - 1, 'month')).toBe('base')
-    const s = makePlayer([makeMon('pidgey', 10)], { league: { weeklyPoints: { '2026-11-02': 20000 }, monthlyPoints: {}, bestLeague: 'ultra' } })
+    expect(leagueForPoints(th.super)).toBe('super')
+    expect(leagueForPoints(th.super - 1)).toBe('base')
+    expect(leagueForPoints(th.master)).toBe('master')
+    expect(leagueForPoints(th.super * cfg.leagues.monthlyMultiplier - 1, 'month')).toBe('base')
+    const c = createEngineContext({ config: { leagues: { weeklyThresholds: { base: 0, super: 8000, ultra: 20000, master: 45000 }, monthlyMultiplier: 4 } } })
+    expect(leagueForPoints(8000, 'week', c)).toBe('super')
+    expect(leagueForPoints(45000, 'week', c)).toBe('master')
+    expect(leagueForPoints(8000 * 4 - 1, 'month', c)).toBe('base')
+    const s = makePlayer([makeMon('pidgey', 10)], { league: { weeklyPoints: { '2026-11-02': th.ultra }, monthlyPoints: {}, bestLeague: 'ultra' } })
     expect(weekKey(s, T0)).toBe('2026-11-02')
     expect(currentLeague(s, T0)).toBe('ultra')
     expect(currentLeague(s, Date.UTC(2026, 10, 9, 0, 1))).toBe('base')

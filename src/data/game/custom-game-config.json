@@ -1,7 +1,12 @@
 {
   "_note": "Parámetros de balance editables (GDD §19 game_config). Todos son valores iniciales [calibrar] que ajusta el simulador.",
   "session": {
-    "presets": [25, 50, 75, 100],
+    "presets": [
+      25,
+      50,
+      75,
+      100
+    ],
     "minMinutes": 15,
     "maxMinutes": 120,
     "waveMinutes": 25,
@@ -12,13 +17,16 @@
   },
   "focus": {
     "screenshotsPerSession": 1,
-    "screenshotWindow": [0.1, 0.95],
+    "screenshotWindow": [
+      0.1,
+      0.95
+    ],
     "screenshotMinGapMinutes": 3,
     "noPermissionValue": 0.85,
     "missedCaptureValue": 0.6,
     "labelValues": {
-      "studying": 1.0,
-      "educational": 1.0,
+      "studying": 1,
+      "educational": 1,
       "chat": 0.6,
       "social": 0.4,
       "game": 0.2,
@@ -36,29 +44,47 @@
     "noDamageMoveEnergyFactor": 0.5,
     "techMultBase": 0.5,
     "techMultSpDefDivisor": 100,
-    "techMultMax": 2.0,
+    "techMultMax": 2,
     "maxActivationChance": 0.4,
     "defenseFocusDivisor": 400,
     "defenseFocusMaxShare": 0.5
   },
   "statCurves": {
     "_note": "Capa 1 de §20.1: efectiva = pivot + (base - pivot) * k. k < 1 comprime los extremos.",
-    "hp": { "pivot": 70, "k": 0.85 },
-    "attack": { "pivot": 70, "k": 0.9 },
-    "defense": { "pivot": 70, "k": 0.8 },
-    "specialAttack": { "pivot": 70, "k": 0.9 },
-    "specialDefense": { "pivot": 70, "k": 0.85 },
-    "speed": { "pivot": 70, "k": 0.75 }
+    "hp": {
+      "pivot": 70,
+      "k": 0.85
+    },
+    "attack": {
+      "pivot": 70,
+      "k": 0.9
+    },
+    "defense": {
+      "pivot": 70,
+      "k": 0.8
+    },
+    "specialAttack": {
+      "pivot": 70,
+      "k": 0.9
+    },
+    "specialDefense": {
+      "pivot": 70,
+      "k": 0.85
+    },
+    "speed": {
+      "pivot": 70,
+      "k": 0.75
+    }
   },
   "energy": {
     "costBase": 0.5,
-    "costLevelDivisor": 25,
+    "costLevelDivisor": 28,
     "dailyResetHour": 5,
     "breakRecoverPct": 0.1,
     "boxRecoverPctPerHour": 0.1
   },
   "rewards": {
-    "expPerMinute": 24,
+    "expPerMinute": 29,
     "dustPerMinute": 10,
     "pokeBallsPerSession": 2
   },
@@ -98,19 +124,49 @@
     "iceColdCelsius": 12,
     "flyingNoiseShare": 0.3,
     "psychicSilenceShare": 0.7,
-    "dayWindow": [5, 12],
-    "afternoonWindow": [12, 18],
-    "nightWindow": [20, 5]
+    "dayWindow": [
+      5,
+      12
+    ],
+    "afternoonWindow": [
+      12,
+      18
+    ],
+    "nightWindow": [
+      20,
+      5
+    ]
   },
   "encounters": {
     "baseWaveSize": 4,
     "waveSizeJitter": 1,
     "minWaveSize": 3,
     "lowFocusThreshold": 0.5,
-    "leagueMaxWaveSize": { "base": 5, "super": 6, "ultra": 7, "master": 8 },
-    "legendaryChance": 0.002,
-    "longSessionLegendaryMult": [1, 1.5, 2, 2],
-    "longSessionRareBoost": [1, 1.15, 1.3, 1.3],
+    "leagueMaxWaveSize": {
+      "base": 5,
+      "super": 6,
+      "ultra": 7,
+      "master": 8
+    },
+    "leagueWaveBonus": {
+      "base": 0,
+      "super": 1,
+      "ultra": 2,
+      "master": 3
+    },
+    "legendaryChance": 0.0016,
+    "longSessionLegendaryMult": [
+      1,
+      1.5,
+      2,
+      2
+    ],
+    "longSessionRareBoost": [
+      1,
+      1.15,
+      1.3,
+      1.3
+    ],
     "conditionTypeWeight": 2,
     "soundProfileWeight": 1.5,
     "teamTypeWeight": 1.25,
@@ -118,25 +174,85 @@
     "roamingSessions": 3,
     "roamingChance": 0.35,
     "studyBallMaxLevel": 20,
+    "studyBallLevelMargin": 10,
     "wildLevelByTrainerLevel": [
-      { "trainerLevel": 1, "min": 2, "max": 10 },
-      { "trainerLevel": 10, "min": 5, "max": 22 },
-      { "trainerLevel": 20, "min": 10, "max": 32 },
-      { "trainerLevel": 30, "min": 15, "max": 40 },
-      { "trainerLevel": 40, "min": 20, "max": 50 }
+      {
+        "trainerLevel": 1,
+        "min": 2,
+        "max": 10
+      },
+      {
+        "trainerLevel": 10,
+        "min": 5,
+        "max": 22
+      },
+      {
+        "trainerLevel": 20,
+        "min": 10,
+        "max": 32
+      },
+      {
+        "trainerLevel": 30,
+        "min": 15,
+        "max": 40
+      },
+      {
+        "trainerLevel": 40,
+        "min": 20,
+        "max": 50
+      },
+      {
+        "trainerLevel": 50,
+        "min": 25,
+        "max": 60
+      },
+      {
+        "trainerLevel": 60,
+        "min": 30,
+        "max": 70
+      }
     ],
     "legendaryMinLevel": 50
   },
   "capture": {
-    "legendaryMinCaptureRate": 30,
+    "legendaryMinCaptureRate": 13,
+    "captureDamageScale": 0.065,
+    "levelSync": {
+      "ratio": 1,
+      "gap": 0
+    },
+    "damageReferenceSpeed": 70,
+    "hitTargeting": "maxHp",
     "minHpFraction": 0.05,
     "maxFailedThrows": 3,
     "balls": {
-      "poke-ball": { "mult": 1.0, "shinyGuarantee": { "maxStage": 1, "maxLevel": 25 } },
-      "great-ball": { "mult": 1.5, "shinyGuarantee": { "maxStage": 2, "maxLevel": 45 } },
-      "ultra-ball": { "mult": 2.0, "shinyGuarantee": { "maxStage": 3, "maxLevel": 100 } }
+      "poke-ball": {
+        "mult": 1,
+        "shinyGuarantee": {
+          "maxStage": 1,
+          "maxLevel": 25
+        }
+      },
+      "great-ball": {
+        "mult": 1.5,
+        "shinyGuarantee": {
+          "maxStage": 2,
+          "maxLevel": 45
+        }
+      },
+      "ultra-ball": {
+        "mult": 2,
+        "shinyGuarantee": {
+          "maxStage": 3,
+          "maxLevel": 100
+        }
+      }
     },
-    "statusMult": { "sleep": 2.5, "paralysis": 1.5, "none": 1.0 },
+    "statusMult": {
+      "sleep": 2.5,
+      "paralysis": 1.5,
+      "none": 1
+    },
     "counter": {
       "basePct": 0.08,
       "levelExponent": 0.5,
@@ -146,25 +262,60 @@
     }
   },
   "progression": {
-    "expCurve": { "coef": 4, "exponent": 2.8 },
+    "expCurve": {
+      "coef": 4,
+      "exponent": 2.8
+    },
     "candyExp": 300,
     "typeCandyExp": 200,
     "candyDustBase": 25,
     "candyDustPerLevel": 3,
     "candiesOnCatch": 3,
-    "candiesOnRelease": [1, 2, 3],
+    "candiesOnRelease": [
+      1,
+      2,
+      3
+    ],
     "levelCaps": [
-      { "species": 0, "cap": 30 },
-      { "species": 25, "cap": 40 },
-      { "species": 45, "cap": 50 }
+      {
+        "species": 0,
+        "cap": 30
+      },
+      {
+        "species": 25,
+        "cap": 40
+      },
+      {
+        "species": 36,
+        "cap": 50
+      },
+      {
+        "species": 50,
+        "cap": 60
+      }
     ],
     "techniqueSlots": [
-      { "level": 1, "slots": 1 },
-      { "level": 15, "slots": 2 },
-      { "level": 30, "slots": 3 },
-      { "level": 50, "slots": 4 }
+      {
+        "level": 1,
+        "slots": 1
+      },
+      {
+        "level": 15,
+        "slots": 2
+      },
+      {
+        "level": 30,
+        "slots": 3
+      },
+      {
+        "level": 50,
+        "slots": 4
+      }
     ],
-    "extraMovesPerIndividual": [2, 3],
+    "extraMovesPerIndividual": [
+      2,
+      3
+    ],
     "extraMoveUnlock": {
       "_note": "Nivel al que se desbloquea cada movimiento extra. Daño: max(1, round((potencia - powerOffset) / powerDivisor)). Técnicas especiales: statusLevel.",
       "powerOffset": 40,
@@ -175,19 +326,48 @@
     "ivMax": 31,
     "legendaryPerfectIvs": 3,
     "mastery": [
-      { "hours": 0, "mult": 1.0 },
-      { "hours": 5, "mult": 1.15 },
-      { "hours": 15, "mult": 1.3 },
-      { "hours": 40, "mult": 1.45 },
-      { "hours": 100, "mult": 1.6 }
+      {
+        "hours": 0,
+        "mult": 1
+      },
+      {
+        "hours": 5,
+        "mult": 1.15
+      },
+      {
+        "hours": 15,
+        "mult": 1.3
+      },
+      {
+        "hours": 40,
+        "mult": 1.45
+      },
+      {
+        "hours": 100,
+        "mult": 1.6
+      }
     ]
   },
   "leagues": {
-    "order": ["base", "super", "ultra", "master"],
-    "weeklyThresholds": { "base": 0, "super": 8000, "ultra": 20000, "master": 45000 },
+    "order": [
+      "base",
+      "super",
+      "ultra",
+      "master"
+    ],
+    "weeklyThresholds": {
+      "base": 0,
+      "super": 6000,
+      "ultra": 60000,
+      "master": 95000
+    },
     "monthlyMultiplier": 4
   },
-  "starters": ["bulbasaur", "charmander", "squirtle"],
+  "starters": [
+    "bulbasaur",
+    "charmander",
+    "squirtle"
+  ],
   "starterLevel": 5,
   "starterPokeBalls": 5
 }

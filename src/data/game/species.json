@@ -4611,7 +4611,7 @@
       "hp": 80,
       "attack": 100,
       "defense": 70,
-      "specialAttack": 58,
+      "specialAttack": 75,
       "specialDefense": 60,
       "speed": 45
     },
@@ -4802,7 +4802,7 @@
       "hp": 90,
       "attack": 130,
       "defense": 80,
-      "specialAttack": 80,
+      "specialAttack": 110,
       "specialDefense": 85,
       "speed": 55
     },
@@ -5374,7 +5374,7 @@
       "hp": 80,
       "attack": 120,
       "defense": 130,
-      "specialAttack": 78,
+      "specialAttack": 100,
       "specialDefense": 65,
       "speed": 45
     },
@@ -5565,7 +5565,7 @@
       "hp": 35,
       "attack": 35,
       "defense": 70,
-      "specialAttack": 95,
+      "specialAttack": 75,
       "specialDefense": 55,
       "speed": 45
     },
@@ -6886,7 +6886,7 @@
       "hp": 65,
       "attack": 65,
       "defense": 60,
-      "specialAttack": 110,
+      "specialAttack": 80,
       "specialDefense": 95,
       "speed": 130
     },
@@ -7214,7 +7214,7 @@
       "hp": 90,
       "attack": 85,
       "defense": 100,
-      "specialAttack": 95,
+      "specialAttack": 125,
       "specialDefense": 125,
       "speed": 85
     },
@@ -8501,11 +8501,11 @@
       "hp": 100,
       "attack": 100,
       "defense": 100,
-      "specialAttack": 100,
+      "specialAttack": 115,
       "specialDefense": 100,
       "speed": 100
     },
-    "captureRate": 45,
+    "captureRate": 3,
     "isLegendary": false,
     "isMythical": true,
     "evolutionChainId": 78,
@@ -8967,7 +8967,7 @@
       "hp": 65,
       "attack": 65,
       "defense": 60,
-      "specialAttack": 130,
+      "specialAttack": 115,
       "specialDefense": 95,
       "speed": 110
     },
@@ -9485,7 +9485,7 @@
       "hp": 100,
       "attack": 100,
       "defense": 80,
-      "specialAttack": 75,
+      "specialAttack": 91,
       "specialDefense": 60,
       "speed": 50
     },
@@ -9860,7 +9860,7 @@
       "hp": 75,
       "attack": 90,
       "defense": 50,
-      "specialAttack": 110,
+      "specialAttack": 90,
       "specialDefense": 80,
       "speed": 95
     },

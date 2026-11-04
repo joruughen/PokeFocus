@@ -1,0 +1,213 @@
+import { useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { defaultContext, toLocal } from '../../engine'
+import type { Locale } from '../../i18n'
+import { Button, Logo, Mascot, type MascotPose, Platform, Segmented, Select, Sprite, Stage, TypeBadge } from '../components'
+import { timeOfDay } from '../lib/conditions'
+import { cx } from '../lib/cx'
+import { allTimeZones, browserTimeZone } from '../lib/format'
+import { useNames } from '../lib/names'
+import { useGame } from '../store/game'
+import { usePrefs } from '../store/prefs'
+
+const ctx = defaultContext()
+const STARTERS = ctx.config.starters
+
+/** First run: who you are → your first partner → how it works (3 steps). */
+export function FirstRun() {
+  const { t } = useTranslation()
+  const names = useNames()
+  const locale = usePrefs((s) => s.locale)
+  const setLocale = usePrefs((s) => s.setLocale)
+  const createPlayer = useGame((s) => s.createPlayer)
+  const [step, setStep] = useState(0)
+  const [name, setName] = useState('')
+  const [tz, setTz] = useState(browserTimeZone())
+  const [starter, setStarter] = useState<string | null>(null)
+  const zones = useMemo(() => allTimeZones().map((z) => ({ value: z, label: z.replace(/_/g, ' ') })), [])
+  const hour = toLocal(Date.now(), tz).hour
+  const trimmed = name.trim()
+  const canNext = step === 0 ? trimmed.length >= 1 && trimmed.length <= 20 : step === 1 ? starter !== null : true
+
+  const speech: { pose: MascotPose; text: string }[] = [
+    { pose: 'idle', text: t('firstRun.speech.0') },
+    { pose: 'point', text: t('firstRun.speech.1', { name: trimmed || t('firstRun.you') }) },
+    { pose: 'cheer', text: t('firstRun.speech.2', { starter: starter ? names.species(starter) : '' }) },
+  ]
+  const s = speech[step]!
+
+  const finish = () => {
+    if (!starter) return
+    createPlayer({ trainerName: trimmed, locale, timezone: tz, starterSlug: starter })
+  }
+
+  return (
+    <div className="min-h-dvh bg-dusk-950">
+      <Stage time={timeOfDay(hour)} weather="clear" className="h-56 shadow-none">
+        <div className="mx-auto flex h-full max-w-5xl items-start px-6 pt-6">
+          <Logo height={48} />
+        </div>
+      </Stage>
+
+      <main className="relative mx-auto -mt-24 max-w-5xl px-6 pb-16">
+        <div className="mb-6 flex items-end gap-4">
+          <Mascot pose={s.pose} size={144} className="shrink-0" />
+          <p key={step} aria-live="polite" className="relative mb-8 max-w-xl animate-pop-in bg-mist-50 px-4 py-3 text-lg text-ink shadow-raised">
+            <SpeechTail />
+            {s.text}
+          </p>
+        </div>
+
+        <section className="bg-dusk-800 p-6 shadow-plate md:p-8" aria-labelledby="fr-title">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h1 id="fr-title" className="text-2xl">
+              {t(`firstRun.steps.${step}`)}
+            </h1>
+            <ol className="flex items-center gap-2" aria-label={t('firstRun.progress', { n: step + 1, total: 3 })}>
+              {[0, 1, 2].map((i) => (
+                <li key={i} aria-current={i === step ? 'step' : undefined} className={cx('h-3 shadow-frame transition-[width]', i === step ? 'w-10 bg-volt-400' : i < step ? 'w-5 bg-mist-300' : 'w-5 bg-dusk-600')}>
+                  <span className="sr-only">{t(`firstRun.steps.${i}`)}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {step === 0 && (
+            <div className="grid gap-6 md:grid-cols-2">
+              <label className="flex flex-col gap-1.5 md:col-span-2">
+                <span className="font-display text-base text-mist-300">{t('firstRun.name')}</span>
+                <input
+                  autoFocus
+                  value={name}
+                  maxLength={20}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && canNext && setStep(1)}
+                  placeholder={t('firstRun.namePlaceholder')}
+                  className="min-h-12 bg-dusk-900 px-3 font-display text-xl text-mist-50 shadow-frame inset-shadow-well placeholder:text-mist-400"
+                />
+              </label>
+              <div className="flex flex-col gap-1.5">
+                <span className="font-display text-base text-mist-300" id="fr-lang">
+                  {t('firstRun.language')}
+                </span>
+                <Segmented<Locale>
+                  label={t('firstRun.language')}
+                  value={locale}
+                  onChange={setLocale}
+                  options={[
+                    { value: 'es', label: 'Español' },
+                    { value: 'en', label: 'English' },
+                  ]}
+                />
+              </div>
+              <div>
+                <Select label={t('firstRun.timezone')} options={zones} value={tz} onChange={setTz} />
+                <p className="mt-1.5 text-sm text-mist-400">{t('firstRun.timezoneNote')}</p>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div role="radiogroup" aria-label={t('firstRun.steps.1')} className="grid gap-5 md:grid-cols-3">
+              {STARTERS.map((slug) => (
+                <StarterCard key={slug} slug={slug} checked={starter === slug} onPick={() => setStarter(slug)} />
+              ))}
+            </div>
+          )}
+
+          {step === 2 && (
+            <ol className="grid gap-5 md:grid-cols-3">
+              <LoopStep n={1} title={t('firstRun.loop.study.title')} body={t('firstRun.loop.study.body')} icon={<span className="font-num text-5xl leading-none text-volt-400">25:00</span>} />
+              <LoopStep n={2} title={t('firstRun.loop.claim.title')} body={t('firstRun.loop.claim.body')} icon={<Mascot pose="cheer" size={48} />} />
+              <LoopStep
+                n={3}
+                title={t('firstRun.loop.catch.title')}
+                body={t('firstRun.loop.catch.body')}
+                icon={<Sprite kind="item" slug="poke-ball" scale={2} alt="" />}
+              />
+            </ol>
+          )}
+
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+ <Button variant="ghost" icon="back" onClick={() => setStep((n) => Math.max(0, n - 1))} className={step === 0 ? 'invisible' : ''}>
+              {t('common.back')}
+            </Button>
+            {step < 2 ? (
+              <Button size="lg" icon="next" disabled={!canNext} onClick={() => setStep((n) => n + 1)}>
+                {t('common.continue')}
+              </Button>
+            ) : (
+              <Button size="lg" icon="play" onClick={finish}>
+                {t('firstRun.finish')}
+              </Button>
+            )}
+          </div>
+        </section>
+        <p className="mt-6 text-center text-xs text-mist-400">{t('app.disclaimer')}</p>
+      </main>
+    </div>
+  )
+}
+
+/** Pixel tail on the left of a speech bubble, pointing at the mascot. */
+function SpeechTail() {
+  return (
+    <svg viewBox="0 0 6 6" width={18} height={18} shapeRendering="crispEdges" aria-hidden className="absolute bottom-3 -left-[16px]">
+      <path d="M6 0v6H5V5H4V4H3V3H2V2H1V1H0V0z" fill="var(--color-ink)" />
+      <path d="M6 1v4H5V4H4V3H3V2H2V1z" fill="var(--color-mist-50)" />
+    </svg>
+  )
+}
+
+function LoopStep({ n, title, body, icon }: { n: number; title: string; body: string; icon: ReactNode }) {
+  return (
+    <li className="flex flex-col gap-3 bg-dusk-900 p-5 inset-shadow-well">
+      <div className="flex h-16 items-center justify-between">
+        {icon}
+        <span className="font-num text-3xl leading-none text-mist-400" aria-hidden>
+          {n}
+        </span>
+      </div>
+      <h2 className="text-lg">{title}</h2>
+      <p className="text-sm text-mist-300">{body}</p>
+    </li>
+  )
+}
+
+function StarterCard({ slug, checked, onPick }: { slug: string; checked: boolean; onPick: () => void }) {
+  const { t } = useTranslation()
+  const names = useNames()
+  const sp = ctx.speciesBySlug.get(slug)!
+  const role = sp.role ?? 'allrounder'
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={checked}
+      onClick={onPick}
+      className={cx(
+        'group flex flex-col items-stretch text-left shadow-raised transition-[translate,background-color] duration-100',
+        checked ? 'translate-y-[3px] bg-dusk-600 shadow-pressed outline-3 outline-offset-4 outline-volt-400' : 'bg-dusk-700 hover:bg-dusk-600',
+      )}
+    >
+      <Stage time="day" weather="clear" celestial={false} className="h-44 shadow-none">
+        <div className="relative flex h-full items-end justify-center pb-3">
+          <Platform width={128} className="absolute bottom-3" />
+          <Sprite kind="showdown" slug={slug} scale={2} alt={names.species(slug)} className={cx('relative mb-3', checked && 'motion-safe:animate-bob')} />
+        </div>
+      </Stage>
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-display text-xl">{names.species(slug)}</span>
+          <span className="flex gap-1">
+            {sp.types.map((ty) => (
+              <TypeBadge key={ty} type={ty} />
+            ))}
+          </span>
+        </div>
+        <p className="font-display text-base text-volt-300">{t(`roles.${role}.name`)}</p>
+        <p className="text-sm text-mist-300">{t(`roles.${role}.body`)}</p>
+      </div>
+    </button>
+  )
+}

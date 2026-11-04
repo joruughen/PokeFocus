@@ -1,6 +1,1190 @@
 {
   "app": {
     "title": "PokeFocus",
-    "tagline": "Estudia. Captura. Evoluciona."
+    "tagline": "Estudia. Captura. Evoluciona.",
+    "disclaimer": "Proyecto personal sin fines de lucro. No está afiliado a Nintendo, Game Freak ni The Pokémon Company."
+  },
+  "common": {
+    "close": "Cerrar",
+    "moreInfo": "Más información",
+    "back": "Atrás",
+    "continue": "Continuar",
+    "cancel": "Cancelar",
+    "on": "Sí",
+    "off": "No",
+    "min": "min",
+    "minutes_one": "{{count}} minuto",
+    "minutes_other": "{{count}} minutos",
+    "skipToContent": "Ir al contenido",
+    "loading": "Cargando…"
+  },
+  "nav": {
+    "label": "Secciones",
+    "home": "Inicio",
+    "box": "Caja",
+    "team": "Equipo",
+    "dex": "Pokédex",
+    "league": "Liga",
+    "settings": "Ajustes",
+    "sessionLive": "Sesión en curso",
+    "sessionDone": "Sesión terminada",
+    "missions": "Misiones"
+  },
+  "trainer": {
+    "level": "Entrenador nv. {{level}}",
+    "streak_one": "Racha de {{count}} día",
+    "streak_other": "Racha de {{count}} días",
+    "bag": "Tu mochila",
+    "ballCount_one": "{{count}} disponible",
+    "ballCount_other": "{{count}} disponibles"
+  },
+  "mascot": {
+    "name": "Pikachu estudioso"
+  },
+  "hint": {
+    "helpFor": "Ayuda: {{title}}",
+    "step": "Paso {{n}} de {{total}}",
+    "next": "Siguiente",
+    "gotIt": "Entendido",
+    "disable": "No mostrar consejos"
+  },
+  "stats": {
+    "basedOn": "basada en {{stat}}",
+    "natureUp": "Su naturaleza la sube",
+    "natureDown": "Su naturaleza la baja",
+    "hp": {
+      "name": "Energía",
+      "what": "Cuánto aguanta estudiando a lo largo del día.",
+      "base": "PS"
+    },
+    "speed": {
+      "name": "Ritmo",
+      "what": "Cada cuánto actúa durante la sesión.",
+      "base": "Velocidad"
+    },
+    "specialAttack": {
+      "name": "Rendimiento",
+      "what": "Cuántos puntos da cada acción.",
+      "base": "Ataque Especial"
+    },
+    "attack": {
+      "name": "Captura",
+      "what": "Cuánta Energía de captura genera para debilitar salvajes.",
+      "base": "Ataque"
+    },
+    "specialDefense": {
+      "name": "Técnica",
+      "what": "Probabilidad de activar sus técnicas.",
+      "base": "Defensa Especial"
+    },
+    "defense": {
+      "name": "Aguante",
+      "what": "Cuánto rinde aunque tu Foco baje, y cuánto resiste los contraataques.",
+      "base": "Defensa"
+    },
+    "summary": "Resumen",
+    "tile": {
+      "week": "Esta semana",
+      "weekNote_one": "{{count}} sesión",
+      "weekNote_other": "{{count}} sesiones",
+      "total": "En total",
+      "totalNote_one": "{{count}} sesión",
+      "totalNote_other": "{{count}} sesiones",
+      "streak": "Racha de días",
+      "streakNote": "Mejor racha: {{best}}",
+      "caught": "Capturas",
+      "caughtNote": "{{count}} especies en la Pokédex"
+    },
+    "weekTitle": "Minutos por día",
+    "weekLabel": "{{count}} minutos estudiados esta semana, por día",
+    "weekNote": "De lunes a domingo, en tu zona horaria. El día de hoy va recuadrado.",
+    "dayTip_one": "{{day}}: {{count}} minuto",
+    "dayTip_other": "{{day}}: {{count}} minutos",
+    "pointsTitle": "Puntos por sesión",
+    "pointsLabel": "Puntos de las últimas {{count}} sesiones",
+    "pointsNote_one": "Tu última sesión.",
+    "pointsNote_other": "Tus últimas {{count}} sesiones, de la más antigua a la más reciente.",
+    "sessionTip": "{{date}}: {{points}} puntos en {{minutes}} min",
+    "focusTitle": "Foco",
+    "focusLabel": "Foco de las últimas sesiones",
+    "focusNote": "El Foco multiplica casi todo lo que gana tu equipo. Estudiar sin distracciones lo mantiene al 100%.",
+    "focusTip": "{{date}}: Foco {{pct}}",
+    "historyTitle": "Historial",
+    "col": {
+      "when": "Cuándo",
+      "minutes": "Min",
+      "points": "Puntos",
+      "focus": "Foco",
+      "caught": "Capt."
+    },
+    "lateTip": "Reclamada tarde: rindió la mitad.",
+    "empty": {
+      "title": "Tus estadísticas empiezan con tu primera sesión",
+      "body": "Aquí verás tus minutos por día, los puntos de cada sesión y cómo evoluciona tu Foco."
+    },
+    "weekEmpty": "Aún no estudiaste esta semana. Tu primera sesión aparecerá aquí."
+  },
+  "roles": {
+    "scholar": {
+      "name": "Estudioso",
+      "body": "Mucho Rendimiento: cada acción da muchos puntos. Ideal para subir de liga."
+    },
+    "hunter": {
+      "name": "Cazador",
+      "body": "Mucha Captura: debilita a los salvajes para que sean fáciles de atrapar."
+    },
+    "sprinter": {
+      "name": "Velocista",
+      "body": "Mucho Ritmo: actúa a menudo, pero se cansa antes."
+    },
+    "marathoner": {
+      "name": "Maratonista",
+      "body": "Mucha Energía: aguanta sesiones largas y días intensos."
+    },
+    "technician": {
+      "name": "Técnico",
+      "body": "Mucha Técnica: activa sus técnicas especiales más seguido."
+    },
+    "guardian": {
+      "name": "Guardián",
+      "body": "Mucho Aguante: rinde aunque tu Foco baje y resiste contraataques. Buen líder."
+    },
+    "support": {
+      "name": "Apoyo",
+      "body": "Ayuda al resto del equipo con curaciones y efectos."
+    },
+    "allrounder": {
+      "name": "Equilibrado",
+      "body": "Sin puntos débiles: encaja en cualquier equipo."
+    }
+  },
+  "pokemon": {
+    "shiny": "Shiny",
+    "levelShort": "Nv",
+    "energyOf": "Energía de {{name}}",
+    "expOf": "EXP de {{name}}",
+    "exp": "EXP",
+    "exhausted": "Agotado: no actuará hasta recuperar Energía."
+  },
+  "team": {
+    "title": "Tu equipo",
+    "leader": "Líder",
+    "leaderTip": "El líder recibe los contraataques cuando falla una captura.",
+    "emptySlotHow": "Captura Pokémon en las oleadas y súmalos al equipo entre sesiones.",
+    "emptySlots_one": "{{count}} hueco libre",
+    "emptySlots_other": "{{count}} huecos libres",
+    "subtitle": "Hasta 6 Pokémon estudian contigo. El primero es el líder: recibe los contraataques cuando falla una captura.",
+    "locked": "Tu equipo está estudiando. Podrás cambiarlo al terminar la sesión.",
+    "slotFree": "Hueco {{n}} libre",
+    "order": "Orden del equipo",
+    "addHint_one": "Te queda {{count}} hueco. Suma Pokémon desde la lista de la Caja.",
+    "addHint_other": "Te quedan {{count}} huecos. Suma Pokémon desde la lista de la Caja.",
+    "fromBox": "Sumar desde la Caja",
+    "boxEmpty": "Tu Caja está vacía. Captura Pokémon en las oleadas para sumarlos al equipo.",
+    "add": "Sumar",
+    "full": "El equipo está completo. Pasa a alguien a la Caja para hacer sitio.",
+    "makeLeader": "Hacer líder",
+    "makeLeaderOf": "Hacer líder a {{name}}",
+    "newLeader": "{{name}} ahora es el líder",
+    "moveUp": "Subir a {{name}}",
+    "moveDown": "Bajar a {{name}}",
+    "removeOf": "Pasar a {{name}} a la Caja",
+    "warnAsleep": "Dormido: no actuará en la próxima sesión.",
+    "warnExhausted": "Agotado: no actuará hasta recuperar Energía.",
+    "warnTired": "Puede agotarse en una sesión de {{minutes}} min.",
+    "leaderRow": "Recibe los contraataques. Aguante {{grit}}.",
+    "leaderTitle": "El líder",
+    "leaderWhy": "Cuando una Ball falla, el salvaje contraataca al líder. Si está agotado, al siguiente.",
+    "gritNote": "Reduce el daño de cada contraataque.",
+    "energyNote": "Es su vida: a 0 deja de actuar.",
+    "weakTo": "Recibe más daño de:",
+    "resists": "Resiste:",
+    "none": "Ninguno",
+    "emptySlotShort": "Súmale uno desde Equipo."
+  },
+  "items": {
+    "dust": "Polvo de Estudio",
+    "dustTip": "Polvo de Estudio: se gana estudiando y sirve para usar caramelos."
+  },
+  "balls": {
+    "study": "Ball de Estudio"
+  },
+  "timeOfDay": {
+    "morning": "Es de mañana.",
+    "day": "Es de tarde.",
+    "evening": "Está anocheciendo.",
+    "night": "Es de noche."
+  },
+  "weather": {
+    "clear": "Templado",
+    "sun": "Sol",
+    "rain": "Lluvia",
+    "cold": "Frío",
+    "effect": {
+      "clear": "Sin efectos de clima. Por ahora el clima lo eliges tú.",
+      "sun": "Activa la condición de Fuego.",
+      "rain": "Activa la condición de Agua.",
+      "cold": "Activa la condición de Hielo."
+    }
+  },
+  "home": {
+    "greeting": "Hola, {{name}}",
+    "now": "Hoy es {{day}}, {{time}}.",
+    "plan": {
+      "title": "Tu próxima sesión",
+      "duration": "Duración en minutos",
+      "custom": "Otra",
+      "customLabel": "Duración",
+      "waves_one": "Al terminar aparece {{count}} oleada de salvajes.",
+      "waves_other": "Al terminar aparecen {{count}} oleadas de salvajes.",
+      "endsAt": "Terminarías a las {{time}}.",
+      "weather": "Clima donde estudias",
+      "tired_one": "{{names}} podría agotarse antes del final.",
+      "tired_other": "{{names}} podrían agotarse antes del final.",
+      "startNote": "Puedes pausar. El equipo no se puede cambiar hasta terminar.",
+      "start": "Empezar",
+      "startMinutes": "{{count}} min"
+    }
+  },
+  "conditions": {
+    "title": "Condiciones si empiezas ahora",
+    "off": "Inactiva",
+    "othersActive": "También activas ahora, para otros tipos:",
+    "memberBoost": "Condición de {{type}} activa: ×{{mult}} a sus puntos.",
+    "rule": {
+      "normal": "Siempre activa.",
+      "fire": "Con sol, {{hot}} °C o más, o de {{pmFrom}}:00 a {{pmTo}}:00.",
+      "water": "Cuando llueve donde estudias.",
+      "grass": "De {{dayFrom}}:00 a {{dayTo}}:00.",
+      "electric": "Sesiones de {{electricMax}} min o menos que empiezan a {{electricGap}} min o menos de la anterior.",
+      "ice": "Con {{cold}} °C o menos, o nieve.",
+      "fighting": "Sesiones de {{fightingMin}} min o más.",
+      "poison": "+{{poisonPct}}% por cada sesión que ya hiciste hoy (hasta +{{poisonMax}}%).",
+      "ground": "Sábados y domingos.",
+      "flying": "Con música o ruido al menos el {{noise}}% del tiempo (requiere micrófono, próximamente).",
+      "psychic": "En la primera sesión del día, o con silencio el {{silence}}% del tiempo.",
+      "bug": "+{{bugPct}}% por cada Pokémon de tipo Bicho del equipo.",
+      "rock": "Si no pausas la sesión.",
+      "ghost": "De {{nightFrom}}:00 a {{nightTo}}:00.",
+      "dragon": "Con una racha de {{streak}} días o más.",
+      "dark": "El día que vuelves tras {{missed}} días o más sin estudiar.",
+      "steel": "Si empiezas a ±{{steelWindow}} min de la hora en que empezaste ayer.",
+      "fairy": "Estudiando a la vez que un amigo (próximamente)."
+    }
+  },
+  "league": {
+    "title": "Liga de la semana",
+    "names": {
+      "base": "Liga Base",
+      "super": "Liga Super",
+      "ultra": "Liga Ultra",
+      "master": "Liga Maestra"
+    },
+    "maxWave_one": "Oleadas de hasta {{count}} salvaje",
+    "maxWave_other": "Oleadas de hasta {{count}} salvajes",
+    "weekPoints": "puntos esta semana",
+    "progressLabel": "Progreso hacia la {{league}}",
+    "toNext": "Faltan {{points}} puntos para la {{league}}.",
+    "top": "Estás en la liga más alta. ¡A mantenerla!",
+    "resets": "Cada lunes todos vuelven a la Liga Base.",
+    "pageTitle": "Liga y estadísticas",
+    "short": {
+      "base": "Base",
+      "super": "Super",
+      "ultra": "Ultra",
+      "master": "Maestra"
+    },
+    "resetIn": "La liga se reinicia en {{d}} d {{h}} h, el lunes a las 00:00.",
+    "best": "Tu mejor liga: {{league}}",
+    "ladderLabel": "Puntos de la semana hacia las ligas",
+    "waveCap_one": "hasta {{count}} salvaje",
+    "waveCap_other": "hasta {{count}} salvajes",
+    "resetsLong": "Cada lunes todos vuelven a la Liga Base. Cada liga suma un salvaje más por oleada, así que las oleadas empiezan pequeñas y crecen a medida que estudias.",
+    "month": "Este mes llevas {{points}} puntos ({{league}} mensual, umbrales ×{{mult}}). Es solo un ranking: no cambia las oleadas.",
+    "from": "puntos",
+    "waveTypical": "unas {{n}} por oleada, hasta {{max}}"
+  },
+  "session": {
+    "title_one": "Sesión de {{count}} minuto",
+    "title_other": "Sesión de {{count}} minutos",
+    "paused": "en pausa",
+    "pausedTitle": "Sesión en pausa",
+    "pausedNote": "El tiempo en pausa no cuenta. Sigue cuando quieras.",
+    "remaining": "Quedan {{time}}",
+    "endsAt": "Termina a las {{time}}.",
+    "progress": "Tiempo estudiado",
+    "waveLegend_one": "Cada marca es una oleada: esta sesión trae {{count}}.",
+    "waveLegend_other": "Cada marca es una oleada: esta sesión trae {{count}}.",
+    "teamWorking": "Tu equipo está estudiando contigo.",
+    "pause": "Pausar",
+    "resume": "Seguir",
+    "cancel": "Abandonar",
+    "rockNote": "Los consejos esperan a que termines. Pausar desactiva la condición de Roca de esta sesión.",
+    "cancelTitle": "¿Abandonar la sesión?",
+    "cancelBody": "Llevas {{minutes}} min. Si abandonas, no recibes puntos, EXP ni oleada.",
+    "keepGoing": "Seguir estudiando",
+    "cancelConfirm": "Abandonar",
+    "waveOne_one": "Al terminar aparece su oleada de salvajes.",
+    "waveOne_other": "Al terminar aparece su oleada de salvajes."
+  },
+  "claim": {
+    "title": "¡Sesión completa!",
+    "subtitle_one": "Estudiaste {{count}} minuto. Tu equipo trabajó contigo.",
+    "subtitle_other": "Estudiaste {{count}} minutos. Tu equipo trabajó contigo.",
+    "windowLabel": "Tiempo para reclamar",
+    "window": "Reclama en los próximos {{minutes}} min para recibir el 100%.",
+    "late": "Pasaron más de {{minutes}} min: al reclamar ahora recibes el {{pct}} de puntos, EXP y Polvo. Las oleadas siguen igual.",
+    "button": "Reclamar recompensas"
+  },
+  "results": {
+    "title": "Resultados",
+    "invalidTitle": "Sesión demasiado corta",
+    "subtitle_one": "{{count}} minuto de estudio.",
+    "subtitle_other": "{{count}} minutos de estudio.",
+    "invalid": "Las sesiones de menos de {{min}} min se guardan, pero no dan recompensas.",
+    "points": "puntos de equipo",
+    "why": "Por qué:",
+    "whyCondition": "Condición de {{type}} activa para {{who}}.",
+    "whyTechnique": "Técnica activada durante la sesión.",
+    "whyFocus": "Tu Foco multiplica los puntos, la EXP y el Polvo.",
+    "focus": "Foco {{pct}}",
+    "whyLate": "Reclamaste fuera de la ventana de 5 minutos.",
+    "late": "Reclamo tarde ×{{mult}}",
+    "whyDaily": "Después de 6 h de estudio en el día, las recompensas bajan.",
+    "daily": "Rendimiento diario {{pct}}",
+    "team": "Tu equipo",
+    "rewards": "Recompensas",
+    "balls": "Poké Balls",
+    "leaguePoints": "Puntos de liga",
+    "trainerLevelUp": "Subiste a entrenador nivel {{level}}.",
+    "leagueUp": "¡Subiste a la {{league}}! Las oleadas serán más grandes.",
+    "wavesReady_one": "Te espera {{count}} oleada",
+    "wavesReady_other": "Te esperan {{count}} oleadas",
+    "wavesNote": "Tu equipo ya debilitó a los salvajes. Es hora de capturarlos.",
+    "toWaves": "Ver los salvajes",
+    "noWaves": "Esta vez no hay oleada.",
+    "done": "Volver al inicio",
+    "asleep": "Durmió esta sesión",
+    "actions_one": "{{count}} acción",
+    "actions_other": "{{count}} acciones",
+    "energySpent": "Gastó {{spent}} de {{max}} de Energía",
+    "exhausted": "Se agotó en el minuto {{minute}}",
+    "newMove": "Aprendió {{move}}",
+    "newSlot": "Ganó un hueco de técnica",
+    "evolution": "{{name}} puede evolucionar a {{to}}",
+    "capped": "Llegó al límite de nivel {{cap}}: captura más especies para subirlo.",
+    "pointsShort": "puntos"
+  },
+  "waves": {
+    "title": "Oleada {{n}} de {{total}}",
+    "subtitle_one": "Apareció {{count}} Pokémon salvaje.",
+    "subtitle_other": "Aparecieron {{count}} Pokémon salvajes.",
+    "progress": "Oleadas",
+    "waveN": "Oleada {{n}}",
+    "hp": "Vida",
+    "hpLabel": "Vida de {{name}} tras el daño de tu equipo",
+    "wildLabel": "{{name}}, nivel {{level}}, vida {{pct}}",
+    "failsLeft_one": "Le queda {{count}} intento antes de huir",
+    "failsLeft_other": "Le quedan {{count}} intentos antes de huir",
+    "studyEligible": "Estudio",
+    "studyNotEligible": "Solo para Pokémon base, no legendarios, de nivel {{level}} o menos.",
+    "shinyGuarantee": "Captura asegurada con {{ball}} o mejor.",
+    "legendary": "Legendario",
+    "caught": "¡Capturado!",
+    "fled": "Huyó",
+    "status": {
+      "sleep": "Dormido",
+      "paralysis": "Paralizado"
+    },
+    "study": {
+      "available": "Ball de Estudio lista",
+      "used": "Ball de Estudio usada",
+      "lost": "Ball de Estudio perdida",
+      "converted": "Sin elegibles: ganaste una Poké Ball"
+    },
+    "counterTarget": "Recibe los contraataques",
+    "missed": "¡Falló!",
+    "counterMissed": "El contraataque falló.",
+    "counterHealed": "Absorbió el ataque de tipo {{type}} y recuperó {{amount}} de Energía.",
+    "counterHit": "Contraataque de tipo {{type}}: −{{damage}} de Energía. {{eff}}",
+    "effSuper": "Es muy eficaz.",
+    "effWeak": "No es muy eficaz.",
+    "survived": "Resistió con 1 de Energía.",
+    "pickBall": "Ball para {{name}}",
+    "pickWild": "Elige un salvaje",
+    "studyOnlyThis": "Solo esta oleada",
+    "count_one": "Tienes {{count}}",
+    "count_other": "Tienes {{count}}",
+    "chanceShort": "{{pct}}",
+    "throw": "Lanzar",
+    "chance": "Probabilidad de captura: {{pct}}",
+    "caughtToast": "¡{{name}} capturado!",
+    "caughtToastBody": "Ya está en tu Caja.",
+    "waveDone": "No quedan salvajes en esta oleada.",
+    "leaveWarn_one": "Si sigues, el salvaje que queda se va.",
+    "leaveWarn_other": "Si sigues, los {{count}} salvajes que quedan se van.",
+    "leaveWarnStudy_one": "Si sigues, el salvaje que queda se va y pierdes la Ball de Estudio de esta oleada.",
+    "leaveWarnStudy_other": "Si sigues, los {{count}} salvajes que quedan se van y pierdes la Ball de Estudio de esta oleada.",
+    "next": "Ir a la oleada {{n}}",
+    "finish": "Terminar",
+    "finishAll": "Saltar el resto",
+    "charges": {
+      "title": "Cargas de tus técnicas",
+      "sleep": "Dormir",
+      "paralysis": "Paralizar",
+      "reroll": "Cambiar",
+      "pick": "Elige a qué salvaje aplicarla.",
+      "note": "Úsalas antes de lanzar: un salvaje dormido o paralizado es más fácil de capturar.",
+      "applyHere": "Aplicar aquí"
+    },
+    "tries": "Intentos",
+    "studyEligibleTip": "Captura asegurada con la Ball de Estudio de esta oleada.",
+    "hitBy": "Golpes"
+  },
+  "firstRun": {
+    "you": "entrenador",
+    "progress": "Paso {{n}} de {{total}}",
+    "steps": [
+      "Sobre ti",
+      "Tu primer compañero",
+      "Cómo funciona"
+    ],
+    "speech": [
+      "¡Hola! Voy a acompañarte mientras estudias. ¿Cómo te llamo?",
+      "Mucho gusto, {{name}}. Elige a tu primer compañero: cada uno rinde distinto.",
+      "¡{{starter}} está listo! Así funciona, en tres pasos."
+    ],
+    "name": "Tu nombre de entrenador",
+    "namePlaceholder": "Por ejemplo, Ash",
+    "language": "Idioma",
+    "timezone": "Zona horaria",
+    "timezoneNote": "La detectamos de tu navegador. Decide la hora de las condiciones y el reinicio diario.",
+    "loop": {
+      "study": {
+        "title": "Estudia",
+        "body": "Elige cuánto tiempo y pulsa Empezar. Tu equipo gana puntos y EXP mientras te concentras."
+      },
+      "claim": {
+        "title": "Reclama",
+        "body": "Al terminar tienes 5 minutos para reclamar todo lo que ganaste."
+      },
+      "catch": {
+        "title": "Captura",
+        "body": "Aparecen salvajes ya debilitados por tu equipo. Lanza Balls para atraparlos."
+      }
+    },
+    "finish": "Empezar a estudiar"
+  },
+  "placeholder": {
+    "cta": "Ir a estudiar"
+  },
+  "settings": {
+    "general": "General",
+    "language": "Idioma",
+    "timezone": "Zona horaria",
+    "help": "Consejos",
+    "tips": "Mostrar consejos",
+    "tipsNote": "El compañero explica cada parte la primera vez que la ves. Los botones «?» siempre funcionan.",
+    "replay": "Volver a ver los consejos",
+    "replayNote": "Los consejos que ya viste vuelven a aparecer.",
+    "replayButton": "Repetir consejos",
+    "replayDone": "Los consejos volverán a aparecer.",
+    "session": "Sesiones",
+    "notifications": "Notificaciones",
+    "notif": {
+      "default": "Te avisamos cuando termina la sesión, aunque estés en otra pestaña.",
+      "granted": "Activadas.",
+      "denied": "Bloqueadas en el navegador. Puedes activarlas desde la configuración del sitio.",
+      "unsupported": "Tu navegador no las admite."
+    },
+    "notifAsk": "Permitir notificaciones",
+    "advanced": "Avanzado",
+    "dev": "Herramientas de desarrollo",
+    "devNote": "Tiempo acelerado, semilla fija y atajos para probar.",
+    "reset": "Borrar todo",
+    "resetNote": "Elimina tu progreso de este navegador.",
+    "resetButton": "Borrar progreso",
+    "resetTitle": "¿Borrar todo tu progreso?",
+    "resetBody": "Se eliminan tus Pokémon, objetos e historial de este navegador. No se puede deshacer.",
+    "resetConfirm": "Borrar",
+    "weather": "Clima donde estudias",
+    "weatherNote": "Hasta que conectemos tu ciudad, lo eliges tú. También puedes cambiarlo en Inicio.",
+    "tzNote": "Decide la hora de tus condiciones, la recarga de Energía y el lunes de la liga. Solo puedes cambiarla una vez cada {{days}} días.",
+    "tzLocked": "Podrás volver a cambiarla el {{date}}.",
+    "tzConfirmTitle": "¿Cambiar la zona horaria?",
+    "tzConfirmBody": "Pasarás a {{zone}}. No podrás volver a cambiarla durante {{days}} días.",
+    "tzConfirm": "Cambiar zona",
+    "tzDone": "Zona horaria: {{zone}}",
+    "audio": {
+      "title": "Sonido",
+      "mute": "Silenciar todo",
+      "muteNote": "Apaga música y efectos sin perder tus volúmenes.",
+      "master": "Volumen general",
+      "music": "Música",
+      "musicNote": "Melodías chiptune generadas al momento.",
+      "sfx": "Efectos",
+      "sfxNote": "Botones, capturas, subidas de nivel y avisos.",
+      "focus": "Música durante la sesión",
+      "focusNote": "Una pista lo-fi tranquila mientras estudias.",
+      "focusLevel": "Volumen de la música de estudio",
+      "focusLevelNote": "Relativo a la música. Bajo por defecto.",
+      "background": "Seguir sonando en otra pestaña",
+      "backgroundNote": "La música de estudio sigue aunque cambies de pestaña.",
+      "hiss": "Ruido de vinilo",
+      "hissNote": "Un crujido suave de fondo en la música de estudio."
+    },
+    "about": {
+      "title": "Acerca de",
+      "body": "PokeFocus convierte tus horas de estudio en un equipo Pokémon que estudia contigo. Este es un prototipo local: tus datos viven solo en este navegador.",
+      "credits": "Sprites de PokeAPI y Pokémon Showdown. Datos de PokeAPI. Música y efectos sintetizados en tu navegador.",
+      "version": "Versión {{version}}"
+    }
+  },
+  "notify": {
+    "doneTitle": "¡Sesión completa!",
+    "doneBody": "Reclama tus recompensas en los próximos 5 minutos.",
+    "tabTitle": "¡Listo! Reclama tus recompensas"
+  },
+  "errors": {
+    "session_active": "Ya tienes una sesión en curso.",
+    "invalid_duration": "La duración debe estar entre 15 y 120 minutos.",
+    "empty_team": "Tu equipo está vacío.",
+    "claimFailed": "No se pudo reclamar. Vuelve a intentarlo.",
+    "throw": {
+      "no_encounter": "No hay oleada activa.",
+      "wave_not_current": "Esa oleada ya pasó.",
+      "unknown_wild": "Ese Pokémon ya no está.",
+      "wild_resolved": "Ese Pokémon ya fue capturado o huyó.",
+      "no_ball": "No te quedan Balls de ese tipo.",
+      "study_ball_unavailable": "La Ball de Estudio de esta oleada ya se usó.",
+      "not_study_eligible": "La Ball de Estudio solo sirve con Pokémon base de nivel {{level}} o menos.",
+      "session_active": "Termina la sesión antes de capturar."
+    },
+    "charge": {
+      "no_encounter": "No hay oleada activa.",
+      "unknown_charge": "Esa carga ya no está.",
+      "wrong_charge_kind": "Esa carga no sirve para esto.",
+      "unknown_wild": "Ese Pokémon ya no está.",
+      "wild_resolved": "Ese Pokémon ya fue capturado o huyó.",
+      "wave_passed": "Esa oleada ya pasó."
+    },
+    "box": {
+      "unknown_pokemon": "Ese Pokémon ya no está.",
+      "session_active": "Termina la sesión antes de cambiar el equipo o sus técnicas.",
+      "in_team": "No puedes soltar a un miembro del equipo.",
+      "team_too_large": "El equipo tiene un máximo de 6.",
+      "team_empty": "El equipo necesita al menos un Pokémon.",
+      "duplicate_in_team": "Ese Pokémon ya está en el equipo.",
+      "not_enough_candies": "No tienes suficientes caramelos.",
+      "not_enough_dust": "No tienes suficiente Polvo de Estudio.",
+      "level_cap": "Llegó al nivel máximo por ahora. Captura más especies para subirlo.",
+      "wrong_chain": "Esos caramelos son de otra línea evolutiva.",
+      "wrong_type": "Esos caramelos son de otro tipo.",
+      "invalid_count": "Cantidad no válida.",
+      "too_many_moves": "No tiene huecos libres para otra técnica.",
+      "duplicate_move": "Esa técnica ya está equipada.",
+      "move_not_known": "No conoce esa técnica.",
+      "move_not_usable": "Esa técnica no existe en PokeFocus.",
+      "move_locked": "Esa técnica aún no está desbloqueada.",
+      "level_too_low": "Aún no tiene el nivel para evolucionar.",
+      "missing_item": "Te falta el objeto para evolucionarlo.",
+      "bond_too_low": "Necesita más Vínculo.",
+      "wrong_time_of_day": "No es la hora del día adecuada.",
+      "trade_unavailable": "Los intercambios aún no existen.",
+      "unsupported": "Esa evolución aún no está disponible.",
+      "no_such_evolution": "No puede evolucionar a esa especie."
+    },
+    "heal": {
+      "unknown_pokemon": "Ese Pokémon ya no está.",
+      "no_item": "No te quedan de ese objeto.",
+      "not_a_heal_item": "Ese objeto no cura.",
+      "already_full": "Ya tiene la Energía llena.",
+      "not_exhausted": "Revivir solo sirve con un Pokémon agotado.",
+      "session_active": "Está estudiando. Cúralo al terminar la sesión."
+    },
+    "mission": {
+      "unknown_mission": "Esa misión ya no está.",
+      "not_completed": "Aún no completaste esa misión.",
+      "already_claimed": "Ya reclamaste esa misión."
+    }
+  },
+  "dev": {
+    "title": "Desarrollo",
+    "open": "Abrir panel de desarrollo",
+    "close": "Cerrar panel",
+    "clock": "Reloj del juego",
+    "gameTime": "Hora del juego: {{time}}",
+    "shifted": "(adelantada)",
+    "rate": "Velocidad del tiempo",
+    "fast": "1 min = 1 s",
+    "plusDay": "+1 día",
+    "realTime": "Hora real",
+    "session": "Sesión",
+    "finishNow": "Terminar la sesión ya",
+    "focusLabel": "Etiqueta de Foco simulada",
+    "labels": {
+      "studying": "Estudiando (100%)",
+      "educational": "Material educativo (100%)",
+      "chat": "Chat (60%)",
+      "social": "Redes sociales (40%)",
+      "game": "Juego (20%)",
+      "none": "Sin permiso de pantalla (85%)"
+    },
+    "inventory": "Objetos",
+    "addBalls": "+ Balls",
+    "addDust": "+1000 Polvo",
+    "addCandies": "+10 caramelos",
+    "rng": "Semilla aleatoria",
+    "seedPlaceholder": "p. ej. demo",
+    "apply": "Aplicar",
+    "seedSet": "Semilla fija: {{seed}}",
+    "seedOff": "Semilla aleatoria",
+    "seedOn": "Fija: {{seed}} (tirada {{n}})",
+    "seedRandom": "Aleatoria en cada tirada",
+    "help": "Consejos",
+    "resetHints": "Reiniciar consejos",
+    "addItems": "+ Pociones y piedras",
+    "levelUp": "+5 niveles al equipo",
+    "addPokemon": "+10 Pokémon",
+    "audio": "Sonido",
+    "audioLab": "Laboratorio de audio"
+  },
+  "hints": {
+    "home": {
+      "team": {
+        "title": "Tu equipo estudia contigo",
+        "body": "Mientras estudias, cada Pokémon actúa por su cuenta y gana puntos, EXP y Energía de captura. La barra es su Energía del día; se recarga a las 5:00."
+      },
+      "start": {
+        "title": "Empieza con 25 minutos",
+        "body": "Cada bloque de 25 min trae una oleada de salvajes al terminar. Puedes pausar, pero el equipo queda fijo hasta acabar."
+      },
+      "conditions": {
+        "title": "Condiciones de tipo",
+        "body": "Cada tipo rinde más en ciertas situaciones: la hora, el clima o la duración. Solo suman, nunca restan. Arma tu equipo según cómo y cuándo estudias."
+      },
+      "weather": {
+        "title": "El clima donde estudias",
+        "body": "Por ahora lo eliges tú. La lluvia potencia al tipo Agua, el sol al Fuego y el frío al Hielo."
+      },
+      "league": {
+        "title": "Tu liga de la semana",
+        "body": "Los puntos de tu equipo te suben de liga, y una liga más alta trae oleadas más grandes. Cada lunes todos vuelven a la Liga Base."
+      },
+      "energy": {
+        "title": "Energía",
+        "body": "Cada acción gasta Energía, así que los más rápidos se cansan antes. Un Pokémon agotado deja de actuar pero sigue ganando EXP. En la Caja recuperan el 10% por hora."
+      },
+      "duration": {
+        "title": "Duración",
+        "body": "Elige 25, 50, 75 o 100 min, u otra entre 15 y 120. Cada 25 min completos suman una oleada, y las sesiones largas atraen Pokémon más raros."
+      },
+      "break": {
+        "title": "Descansar también suma",
+        "body": "Un descanso completo devuelve Energía a todo tu equipo. Si lo cortas antes, no cuenta."
+      },
+      "checklist": {
+        "title": "Primeros pasos",
+        "body": "Seis pasos para conocer PokeFocus. Ciérralo cuando quieras; puedes recuperarlo en Ajustes."
+      }
+    },
+    "claim": {
+      "window": {
+        "title": "Reclama a tiempo",
+        "body": "Tienes 5 minutos para reclamar el 100%. Si llegas tarde recibes la mitad: así, dejar el temporizador corriendo solo no compensa."
+      }
+    },
+    "results": {
+      "why": {
+        "title": "De dónde salen tus puntos",
+        "body": "Cada acción da puntos según el Rendimiento del Pokémon, multiplicados por su condición de tipo, su Vínculo y tu Foco. Pasa el cursor por cada etiqueta para ver el detalle."
+      },
+      "levelUp": {
+        "title": "¡Subió de nivel!",
+        "body": "Al subir de nivel mejoran sus estadísticas y puede aprender técnicas. En los niveles 15, 30 y 50 gana un hueco de técnica."
+      }
+    },
+    "waves": {
+      "hp": {
+        "title": "La vida tras el daño",
+        "body": "Tu equipo ya debilitó a estos salvajes con la Energía que generó mientras estudiabas. Menos vida significa una captura más fácil. Nunca baja del 5%."
+      },
+      "studyBall": {
+        "title": "Ball de Estudio",
+        "body": "Cada oleada trae una que siempre captura a un Pokémon base de nivel {{level}} o menos (el límite sube con tu nivel de entrenador). Solo sirve en esta oleada: si sigues sin usarla, se pierde."
+      },
+      "throw": {
+        "title": "Lanza una Ball",
+        "body": "Elige un salvaje y una Ball; verás la probabilidad antes de lanzar. Si falla, el salvaje contraataca a tu líder y le quita Energía."
+      },
+      "flee": {
+        "title": "Intentos antes de huir",
+        "body": "Estos cuadros son los fallos que le quedan. Cuando se acaban, el salvaje huye. Los legendarios que huyen pueden volver en tus próximas sesiones."
+      },
+      "counter": {
+        "title": "Contraataque",
+        "body": "{{name}} recibió {{damage}} de Energía. Los contraataques van primero al líder y, si está agotado, al siguiente. Un líder con mucho Aguante resiste mejor."
+      },
+      "fled": {
+        "title": "Se escapó",
+        "body": "Usó todos sus intentos. No pasa nada: cada sesión trae oleadas nuevas. Bajarle más la vida o dormirlo ayuda la próxima vez."
+      },
+      "firstCatch": {
+        "title": "¡Tu primera captura!",
+        "body": "Ya está en tu Caja. Entre sesiones podrás sumarlo al equipo: hasta 6 Pokémon estudian contigo."
+      },
+      "charges": {
+        "title": "Cargas de técnicas",
+        "body": "Las técnicas de tu equipo dejaron efectos para usar aquí. Dormir o paralizar a un salvaje facilita la captura; cambiarlo lo reemplaza por otro."
+      },
+      "shiny": {
+        "title": "Shiny",
+        "body": "Los shiny son rarísimos. Con la Ball adecuada, o una mejor, la captura está asegurada."
+      },
+      "next": {
+        "title": "Siguiente oleada",
+        "body": "Los salvajes que no captures se quedan aquí. Cada oleada trae su propia Ball de Estudio."
+      },
+      "iv": {
+        "title": "Ves la calidad",
+        "body": "Una técnica de tu equipo revela la calidad (IVs) de los salvajes. Prioriza a los de más estrellas."
+      }
+    },
+    "box": {
+      "intro": {
+        "title": "Tu Caja",
+        "body": "Aquí vive cada Pokémon que capturas. Toca uno para ver su ficha: técnicas, caramelos, evolución y si se suma al equipo."
+      },
+      "filters": {
+        "title": "Filtra y ordena",
+        "body": "Busca por nombre, filtra por tipo o rol y ordena por nivel o por calidad (IVs) para encontrar a tu mejor candidato."
+      },
+      "candies": {
+        "title": "Caramelos y Polvo",
+        "body": "Los caramelos dan EXP a un Pokémon de su línea (o de su tipo). Cada uno cuesta Polvo de Estudio, que solo se gana estudiando: así el estudio sigue mandando."
+      }
+    },
+    "detail": {
+      "techniques": {
+        "title": "Huecos de técnica",
+        "body": "Tiene de 1 a 4 huecos según su nivel. Equipa una técnica de daño para debilitar salvajes, o una pasiva o activable para potenciar la sesión."
+      },
+      "candies": {
+        "title": "Súbelo con caramelos",
+        "body": "Cada caramelo da EXP al momento y cuesta Polvo. Rinden mucho a nivel bajo, ideal para poner al día a un Pokémon nuevo."
+      },
+      "actions": {
+        "title": "Al equipo, líder o soltar",
+        "body": "Desde aquí lo sumas al equipo o lo haces líder. Soltar a los repetidos te da caramelos de su línea."
+      },
+      "mastery": {
+        "title": "Dominio",
+        "body": "Cada técnica gana estrellas con las horas que pasa equipada en sesiones: 5 h, 15 h, 40 h y 100 h. Más estrellas, más probabilidad de activarse. Si la quitas, conserva su Dominio."
+      },
+      "extraMoves": {
+        "title": "Técnicas extra",
+        "body": "Cada individuo trae 2 o 3 técnicas extra al azar. Las más potentes se desbloquean a un nivel mayor; hasta entonces aparecen aquí."
+      },
+      "iv": {
+        "title": "Calidad (IVs)",
+        "body": "Cada individuo nace con valores ocultos de 0 a 31 en cada estadística. Más calidad, mejores estadísticas, sobre todo a nivel alto. Dos Bulbasaur nunca son iguales."
+      },
+      "stats": {
+        "title": "Estadísticas de PokeFocus",
+        "body": "Cada estadística hace algo en tu sesión: Ritmo es cada cuánto actúa, Rendimiento cuántos puntos da, Captura cuánto debilita salvajes. Pasa el cursor por cada nombre para verlo."
+      },
+      "levelCap": {
+        "title": "Límite de nivel",
+        "body": "Tus Pokémon no pueden pasar del límite actual. Captura especies distintas para subirlo: 25 especies abren el Nv 40 y 45 el Nv 50. La EXP extra no se pierde."
+      },
+      "evolve": {
+        "title": "¡Puede evolucionar!",
+        "body": "La evolución mejora sus estadísticas y conserva su nivel, técnicas y Dominio. Pulsa Evolucionar cuando quieras."
+      },
+      "energy": {
+        "title": "Energía del día",
+        "body": "Se gasta al actuar y se llena a las 05:00. En la Caja recupera un 10% por hora; en el equipo, solo con descansos, técnicas o pociones."
+      },
+      "bond": {
+        "title": "Vínculo",
+        "body": "Crece con cada minuto que estudia en tu equipo, hasta +20% de puntos. Algunas especies evolucionan con Vínculo alto."
+      }
+    },
+    "team": {
+      "intro": {
+        "title": "Arma tu equipo",
+        "body": "Ordena a tus 6 con las flechas o súmalos desde la Caja. Mezcla roles: alguien que dé puntos, alguien que capture y alguien que aguante."
+      },
+      "leader": {
+        "title": "Elige bien al líder",
+        "body": "Recibe los contraataques cuando falla una Ball. Un líder con mucho Aguante y Energía resiste mejor; fíjate también en sus debilidades de tipo."
+      },
+      "order": {
+        "title": "El orden importa",
+        "body": "El primero es el líder. Si se agota, los contraataques pasan al siguiente. El resto del orden no cambia los puntos."
+      },
+      "tired": {
+        "title": "Alguien está cansado",
+        "body": "Un Pokémon agotado o dormido no actúa en la sesión. Pásalo a la Caja para que recupere Energía y suma a otro."
+      }
+    },
+    "dex": {
+      "intro": {
+        "title": "Tu Pokédex",
+        "body": "Registra las 56 especies del pack. Las que ves en una oleada quedan como silueta; las que capturas, a color."
+      },
+      "cap": {
+        "title": "Más especies, más nivel",
+        "body": "Cada especie distinta que capturas acerca el siguiente límite de nivel de todo tu equipo."
+      }
+    },
+    "league": {
+      "intro": {
+        "title": "La liga de la semana",
+        "body": "Los puntos de tu equipo suben tu liga, y cada liga deja aparecer más salvajes por oleada. Cada lunes todos vuelven a la Base."
+      },
+      "stats": {
+        "title": "Tus estadísticas",
+        "body": "Pasa el cursor por cada barra o punto para ver el detalle. El historial de abajo tiene todos los números."
+      },
+      "focus": {
+        "title": "Foco",
+        "body": "Mide cuánto estudiaste de verdad (en el prototipo lo simula el panel de desarrollo). Multiplica puntos, EXP y Polvo, y el Aguante de cada Pokémon lo amortigua."
+      }
+    },
+    "break": {
+      "why": {
+        "title": "Un descanso de verdad",
+        "body": "Mientras corre, aléjate de la pantalla. Al terminar, recoge la Energía para tu equipo."
+      }
+    },
+    "settings": {
+      "audio": {
+        "title": "Tu sonido",
+        "body": "Ajusta música y efectos por separado. Puedes dejar la música solo durante la sesión, o silenciarla del todo."
+      }
+    },
+    "missions": {
+      "intro": {
+        "title": "Misiones",
+        "body": "Hay 3 diarias y 3 semanales que se renuevan solas, y hitos por registrar especies. Avanzan mientras estudias y capturas; reclámalas aquí."
+      },
+      "ready": {
+        "title": "¡Misión cumplida!",
+        "body": "Tienes recompensas esperando. Abre Misiones para reclamarlas."
+      },
+      "pokedex": {
+        "title": "Hitos de Pokédex",
+        "body": "Se cumplen una sola vez, al capturar 10, 25 y 50 especies distintas. Dan piedras evolutivas y otros objetos."
+      }
+    }
+  },
+  "technique": {
+    "kind": {
+      "damage": "Daño",
+      "passive": "Pasiva",
+      "activable": "Activable"
+    }
+  },
+  "iv": {
+    "title": "Calidad (IVs)",
+    "short": "Calidad",
+    "label": "Calidad: {{word}}",
+    "tier": {
+      "0": "Floja",
+      "1": "Normal",
+      "2": "Buena",
+      "3": "Excelente",
+      "4": "Casi perfecta"
+    }
+  },
+  "bag": {
+    "title": "Mochila",
+    "candies": "Caramelos",
+    "noCandies": "Aún no tienes. Capturar da 3 de esa línea y soltar da de 1 a 3.",
+    "lineCandy": "Caramelos de {{name}}",
+    "typeCandy": "Caramelos tipo {{type}}",
+    "items": "Objetos",
+    "noItems": "Sin objetos por ahora. Las pociones y piedras llegarán con las misiones.",
+    "healHow": "Úsala desde la ficha de un Pokémon"
+  },
+  "box": {
+    "count_one": "{{count}} Pokémon, {{team}} en el equipo.",
+    "count_other": "{{count}} Pokémon, {{team}} en el equipo.",
+    "search": "Buscar",
+    "searchPlaceholder": "Nombre del Pokémon",
+    "filter": {
+      "type": "Tipo",
+      "anyType": "Todos los tipos",
+      "role": "Rol",
+      "anyRole": "Todos los roles",
+      "where": "Dónde está",
+      "shiny": "Solo shiny"
+    },
+    "where": {
+      "all": "Todos",
+      "team": "En el equipo",
+      "box": "En la caja"
+    },
+    "sort": {
+      "label": "Ordenar por",
+      "recent": "Recientes",
+      "level": "Nivel",
+      "species": "N.º de Pokédex",
+      "iv": "Calidad (IVs)"
+    },
+    "clear": "Quitar filtros",
+    "gridLabel_one": "{{count}} Pokémon",
+    "gridLabel_other": "{{count}} Pokémon",
+    "inTeam": "en el equipo",
+    "exhaustedShort": "agotado",
+    "emptyMore": {
+      "title": "Aquí llegarán tus capturas",
+      "body": "Termina una sesión y lanza Balls en la oleada. Cada Pokémon que atrapes aparece en la Caja."
+    },
+    "noMatch": {
+      "title": "Ningún Pokémon coincide",
+      "body": "Prueba con otro nombre, tipo o rol, o quita los filtros para ver toda la Caja."
+    }
+  },
+  "detail": {
+    "nav": "Navegar por la Caja",
+    "back": "Volver a la Caja",
+    "prev": "Pokémon anterior",
+    "next": "Pokémon siguiente",
+    "gone": {
+      "title": "Este Pokémon ya no está",
+      "body": "Quizás lo soltaste o evolucionó en otra pestaña. Vuelve a la Caja para ver a los demás."
+    },
+    "slot": "Hueco {{n}}",
+    "expToNext": "faltan {{exp}} EXP",
+    "addTeam": "Sumar al equipo",
+    "teamFull": "Equipo lleno",
+    "removeTeam": "Pasar a la Caja",
+    "added": "{{name}} se sumó al equipo",
+    "removed": "{{name}} volvió a la Caja",
+    "release": "Soltar",
+    "releaseTip_one": "Vuelve a la naturaleza y te da {{count}} caramelo de su línea.",
+    "releaseTip_other": "Vuelve a la naturaleza y te da {{count}} caramelos de su línea.",
+    "releaseInTeam": "No puedes soltar a un miembro del equipo. Pásalo a la Caja primero.",
+    "releaseTitle": "¿Soltar a {{name}}?",
+    "releaseBody_one": "Volverá a la naturaleza y recibirás {{count}} caramelo de {{line}}. No se puede deshacer.",
+    "releaseBody_other": "Volverá a la naturaleza y recibirás {{count}} caramelos de {{line}}. No se puede deshacer.",
+    "releaseConfirm": "Soltar",
+    "released_one": "Soltaste a {{name}}: +{{count}} caramelo de {{line}}",
+    "released_other": "Soltaste a {{name}}: +{{count}} caramelos de {{line}}",
+    "lockedSession": "{{name}} está estudiando. Podrás cambiar sus técnicas, usar caramelos o evolucionarlo al terminar la sesión.",
+    "stats": "Estadísticas",
+    "every": "Actúa cada {{time}} durante la sesión.",
+    "perAction": "Da unos {{points}} puntos por acción (antes de condiciones y Foco).",
+    "techMult": "Sus técnicas activables se multiplican ×{{mult}} por su Técnica.",
+    "nature": "Naturaleza",
+    "neutral": "Neutra: no sube ni baja nada",
+    "ability": "Habilidad",
+    "noAbility": "Su especie aún no tiene habilidades en PokeFocus.",
+    "met": "Origen",
+    "starter": "Tu primer compañero.",
+    "caughtWith": "Capturado al Nv {{level}} con {{ball}}, el {{date}}."
+  },
+  "tech": {
+    "title": "Técnicas",
+    "intro": "Equipa técnicas en sus huecos: las de daño generan Energía de captura, las pasivas siempre están activas y las activables pueden saltar en cada acción.",
+    "slotsLabel_one": "{{count}} hueco de técnica",
+    "slotsLabel_other": "{{count}} huecos de técnica",
+    "slotLocked": "Se abre al nivel {{level}}",
+    "slotEmpty": "Hueco libre: equipa una técnica de abajo.",
+    "unequip": "Quitar",
+    "equip": "Equipar",
+    "swap": "Cambiar",
+    "replaceHere": "Reemplazar esta",
+    "pickSlot": "Elige qué técnica reemplazar por {{move}}.",
+    "equipped": "{{name}} equipó {{move}}",
+    "unequipped": "Quitaste {{move}}",
+    "replaced": "{{move}} reemplazó a {{old}}",
+    "known": "Técnicas que conoce",
+    "noneMore": "Ya tiene equipadas todas las técnicas que conoce. Aprenderá más al subir de nivel.",
+    "lockedTitle": "Por desbloquear",
+    "unlocksAt": "Se desbloquea al nivel {{level}}",
+    "damageDesc": "En cada acción genera Energía de captura de tipo {{type}} para debilitar salvajes.",
+    "power": "Potencia {{power}}",
+    "baseChance": "Prob. base {{pct}} por acción",
+    "effChance": "(ahora ≈ {{pct}})",
+    "limit_one": "Hasta {{count}} vez por sesión",
+    "limit_other": "Hasta {{count}} veces por sesión",
+    "limitWeek_one": "{{count}} vez por semana",
+    "limitWeek_other": "{{count}} veces por semana",
+    "masteryTitle": "Dominio {{stars}} de 5",
+    "masteryBody": "Lleva {{hours}} h equipada en sesiones. Multiplica su probabilidad ×{{mult}}.",
+    "masteryNext": "A las {{hours}} h llega a {{stars}} estrellas.",
+    "masteryAria": "Dominio: {{stars}} de 5 estrellas"
+  },
+  "candy": {
+    "title": "Subir de nivel",
+    "toNext": "EXP hacia el Nv {{level}}",
+    "each": "+{{exp}} EXP cada uno",
+    "less": "Uno menos",
+    "more": "Uno más",
+    "use_one": "Usar {{count}}",
+    "use_other": "Usar {{count}}",
+    "reach": "Llegará al Nv {{level}}.",
+    "reachSame": "Le acerca al siguiente nivel.",
+    "noneOfThese": "No tienes de estos. Captura o suelta Pokémon de esta línea.",
+    "noDust": "Te falta Polvo: cada caramelo cuesta {{cost}} a este nivel.",
+    "costNote": "Cada caramelo cuesta {{cost}} de Polvo a este nivel y sube con el nivel. Tienes {{dust}}.",
+    "used_one": "Usaste {{count}} caramelo en {{name}} (−{{dust}} Polvo)",
+    "used_other": "Usaste {{count}} caramelos en {{name}} (−{{dust}} Polvo)",
+    "levelUp": "¡{{name}} subió al Nv {{level}}!",
+    "newMoves": "Aprendió {{moves}}",
+    "capTitle": "Nivel máximo por ahora: {{cap}}",
+    "capBody": "Captura {{species}} especies distintas para subir el límite a {{cap}}. Llevas {{caught}}.",
+    "capMax": "Es el límite más alto de este pack.",
+    "toDex": "Ver la Pokédex"
+  },
+  "evo": {
+    "title": "Evolución",
+    "button": "Evolucionar",
+    "none": "{{name}} no evoluciona.",
+    "final": "{{name}} ya está en su forma final.",
+    "itemHave": "Tienes {{count}}",
+    "cond": {
+      "level": "Al nivel {{level}}",
+      "item": "Con una piedra",
+      "bond": "Con Vínculo alto",
+      "bondDay": "Con Vínculo alto, de día",
+      "bondNight": "Con Vínculo alto, de noche",
+      "trade": "Por intercambio",
+      "other": "Con un método especial"
+    },
+    "block": {
+      "level_one": "Le falta {{count}} nivel.",
+      "level_other": "Le faltan {{count}} niveles.",
+      "item": "Necesitas {{item}}. Las piedras llegarán con las misiones.",
+      "bond": "Necesita +{{pct}} de Vínculo (ahora +{{now}}). Sigue estudiando con él en el equipo.",
+      "day": "Solo de día (05:00 a 18:00).",
+      "night": "Solo de noche (18:00 a 05:00).",
+      "trade": "Los intercambios llegarán con los amigos.",
+      "other": "Aún no disponible en el prototipo."
+    },
+    "whatTitle": "¿Qué? ¡{{name}} está evolucionando!",
+    "whatBody": "Quédate mirando…",
+    "doneTitle": "¡Felicidades!",
+    "doneBody": "¡Tu {{from}} evolucionó a {{to}}! Conserva su nivel, sus técnicas y su Dominio."
+  },
+  "energy": {
+    "title": "Energía y Vínculo",
+    "actionsLeft_one": "Le queda para unas {{count}} acción hoy.",
+    "actionsLeft_other": "Le queda para unas {{count}} acciones hoy.",
+    "teamRegen": "En el equipo no se recupera sola: se llena a las 05:00 o con un descanso.",
+    "boxRegen": "En la Caja recupera {{pct}} por hora.",
+    "asleep": "Está dormido por Descanso: no actuará en la próxima sesión.",
+    "heal": "Curar",
+    "noHeal": "No tienes pociones. Llegarán con las misiones.",
+    "potionDesc": "Recupera {{amount}} de Energía",
+    "reviveDesc": "Agotado a {{pct}} de Energía",
+    "use": "Usar",
+    "healed": "{{name}} recuperó Energía con {{item}}"
+  },
+  "bond": {
+    "title": "Vínculo",
+    "minutes": "{{hours}} h estudiando juntos",
+    "note": "Sube con cada minuto en el equipo, hasta +{{max}} de puntos."
+  },
+  "dex": {
+    "counts": "{{caught}} capturadas y {{seen}} vistas de {{total}}.",
+    "capTitle": "Límite de nivel",
+    "capStart": "al empezar",
+    "capAt": "{{count}} especies",
+    "capNext": "Tus Pokémon pueden llegar al Nv {{cap}}. Captura {{need}} especies más para subir el límite a {{next}}.",
+    "capTop": "Tus Pokémon pueden llegar al Nv {{cap}}, el máximo de este pack.",
+    "gridLabel": "Especies del pack",
+    "show": "Mostrar",
+    "showAll": "Todas",
+    "showCaught": "Capturadas",
+    "showMissing": "Por capturar",
+    "unknownName": "???",
+    "unknownBody": "Aún no lo has visto. Aparecerá en alguna oleada: los tipos con condición activa y los de tu equipo salen más a menudo.",
+    "state": {
+      "caught": "capturada",
+      "seen": "vista",
+      "unknown": "sin ver"
+    },
+    "owned_one": "Tienes {{count}} en tu Caja.",
+    "owned_other": "Tienes {{count}} en tu Caja.",
+    "caughtNone": "Capturada antes; ahora no tienes ninguno.",
+    "seenOnly": "Vista en una oleada, aún sin capturar.",
+    "line": "Línea evolutiva",
+    "legendary": "Legendario",
+    "mythical": "Mítico"
+  },
+  "break": {
+    "offerTitle": "¿Un descanso?",
+    "offerBody": "Levántate, toma agua y estira. Si completas el descanso, tu equipo recupera {{pct}} de su Energía.",
+    "length": "Duración del descanso",
+    "start": "Empezar descanso",
+    "skip": "Ahora no",
+    "title_one": "Descanso de {{count}} minuto",
+    "title_other": "Descanso de {{count}} minutos",
+    "body": "Aléjate de la pantalla un momento. Tu equipo también descansa.",
+    "doneTitle": "Descanso completo",
+    "doneBody": "¡Bien hecho! Recoge la Energía de tu equipo y vuelve cuando quieras.",
+    "progress": "Tiempo de descanso",
+    "collect": "Recoger +{{pct}} de Energía",
+    "early": "Terminar antes",
+    "earlyNote": "Si lo terminas antes, tu equipo no recupera Energía.",
+    "healed": "Tu equipo recuperó {{pct}} de Energía",
+    "ended": "Descanso terminado sin recuperar Energía",
+    "tabTitle": "Descanso terminado | PokeFocus"
+  },
+  "checklist": {
+    "title": "Primeros pasos",
+    "hide": "Ocultar primeros pasos",
+    "progress": "Pasos completados",
+    "go": "Ir",
+    "done": "(hecho)",
+    "allDone": "¡Completaste los primeros pasos!",
+    "session": {
+      "title": "Completa tu primera sesión",
+      "how": "Elige 25 min y pulsa Empezar."
+    },
+    "catch": {
+      "title": "Captura tu primer Pokémon",
+      "how": "Al terminar una sesión, usa la Ball de Estudio en la oleada."
+    },
+    "team": {
+      "title": "Suma un segundo miembro al equipo",
+      "how": "En Equipo, elige a alguien de tu Caja."
+    },
+    "equip": {
+      "title": "Equipa una técnica",
+      "how": "Abre la ficha de un Pokémon y equipa una técnica en un hueco."
+    },
+    "candy": {
+      "title": "Usa un caramelo",
+      "how": "En la ficha, usa caramelos y Polvo para subirlo de nivel."
+    },
+    "evolve": {
+      "title": "Evoluciona un Pokémon",
+      "how": "Cuando llegue a su nivel, pulsa Evolucionar en su ficha."
+    }
+  },
+  "missions": {
+    "title": "Misiones",
+    "subtitle": "Pequeños objetivos de estudio y captura. Cada uno da Balls, Polvo, pociones u otros objetos al reclamarlo.",
+    "daily": "Diarias",
+    "weekly": "Semanales",
+    "pokedex": "Hitos de Pokédex",
+    "renewsHours": "Se renuevan en {{h}} h {{m}} min",
+    "renewsDays": "Se renuevan en {{d}} d {{h}} h",
+    "claim": "Reclamar",
+    "claimAll_one": "Reclamar {{count}}",
+    "claimAll_other": "Reclamar las {{count}}",
+    "done": "Hecha",
+    "reward": "Premio:",
+    "none": "No hay misiones ahora.",
+    "claimed": "Reclamaste «{{title}}»",
+    "claimedAll_one": "Reclamaste {{count}} misión",
+    "claimedAll_other": "Reclamaste {{count}} misiones",
+    "badge_one": "{{count}} misión lista",
+    "badge_other": "{{count}} misiones listas"
   }
 }

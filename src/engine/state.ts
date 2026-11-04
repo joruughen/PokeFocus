@@ -6,6 +6,7 @@
 import type { BaseStats, LocaleCode, TypeSlug } from './data-types'
 import type { BallSlug, FocusLabel, LeagueId, WildStatus } from './config'
 import type { TimeZoneSpec } from './time'
+import type { MissionsState } from './missions'
 
 // ---------------------------------------------------------------------------
 // Inputs shared by several APIs
@@ -59,8 +60,13 @@ export interface OwnedPokemon extends IndividualCore {
   moveMasteryMinutes: Record<string, number>
   /** Daily energy (= HP). `current` is valid as of `updatedAt` (ms). */
   energy: { current: number; updatedAt: number }
-  /** Set by Rest: skips the next session (still gets EXP). */
+  /**
+   * Set by Rest: skips the next session (still gets EXP). Cleared after that
+   * session, when it sits out a completed session, or at the daily energy reset.
+   */
   asleepNextSession: boolean
+  /** When Rest put it to sleep (ms; absent in older saves). */
+  asleepSetAt?: number | null
   teraType: TypeSlug | null
   teraUntil: number | null
   teraSessionsLeft: number
@@ -136,6 +142,33 @@ export interface EnergyContribution {
   effectivenessFloors: { from: number; to: number }[]
 }
 
+/**
+ * Hits of one team member's move on one wild of a wave (GDD §11.3, classic
+ * damage formula). Each action of the 25-min block targets one wild of its
+ * wave at random; actions with the same member, move and target are summed.
+ */
+export interface WaveHit {
+  uid: string
+  /** Index of the targeted wild in `Wave.wilds`. */
+  target: number
+  /** Move slug, or null for the no-damage-move Normal hit. */
+  move: string | null
+  type: TypeSlug
+  power: number
+  damageClass: 'physical' | 'special'
+  /** Attacker level. */
+  level: number
+  /** Attacker Attack (physical) or Sp. Atk (special) stat. */
+  attack: number
+  /** Same-type attack bonus (move type is one of the attacker's types). */
+  stab: boolean
+  /** Number of actions, each weighted by its captureEnergy mods (and noDamageMoveEnergyFactor). */
+  units: number
+  /** Same with `targetLegendary: true` effects. */
+  unitsVsLegendary: number
+  effectivenessFloors: { from: number; to: number }[]
+}
+
 export interface WildPokemon extends IndividualCore {
   isLegendary: boolean
   isRoaming: boolean
@@ -160,6 +193,8 @@ export interface Wave {
   /** available → used/lost; `converted` = no eligible wild, became a Poké Ball in the inventory. */
   studyBall: 'available' | 'used' | 'lost' | 'converted'
   contributions: EnergyContribution[]
+  /** Per-wild hits that produced each wild's `damage` (absent in encounters saved before the damage model). */
+  hits?: WaveHit[]
   /** Types whose condition counted as active for species weighting. */
   activeConditionTypes: TypeSlug[]
 }
@@ -245,6 +280,8 @@ export interface PlayerState {
   /** Uses of techniques with `limitPerWeek` (key `uid:move`), for `weekKey`. */
   techniqueWeekUses: { weekKey: string; uses: Record<string, number> }
   counters: { pokemon: number; session: number; charge: number }
+  /** Daily/weekly missions and claimed Pokédex milestones (absent in older saves; see missions.ts). */
+  missions?: MissionsState
 }
 
 export type FocusInputs = {

@@ -18,9 +18,10 @@ import { ofKind, passiveEffects, selfStatMult, teamStatMults, type SourcedEffect
 import { refreshEnergy } from './energy'
 import { finishEncounter } from './capture'
 import { leagueForPoints, leagueRank } from './league'
+import { recordMissionEvent } from './missions'
 import { getTechnique, type TechniqueInfo } from './moves'
 import { gainExp, levelCap, trainerLevelFromExp, type ProgressEvent } from './progression'
-import { chance, pick, type Rng } from './rng'
+import { chance, pick, weightedPick, type Rng } from './rng'
 import {
   err,
   ok,
@@ -36,6 +37,7 @@ import {
   type SoundProfile,
   type Wave,
   type WaveGenParams,
+  type WaveHit,
   type WeatherInput,
 } from './state'
 import {
@@ -51,7 +53,7 @@ import {
   techniqueMultiplier,
 } from './stats'
 import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from './time'
-import { blockIndexAt, rollWaveSize, rollWild, waveCount } from './waves'
+import { blockIndexAt, damageFromHits, hpFractionAfter, rollWaveSize, rollWild, waveCount } from './waves'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -133,6 +135,40 @@ export function projectStreak(
   if (gap === 1) return { current: streak.current + 1, usedProtect: false, missedDaysBeforeToday: 0 }
   if (gap === 2 && protectAvailable) return { current: streak.current + 1, usedProtect: true, missedDaysBeforeToday: 1 }
   return { current: 1, usedProtect: false, missedDaysBeforeToday: gap - 1 }
+}
+
+/**
+ * Conditions env of a hypothetical session that starts at `now` with no
+ * pauses, no sound profile and no friend (the "conditions if you start now"
+ * preview). Mirrors the env `completeSession` builds from the same state.
+ */
+export function conditionEnvAt(
+  state: PlayerState,
+  now: number,
+  plannedMinutes: number,
+  opts: { weather?: PlayerState['profile']['weather'] } = {},
+  ctx: EngineContext = defaultContext(),
+): ConditionEnv {
+  const local = toLocal(now, state.profile.timezone)
+  const today = state.days[local.dayKey]
+  const streak = projectStreak(state.streak, local.dayKey, false)
+  const members = state.team.map((u) => state.pokemon[u]).filter((p): p is OwnedPokemon => Boolean(p))
+  return {
+    minutes: plannedMinutes,
+    localHour: local.hour,
+    weekday: local.weekday,
+    startMinuteOfDay: local.minuteOfDay,
+    weather: opts.weather !== undefined ? opts.weather : state.profile.weather,
+    soundProfile: null,
+    pausedSeconds: 0,
+    friendOverlap: null,
+    sessionsEarlierToday: today?.sessions ?? 0,
+    minutesSincePreviousEnd: state.lastSessionEndedAt === null ? null : (now - state.lastSessionEndedAt) / MINUTE_MS,
+    streakDays: streak.current,
+    missedDaysBeforeToday: streak.missedDaysBeforeToday,
+    yesterdayFirstStartMinute: state.days[addDays(local.dayKey, -1)]?.firstStartMinute ?? null,
+    bugCount: members.filter((p) => conditionTypes(p, now, ctx).includes('bug')).length,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -355,6 +391,58 @@ interface Sim {
 
 export type CompleteSessionError = 'no_active_session' | 'invalid_times'
 
+interface BlockAction {
+  sim: Sim
+  move: TechniqueInfo | null
+  units: number
+  unitsVsLegendary: number
+}
+
+/**
+ * Each action targets one wild of its wave (with probability ∝ `weights`,
+ * see `capture.hitTargeting`); actions with the same
+ * member, move and target are merged into a `WaveHit`. No damage move →
+ * Normal, power 40, physical (units already × noDamageMoveEnergyFactor).
+ */
+function assignHits(
+  actions: readonly BlockAction[],
+  weights: readonly number[],
+  rng: Rng,
+  floorsOf: (s: Sim) => { from: number; to: number }[],
+): WaveHit[] {
+  const out = new Map<string, WaveHit>()
+  for (const a of actions) {
+    const target = weightedPick(rng, weights.map((_, i) => i), (i) => weights[i] ?? 0) ?? 0
+    const key = `${a.sim.uid}|${a.move?.slug ?? ''}|${target}`
+    let h = out.get(key)
+    if (!h) {
+      const type: TypeSlug = a.move ? a.move.type : 'normal'
+      const damageClass = a.move?.damageClass === 'special' ? 'special' : 'physical'
+      h = {
+        uid: a.sim.uid,
+        target,
+        move: a.move?.slug ?? null,
+        type,
+        power: a.move ? a.move.power : NO_DAMAGE_MOVE_POWER,
+        damageClass,
+        level: a.sim.p.level,
+        attack: damageClass === 'special' ? a.sim.stats.specialAttack : a.sim.stats.attack,
+        stab: a.sim.types.includes(type),
+        units: 0,
+        unitsVsLegendary: 0,
+        effectivenessFloors: floorsOf(a.sim),
+      }
+      out.set(key, h)
+    }
+    h.units += a.units
+    h.unitsVsLegendary += a.unitsVsLegendary
+  }
+  return [...out.values()]
+}
+
+/** Power of the Normal hit used when a Pokémon has no damage technique equipped. */
+export const NO_DAMAGE_MOVE_POWER = 40
+
 /**
  * Simulate a completed session. Pure: `state` is not modified. Pass the result
  * to `applySessionResult`. Deterministic for a given rng seed.
@@ -487,6 +575,8 @@ export function completeSession(
   let chargeN = state.counters.charge
   let extraWild = 0
   const contrib: Map<string, EnergyContribution>[] = Array.from({ length: nWaves }, () => new Map())
+  /** Every action of each block, for the per-wild damage (targets are drawn once the wave size is known). */
+  const blockActions: BlockAction[][] = Array.from({ length: nWaves }, () => [])
   const effFloorsOf = (s: Sim) =>
     ofKind(s.passives, 'effectivenessFloor')
       .filter((e) => evaluateWhen(e.effect.when, wcOf(s), cfg))
@@ -592,21 +682,30 @@ export function completeSession(
       // Catch energy
       let type: TypeSlug = 'normal'
       let amount: number
+      let move: TechniqueInfo | null = null
       if (s.damageMoves.length > 0) {
-        const m = pick(rng, s.damageMoves)
-        type = m.type
-        amount = catchEnergyPerAction(s.stats.attack, m.power, cfg)
+        move = pick(rng, s.damageMoves)
+        type = move.type
+        amount = catchEnergyPerAction(s.stats.attack, move.power, cfg)
       } else {
         amount = noDamageMoveEnergy(s.stats.attack, cfg)
       }
-      const block = contrib[blockIndexAt(t, nWaves, cfg)] as Map<string, EnergyContribution>
+      const bi = blockIndexAt(t, nWaves, cfg)
+      const block = contrib[bi] as Map<string, EnergyContribution>
       const key = `${s.uid}:${type}`
       const c = block.get(key) ?? { uid: s.uid, type, amount: 0, amountVsLegendary: 0, effectivenessFloors: effFloorsOf(s) }
-      const capNormal = amount * mult(s, 'captureEnergy', { ...wc, targetLegendary: false })
+      const capMultNormal = mult(s, 'captureEnergy', { ...wc, targetLegendary: false })
+      const capMultLeg = mult(s, 'captureEnergy', { ...wc, targetLegendary: true })
+      const capNormal = amount * capMultNormal
       c.amount += capNormal
-      c.amountVsLegendary += amount * mult(s, 'captureEnergy', { ...wc, targetLegendary: true })
+      c.amountVsLegendary += amount * capMultLeg
       block.set(key, c)
       s.catchEnergy += capNormal
+      // Pace-neutral damage: a faster Pokémon acts more often but each action hits proportionally softer.
+      const refSpeed = cfg.capture.damageReferenceSpeed
+      const paceFactor = refSpeed === null || refSpeed === undefined ? 1 : interval(s) / actionIntervalSeconds(refSpeed, cfg)
+      const unit = (move ? 1 : cfg.actions.noDamageMoveEnergyFactor) * paceFactor
+      ;(blockActions[bi] as BlockAction[]).push({ sim: s, move, units: unit * capMultNormal, unitsVsLegendary: unit * capMultLeg })
       // Energy cost
       const cost = energyCostPerAction(s.p.level, cfg) * mult(s, 'energyCost', wc)
       s.spent += Math.min(cost, s.energy)
@@ -721,22 +820,30 @@ export function completeSession(
       const activeTypes = activeConditionTypes(env, cfg, forcedTypes)
       const contributions = [...(contrib[i] as Map<string, EnergyContribution>).values()]
       const size = rollWaveSize(rng, focus, league, i === 0 ? extraWild : 0, cfg)
-      const wilds = []
+      let wilds: Wave['wilds'] = []
       if (i === 0) {
         for (const r of state.roaming) {
           if (wilds.length >= size) break
           if (chance(rng, cfg.encounters.roamingChance)) {
             appeared.add(r.speciesSlug)
-            wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, forceSpecies: r.speciesSlug, isRoaming: true }, ctx))
+            wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, hits: [], forceSpecies: r.speciesSlug, isRoaming: true }, ctx))
           }
         }
       }
-      while (wilds.length < size) wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions }, ctx))
+      while (wilds.length < size) wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, hits: [] }, ctx))
+      // Damage (GDD §11.3): each action of the block hits one wild of this wave.
+      const weights = cfg.capture.hitTargeting === 'maxHp' ? wilds.map((w) => w.maxHp) : wilds.map(() => 1)
+      const hits = assignHits(blockActions[i] as BlockAction[], weights, rng, effFloorsOf)
+      wilds = wilds.map((w, slot) => {
+        const damage = damageFromHits(hits, slot, w, w.isLegendary, ctx)
+        return { ...w, damage, hpFraction: hpFractionAfter(damage, w.maxHp, cfg) }
+      })
       waves.push({
         index: i,
         wilds,
         studyBall: wilds.some((w) => w.studyBallEligible) ? 'available' : 'converted',
         contributions,
+        hits,
         activeConditionTypes: activeTypes,
       })
     }
@@ -824,6 +931,7 @@ export function applySessionResult(
       ...p,
       energy: { current: m.energyEnd, updatedAt: result.startedAt },
       asleepNextSession: m.rested ? true : m.asleep ? false : p.asleepNextSession,
+      asleepSetAt: m.rested ? result.endedAt : m.asleep ? null : (p.asleepSetAt ?? null),
       bondMinutes: p.bondMinutes + m.bondMinutes,
       moveMasteryMinutes: { ...p.moveMasteryMinutes },
       teraSessionsLeft: p.teraType && result.valid ? Math.max(0, p.teraSessionsLeft - 1) : p.teraSessionsLeft,
@@ -832,6 +940,13 @@ export function applySessionResult(
     const g = gainExp(p, m.exp, cap, ctx)
     pokemon[m.uid] = g.pokemon
     events.push(...g.events)
+  }
+  // Asleep Pokémon that sat out a completed session wake up.
+  if (result.valid) {
+    const inSession = new Set(result.members.map((m) => m.uid))
+    for (const [uid, p] of Object.entries(pokemon)) {
+      if (p.asleepNextSession && !inSession.has(uid)) pokemon[uid] = { ...p, asleepNextSession: false, asleepSetAt: null }
+    }
   }
   const converted = result.waves.filter((w) => w.studyBall === 'converted').length
   const inventory = { ...s.inventory, 'poke-ball': (s.inventory['poke-ball'] ?? 0) + result.pokeBalls + converted }
@@ -930,6 +1045,9 @@ export function applySessionResult(
       result.waves.length > 0
         ? { sessionId: result.sessionId, waves: result.waves, currentWave: 0, charges: result.charges, gen: result.gen, env: result.env }
         : null,
+  }
+  if (result.valid && result.rewardFactor > 0) {
+    s = recordMissionEvent(s, { kind: 'session', minutes: result.minutes, dayKey: result.dayKey, techniques: summary.techniqueActivations }, result.claimedAt, ctx)
   }
   return ok({ state: s, events })
 }

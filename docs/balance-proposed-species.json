@@ -1,0 +1,9 @@
+{
+  "_note": "Generado por npm run simulate. Formato de data/overrides/species.json; se usa con --species.",
+  "jolteon": {
+    "baseStats": {
+      "specialAttack": 66
+    },
+    "_note": "+44% frente a la mediana de etapa 2; Rendimiento (Atq. Esp.) 80→66 lo deja en +31%"
+  }
+}

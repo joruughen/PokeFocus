@@ -1,0 +1,200 @@
+{
+  "_note": "Misiones (GDD §13). 3 diarias + 3 semanales sorteadas del pool (peso `weight`, solo las de `minTrainerLevel` ≤ nivel de entrenador) de forma determinista por jugador y día/semana local; más los hitos de Pokédex. `rewards` es una lista de escalones: se usa el último cuyo `minTrainerLevel` ≤ nivel del entrenador al generar la misión. En los textos, {n} = objetivo, {minutes} = minutos mínimos de la sesión, {type} = tipo sorteado. Tipos de misión: sessions, studyMinutes, longSession, studyDays, techniques, catch, catchType, catchFirstThrow, studyBall, evolve.",
+  "dailyCount": 3,
+  "weeklyCount": 3,
+  "placeholderItems": {
+    "_note": "Objetos que solo dan las misiones y que el motor aún no usa (nombres para la UI).",
+    "tera-shard": {
+      "names": { "es": "Teralito", "en": "Tera Shard" },
+      "description": { "es": "Para la Teracristalización (próximamente).", "en": "For Terastallization (coming soon)." }
+    },
+    "technical-machine": {
+      "names": { "es": "MT", "en": "TM" },
+      "description": { "es": "Enseña una técnica (próximamente).", "en": "Teaches a technique (coming soon)." }
+    }
+  },
+  "pool": [
+    {
+      "id": "daily-sessions",
+      "period": "daily",
+      "kind": "sessions",
+      "target": 3,
+      "weight": 3,
+      "title": { "es": "Constancia", "en": "Consistency" },
+      "description": { "es": "Completa {n} sesiones de estudio hoy", "en": "Complete {n} study sessions today" },
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "poke-ball": 3 } },
+        { "minTrainerLevel": 5, "items": { "great-ball": 1, "poke-ball": 1 } }
+      ]
+    },
+    {
+      "id": "daily-minutes",
+      "period": "daily",
+      "kind": "studyMinutes",
+      "target": 75,
+      "weight": 3,
+      "title": { "es": "Hora y cuarto", "en": "An hour and a quarter" },
+      "description": { "es": "Estudia {n} minutos hoy", "en": "Study for {n} minutes today" },
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "poke-ball": 2 }, "dust": 50 },
+        { "minTrainerLevel": 5, "items": { "great-ball": 1 }, "dust": 50 }
+      ]
+    },
+    {
+      "id": "daily-long-session",
+      "period": "daily",
+      "kind": "longSession",
+      "target": 1,
+      "minMinutes": 50,
+      "weight": 2,
+      "title": { "es": "Concentración profunda", "en": "Deep focus" },
+      "description": { "es": "Haz una sesión de al menos {minutes} minutos", "en": "Finish a session of at least {minutes} minutes" },
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "potion": 1 }, "dust": 100 },
+        { "minTrainerLevel": 5, "items": { "super-potion": 1, "great-ball": 1 } }
+      ]
+    },
+    {
+      "id": "daily-catch",
+      "period": "daily",
+      "kind": "catch",
+      "target": 3,
+      "weight": 3,
+      "title": { "es": "Pokédex en marcha", "en": "Filling the Pokédex" },
+      "description": { "es": "Captura {n} Pokémon", "en": "Catch {n} Pokémon" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "poke-ball": 3 } }]
+    },
+    {
+      "id": "daily-first-throw",
+      "period": "daily",
+      "kind": "catchFirstThrow",
+      "target": 2,
+      "weight": 2,
+      "title": { "es": "Buen pulso", "en": "Steady hand" },
+      "description": { "es": "Captura {n} Pokémon al primer lanzamiento (sin Ball de Estudio)", "en": "Catch {n} Pokémon on the first throw (Study Ball excluded)" },
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "poke-ball": 2 } },
+        { "minTrainerLevel": 5, "items": { "great-ball": 1 } }
+      ]
+    },
+    {
+      "id": "daily-study-ball",
+      "period": "daily",
+      "kind": "studyBall",
+      "target": 2,
+      "weight": 2,
+      "title": { "es": "Premio al esfuerzo", "en": "Reward for effort" },
+      "description": { "es": "Captura {n} Pokémon con la Ball de Estudio", "en": "Catch {n} Pokémon with the Study Ball" },
+      "rewards": [{ "minTrainerLevel": 1, "dust": 150 }]
+    },
+    {
+      "id": "daily-techniques",
+      "period": "daily",
+      "kind": "techniques",
+      "target": 4,
+      "weight": 2,
+      "title": { "es": "Técnica pulida", "en": "Polished technique" },
+      "description": { "es": "Activa {n} técnicas durante tus sesiones", "en": "Activate {n} techniques during your sessions" },
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "potion": 2 } },
+        { "minTrainerLevel": 5, "items": { "super-potion": 1 }, "dust": 75 }
+      ]
+    },
+    {
+      "id": "weekly-catch-type",
+      "period": "weekly",
+      "kind": "catchType",
+      "target": 8,
+      "type": "random",
+      "weight": 3,
+      "title": { "es": "Especialista en tipo {type}", "en": "{type}-type specialist" },
+      "description": { "es": "Captura {n} Pokémon de tipo {type}", "en": "Catch {n} {type}-type Pokémon" },
+      "rewards": [{ "minTrainerLevel": 1, "typeCandies": 5 }]
+    },
+    {
+      "id": "weekly-days",
+      "period": "weekly",
+      "kind": "studyDays",
+      "target": 5,
+      "weight": 3,
+      "title": { "es": "Semana constante", "en": "Steady week" },
+      "description": { "es": "Estudia {n} días distintos esta semana", "en": "Study on {n} different days this week" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1, "great-ball": 1 } }]
+    },
+    {
+      "id": "weekly-techniques",
+      "period": "weekly",
+      "kind": "techniques",
+      "target": 20,
+      "weight": 2,
+      "title": { "es": "Repertorio", "en": "Repertoire" },
+      "description": { "es": "Activa {n} técnicas esta semana", "en": "Activate {n} techniques this week" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1, "tera-shard": 1 } }]
+    },
+    {
+      "id": "weekly-minutes",
+      "period": "weekly",
+      "kind": "studyMinutes",
+      "target": 500,
+      "weight": 2,
+      "title": { "es": "Maratón semanal", "en": "Weekly marathon" },
+      "description": { "es": "Estudia {n} minutos esta semana", "en": "Study for {n} minutes this week" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1 }, "dust": 300 }]
+    },
+    {
+      "id": "weekly-long-sessions",
+      "period": "weekly",
+      "kind": "longSession",
+      "target": 3,
+      "minMinutes": 50,
+      "weight": 2,
+      "title": { "es": "Fondo", "en": "Stamina" },
+      "description": { "es": "Haz {n} sesiones de al menos {minutes} minutos", "en": "Finish {n} sessions of at least {minutes} minutes" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1, "hyper-potion": 1 } }]
+    },
+    {
+      "id": "weekly-catch",
+      "period": "weekly",
+      "kind": "catch",
+      "target": 20,
+      "weight": 2,
+      "title": { "es": "Gran cosecha", "en": "Big haul" },
+      "description": { "es": "Captura {n} Pokémon esta semana", "en": "Catch {n} Pokémon this week" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "great-ball": 3 }, "dust": 200 }]
+    },
+    {
+      "id": "weekly-evolve",
+      "period": "weekly",
+      "kind": "evolve",
+      "target": 2,
+      "weight": 1,
+      "minTrainerLevel": 3,
+      "title": { "es": "Metamorfosis", "en": "Metamorphosis" },
+      "description": { "es": "Evoluciona {n} Pokémon", "en": "Evolve {n} Pokémon" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "tera-shard": 2 }, "dust": 250 }]
+    }
+  ],
+  "pokedex": [
+    {
+      "id": "dex-10",
+      "species": 10,
+      "title": { "es": "Primeros registros", "en": "First entries" },
+      "description": { "es": "Registra {n} especies en la Pokédex", "en": "Register {n} species in the Pokédex" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "great-ball": 3 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 1 } }]
+    },
+    {
+      "id": "dex-25",
+      "species": 25,
+      "title": { "es": "Investigador", "en": "Researcher" },
+      "description": { "es": "Registra {n} especies en la Pokédex", "en": "Register {n} species in the Pokédex" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "technical-machine": 1, "ultra-ball": 1 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 1 } }]
+    },
+    {
+      "id": "dex-50",
+      "species": 50,
+      "title": { "es": "Enciclopedia viviente", "en": "Living encyclopedia" },
+      "description": { "es": "Registra {n} especies en la Pokédex", "en": "Register {n} species in the Pokédex" },
+      "rewards": [{ "minTrainerLevel": 1, "items": { "technical-machine": 1, "ultra-ball": 2 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 2 } }]
+    }
+  ]
+}

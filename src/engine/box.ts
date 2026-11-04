@@ -6,6 +6,7 @@ import { defaultContext, getSpecies, type EngineContext } from './context'
 import type { LocaleCode, TypeSlug } from './data-types'
 import { refreshEnergy } from './energy'
 import { createIndividual, definedAbilities, rollAbility, toOwnedPokemon } from './individual'
+import { recordMissionEvent, refreshMissions } from './missions'
 import { levelUpMovesUpTo, techniqueSlots, validateEquip, type EquipError } from './moves'
 import {
   candyDustCost,
@@ -37,7 +38,7 @@ export function createNewPlayer(input: NewPlayerInput, rng: Rng, ctx: EngineCont
   if (!cfg.starters.includes(input.starterSlug) || !ctx.speciesBySlug.has(input.starterSlug)) return err('invalid_starter')
   const core = createIndividual(input.starterSlug, cfg.starterLevel, rng, {}, ctx)
   const starter = toOwnedPokemon(core, 'p1', input.now, 'starter', ctx)
-  return ok({
+  return ok(refreshMissions({
     version: 1,
     profile: {
       trainerName: input.trainerName,
@@ -65,7 +66,7 @@ export function createNewPlayer(input: NewPlayerInput, rng: Rng, ctx: EngineCont
     lastSessionEndedAt: null,
     techniqueWeekUses: { weekKey: '', uses: {} },
     counters: { pokemon: 1, session: 0, charge: 0 },
-  })
+  }, input.now, ctx))
 }
 
 type BoxError =
@@ -219,10 +220,8 @@ export function evolvePokemon(
   if (opt.evolution.trigger === 'item' && opt.evolution.item) inventory[opt.evolution.item] = (inventory[opt.evolution.item] ?? 0) - 1
   const caught = state.pokedex.caught.includes(toSlug) ? state.pokedex.caught : [...state.pokedex.caught, toSlug]
   const seen = state.pokedex.seen.includes(toSlug) ? state.pokedex.seen : [...state.pokedex.seen, toSlug]
-  return ok({
-    state: { ...state, inventory, pokedex: { seen, caught }, pokemon: { ...state.pokemon, [uid]: evolved } },
-    pokemon: evolved,
-  })
+  const next = recordMissionEvent({ ...state, inventory, pokedex: { seen, caught }, pokemon: { ...state.pokemon, [uid]: evolved } }, { kind: 'evolve' }, now, ctx)
+  return ok({ state: next, pokemon: evolved })
 }
 
 /** Add items (e.g. mission rewards, debug). */

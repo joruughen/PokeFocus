@@ -1,6 +1,1190 @@
 {
   "app": {
     "title": "PokeFocus",
-    "tagline": "Study. Capture. Evolve."
+    "tagline": "Study. Capture. Evolve.",
+    "disclaimer": "Personal non-commercial project. Not affiliated with Nintendo, Game Freak or The Pokémon Company."
+  },
+  "common": {
+    "close": "Close",
+    "moreInfo": "More info",
+    "back": "Back",
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "on": "On",
+    "off": "Off",
+    "min": "min",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "skipToContent": "Skip to content",
+    "loading": "Loading…"
+  },
+  "nav": {
+    "label": "Sections",
+    "home": "Home",
+    "box": "Box",
+    "team": "Team",
+    "dex": "Pokédex",
+    "league": "League",
+    "settings": "Settings",
+    "sessionLive": "Session running",
+    "sessionDone": "Session finished",
+    "missions": "Missions"
+  },
+  "trainer": {
+    "level": "Trainer lv. {{level}}",
+    "streak_one": "{{count}}-day streak",
+    "streak_other": "{{count}}-day streak",
+    "bag": "Your bag",
+    "ballCount_one": "{{count}} left",
+    "ballCount_other": "{{count}} left"
+  },
+  "mascot": {
+    "name": "Study Pikachu"
+  },
+  "hint": {
+    "helpFor": "Help: {{title}}",
+    "step": "Step {{n}} of {{total}}",
+    "next": "Next",
+    "gotIt": "Got it",
+    "disable": "Don't show tips"
+  },
+  "stats": {
+    "basedOn": "based on {{stat}}",
+    "natureUp": "Raised by its nature",
+    "natureDown": "Lowered by its nature",
+    "hp": {
+      "name": "Energy",
+      "what": "How long it can keep studying through the day.",
+      "base": "HP"
+    },
+    "speed": {
+      "name": "Pace",
+      "what": "How often it acts during a session.",
+      "base": "Speed"
+    },
+    "specialAttack": {
+      "name": "Output",
+      "what": "How many points each action gives.",
+      "base": "Sp. Atk"
+    },
+    "attack": {
+      "name": "Catch",
+      "what": "How much catch energy it makes to weaken wild Pokémon.",
+      "base": "Attack"
+    },
+    "specialDefense": {
+      "name": "Technique",
+      "what": "Chance to trigger its techniques.",
+      "base": "Sp. Def"
+    },
+    "defense": {
+      "name": "Grit",
+      "what": "How well it performs when your Focus drops, and how well it takes counterattacks.",
+      "base": "Defense"
+    },
+    "summary": "Summary",
+    "tile": {
+      "week": "This week",
+      "weekNote_one": "{{count}} session",
+      "weekNote_other": "{{count}} sessions",
+      "total": "All time",
+      "totalNote_one": "{{count}} session",
+      "totalNote_other": "{{count}} sessions",
+      "streak": "Day streak",
+      "streakNote": "Best streak: {{best}}",
+      "caught": "Catches",
+      "caughtNote": "{{count}} species in the Pokédex"
+    },
+    "weekTitle": "Minutes per day",
+    "weekLabel": "{{count}} minutes studied this week, by day",
+    "weekNote": "Monday to Sunday, in your time zone. Today is outlined.",
+    "dayTip_one": "{{day}}: {{count}} minute",
+    "dayTip_other": "{{day}}: {{count}} minutes",
+    "pointsTitle": "Points per session",
+    "pointsLabel": "Points of the last {{count}} sessions",
+    "pointsNote_one": "Your last session.",
+    "pointsNote_other": "Your last {{count}} sessions, oldest to newest.",
+    "sessionTip": "{{date}}: {{points}} points in {{minutes}} min",
+    "focusTitle": "Focus",
+    "focusLabel": "Focus of recent sessions",
+    "focusNote": "Focus multiplies almost everything your team earns. Studying without distractions keeps it at 100%.",
+    "focusTip": "{{date}}: Focus {{pct}}",
+    "historyTitle": "History",
+    "col": {
+      "when": "When",
+      "minutes": "Min",
+      "points": "Points",
+      "focus": "Focus",
+      "caught": "Caught"
+    },
+    "lateTip": "Claimed late: it earned half.",
+    "empty": {
+      "title": "Your stats start with your first session",
+      "body": "Here you'll see your minutes per day, each session's points and how your Focus changes."
+    },
+    "weekEmpty": "You haven't studied this week yet. Your first session will show up here."
+  },
+  "roles": {
+    "scholar": {
+      "name": "Scholar",
+      "body": "High Output: every action gives lots of points. Great for climbing leagues."
+    },
+    "hunter": {
+      "name": "Hunter",
+      "body": "High Catch: weakens wild Pokémon so they are easy to catch."
+    },
+    "sprinter": {
+      "name": "Sprinter",
+      "body": "High Pace: acts often, but tires sooner."
+    },
+    "marathoner": {
+      "name": "Marathoner",
+      "body": "High Energy: lasts through long sessions and busy days."
+    },
+    "technician": {
+      "name": "Technician",
+      "body": "High Technique: triggers its special techniques more often."
+    },
+    "guardian": {
+      "name": "Guardian",
+      "body": "High Grit: performs even when your Focus drops and takes counterattacks well. A good leader."
+    },
+    "support": {
+      "name": "Support",
+      "body": "Helps the rest of the team with heals and effects."
+    },
+    "allrounder": {
+      "name": "All-rounder",
+      "body": "No weak spots: fits any team."
+    }
+  },
+  "pokemon": {
+    "shiny": "Shiny",
+    "levelShort": "Lv",
+    "energyOf": "{{name}}'s Energy",
+    "expOf": "{{name}}'s EXP",
+    "exp": "EXP",
+    "exhausted": "Exhausted: it won't act until it gets Energy back."
+  },
+  "team": {
+    "title": "Your team",
+    "leader": "Leader",
+    "leaderTip": "The leader takes the counterattacks when a catch fails.",
+    "emptySlotHow": "Catch Pokémon in the waves and add them to the team between sessions.",
+    "emptySlots_one": "{{count}} free slot",
+    "emptySlots_other": "{{count}} free slots",
+    "subtitle": "Up to 6 Pokémon study with you. The first is the leader: it takes the counterattacks when a catch fails.",
+    "locked": "Your team is studying. You can change it when the session ends.",
+    "slotFree": "Slot {{n}} free",
+    "order": "Team order",
+    "addHint_one": "{{count}} slot left. Add Pokémon from the Box list.",
+    "addHint_other": "{{count}} slots left. Add Pokémon from the Box list.",
+    "fromBox": "Add from the Box",
+    "boxEmpty": "Your Box is empty. Catch Pokémon in the waves to add them to the team.",
+    "add": "Add",
+    "full": "The team is full. Move someone to the Box to make room.",
+    "makeLeader": "Make leader",
+    "makeLeaderOf": "Make {{name}} the leader",
+    "newLeader": "{{name}} is now the leader",
+    "moveUp": "Move {{name}} up",
+    "moveDown": "Move {{name}} down",
+    "removeOf": "Move {{name}} to the Box",
+    "warnAsleep": "Asleep: it won't act next session.",
+    "warnExhausted": "Exhausted: it won't act until it recovers Energy.",
+    "warnTired": "May run out of Energy in a {{minutes}}-min session.",
+    "leaderRow": "Takes the counterattacks. Grit {{grit}}.",
+    "leaderTitle": "The leader",
+    "leaderWhy": "When a Ball fails, the wild Pokémon counterattacks the leader. If it's exhausted, the next one.",
+    "gritNote": "Reduces the damage of each counterattack.",
+    "energyNote": "Its health: at 0 it stops acting.",
+    "weakTo": "Takes more damage from:",
+    "resists": "Resists:",
+    "none": "None",
+    "emptySlotShort": "Add one from Team."
+  },
+  "items": {
+    "dust": "Study Dust",
+    "dustTip": "Study Dust: earned by studying, spent to use candies."
+  },
+  "balls": {
+    "study": "Study Ball"
+  },
+  "timeOfDay": {
+    "morning": "It's morning.",
+    "day": "It's afternoon.",
+    "evening": "It's getting dark.",
+    "night": "It's night."
+  },
+  "weather": {
+    "clear": "Mild",
+    "sun": "Sunny",
+    "rain": "Rain",
+    "cold": "Cold",
+    "effect": {
+      "clear": "No weather effects. For now you pick the weather yourself.",
+      "sun": "Turns on the Fire condition.",
+      "rain": "Turns on the Water condition.",
+      "cold": "Turns on the Ice condition."
+    }
+  },
+  "home": {
+    "greeting": "Hi, {{name}}",
+    "now": "It's {{day}}, {{time}}.",
+    "plan": {
+      "title": "Your next session",
+      "duration": "Duration in minutes",
+      "custom": "Other",
+      "customLabel": "Duration",
+      "waves_one": "When it ends, {{count}} wave of wild Pokémon appears.",
+      "waves_other": "When it ends, {{count}} waves of wild Pokémon appear.",
+      "endsAt": "You'd finish at {{time}}.",
+      "weather": "Weather where you study",
+      "tired_one": "{{names}} may run out of Energy before the end.",
+      "tired_other": "{{names}} may run out of Energy before the end.",
+      "startNote": "You can pause. The team can't change until you finish.",
+      "start": "Start",
+      "startMinutes": "{{count}} min"
+    }
+  },
+  "conditions": {
+    "title": "Conditions if you start now",
+    "off": "Off",
+    "othersActive": "Also active now, for other types:",
+    "memberBoost": "{{type}} condition active: ×{{mult}} to its points.",
+    "rule": {
+      "normal": "Always active.",
+      "fire": "Sunny, {{hot}} °C or more, or from {{pmFrom}}:00 to {{pmTo}}:00.",
+      "water": "When it rains where you study.",
+      "grass": "From {{dayFrom}}:00 to {{dayTo}}:00.",
+      "electric": "Sessions of {{electricMax}} min or less that start within {{electricGap}} min of the previous one.",
+      "ice": "{{cold}} °C or less, or snow.",
+      "fighting": "Sessions of {{fightingMin}} min or more.",
+      "poison": "+{{poisonPct}}% for each session you already did today (up to +{{poisonMax}}%).",
+      "ground": "Saturdays and Sundays.",
+      "flying": "Music or noise at least {{noise}}% of the time (needs the microphone, coming soon).",
+      "psychic": "Your first session of the day, or {{silence}}% silence.",
+      "bug": "+{{bugPct}}% for each Bug-type Pokémon on the team.",
+      "rock": "If you don't pause the session.",
+      "ghost": "From {{nightFrom}}:00 to {{nightTo}}:00.",
+      "dragon": "With a streak of {{streak}} days or more.",
+      "dark": "The day you come back after {{missed}} or more days without studying.",
+      "steel": "If you start within ±{{steelWindow}} min of when you started yesterday.",
+      "fairy": "Studying at the same time as a friend (coming soon)."
+    }
+  },
+  "league": {
+    "title": "This week's league",
+    "names": {
+      "base": "Base League",
+      "super": "Super League",
+      "ultra": "Ultra League",
+      "master": "Master League"
+    },
+    "maxWave_one": "Waves of up to {{count}} wild Pokémon",
+    "maxWave_other": "Waves of up to {{count}} wild Pokémon",
+    "weekPoints": "points this week",
+    "progressLabel": "Progress to {{league}}",
+    "toNext": "{{points}} points to go for {{league}}.",
+    "top": "You're in the top league. Keep it up!",
+    "resets": "Every Monday everyone goes back to Base League.",
+    "pageTitle": "League and stats",
+    "short": {
+      "base": "Base",
+      "super": "Super",
+      "ultra": "Ultra",
+      "master": "Master"
+    },
+    "resetIn": "The league resets in {{d}} d {{h}} h, on Monday at 00:00.",
+    "best": "Your best league: {{league}}",
+    "ladderLabel": "This week's points towards the leagues",
+    "waveCap_one": "up to {{count}} wild",
+    "waveCap_other": "up to {{count}} wild",
+    "resetsLong": "Every Monday everyone goes back to the Base League. Each league adds one more wild per wave, so waves start small and grow as you study.",
+    "month": "This month you have {{points}} points ({{league}} monthly, thresholds ×{{mult}}). It's only a ranking: it doesn't change waves.",
+    "from": "points",
+    "waveTypical": "about {{n}} per wave, up to {{max}}"
+  },
+  "session": {
+    "title_one": "{{count}}-minute session",
+    "title_other": "{{count}}-minute session",
+    "paused": "paused",
+    "pausedTitle": "Session paused",
+    "pausedNote": "Paused time doesn't count. Resume whenever you're ready.",
+    "remaining": "{{time}} left",
+    "endsAt": "Ends at {{time}}.",
+    "progress": "Time studied",
+    "waveLegend_one": "Each mark is a wave: this session brings {{count}}.",
+    "waveLegend_other": "Each mark is a wave: this session brings {{count}}.",
+    "teamWorking": "Your team is studying with you.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "cancel": "Give up",
+    "rockNote": "Tips wait until you finish. Pausing turns off the Rock condition for this session.",
+    "cancelTitle": "Give up this session?",
+    "cancelBody": "You've done {{minutes}} min. If you give up, you get no points, EXP or wave.",
+    "keepGoing": "Keep studying",
+    "cancelConfirm": "Give up",
+    "waveOne_one": "Its wave of wild Pokémon appears at the end.",
+    "waveOne_other": "Its wave of wild Pokémon appears at the end."
+  },
+  "claim": {
+    "title": "Session complete!",
+    "subtitle_one": "You studied {{count}} minute. Your team worked with you.",
+    "subtitle_other": "You studied {{count}} minutes. Your team worked with you.",
+    "windowLabel": "Time left to claim",
+    "window": "Claim within {{minutes}} min to get 100%.",
+    "late": "More than {{minutes}} min have passed: claiming now gives you {{pct}} of the points, EXP and Dust. The waves stay the same.",
+    "button": "Claim rewards"
+  },
+  "results": {
+    "title": "Results",
+    "invalidTitle": "Session too short",
+    "subtitle_one": "{{count}} minute of study.",
+    "subtitle_other": "{{count}} minutes of study.",
+    "invalid": "Sessions under {{min}} min are saved but give no rewards.",
+    "points": "team points",
+    "why": "Why:",
+    "whyCondition": "{{type}} condition active for {{who}}.",
+    "whyTechnique": "Technique triggered during the session.",
+    "whyFocus": "Your Focus multiplies points, EXP and Dust.",
+    "focus": "Focus {{pct}}",
+    "whyLate": "You claimed after the 5-minute window.",
+    "late": "Late claim ×{{mult}}",
+    "whyDaily": "After 6 h of study in a day, rewards go down.",
+    "daily": "Daily rate {{pct}}",
+    "team": "Your team",
+    "rewards": "Rewards",
+    "balls": "Poké Balls",
+    "leaguePoints": "League points",
+    "trainerLevelUp": "You reached trainer level {{level}}.",
+    "leagueUp": "You moved up to {{league}}! Waves will be bigger.",
+    "wavesReady_one": "{{count}} wave is waiting",
+    "wavesReady_other": "{{count}} waves are waiting",
+    "wavesNote": "Your team already weakened the wild Pokémon. Time to catch them.",
+    "toWaves": "See the wild Pokémon",
+    "noWaves": "No wave this time.",
+    "done": "Back to home",
+    "asleep": "Slept through this session",
+    "actions_one": "{{count}} action",
+    "actions_other": "{{count}} actions",
+    "energySpent": "Used {{spent}} of {{max}} Energy",
+    "exhausted": "Ran out at minute {{minute}}",
+    "newMove": "Learned {{move}}",
+    "newSlot": "Gained a technique slot",
+    "evolution": "{{name}} can evolve into {{to}}",
+    "capped": "Reached the level cap ({{cap}}): catch more species to raise it.",
+    "pointsShort": "points"
+  },
+  "waves": {
+    "title": "Wave {{n}} of {{total}}",
+    "subtitle_one": "{{count}} wild Pokémon appeared.",
+    "subtitle_other": "{{count}} wild Pokémon appeared.",
+    "progress": "Waves",
+    "waveN": "Wave {{n}}",
+    "hp": "HP",
+    "hpLabel": "{{name}}'s HP after your team's damage",
+    "wildLabel": "{{name}}, level {{level}}, HP {{pct}}",
+    "failsLeft_one": "{{count}} try left before it flees",
+    "failsLeft_other": "{{count}} tries left before it flees",
+    "studyEligible": "Study",
+    "studyNotEligible": "Only for base-form, non-legendary Pokémon at level {{level}} or lower.",
+    "shinyGuarantee": "Guaranteed catch with a {{ball}} or better.",
+    "legendary": "Legendary",
+    "caught": "Caught!",
+    "fled": "Fled",
+    "status": {
+      "sleep": "Asleep",
+      "paralysis": "Paralyzed"
+    },
+    "study": {
+      "available": "Study Ball ready",
+      "used": "Study Ball used",
+      "lost": "Study Ball lost",
+      "converted": "None eligible: you got a Poké Ball"
+    },
+    "counterTarget": "Takes the counterattacks",
+    "missed": "Missed!",
+    "counterMissed": "The counterattack missed.",
+    "counterHealed": "It absorbed the {{type}} attack and recovered {{amount}} Energy.",
+    "counterHit": "{{type}} counterattack: −{{damage}} Energy. {{eff}}",
+    "effSuper": "It's super effective.",
+    "effWeak": "It's not very effective.",
+    "survived": "It held on with 1 Energy.",
+    "pickBall": "Ball for {{name}}",
+    "pickWild": "Pick a wild Pokémon",
+    "studyOnlyThis": "This wave only",
+    "count_one": "You have {{count}}",
+    "count_other": "You have {{count}}",
+    "chanceShort": "{{pct}}",
+    "throw": "Throw",
+    "chance": "Catch chance: {{pct}}",
+    "caughtToast": "{{name}} caught!",
+    "caughtToastBody": "It's in your Box now.",
+    "waveDone": "No wild Pokémon left in this wave.",
+    "leaveWarn_one": "If you move on, the one left will leave.",
+    "leaveWarn_other": "If you move on, the {{count}} left will leave.",
+    "leaveWarnStudy_one": "If you move on, the one left will leave and you lose this wave's Study Ball.",
+    "leaveWarnStudy_other": "If you move on, the {{count}} left will leave and you lose this wave's Study Ball.",
+    "next": "Go to wave {{n}}",
+    "finish": "Finish",
+    "finishAll": "Skip the rest",
+    "charges": {
+      "title": "Charges from your techniques",
+      "sleep": "Put to sleep",
+      "paralysis": "Paralyze",
+      "reroll": "Swap",
+      "pick": "Pick a wild Pokémon to use it on.",
+      "note": "Use them before throwing: an asleep or paralyzed Pokémon is easier to catch.",
+      "applyHere": "Use here"
+    },
+    "tries": "Tries",
+    "studyEligibleTip": "Guaranteed catch with this wave's Study Ball.",
+    "hitBy": "Hit by"
+  },
+  "firstRun": {
+    "you": "trainer",
+    "progress": "Step {{n}} of {{total}}",
+    "steps": [
+      "About you",
+      "Your first partner",
+      "How it works"
+    ],
+    "speech": [
+      "Hi! I'll keep you company while you study. What should I call you?",
+      "Nice to meet you, {{name}}. Pick your first partner: each one plays differently.",
+      "{{starter}} is ready! Here's how it works, in three steps."
+    ],
+    "name": "Your trainer name",
+    "namePlaceholder": "For example, Ash",
+    "language": "Language",
+    "timezone": "Time zone",
+    "timezoneNote": "Detected from your browser. It sets the time for conditions and the daily reset.",
+    "loop": {
+      "study": {
+        "title": "Study",
+        "body": "Choose how long and press Start. Your team earns points and EXP while you focus."
+      },
+      "claim": {
+        "title": "Claim",
+        "body": "When the timer ends you have 5 minutes to claim everything you earned."
+      },
+      "catch": {
+        "title": "Catch",
+        "body": "Wild Pokémon appear, already weakened by your team. Throw Balls to catch them."
+      }
+    },
+    "finish": "Start studying"
+  },
+  "placeholder": {
+    "cta": "Go study"
+  },
+  "settings": {
+    "general": "General",
+    "language": "Language",
+    "timezone": "Time zone",
+    "help": "Tips",
+    "tips": "Show tips",
+    "tipsNote": "Your partner explains each part the first time you see it. The \"?\" buttons always work.",
+    "replay": "See the tips again",
+    "replayNote": "Tips you've already seen will show up again.",
+    "replayButton": "Replay tips",
+    "replayDone": "Tips will show up again.",
+    "session": "Sessions",
+    "notifications": "Notifications",
+    "notif": {
+      "default": "We'll tell you when the session ends, even from another tab.",
+      "granted": "On.",
+      "denied": "Blocked in the browser. You can turn them on in the site settings.",
+      "unsupported": "Your browser doesn't support them."
+    },
+    "notifAsk": "Allow notifications",
+    "advanced": "Advanced",
+    "dev": "Developer tools",
+    "devNote": "Fast time, fixed seed and shortcuts for testing.",
+    "reset": "Erase everything",
+    "resetNote": "Deletes your progress from this browser.",
+    "resetButton": "Erase progress",
+    "resetTitle": "Erase all your progress?",
+    "resetBody": "Your Pokémon, items and history in this browser will be deleted. This can't be undone.",
+    "resetConfirm": "Erase",
+    "weather": "Weather where you study",
+    "weatherNote": "Until we connect your city, you choose it. You can also change it on Home.",
+    "tzNote": "It sets the time for your conditions, the Energy refill and the league's Monday. You can change it once every {{days}} days.",
+    "tzLocked": "You can change it again on {{date}}.",
+    "tzConfirmTitle": "Change time zone?",
+    "tzConfirmBody": "You'll switch to {{zone}}. You won't be able to change it again for {{days}} days.",
+    "tzConfirm": "Change zone",
+    "tzDone": "Time zone: {{zone}}",
+    "audio": {
+      "title": "Sound",
+      "mute": "Mute everything",
+      "muteNote": "Turns off music and effects without losing your volumes.",
+      "master": "Master volume",
+      "music": "Music",
+      "musicNote": "Chiptune tunes generated on the fly.",
+      "sfx": "Effects",
+      "sfxNote": "Buttons, catches, level ups and alerts.",
+      "focus": "Music during sessions",
+      "focusNote": "A calm lo-fi track while you study.",
+      "focusLevel": "Study music volume",
+      "focusLevelNote": "Relative to the music. Low by default.",
+      "background": "Keep playing in another tab",
+      "backgroundNote": "Study music keeps going when you switch tabs.",
+      "hiss": "Vinyl crackle",
+      "hissNote": "A soft crackle under the study music."
+    },
+    "about": {
+      "title": "About",
+      "body": "PokeFocus turns your study hours into a Pokémon team that studies with you. This is a local prototype: your data lives only in this browser.",
+      "credits": "Sprites from PokeAPI and Pokémon Showdown. Data from PokeAPI. Music and effects are synthesized in your browser.",
+      "version": "Version {{version}}"
+    }
+  },
+  "notify": {
+    "doneTitle": "Session complete!",
+    "doneBody": "Claim your rewards within the next 5 minutes.",
+    "tabTitle": "Done! Claim your rewards"
+  },
+  "errors": {
+    "session_active": "You already have a session running.",
+    "invalid_duration": "The duration must be between 15 and 120 minutes.",
+    "empty_team": "Your team is empty.",
+    "claimFailed": "Couldn't claim. Try again.",
+    "throw": {
+      "no_encounter": "There's no active wave.",
+      "wave_not_current": "That wave has passed.",
+      "unknown_wild": "That Pokémon is gone.",
+      "wild_resolved": "That Pokémon was already caught or fled.",
+      "no_ball": "You have no Balls of that kind left.",
+      "study_ball_unavailable": "This wave's Study Ball was already used.",
+      "not_study_eligible": "The Study Ball only works on base-form Pokémon at level {{level}} or lower.",
+      "session_active": "Finish the session before catching."
+    },
+    "charge": {
+      "no_encounter": "There's no active wave.",
+      "unknown_charge": "That charge is gone.",
+      "wrong_charge_kind": "That charge can't do that.",
+      "unknown_wild": "That Pokémon is gone.",
+      "wild_resolved": "That Pokémon was already caught or fled.",
+      "wave_passed": "That wave has passed."
+    },
+    "box": {
+      "unknown_pokemon": "That Pokémon is gone.",
+      "session_active": "Finish the session before changing the team or its techniques.",
+      "in_team": "You can't release a team member.",
+      "team_too_large": "The team holds 6 at most.",
+      "team_empty": "The team needs at least one Pokémon.",
+      "duplicate_in_team": "That Pokémon is already in the team.",
+      "not_enough_candies": "You don't have enough candies.",
+      "not_enough_dust": "You don't have enough Study Dust.",
+      "level_cap": "It reached the max level for now. Catch more species to raise it.",
+      "wrong_chain": "Those candies belong to another evolution line.",
+      "wrong_type": "Those candies are of another type.",
+      "invalid_count": "Invalid amount.",
+      "too_many_moves": "No free slot for another technique.",
+      "duplicate_move": "That technique is already equipped.",
+      "move_not_known": "It doesn't know that technique.",
+      "move_not_usable": "That technique doesn't exist in PokeFocus.",
+      "move_locked": "That technique isn't unlocked yet.",
+      "level_too_low": "It isn't at the level to evolve yet.",
+      "missing_item": "You're missing the item to evolve it.",
+      "bond_too_low": "It needs more Bond.",
+      "wrong_time_of_day": "It's not the right time of day.",
+      "trade_unavailable": "Trading doesn't exist yet.",
+      "unsupported": "That evolution isn't available yet.",
+      "no_such_evolution": "It can't evolve into that species."
+    },
+    "heal": {
+      "unknown_pokemon": "That Pokémon is gone.",
+      "no_item": "You have none of that item left.",
+      "not_a_heal_item": "That item doesn't heal.",
+      "already_full": "Its Energy is already full.",
+      "not_exhausted": "Revive only works on an exhausted Pokémon.",
+      "session_active": "It's studying. Heal it when the session ends."
+    },
+    "mission": {
+      "unknown_mission": "That mission is gone.",
+      "not_completed": "You haven't completed that mission yet.",
+      "already_claimed": "You already claimed that mission."
+    }
+  },
+  "dev": {
+    "title": "Developer",
+    "open": "Open developer panel",
+    "close": "Close panel",
+    "clock": "Game clock",
+    "gameTime": "Game time: {{time}}",
+    "shifted": "(ahead)",
+    "rate": "Time speed",
+    "fast": "1 min = 1 s",
+    "plusDay": "+1 day",
+    "realTime": "Real time",
+    "session": "Session",
+    "finishNow": "Finish session now",
+    "focusLabel": "Simulated Focus label",
+    "labels": {
+      "studying": "Studying (100%)",
+      "educational": "Educational content (100%)",
+      "chat": "Chat (60%)",
+      "social": "Social media (40%)",
+      "game": "Game (20%)",
+      "none": "No screen permission (85%)"
+    },
+    "inventory": "Items",
+    "addBalls": "+ Balls",
+    "addDust": "+1000 Dust",
+    "addCandies": "+10 candies",
+    "rng": "Random seed",
+    "seedPlaceholder": "e.g. demo",
+    "apply": "Apply",
+    "seedSet": "Fixed seed: {{seed}}",
+    "seedOff": "Random seed",
+    "seedOn": "Fixed: {{seed}} (roll {{n}})",
+    "seedRandom": "Random on every roll",
+    "help": "Tips",
+    "resetHints": "Reset tips",
+    "addItems": "+ Potions and stones",
+    "levelUp": "+5 levels to team",
+    "addPokemon": "+10 Pokémon",
+    "audio": "Sound",
+    "audioLab": "Audio lab"
+  },
+  "hints": {
+    "home": {
+      "team": {
+        "title": "Your team studies with you",
+        "body": "While you study, each Pokémon acts on its own and earns points, EXP and catch energy. The bar is its Energy for the day; it refills at 5:00."
+      },
+      "start": {
+        "title": "Start with 25 minutes",
+        "body": "Every 25-minute block brings a wave of wild Pokémon at the end. You can pause, but the team is locked until you finish."
+      },
+      "conditions": {
+        "title": "Type conditions",
+        "body": "Each type does better in certain situations: the time, the weather or the length. They only add, never subtract. Build your team around how and when you study."
+      },
+      "weather": {
+        "title": "Weather where you study",
+        "body": "For now you pick it yourself. Rain boosts Water types, sun boosts Fire and cold boosts Ice."
+      },
+      "league": {
+        "title": "This week's league",
+        "body": "Your team's points move you up, and a higher league brings bigger waves. Every Monday everyone goes back to Base League."
+      },
+      "energy": {
+        "title": "Energy",
+        "body": "Every action costs Energy, so fast Pokémon tire sooner. An exhausted Pokémon stops acting but still earns EXP. In the Box they recover 10% per hour."
+      },
+      "duration": {
+        "title": "Duration",
+        "body": "Pick 25, 50, 75 or 100 min, or any length from 15 to 120. Every full 25 minutes adds a wave, and long sessions attract rarer Pokémon."
+      },
+      "break": {
+        "title": "Resting counts too",
+        "body": "A complete break gives Energy back to your whole team. If you cut it short, it doesn't count."
+      },
+      "checklist": {
+        "title": "Getting started",
+        "body": "Six steps to learn PokeFocus. Close it whenever you like; you can bring it back in Settings."
+      }
+    },
+    "claim": {
+      "window": {
+        "title": "Claim in time",
+        "body": "You have 5 minutes to claim 100%. If you're late you get half, so leaving the timer running on its own doesn't pay off."
+      }
+    },
+    "results": {
+      "why": {
+        "title": "Where your points come from",
+        "body": "Each action gives points from the Pokémon's Output, multiplied by its type condition, its Bond and your Focus. Hover each tag for the details."
+      },
+      "levelUp": {
+        "title": "Level up!",
+        "body": "Leveling up improves its stats and can teach it techniques. At levels 15, 30 and 50 it gains a technique slot."
+      }
+    },
+    "waves": {
+      "hp": {
+        "title": "HP after the damage",
+        "body": "Your team already weakened these Pokémon with the energy it made while you studied. Less HP means an easier catch. It never drops below 5%."
+      },
+      "studyBall": {
+        "title": "Study Ball",
+        "body": "Each wave brings one that always catches a base-form Pokémon at level {{level}} or lower (the limit rises with your trainer level). It only works in this wave: move on without using it and it's lost."
+      },
+      "throw": {
+        "title": "Throw a Ball",
+        "body": "Pick a wild Pokémon and a Ball; you'll see the chance before throwing. If it fails, the Pokémon counterattacks your leader and drains its Energy."
+      },
+      "flee": {
+        "title": "Tries before it flees",
+        "body": "These squares are the misses it has left. When they run out, it flees. Legendaries that flee may come back in your next sessions."
+      },
+      "counter": {
+        "title": "Counterattack",
+        "body": "{{name}} lost {{damage}} Energy. Counterattacks hit the leader first and, if it's exhausted, the next one. A leader with high Grit takes them better."
+      },
+      "fled": {
+        "title": "It got away",
+        "body": "It used all its tries. That's fine: every session brings new waves. Lower HP or putting it to sleep helps next time."
+      },
+      "firstCatch": {
+        "title": "Your first catch!",
+        "body": "It's in your Box now. Between sessions you can add it to your team: up to 6 Pokémon study with you."
+      },
+      "charges": {
+        "title": "Technique charges",
+        "body": "Your team's techniques left effects to use here. Putting a Pokémon to sleep or paralyzing it makes the catch easier; swapping replaces it with another."
+      },
+      "shiny": {
+        "title": "Shiny",
+        "body": "Shiny Pokémon are very rare. With the right Ball, or a better one, the catch is guaranteed."
+      },
+      "next": {
+        "title": "Next wave",
+        "body": "Wild Pokémon you don't catch stay behind. Each wave brings its own Study Ball."
+      },
+      "iv": {
+        "title": "You can see quality",
+        "body": "A technique in your team reveals the quality (IVs) of wild Pokémon. Go for the ones with more stars."
+      }
+    },
+    "box": {
+      "intro": {
+        "title": "Your Box",
+        "body": "Every Pokémon you catch lives here. Tap one to open its page: techniques, candies, evolution and whether it joins the team."
+      },
+      "filters": {
+        "title": "Filter and sort",
+        "body": "Search by name, filter by type or role, and sort by level or quality (IVs) to find your best candidate."
+      },
+      "candies": {
+        "title": "Candies and Dust",
+        "body": "Candies give EXP to a Pokémon of their line (or type). Each one costs Study Dust, which you only earn by studying: studying stays in charge."
+      }
+    },
+    "detail": {
+      "techniques": {
+        "title": "Technique slots",
+        "body": "It has 1 to 4 slots depending on its level. Equip a damage technique to weaken wild Pokémon, or a passive or activable one to boost the session."
+      },
+      "candies": {
+        "title": "Level it up with candies",
+        "body": "Each candy gives EXP right away and costs Dust. They go a long way at low levels, great for catching up a new Pokémon."
+      },
+      "actions": {
+        "title": "Team, leader or release",
+        "body": "From here you add it to the team or make it the leader. Releasing duplicates gives you candies of their line."
+      },
+      "mastery": {
+        "title": "Mastery",
+        "body": "Each technique earns stars with the hours it spends equipped in sessions: 5 h, 15 h, 40 h and 100 h. More stars, higher chance to trigger. Remove it and it keeps its Mastery."
+      },
+      "extraMoves": {
+        "title": "Extra techniques",
+        "body": "Each individual has 2 or 3 random extra techniques. The strongest unlock at a higher level; until then they wait here."
+      },
+      "iv": {
+        "title": "Quality (IVs)",
+        "body": "Each individual is born with hidden values from 0 to 31 for each stat. Higher quality means better stats, especially at high levels. No two Bulbasaur are the same."
+      },
+      "stats": {
+        "title": "PokeFocus stats",
+        "body": "Each stat does something in your session: Pace is how often it acts, Output how many points it gives, Catch how much it weakens wild Pokémon. Hover each name to see it."
+      },
+      "levelCap": {
+        "title": "Level cap",
+        "body": "Your Pokémon can't go past the current cap. Catch different species to raise it: 25 species open Lv 40 and 45 open Lv 50. Extra EXP isn't lost."
+      },
+      "evolve": {
+        "title": "It can evolve!",
+        "body": "Evolving improves its stats and keeps its level, techniques and Mastery. Press Evolve whenever you're ready."
+      },
+      "energy": {
+        "title": "Daily Energy",
+        "body": "It's spent by acting and refills at 05:00. In the Box it recovers 10% per hour; in the team, only with breaks, techniques or potions."
+      },
+      "bond": {
+        "title": "Bond",
+        "body": "Grows with every minute it studies in your team, up to +20% points. Some species evolve with high Bond."
+      }
+    },
+    "team": {
+      "intro": {
+        "title": "Build your team",
+        "body": "Order your 6 with the arrows or add them from the Box. Mix roles: someone for points, someone for catching and someone who can take hits."
+      },
+      "leader": {
+        "title": "Pick the leader well",
+        "body": "It takes the counterattacks when a Ball fails. A leader with lots of Grit and Energy holds up better; check its type weaknesses too."
+      },
+      "order": {
+        "title": "Order matters",
+        "body": "The first one is the leader. If it's exhausted, counterattacks go to the next. The rest of the order doesn't change points."
+      },
+      "tired": {
+        "title": "Someone is tired",
+        "body": "An exhausted or sleeping Pokémon doesn't act in the session. Move it to the Box to recover Energy and add someone else."
+      }
+    },
+    "dex": {
+      "intro": {
+        "title": "Your Pokédex",
+        "body": "It records the 56 species of the pack. Those you see in a wave stay as a silhouette; those you catch, in color."
+      },
+      "cap": {
+        "title": "More species, higher levels",
+        "body": "Every different species you catch brings your whole team closer to the next level cap."
+      }
+    },
+    "league": {
+      "intro": {
+        "title": "This week's league",
+        "body": "Your team's points raise your league, and each league lets more wild Pokémon appear per wave. Every Monday everyone goes back to Base."
+      },
+      "stats": {
+        "title": "Your stats",
+        "body": "Hover each bar or point for details. The history below has every number."
+      },
+      "focus": {
+        "title": "Focus",
+        "body": "It measures how much you really studied (in the prototype the dev panel simulates it). It multiplies points, EXP and Dust, and each Pokémon's Grit softens drops."
+      }
+    },
+    "break": {
+      "why": {
+        "title": "A real break",
+        "body": "While it runs, step away from the screen. When it ends, collect the Energy for your team."
+      }
+    },
+    "settings": {
+      "audio": {
+        "title": "Your sound",
+        "body": "Set music and effects separately. You can keep music only during sessions, or mute it altogether."
+      }
+    },
+    "missions": {
+      "intro": {
+        "title": "Missions",
+        "body": "There are 3 daily and 3 weekly missions that renew by themselves, plus milestones for registering species. They advance as you study and catch; claim them here."
+      },
+      "ready": {
+        "title": "Mission complete!",
+        "body": "You have rewards waiting. Open Missions to claim them."
+      },
+      "pokedex": {
+        "title": "Pokédex milestones",
+        "body": "They complete once, when you catch 10, 25 and 50 different species. They give evolution stones and other items."
+      }
+    }
+  },
+  "technique": {
+    "kind": {
+      "damage": "Damage",
+      "passive": "Passive",
+      "activable": "Activable"
+    }
+  },
+  "iv": {
+    "title": "Quality (IVs)",
+    "short": "Quality",
+    "label": "Quality: {{word}}",
+    "tier": {
+      "0": "Weak",
+      "1": "Average",
+      "2": "Good",
+      "3": "Excellent",
+      "4": "Near perfect"
+    }
+  },
+  "bag": {
+    "title": "Bag",
+    "candies": "Candies",
+    "noCandies": "None yet. Catching gives 3 of that line and releasing gives 1 to 3.",
+    "lineCandy": "{{name}} candies",
+    "typeCandy": "{{type}} candies",
+    "items": "Items",
+    "noItems": "No items yet. Potions and stones will come with missions.",
+    "healHow": "Use it from a Pokémon's page"
+  },
+  "box": {
+    "count_one": "{{count}} Pokémon, {{team}} in your team.",
+    "count_other": "{{count}} Pokémon, {{team}} in your team.",
+    "search": "Search",
+    "searchPlaceholder": "Pokémon name",
+    "filter": {
+      "type": "Type",
+      "anyType": "All types",
+      "role": "Role",
+      "anyRole": "All roles",
+      "where": "Where it is",
+      "shiny": "Shiny only"
+    },
+    "where": {
+      "all": "All",
+      "team": "In team",
+      "box": "In box"
+    },
+    "sort": {
+      "label": "Sort by",
+      "recent": "Recent",
+      "level": "Level",
+      "species": "Pokédex no.",
+      "iv": "Quality (IVs)"
+    },
+    "clear": "Clear filters",
+    "gridLabel_one": "{{count}} Pokémon",
+    "gridLabel_other": "{{count}} Pokémon",
+    "inTeam": "in team",
+    "exhaustedShort": "exhausted",
+    "emptyMore": {
+      "title": "Your catches will land here",
+      "body": "Finish a session and throw Balls in the wave. Every Pokémon you catch shows up in the Box."
+    },
+    "noMatch": {
+      "title": "No Pokémon match",
+      "body": "Try another name, type or role, or clear the filters to see the whole Box."
+    }
+  },
+  "detail": {
+    "nav": "Browse the Box",
+    "back": "Back to the Box",
+    "prev": "Previous Pokémon",
+    "next": "Next Pokémon",
+    "gone": {
+      "title": "This Pokémon is gone",
+      "body": "Maybe you released it or it evolved in another tab. Go back to the Box to see the others."
+    },
+    "slot": "Slot {{n}}",
+    "expToNext": "{{exp}} EXP to go",
+    "addTeam": "Add to team",
+    "teamFull": "Team is full",
+    "removeTeam": "Move to Box",
+    "added": "{{name}} joined the team",
+    "removed": "{{name}} went back to the Box",
+    "release": "Release",
+    "releaseTip_one": "It goes back to the wild and gives you {{count}} candy of its line.",
+    "releaseTip_other": "It goes back to the wild and gives you {{count}} candies of its line.",
+    "releaseInTeam": "You can't release a team member. Move it to the Box first.",
+    "releaseTitle": "Release {{name}}?",
+    "releaseBody_one": "It goes back to the wild and you get {{count}} {{line}} candy. This can't be undone.",
+    "releaseBody_other": "It goes back to the wild and you get {{count}} {{line}} candies. This can't be undone.",
+    "releaseConfirm": "Release",
+    "released_one": "You released {{name}}: +{{count}} {{line}} candy",
+    "released_other": "You released {{name}}: +{{count}} {{line}} candies",
+    "lockedSession": "{{name}} is studying. You can change its techniques, use candies or evolve it when the session ends.",
+    "stats": "Stats",
+    "every": "Acts every {{time}} during a session.",
+    "perAction": "Gives about {{points}} points per action (before conditions and Focus).",
+    "techMult": "Its Technique multiplies its activable techniques ×{{mult}}.",
+    "nature": "Nature",
+    "neutral": "Neutral: raises and lowers nothing",
+    "ability": "Ability",
+    "noAbility": "Its species has no abilities in PokeFocus yet.",
+    "met": "Origin",
+    "starter": "Your first partner.",
+    "caughtWith": "Caught at Lv {{level}} with a {{ball}} on {{date}}."
+  },
+  "tech": {
+    "title": "Techniques",
+    "intro": "Equip techniques in its slots: damage ones make catch Energy, passive ones are always on, and activable ones can trigger on every action.",
+    "slotsLabel_one": "{{count}} technique slot",
+    "slotsLabel_other": "{{count}} technique slots",
+    "slotLocked": "Opens at level {{level}}",
+    "slotEmpty": "Free slot: equip a technique from below.",
+    "unequip": "Remove",
+    "equip": "Equip",
+    "swap": "Swap",
+    "replaceHere": "Replace this one",
+    "pickSlot": "Pick which technique {{move}} replaces.",
+    "equipped": "{{name}} equipped {{move}}",
+    "unequipped": "Removed {{move}}",
+    "replaced": "{{move}} replaced {{old}}",
+    "known": "Techniques it knows",
+    "noneMore": "Every technique it knows is equipped. It learns more as it levels up.",
+    "lockedTitle": "Still locked",
+    "unlocksAt": "Unlocks at level {{level}}",
+    "damageDesc": "Every action makes {{type}} catch Energy to weaken wild Pokémon.",
+    "power": "Power {{power}}",
+    "baseChance": "Base chance {{pct}} per action",
+    "effChance": "(now ≈ {{pct}})",
+    "limit_one": "Up to {{count}} time per session",
+    "limit_other": "Up to {{count}} times per session",
+    "limitWeek_one": "{{count}} time per week",
+    "limitWeek_other": "{{count}} times per week",
+    "masteryTitle": "Mastery {{stars}} of 5",
+    "masteryBody": "Equipped for {{hours}} h of sessions. Multiplies its chance ×{{mult}}.",
+    "masteryNext": "At {{hours}} h it reaches {{stars}} stars.",
+    "masteryAria": "Mastery: {{stars}} of 5 stars"
+  },
+  "candy": {
+    "title": "Level up",
+    "toNext": "EXP to Lv {{level}}",
+    "each": "+{{exp}} EXP each",
+    "less": "One fewer",
+    "more": "One more",
+    "use_one": "Use {{count}}",
+    "use_other": "Use {{count}}",
+    "reach": "It will reach Lv {{level}}.",
+    "reachSame": "Gets it closer to the next level.",
+    "noneOfThese": "You have none of these. Catch or release Pokémon of this line.",
+    "noDust": "Not enough Dust: each candy costs {{cost}} at this level.",
+    "costNote": "Each candy costs {{cost}} Dust at this level, and more as it levels up. You have {{dust}}.",
+    "used_one": "Used {{count}} candy on {{name}} (−{{dust}} Dust)",
+    "used_other": "Used {{count}} candies on {{name}} (−{{dust}} Dust)",
+    "levelUp": "{{name}} reached Lv {{level}}!",
+    "newMoves": "Learned {{moves}}",
+    "capTitle": "Max level for now: {{cap}}",
+    "capBody": "Catch {{species}} different species to raise the cap to {{cap}}. You have {{caught}}.",
+    "capMax": "That's the highest cap in this pack.",
+    "toDex": "Open the Pokédex"
+  },
+  "evo": {
+    "title": "Evolution",
+    "button": "Evolve",
+    "none": "{{name}} doesn't evolve.",
+    "final": "{{name}} is already in its final form.",
+    "itemHave": "You have {{count}}",
+    "cond": {
+      "level": "At level {{level}}",
+      "item": "With a stone",
+      "bond": "With high Bond",
+      "bondDay": "With high Bond, by day",
+      "bondNight": "With high Bond, at night",
+      "trade": "By trading",
+      "other": "With a special method"
+    },
+    "block": {
+      "level_one": "{{count}} more level to go.",
+      "level_other": "{{count}} more levels to go.",
+      "item": "You need a {{item}}. Stones will come with missions.",
+      "bond": "Needs +{{pct}} Bond (now +{{now}}). Keep studying with it in the team.",
+      "day": "Only by day (05:00 to 18:00).",
+      "night": "Only at night (18:00 to 05:00).",
+      "trade": "Trading will come with friends.",
+      "other": "Not available in the prototype yet."
+    },
+    "whatTitle": "What? {{name}} is evolving!",
+    "whatBody": "Keep watching…",
+    "doneTitle": "Congratulations!",
+    "doneBody": "Your {{from}} evolved into {{to}}! It keeps its level, techniques and Mastery."
+  },
+  "energy": {
+    "title": "Energy and Bond",
+    "actionsLeft_one": "Enough for about {{count}} action today.",
+    "actionsLeft_other": "Enough for about {{count}} actions today.",
+    "teamRegen": "In the team it doesn't recover by itself: it refills at 05:00 or with a break.",
+    "boxRegen": "In the Box it recovers {{pct}} per hour.",
+    "asleep": "Asleep from Rest: it won't act next session.",
+    "heal": "Heal",
+    "noHeal": "You have no potions. They will come with missions.",
+    "potionDesc": "Restores {{amount}} Energy",
+    "reviveDesc": "Exhausted to {{pct}} Energy",
+    "use": "Use",
+    "healed": "{{name}} recovered Energy with a {{item}}"
+  },
+  "bond": {
+    "title": "Bond",
+    "minutes": "{{hours}} h studying together",
+    "note": "Grows with every minute in the team, up to +{{max}} points."
+  },
+  "dex": {
+    "counts": "{{caught}} caught and {{seen}} seen of {{total}}.",
+    "capTitle": "Level cap",
+    "capStart": "at the start",
+    "capAt": "{{count}} species",
+    "capNext": "Your Pokémon can reach Lv {{cap}}. Catch {{need}} more species to raise the cap to {{next}}.",
+    "capTop": "Your Pokémon can reach Lv {{cap}}, the highest in this pack.",
+    "gridLabel": "Species in the pack",
+    "show": "Show",
+    "showAll": "All",
+    "showCaught": "Caught",
+    "showMissing": "Not caught",
+    "unknownName": "???",
+    "unknownBody": "You haven't seen it yet. It will show up in some wave: types with an active condition and your team's types appear more often.",
+    "state": {
+      "caught": "caught",
+      "seen": "seen",
+      "unknown": "not seen"
+    },
+    "owned_one": "You have {{count}} in your Box.",
+    "owned_other": "You have {{count}} in your Box.",
+    "caughtNone": "Caught before; you have none now.",
+    "seenOnly": "Seen in a wave, not caught yet.",
+    "line": "Evolution line",
+    "legendary": "Legendary",
+    "mythical": "Mythical"
+  },
+  "break": {
+    "offerTitle": "Take a break?",
+    "offerBody": "Get up, drink some water and stretch. If you finish the break, your team recovers {{pct}} of its Energy.",
+    "length": "Break length",
+    "start": "Start break",
+    "skip": "Not now",
+    "title_one": "{{count}}-minute break",
+    "title_other": "{{count}}-minute break",
+    "body": "Step away from the screen for a moment. Your team is resting too.",
+    "doneTitle": "Break complete",
+    "doneBody": "Well done! Collect your team's Energy and come back whenever you like.",
+    "progress": "Break time",
+    "collect": "Collect +{{pct}} Energy",
+    "early": "End early",
+    "earlyNote": "If you end it early, your team doesn't recover Energy.",
+    "healed": "Your team recovered {{pct}} Energy",
+    "ended": "Break ended without recovering Energy",
+    "tabTitle": "Break over | PokeFocus"
+  },
+  "checklist": {
+    "title": "Getting started",
+    "hide": "Hide getting started",
+    "progress": "Steps done",
+    "go": "Go",
+    "done": "(done)",
+    "allDone": "You finished getting started!",
+    "session": {
+      "title": "Finish your first session",
+      "how": "Pick 25 min and press Start."
+    },
+    "catch": {
+      "title": "Catch your first Pokémon",
+      "how": "After a session, use the Study Ball in the wave."
+    },
+    "team": {
+      "title": "Add a second team member",
+      "how": "In Team, pick someone from your Box."
+    },
+    "equip": {
+      "title": "Equip a technique",
+      "how": "Open a Pokémon's page and equip a technique in a slot."
+    },
+    "candy": {
+      "title": "Use a candy",
+      "how": "On its page, use candies and Dust to level it up."
+    },
+    "evolve": {
+      "title": "Evolve a Pokémon",
+      "how": "When it reaches its level, press Evolve on its page."
+    }
+  },
+  "missions": {
+    "title": "Missions",
+    "subtitle": "Small study and catch goals. Each one gives Balls, Dust, potions or other items when you claim it.",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "pokedex": "Pokédex milestones",
+    "renewsHours": "Renew in {{h}} h {{m}} min",
+    "renewsDays": "Renew in {{d}} d {{h}} h",
+    "claim": "Claim",
+    "claimAll_one": "Claim {{count}}",
+    "claimAll_other": "Claim all {{count}}",
+    "done": "Done",
+    "reward": "Reward:",
+    "none": "No missions right now.",
+    "claimed": "You claimed “{{title}}”",
+    "claimedAll_one": "You claimed {{count}} mission",
+    "claimedAll_other": "You claimed {{count}} missions",
+    "badge_one": "{{count}} mission ready",
+    "badge_other": "{{count}} missions ready"
   }
 }

@@ -8,6 +8,7 @@ import { evaluateWhen, type WhenContext } from './conditions'
 import type { TypeSlug } from './data-types'
 import { ofKind, passiveEffects, selfStatMult, teamCaptureMods, type TeamCaptureMods } from './effects'
 import { toOwnedPokemon } from './individual'
+import { recordMissionEvent } from './missions'
 import { trainerLevelFromExp } from './progression'
 import { chance, type Rng } from './rng'
 import { err, ok, type OwnedPokemon, type PlayerState, type Result, type WildPokemon, type EncounterState } from './state'
@@ -288,6 +289,7 @@ export function throwBall(
       encounter,
     }
     s = { ...s, trainer: { exp: s.trainer.exp, level: Math.max(s.trainer.level, trainerLevelFromExp(s.trainer.exp, ctx)) } }
+    s = recordMissionEvent(s, { kind: 'catch', types: sp.types, ball, firstThrow: wild.failedThrows === 0 }, now, ctx)
     return ok({ state: s, outcome: { kind: 'caught', uid, ball, chance: p, guaranteed } })
   }
 
@@ -343,14 +345,14 @@ export function applyStatusCharge(state: PlayerState, chargeId: string, ref: Wil
   return ok({ ...state, encounter: { ...next, charges: enc.charges.filter((c) => c.id !== chargeId) } })
 }
 
-/** Use a reroll charge: replace a wild with a freshly rolled one (same wave energy). */
+/** Use a reroll charge: replace a wild with a freshly rolled one (it takes the hits aimed at that slot). */
 export function rerollWild(state: PlayerState, chargeId: string, ref: WildRef, rng: Rng, ctx: EngineContext = defaultContext()): Result<PlayerState, ChargeError> {
   const r = chargeTarget(state, chargeId, 'reroll', ref)
   if (!r.ok) return r
   const { enc } = r.value
   const wave = enc.waves[ref.waveIndex]
   if (!wave) return err('unknown_wild')
-  const fresh = rollWild(rng, { waveIndex: ref.waveIndex, gen: enc.gen, activeConditionTypes: wave.activeConditionTypes, contributions: wave.contributions }, ctx)
+  const fresh = rollWild(rng, { waveIndex: ref.waveIndex, gen: enc.gen, activeConditionTypes: wave.activeConditionTypes, contributions: wave.contributions, hits: wave.hits, slot: ref.wildIndex }, ctx)
   let next = replaceWild(enc, ref, fresh)
   let inventory = state.inventory
   const nw = next.waves[ref.waveIndex]

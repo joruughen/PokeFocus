@@ -7,15 +7,19 @@
 import { gameData as shippedData } from '../data/index'
 import abilitiesJson from '../data/game/custom-abilities.json'
 import techniquesJson from '../data/game/custom-techniques.json'
+import missionsJson from '../data/game/custom-missions.json'
 import { buildConfig, type GameConfig, type GameConfigOverrides } from './config'
 import type { GameData, Move, Nature, Species, TypeChart } from './data-types'
 import { EFFECT_KINDS, type AbilityDef, type TechniqueDef } from './effect-types'
+import { MISSION_KINDS, type MissionsContent } from './missions'
 
 export interface EngineContext {
   config: GameConfig
   data: GameData
   techniques: Record<string, TechniqueDef>
   abilities: Record<string, AbilityDef>
+  /** Mission pool and Pokédex milestones (custom-missions.json). */
+  missions: MissionsContent
   speciesBySlug: Map<string, Species>
   speciesById: Map<number, Species>
   movesBySlug: Map<string, Move>
@@ -30,6 +34,7 @@ export interface ContextOptions {
   data?: GameData
   techniques?: Record<string, TechniqueDef>
   abilities?: Record<string, AbilityDef>
+  missions?: MissionsContent
 }
 
 function stripNotes<T>(obj: Record<string, unknown>): Record<string, T> {
@@ -53,11 +58,15 @@ export function createEngineContext(opts: ContextOptions = {}): EngineContext {
   for (const [slug, a] of Object.entries(abilities)) {
     for (const e of a.effects) if (!known.has(e.kind)) warnings.push(`ability ${slug}: unknown effect kind ${e.kind}`)
   }
+  const missions = opts.missions ?? (missionsJson as unknown as MissionsContent)
+  const kinds = new Set<string>(MISSION_KINDS)
+  for (const d of missions.pool) if (!kinds.has(d.kind)) warnings.push(`mission ${d.id}: unknown kind ${d.kind}`)
   return {
     config: buildConfig(opts.config),
     data,
     techniques,
     abilities,
+    missions,
     speciesBySlug: new Map(data.species.map((s) => [s.slug, s])),
     speciesById: new Map(data.species.map((s) => [s.id, s])),
     movesBySlug,

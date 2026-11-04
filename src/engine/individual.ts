@@ -105,3 +105,19 @@ export function toOwnedPokemon(
     metLevel: core.level,
   }
 }
+
+/**
+ * IV quality of an individual (GDD §6.1), for the box sort, the detail sheet
+ * and the wild "reveal IVs" effect. `tier` 0–4: 0 under 25% of the max total,
+ * 1 under 50%, 2 under 75%, 3 under 95%, 4 from 95% (near perfect).
+ * `best` lists the stats at ivMax.
+ */
+export function ivQuality(ivs: BaseStats, ctx: EngineContext = defaultContext()): { total: number; max: number; fraction: number; tier: 0 | 1 | 2 | 3 | 4; best: (keyof BaseStats)[] } {
+  const ivMax = ctx.config.progression.ivMax
+  const keys = Object.keys(ivs) as (keyof BaseStats)[]
+  const total = keys.reduce((a, k) => a + ivs[k], 0)
+  const max = ivMax * 6
+  const fraction = max > 0 ? total / max : 0
+  const tier = fraction >= 0.95 ? 4 : fraction >= 0.75 ? 3 : fraction >= 0.5 ? 2 : fraction >= 0.25 ? 1 : 0
+  return { total, max, fraction, tier, best: keys.filter((k) => ivs[k] >= ivMax) }
+}

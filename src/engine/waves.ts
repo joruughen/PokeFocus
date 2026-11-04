@@ -1,13 +1,13 @@
 /**
- * Encounters (GDD §10) and session-energy damage (GDD §11.3).
+ * Encounters (GDD §10) and wild damage (GDD §11.3: classic damage formula per action).
  */
 import type { BallSlug, GameConfig, LeagueId } from './config'
 import { defaultContext, getSpecies, getSpeciesById, type EngineContext } from './context'
 import type { Species, TypeChart, TypeSlug } from './data-types'
 import { createIndividual, isLegendarySpecies } from './individual'
 import { chance, pick, randInt, weightedPick, type Rng } from './rng'
-import type { EnergyContribution, WaveGenParams, WildPokemon } from './state'
-import { maxEnergyOf } from './stats'
+import type { EnergyContribution, IndividualCore, WaveGenParams, WaveHit, WildPokemon } from './state'
+import { computeStats } from './stats'
 
 // --- Type chart --------------------------------------------------------------
 
@@ -43,10 +43,13 @@ export function blockIndexAt(seconds: number, waves: number, cfg: GameConfig): n
   return Math.min(waves - 1, Math.floor(seconds / (cfg.session.waveMinutes * 60)))
 }
 
-/** Wave size: base ± jitter + extra − (focus < 0.5), min 3, max by league. */
+/**
+ * Wave size: base + league bonus ± jitter + extra − (focus < 0.5), min 3,
+ * max by league. `leagueWaveBonus` rewards climbing leagues within the week.
+ */
 export function rollWaveSize(rng: Rng, focus: number, league: LeagueId, extraWild: number, cfg: GameConfig): number {
   const e = cfg.encounters
-  let size = e.baseWaveSize + randInt(rng, -e.waveSizeJitter, e.waveSizeJitter) + extraWild
+  let size = e.baseWaveSize + (e.leagueWaveBonus?.[league] ?? 0) + randInt(rng, -e.waveSizeJitter, e.waveSizeJitter) + extraWild
   if (focus < e.lowFocusThreshold) size -= 1
   size = Math.max(e.minWaveSize, size)
   return Math.min(size, e.leagueMaxWaveSize[league])
@@ -104,12 +107,84 @@ export function ballCovers(ball: BallSlug, needed: BallSlug | null): boolean {
   return needed !== null && BALL_ORDER.indexOf(ball) >= BALL_ORDER.indexOf(needed)
 }
 
-/** Study Ball eligibility: base form, not legendary/mythical, level ≤ studyBallMaxLevel. */
-export function isStudyBallEligible(sp: Species, level: number, cfg: GameConfig): boolean {
-  return sp.stage === 1 && !isLegendarySpecies(sp) && level <= cfg.encounters.studyBallMaxLevel
+/**
+ * Highest level the Study Ball accepts for a trainer level:
+ * max(studyBallMaxLevel, wild range min + studyBallLevelMargin).
+ */
+export function studyBallMaxLevelFor(trainerLevel: number, cfg: GameConfig): number {
+  const e = cfg.encounters
+  return Math.max(e.studyBallMaxLevel, wildLevelRange(trainerLevel, cfg).min + (e.studyBallLevelMargin ?? 0))
 }
 
-/** Damage = Σ energy · effectiveness (per contributor's floors). */
+/**
+ * Study Ball eligibility: base form, not legendary/mythical, level ≤
+ * `studyBallMaxLevelFor(trainerLevel)` (trainer level 1 when omitted).
+ */
+export function isStudyBallEligible(sp: Species, level: number, cfg: GameConfig, trainerLevel = 1): boolean {
+  return sp.stage === 1 && !isLegendarySpecies(sp) && level <= studyBallMaxLevelFor(trainerLevel, cfg)
+}
+
+/** Same-type attack bonus of the capture damage formula. */
+export const STAB_MULT = 1.5
+
+/**
+ * Level sync: against a weaker wild the attacker fights at most at
+ * `wildLevel · levelSync.ratio + levelSync.gap` (its Attack scales with it).
+ */
+export function syncedLevel(attackerLevel: number, wildLevel: number, cfg: GameConfig): number {
+  const ls = cfg.capture.levelSync
+  if (!ls) return attackerLevel
+  return Math.max(1, Math.min(attackerLevel, wildLevel * ls.ratio + ls.gap))
+}
+
+/** Classic damage core: ((2·L/5 + 2) · Power · A / D / 50 + 2). */
+export function classicDamage(level: number, power: number, attack: number, defense: number): number {
+  return (((2 * level) / 5 + 2) * power * attack) / Math.max(1, defense) / 50 + 2
+}
+
+/**
+ * Damage of one hit group on a wild (GDD §11.3): classicDamage(L, Power, A, D)
+ * · STAB · effectiveness (with the attacker's floors) · captureDamageScale · units.
+ * D = wild Defense (physical) or Sp. Def (special).
+ */
+export function hitDamage(
+  hit: WaveHit,
+  wildStats: { defense: number; specialDefense: number },
+  wildLevel: number,
+  wildTypes: readonly TypeSlug[],
+  legendary: boolean,
+  ctx: EngineContext = defaultContext(),
+): number {
+  const D = hit.damageClass === 'special' ? wildStats.specialDefense : wildStats.defense
+  const units = legendary ? hit.unitsVsLegendary : hit.units
+  if (units <= 0) return 0
+  const level = syncedLevel(hit.level, wildLevel, ctx.config)
+  const attack = hit.attack * (level / Math.max(1, hit.level))
+  return (
+    classicDamage(level, hit.power, attack, D) *
+    (hit.stab ? STAB_MULT : 1) *
+    typeEffectiveness(hit.type, wildTypes, ctx.chart, hit.effectivenessFloors) *
+    ctx.config.capture.captureDamageScale *
+    units
+  )
+}
+
+/** Total damage of a wave's hits aimed at the wild in slot `target`. */
+export function damageFromHits(
+  hits: readonly WaveHit[],
+  target: number,
+  wild: Pick<IndividualCore, 'speciesSlug' | 'level' | 'ivs' | 'nature'>,
+  legendary: boolean,
+  ctx: EngineContext = defaultContext(),
+): number {
+  const stats = computeStats(wild, ctx)
+  const types = getSpecies(wild.speciesSlug, ctx).types
+  let dmg = 0
+  for (const h of hits) if (h.target === target) dmg += hitDamage(h, stats, wild.level, types, legendary, ctx)
+  return dmg
+}
+
+/** Legacy damage model (encounters saved before WaveHit): Σ energy · effectiveness. */
 export function computeDamage(contributions: readonly EnergyContribution[], wildTypes: readonly TypeSlug[], legendary: boolean, chart: TypeChart): number {
   let dmg = 0
   for (const c of contributions) {
@@ -129,6 +204,10 @@ export interface RollWildParams {
   gen: WaveGenParams
   activeConditionTypes: readonly TypeSlug[]
   contributions: readonly EnergyContribution[]
+  /** Hits of the wave (classic damage model). When given, damage = hits aimed at `slot`. */
+  hits?: readonly WaveHit[]
+  /** Index this wild takes in the wave (target of `hits`). */
+  slot?: number
   /** Force a species (roaming legendaries). */
   forceSpecies?: string
   isRoaming?: boolean
@@ -178,8 +257,8 @@ export function rollWild(rng: Rng, p: RollWildParams, ctx: EngineContext = defau
   const nature = p.gen.syncNature && chance(rng, p.gen.syncNature.chance) ? p.gen.syncNature.nature : undefined
   const core = createIndividual(sp.slug, level, rng, { shiny: isShiny, nature }, ctx)
   const legendary = isLegendarySpecies(sp)
-  const maxHp = maxEnergyOf(core, ctx)
-  const damage = computeDamage(p.contributions, sp.types, legendary, ctx.chart)
+  const maxHp = computeStats(core, ctx).hp
+  const damage = p.hits ? damageFromHits(p.hits, p.slot ?? 0, core, legendary, ctx) : computeDamage(p.contributions, sp.types, legendary, ctx.chart)
   return {
     ...core,
     isLegendary: legendary,
@@ -188,7 +267,7 @@ export function rollWild(rng: Rng, p: RollWildParams, ctx: EngineContext = defau
     damage,
     hpFraction: hpFractionAfter(damage, maxHp, cfg),
     status: null,
-    studyBallEligible: isStudyBallEligible(sp, level, cfg),
+    studyBallEligible: isStudyBallEligible(sp, level, cfg, p.gen.trainerLevel),
     guaranteedBall: shinyGuaranteeBall(sp, level, isShiny, cfg),
     failedThrows: 0,
     nextThrowBonus: 1,
