@@ -1,0 +1,645 @@
+{
+  "_note": "Técnicas especiales (GDD §7.1). La clave es el slug del movimiento en PokeAPI. Los movimientos de daño (potencia > 0) que no estén aquí son técnicas de daño genéricas. Los movimientos de estado que no estén aquí no se pueden equipar ni se muestran. Primitivas de efecto: ver docs/effects.md.",
+  "calm-mind": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "points",
+        "mult": 1.3,
+        "scope": "self",
+        "when": {
+          "sessionMinMinutes": 50
+        }
+      }
+    ],
+    "description": {
+      "es": "+30% de puntos en sesiones de 50 min o más.",
+      "en": "+30% points in sessions of 50 min or longer."
+    }
+  },
+  "meditate": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+15% de Energía de captura.",
+      "en": "+15% catch energy."
+    }
+  },
+  "bulk-up": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+15% de Energía de captura.",
+      "en": "+15% catch energy."
+    }
+  },
+  "teleport": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "lateClaimImmune"
+      }
+    ],
+    "description": {
+      "es": "Reclamar tarde no reduce lo que genera este Pokémon.",
+      "en": "Claiming late doesn't reduce what this Pokémon earns."
+    }
+  },
+  "amnesia": {
+    "category": "passive",
+    "limitPerWeek": 1,
+    "effects": [
+      {
+        "kind": "streakProtect"
+      }
+    ],
+    "description": {
+      "es": "Si un día no estudias, protege tu racha (1 vez por semana).",
+      "en": "Protects your streak if you skip a day (once a week)."
+    }
+  },
+  "focus-energy": {
+    "category": "activable",
+    "baseChance": 0.04,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "pointsBurst",
+        "actions": 5,
+        "mult": 2
+      }
+    ],
+    "description": {
+      "es": "Sus 5 acciones siguientes dan el doble de puntos.",
+      "en": "Its next 5 actions earn double points."
+    }
+  },
+  "rain-dance": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "water"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Agua para todo el equipo el resto de la sesión.",
+      "en": "Activates the Water condition for the whole team for the rest of the session."
+    }
+  },
+  "sunny-day": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "fire"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Fuego para todo el equipo el resto de la sesión.",
+      "en": "Activates the Fire condition for the whole team for the rest of the session."
+    }
+  },
+  "hail": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "ice"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Hielo para todo el equipo el resto de la sesión.",
+      "en": "Activates the Ice condition for the whole team for the rest of the session."
+    }
+  },
+  "sweet-scent": {
+    "category": "activable",
+    "baseChance": 0.04,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "extraWild",
+        "count": 1
+      }
+    ],
+    "description": {
+      "es": "Atrae a 1 Pokémon salvaje más a una oleada.",
+      "en": "Attracts 1 extra wild Pokémon to a wave."
+    }
+  },
+  "hypnosis": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "sleep"
+      }
+    ],
+    "description": {
+      "es": "Duerme a un salvaje que elijas (×2.5 a la captura).",
+      "en": "Puts a wild Pokémon of your choice to sleep (×2.5 catch rate)."
+    }
+  },
+  "sleep-powder": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "sleep"
+      }
+    ],
+    "description": {
+      "es": "Duerme a un salvaje que elijas (×2.5 a la captura).",
+      "en": "Puts a wild Pokémon of your choice to sleep (×2.5 catch rate)."
+    }
+  },
+  "yawn": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "sleep"
+      }
+    ],
+    "description": {
+      "es": "Duerme a un salvaje que elijas (×2.5 a la captura).",
+      "en": "Puts a wild Pokémon of your choice to sleep (×2.5 catch rate)."
+    }
+  },
+  "thunder-wave": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "paralysis"
+      }
+    ],
+    "description": {
+      "es": "Paraliza a un salvaje que elijas (×1.5 a la captura).",
+      "en": "Paralyzes a wild Pokémon of your choice (×1.5 catch rate)."
+    }
+  },
+  "stun-spore": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "paralysis"
+      }
+    ],
+    "description": {
+      "es": "Paraliza a un salvaje que elijas (×1.5 a la captura).",
+      "en": "Paralyzes a wild Pokémon of your choice (×1.5 catch rate)."
+    }
+  },
+  "roar": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "rerollWild"
+      }
+    ],
+    "description": {
+      "es": "Permite cambiar un salvaje de una oleada por otro.",
+      "en": "Lets you swap one wild Pokémon in a wave for another."
+    }
+  },
+  "whirlwind": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "rerollWild"
+      }
+    ],
+    "description": {
+      "es": "Permite cambiar un salvaje de una oleada por otro.",
+      "en": "Lets you swap one wild Pokémon in a wave for another."
+    }
+  },
+  "recover": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "self"
+      }
+    ],
+    "description": {
+      "es": "Recupera el 50% de su Energía.",
+      "en": "Restores 50% of its Energy."
+    }
+  },
+  "roost": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "self"
+      }
+    ],
+    "description": {
+      "es": "Recupera el 50% de su Energía.",
+      "en": "Restores 50% of its Energy."
+    }
+  },
+  "synthesis": {
+    "category": "activable",
+    "baseChance": 0.09,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "self",
+        "when": {
+          "timeWindow": "daylight"
+        }
+      },
+      {
+        "kind": "heal",
+        "pct": 0.25,
+        "target": "self",
+        "when": {
+          "timeWindow": "notDaylight"
+        }
+      }
+    ],
+    "description": {
+      "es": "Recupera el 50% de su Energía de día y el 25% de noche.",
+      "en": "Restores 50% of its Energy by day, 25% at night."
+    }
+  },
+  "morning-sun": {
+    "category": "activable",
+    "baseChance": 0.09,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "self",
+        "when": {
+          "timeWindow": "daylight"
+        }
+      },
+      {
+        "kind": "heal",
+        "pct": 0.25,
+        "target": "self",
+        "when": {
+          "timeWindow": "notDaylight"
+        }
+      }
+    ],
+    "description": {
+      "es": "Recupera el 50% de su Energía de día y el 25% de noche.",
+      "en": "Restores 50% of its Energy by day, 25% at night."
+    }
+  },
+  "moonlight": {
+    "category": "activable",
+    "baseChance": 0.09,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "self",
+        "when": {
+          "timeWindow": "night"
+        }
+      },
+      {
+        "kind": "heal",
+        "pct": 0.25,
+        "target": "self",
+        "when": {
+          "timeWindow": "notNight"
+        }
+      }
+    ],
+    "description": {
+      "es": "Recupera el 50% de su Energía de noche y el 25% de día.",
+      "en": "Restores 50% of its Energy at night, 25% by day."
+    }
+  },
+  "rest": {
+    "category": "activable",
+    "baseChance": 0.1,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "restFullHeal"
+      }
+    ],
+    "description": {
+      "es": "Recupera toda su Energía, pero no actuará en la sesión siguiente.",
+      "en": "Fully restores its Energy, but it won't act next session."
+    }
+  },
+  "wish": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "lowestAlly",
+        "timing": "nextSessionStart"
+      }
+    ],
+    "description": {
+      "es": "Al empezar la próxima sesión, cura el 50% al compañero con menos Energía.",
+      "en": "At the start of the next session, heals 50% to the teammate with the least Energy."
+    }
+  },
+  "heal-bell": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.2,
+        "target": "team"
+      }
+    ],
+    "description": {
+      "es": "Cura el 20% de Energía a todo el equipo.",
+      "en": "Heals 20% Energy to the whole team."
+    }
+  },
+  "aqua-ring": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "healOverTime",
+        "pctPerAction": 0.05
+      }
+    ],
+    "description": {
+      "es": "Recupera un 5% de Energía tras cada acción el resto de la sesión.",
+      "en": "Restores 5% Energy after each action for the rest of the session."
+    }
+  },
+  "ingrain": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "healOverTime",
+        "pctPerAction": 0.05
+      }
+    ],
+    "description": {
+      "es": "Recupera un 5% de Energía tras cada acción el resto de la sesión.",
+      "en": "Restores 5% Energy after each action for the rest of the session."
+    }
+  },
+  "agility": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "pace",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+15% de Ritmo (actúa más a menudo).",
+      "en": "+15% Pace (acts more often)."
+    }
+  },
+  "nasty-plot": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "points",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+15% de puntos.",
+      "en": "+15% points."
+    }
+  },
+  "growth": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "points",
+        "mult": 1.2,
+        "scope": "self",
+        "when": {
+          "timeWindow": "daylight"
+        }
+      }
+    ],
+    "description": {
+      "es": "+20% de puntos de día.",
+      "en": "+20% points during the day."
+    }
+  },
+  "dragon-dance": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "pace",
+        "mult": 1.1,
+        "scope": "self"
+      },
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.1,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+10% de Ritmo y de Energía de captura.",
+      "en": "+10% Pace and catch energy."
+    }
+  },
+  "helping-hand": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "points",
+        "mult": 1.05,
+        "scope": "team"
+      }
+    ],
+    "description": {
+      "es": "+5% de puntos a todo el equipo (no se acumula).",
+      "en": "+5% points for the whole team (doesn't stack)."
+    }
+  },
+  "baton-pass": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "techChance",
+        "mult": 1.1,
+        "scope": "team"
+      }
+    ],
+    "description": {
+      "es": "+10% de probabilidad de técnicas a todo el equipo (no se acumula).",
+      "en": "+10% technique chance for the whole team (doesn't stack)."
+    }
+  },
+  "protect": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.6,
+        "scope": "self",
+        "when": {
+          "isLeader": true
+        }
+      }
+    ],
+    "description": {
+      "es": "Como líder, recibe un 40% menos de daño de los contraataques.",
+      "en": "As leader, takes 40% less counterattack damage."
+    }
+  },
+  "detect": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.6,
+        "scope": "self",
+        "when": {
+          "isLeader": true
+        }
+      }
+    ],
+    "description": {
+      "es": "Como líder, recibe un 40% menos de daño de los contraataques.",
+      "en": "As leader, takes 40% less counterattack damage."
+    }
+  },
+  "safeguard": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.85,
+        "scope": "team"
+      }
+    ],
+    "description": {
+      "es": "Todo el equipo recibe un 15% menos de daño de los contraataques (no se acumula).",
+      "en": "The whole team takes 15% less counterattack damage (doesn't stack)."
+    }
+  },
+  "mean-look": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "maxFailedThrows",
+        "add": 1
+      }
+    ],
+    "description": {
+      "es": "Los salvajes aguantan 1 lanzamiento fallido más antes de escapar (no se acumula).",
+      "en": "Wild Pokémon stay for 1 more failed throw before fleeing (doesn't stack)."
+    }
+  },
+  "block": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "maxFailedThrows",
+        "add": 1
+      }
+    ],
+    "description": {
+      "es": "Los salvajes aguantan 1 lanzamiento fallido más antes de escapar (no se acumula).",
+      "en": "Wild Pokémon stay for 1 more failed throw before fleeing (doesn't stack)."
+    }
+  },
+  "foresight": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "revealWildIvs"
+      }
+    ],
+    "description": {
+      "es": "Muestra la calidad (IVs) de los salvajes antes de lanzar.",
+      "en": "Shows wild Pokémon quality (IVs) before throwing."
+    }
+  },
+  "odor-sleuth": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "revealWildIvs"
+      }
+    ],
+    "description": {
+      "es": "Muestra la calidad (IVs) de los salvajes antes de lanzar.",
+      "en": "Shows wild Pokémon quality (IVs) before throwing."
+    }
+  }
+}

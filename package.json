@@ -1,0 +1,39 @@
+{
+  "name": "pokefocus",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "import:pokeapi": "tsx scripts/import-pokeapi.ts",
+    "build:data": "tsx scripts/build-data.ts",
+    "download:sprites": "tsx scripts/download-sprites.ts"
+  },
+  "dependencies": {
+    "@floating-ui/react-dom": "^2.1.9",
+    "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
+    "@fontsource/jersey-10": "^5.3.0",
+    "@fontsource/pixelify-sans": "^5.3.0",
+    "i18next": "^26.7.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-i18next": "^17.1.12",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "tailwindcss": "^4.3.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  }
+}

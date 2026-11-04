@@ -1,0 +1,16 @@
+# dependencies
+node_modules
+
+# build output
+dist
+*.tsbuildinfo
+
+# raw PokeAPI responses (see scripts/import-pokeapi.ts)
+data/cache
+
+# logs / editor
+*.log
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea

@@ -1,0 +1,78 @@
+{
+  "_note": "Curación del Pack 1 (GDD §20.1, capa 2). 'role' es el papel principal del Pokémon en PokeFocus y se muestra en la UI. Roles: scholar (Rendimiento/puntos), hunter (Captura), sprinter (Ritmo), marathoner (Energía), technician (Técnica), guardian (Aguante, buen líder), support (curación del equipo), allrounder. Regla aplicada: mínimo de Ataque Esp. (Rendimiento) por etapa final ≥ 75, intermedia ≥ 55, base ≥ 35 (salvo Caterpie/Metapod, que evolucionan muy pronto). Legendarios: techo de 135 en cualquier stat.",
+
+  "bulbasaur": { "role": "technician" },
+  "ivysaur": { "role": "technician" },
+  "venusaur": { "role": "technician", "_note": "Somnífero + Síntesis: debilita y se cura solo." },
+
+  "charmander": { "role": "scholar" },
+  "charmeleon": { "role": "scholar" },
+  "charizard": { "role": "scholar" },
+
+  "squirtle": { "role": "guardian" },
+  "wartortle": { "role": "guardian" },
+  "blastoise": { "role": "guardian", "_note": "Líder natural: Def/DefEsp altas + Protección." },
+
+  "caterpie": { "role": "allrounder", "_note": "Débil a propósito: evoluciona a nivel 7." },
+  "metapod": { "role": "guardian", "_note": "Sin técnicas de daño: genera Energía Normal al 50%. Evoluciona a nivel 10." },
+  "butterfree": { "role": "technician", "_note": "Paralizador + Somnífero + Remolino: el mejor preparador de capturas temprano." },
+
+  "pidgey": { "role": "sprinter" },
+  "pidgeotto": { "role": "sprinter", "baseStats": { "specialAttack": 55 }, "_note": "AtEsp 50 → 55 (mínimo etapa intermedia)." },
+  "pidgeot": { "role": "sprinter", "baseStats": { "specialAttack": 80 }, "_note": "AtEsp 70 → 80 para que su Ritmo se traduzca en puntos." },
+
+  "pikachu": { "role": "sprinter" },
+  "raichu": { "role": "sprinter" },
+
+  "sandshrew": { "role": "hunter", "baseStats": { "specialAttack": 35 }, "_note": "AtEsp 20 → 35 (mínimo base)." },
+  "sandslash": { "role": "hunter", "baseStats": { "specialAttack": 75, "defense": 100 }, "_note": "AtEsp 45 → 75; Def 110 → 100 para no eclipsar a Golem como líder." },
+
+  "clefairy": { "role": "support" },
+  "clefable": { "role": "support", "_note": "Luz Lunar / Campana Cura + Guardia Amiga: sostiene al equipo." },
+
+  "zubat": { "role": "sprinter", "baseStats": { "specialAttack": 40 }, "_note": "AtEsp 30 → 40." },
+  "golbat": { "role": "sprinter", "baseStats": { "specialAttack": 65 }, "_note": "AtEsp 65 se mantiene (≥ 55)." },
+  "crobat": { "role": "sprinter", "baseStats": { "specialAttack": 80 }, "_note": "AtEsp 70 → 80." },
+
+  "abra": { "role": "scholar", "baseStats": { "hp": 30 }, "_note": "PS 25 → 30: frágil pero jugable una sesión entera." },
+  "kadabra": { "role": "scholar" },
+  "alakazam": { "role": "scholar", "_note": "Máximo Rendimiento del pack no legendario, pero poca Energía: se agota en días largos." },
+
+  "machop": { "role": "hunter", "baseStats": { "specialAttack": 40 }, "_note": "AtEsp 35 → 40." },
+  "machoke": { "role": "hunter", "baseStats": { "specialAttack": 58 }, "_note": "AtEsp 50 → 58." },
+  "machamp": { "role": "hunter", "baseStats": { "specialAttack": 80 }, "_note": "AtEsp 65 → 80: el mejor cazador sin quedar fuera del ranking." },
+
+  "geodude": { "role": "guardian", "baseStats": { "specialAttack": 40 }, "_note": "AtEsp 30 → 40." },
+  "graveler": { "role": "guardian", "baseStats": { "specialAttack": 58 }, "_note": "AtEsp 45 → 58." },
+  "golem": { "role": "guardian", "baseStats": { "specialAttack": 78 }, "_note": "AtEsp 55 → 78. Robustez + Def alta: el líder más seguro." },
+
+  "magnemite": { "role": "scholar", "baseStats": { "hp": 35 }, "_note": "PS 25 → 35." },
+  "magneton": { "role": "scholar" },
+
+  "gastly": { "role": "scholar" },
+  "haunter": { "role": "scholar" },
+  "gengar": { "role": "scholar", "_note": "Estudioso nocturno con Hipnosis." },
+
+  "eevee": { "role": "allrounder" },
+  "vaporeon": { "role": "marathoner", "baseStats": { "hp": 120 }, "_note": "PS 130 → 120 (la curva global ya comprime; evita que sea obligatorio)." },
+  "jolteon": { "role": "sprinter" },
+  "flareon": { "role": "hunter" },
+  "espeon": { "role": "scholar" },
+  "umbreon": { "role": "guardian", "baseStats": { "specialAttack": 75 }, "_note": "AtEsp 60 → 75." },
+
+  "dratini": { "role": "allrounder" },
+  "dragonair": { "role": "allrounder" },
+  "dragonite": { "role": "allrounder", "_note": "Pseudolegendario: bueno en todo, requiere racha (Dragón)." },
+
+  "houndour": { "role": "scholar" },
+  "houndoom": { "role": "scholar" },
+
+  "swinub": { "role": "marathoner", "baseStats": { "specialAttack": 40 }, "_note": "AtEsp 30 → 40." },
+  "piloswine": { "role": "marathoner", "baseStats": { "specialAttack": 75 }, "_note": "AtEsp 60 → 75. Etapa final dentro del Pack 1 (Mamoswine no está)." },
+
+  "articuno": { "role": "technician", "baseStats": { "specialDefense": 125 } },
+  "zapdos": { "role": "scholar" },
+  "moltres": { "role": "scholar" },
+  "mewtwo": { "role": "scholar", "baseStats": { "specialAttack": 135 }, "_note": "AtEsp 154 → 135 (techo legendario)." },
+  "mew": { "role": "allrounder", "_note": "100 en todo y el repertorio más amplio: el comodín definitivo." }
+}

@@ -1,0 +1,210 @@
+{
+  "_note": "Habilidades con efecto definido (GDD §6.3). Solo las habilidades presentes aquí existen en el juego: las demás nunca se muestran ni salen en salvajes. Efectos con scope 'team' no se acumulan entre miembros (se aplica el mayor).",
+  "overgrow": {
+    "effects": [{ "kind": "statMod", "stat": "points", "mult": 1.3, "scope": "self", "when": { "energyBelow": 0.33 } }],
+    "description": { "es": "+30% de puntos cuando le queda menos de un tercio de Energía.", "en": "+30% points when below a third of its Energy." }
+  },
+  "blaze": {
+    "effects": [{ "kind": "statMod", "stat": "points", "mult": 1.3, "scope": "self", "when": { "energyBelow": 0.33 } }],
+    "description": { "es": "+30% de puntos cuando le queda menos de un tercio de Energía.", "en": "+30% points when below a third of its Energy." }
+  },
+  "torrent": {
+    "effects": [{ "kind": "statMod", "stat": "points", "mult": 1.3, "scope": "self", "when": { "energyBelow": 0.33 } }],
+    "description": { "es": "+30% de puntos cuando le queda menos de un tercio de Energía.", "en": "+30% points when below a third of its Energy." }
+  },
+  "chlorophyll": {
+    "effects": [{ "kind": "statMod", "stat": "pace", "mult": 1.2, "scope": "self", "when": { "timeWindow": "daylight" } }],
+    "description": { "es": "+20% de Ritmo de día.", "en": "+20% Pace during the day." }
+  },
+  "solar-power": {
+    "effects": [
+      { "kind": "statMod", "stat": "points", "mult": 1.25, "scope": "self", "when": { "weather": "sun" } },
+      { "kind": "statMod", "stat": "energyCost", "mult": 1.15, "scope": "self", "when": { "weather": "sun" } }
+    ],
+    "description": { "es": "Con sol: +25% de puntos, pero gasta un 15% más de Energía.", "en": "In sun: +25% points, but uses 15% more Energy." }
+  },
+  "rain-dish": {
+    "effects": [{ "kind": "heal", "pct": 0.2, "target": "self", "timing": "sessionEnd", "when": { "weather": "rain" } }],
+    "description": { "es": "Con lluvia, recupera un 20% de Energía al terminar cada sesión.", "en": "In rain, restores 20% Energy at the end of each session." }
+  },
+  "shield-dust": {
+    "effects": [{ "kind": "statMod", "stat": "counterDamageTaken", "mult": 0.5, "scope": "self" }],
+    "description": { "es": "Recibe la mitad de daño de los contraataques.", "en": "Takes half damage from counterattacks." }
+  },
+  "run-away": {
+    "effects": [{ "kind": "maxFailedThrows", "add": 1 }],
+    "description": { "es": "Los salvajes aguantan 1 lanzamiento fallido más (no se acumula).", "en": "Wild Pokémon stay for 1 more failed throw (doesn't stack)." }
+  },
+  "shed-skin": {
+    "effects": [{ "kind": "heal", "pct": 0.1, "target": "self", "timing": "sessionEnd" }],
+    "description": { "es": "Recupera un 10% de Energía al terminar cada sesión.", "en": "Restores 10% Energy at the end of each session." }
+  },
+  "compound-eyes": {
+    "effects": [{ "kind": "statMod", "stat": "captureEnergy", "mult": 1.2, "scope": "self" }],
+    "description": { "es": "+20% de Energía de captura.", "en": "+20% catch energy." }
+  },
+  "tinted-lens": {
+    "effects": [{ "kind": "effectivenessFloor", "from": 0.5, "to": 1 }],
+    "description": { "es": "Su Energía de captura no se reduce contra tipos que la resisten.", "en": "Its catch energy isn't reduced against resisting types." }
+  },
+  "keen-eye": {
+    "effects": [{ "kind": "revealWildIvs" }],
+    "description": { "es": "Muestra la calidad (IVs) de los salvajes antes de lanzar.", "en": "Shows wild Pokémon quality (IVs) before throwing." }
+  },
+  "tangled-feet": {
+    "effects": [{ "kind": "focusFloor", "min": 0.7 }],
+    "description": { "es": "Con Foco bajo, rinde como si tuviera al menos un 70%.", "en": "With low Focus, performs as if it had at least 70%." }
+  },
+  "big-pecks": {
+    "effects": [{ "kind": "statMod", "stat": "counterDamageTaken", "mult": 0.75, "scope": "self", "when": { "isLeader": true } }],
+    "description": { "es": "Como líder, recibe un 25% menos de daño de los contraataques.", "en": "As leader, takes 25% less counterattack damage." }
+  },
+  "static": {
+    "effects": [{ "kind": "statusOnAction", "status": "paralysis", "chance": 0.03, "limit": 1 }],
+    "description": { "es": "A veces paraliza a un salvaje durante la sesión.", "en": "Sometimes paralyzes a wild Pokémon during the session." }
+  },
+  "lightning-rod": {
+    "effects": [{ "kind": "conditionBonusMult", "mult": 1.5 }],
+    "description": { "es": "Su bonificación por condición de tipo es un 50% mayor.", "en": "Its type-condition bonus is 50% stronger." }
+  },
+  "sand-veil": {
+    "effects": [{ "kind": "counterMiss", "chance": 0.25 }],
+    "description": { "es": "Los contraataques contra él fallan un 25% de las veces.", "en": "Counterattacks against it miss 25% of the time." }
+  },
+  "snow-cloak": {
+    "effects": [{ "kind": "counterMiss", "chance": 0.25 }],
+    "description": { "es": "Los contraataques contra él fallan un 25% de las veces.", "en": "Counterattacks against it miss 25% of the time." }
+  },
+  "sand-rush": {
+    "effects": [{ "kind": "statMod", "stat": "pace", "mult": 1.25, "scope": "self", "when": { "weekend": true } }],
+    "description": { "es": "+25% de Ritmo los fines de semana.", "en": "+25% Pace on weekends." }
+  },
+  "cute-charm": {
+    "effects": [{ "kind": "statMod", "stat": "bondGain", "mult": 1.5, "scope": "self" }],
+    "description": { "es": "Gana Vínculo un 50% más rápido.", "en": "Gains Bond 50% faster." }
+  },
+  "magic-guard": {
+    "effects": [{ "kind": "statMod", "stat": "counterDamageTaken", "mult": 0, "scope": "self" }],
+    "description": { "es": "Los contraataques no le hacen daño.", "en": "Counterattacks deal no damage to it." }
+  },
+  "friend-guard": {
+    "effects": [{ "kind": "statMod", "stat": "counterDamageTaken", "mult": 0.75, "scope": "team" }],
+    "description": { "es": "Todo el equipo recibe un 25% menos de daño de los contraataques (no se acumula).", "en": "The whole team takes 25% less counterattack damage (doesn't stack)." }
+  },
+  "unaware": {
+    "effects": [{ "kind": "statMod", "stat": "captureEnergy", "mult": 1.3, "scope": "self", "when": { "targetLegendary": true } }],
+    "description": { "es": "+30% de Energía de captura contra legendarios y míticos.", "en": "+30% catch energy against legendary and mythical Pokémon." }
+  },
+  "inner-focus": {
+    "effects": [{ "kind": "focusFloor", "min": 0.75 }],
+    "description": { "es": "Rinde como si tu Foco fuera al menos del 75%.", "en": "Performs as if your Focus were at least 75%." }
+  },
+  "infiltrator": {
+    "effects": [{ "kind": "effectivenessFloor", "from": 0, "to": 0.5 }],
+    "description": { "es": "Su Energía de captura afecta a la mitad contra tipos inmunes.", "en": "Its catch energy deals half against immune types." }
+  },
+  "synchronize": {
+    "effects": [{ "kind": "encounterWeight", "match": { "natureOfSelf": true }, "mult": 0.5 }],
+    "description": { "es": "Los salvajes tienen un 50% de probabilidad de tener su misma naturaleza.", "en": "Wild Pokémon have a 50% chance to share its nature." }
+  },
+  "guts": {
+    "effects": [{ "kind": "statMod", "stat": "captureEnergy", "mult": 1.25, "scope": "self", "when": { "energyBelow": 0.5 } }],
+    "description": { "es": "+25% de Energía de captura por debajo de la mitad de Energía.", "en": "+25% catch energy when below half Energy." }
+  },
+  "no-guard": {
+    "effects": [{ "kind": "ballMult", "mult": 1.1 }],
+    "description": { "es": "+10% de probabilidad de captura con cualquier Ball (no se acumula).", "en": "+10% catch chance with any ball (doesn't stack)." }
+  },
+  "steadfast": {
+    "effects": [{ "kind": "nextThrowBonus", "mult": 1.15, "when": { "isLeader": true } }],
+    "description": { "es": "Como líder, tras recibir un contraataque, el siguiente lanzamiento tiene +15%.", "en": "As leader, after taking a counterattack, the next throw gets +15%." }
+  },
+  "rock-head": {
+    "effects": [{ "kind": "statMod", "stat": "energyCost", "mult": 0.9, "scope": "self", "when": { "noPauses": true } }],
+    "description": { "es": "En sesiones sin pausas gasta un 10% menos de Energía.", "en": "Uses 10% less Energy in sessions without pauses." }
+  },
+  "sturdy": {
+    "effects": [{ "kind": "counterMinHp1" }],
+    "description": { "es": "Los contraataques nunca lo dejan agotado.", "en": "Counterattacks never exhaust it." }
+  },
+  "magnet-pull": {
+    "effects": [{ "kind": "encounterWeight", "match": { "type": "steel" }, "mult": 2 }],
+    "description": { "es": "Atrae el doble de Pokémon de tipo Acero (no se acumula).", "en": "Attracts twice as many Steel-type Pokémon (doesn't stack)." }
+  },
+  "analytic": {
+    "effects": [{ "kind": "lastActionMult", "mult": 3 }],
+    "description": { "es": "Su última acción de cada sesión da el triple de puntos.", "en": "Its last action of each session earns triple points." }
+  },
+  "levitate": {
+    "effects": [{ "kind": "lateClaimImmune" }],
+    "description": { "es": "Reclamar tarde no reduce lo que genera.", "en": "Claiming late doesn't reduce what it earns." }
+  },
+  "cursed-body": {
+    "effects": [{ "kind": "counterStatus", "status": "paralysis", "chance": 0.3 }],
+    "description": { "es": "Si recibe un contraataque, puede paralizar al salvaje (30%).", "en": "When counterattacked, may paralyze the wild Pokémon (30%)." }
+  },
+  "adaptability": {
+    "effects": [{ "kind": "conditionBonusMult", "mult": 1.5 }],
+    "description": { "es": "Su bonificación por condición de tipo es un 50% mayor.", "en": "Its type-condition bonus is 50% stronger." }
+  },
+  "anticipation": {
+    "effects": [{ "kind": "statMod", "stat": "techChance", "mult": 1.15, "scope": "self" }],
+    "description": { "es": "+15% de probabilidad de activar sus técnicas.", "en": "+15% chance to activate its techniques." }
+  },
+  "water-absorb": {
+    "effects": [{ "kind": "counterImmuneType", "type": "water" }],
+    "description": { "es": "Los contraataques de tipo Agua le curan en vez de dañarle.", "en": "Water-type counterattacks heal it instead." }
+  },
+  "volt-absorb": {
+    "effects": [{ "kind": "counterImmuneType", "type": "electric" }],
+    "description": { "es": "Los contraataques de tipo Eléctrico le curan en vez de dañarle.", "en": "Electric-type counterattacks heal it instead." }
+  },
+  "flash-fire": {
+    "effects": [{ "kind": "counterImmuneType", "type": "fire" }],
+    "description": { "es": "Los contraataques de tipo Fuego le curan en vez de dañarle.", "en": "Fire-type counterattacks heal it instead." }
+  },
+  "hydration": {
+    "effects": [{ "kind": "noSleepFromRest", "when": { "weather": "rain" } }],
+    "description": { "es": "Con lluvia, usar Descanso no lo duerme.", "en": "In rain, Rest doesn't put it to sleep." }
+  },
+  "quick-feet": {
+    "effects": [{ "kind": "statMod", "stat": "pace", "mult": 1.25, "scope": "self", "when": { "energyBelow": 0.5 } }],
+    "description": { "es": "+25% de Ritmo por debajo de la mitad de Energía.", "en": "+25% Pace when below half Energy." }
+  },
+  "magic-bounce": {
+    "effects": [{ "kind": "counterReflect", "wildHpPct": 0.1 }],
+    "description": { "es": "Cuando recibe un contraataque, el salvaje pierde un 10% de vida.", "en": "When counterattacked, the wild Pokémon loses 10% HP." }
+  },
+  "marvel-scale": {
+    "effects": [{ "kind": "statMod", "stat": "counterDamageTaken", "mult": 0.7, "scope": "self", "when": { "energyBelow": 0.5 } }],
+    "description": { "es": "Por debajo de la mitad de Energía, recibe un 30% menos de daño.", "en": "Below half Energy, takes 30% less damage." }
+  },
+  "multiscale": {
+    "effects": [{ "kind": "statMod", "stat": "counterDamageTaken", "mult": 0.5, "scope": "self", "when": { "energyFull": true } }],
+    "description": { "es": "Con la Energía al máximo, recibe la mitad de daño.", "en": "At full Energy, takes half damage." }
+  },
+  "early-bird": {
+    "effects": [{ "kind": "statMod", "stat": "points", "mult": 1.2, "scope": "self", "when": { "timeWindow": "earlyMorning" } }],
+    "description": { "es": "+20% de puntos en sesiones que empiezan entre las 5:00 y las 9:00.", "en": "+20% points in sessions starting between 5:00 and 9:00." }
+  },
+  "unnerve": {
+    "effects": [{ "kind": "counterNoFirst" }],
+    "description": { "es": "Los salvajes no contraatacan tras el primer lanzamiento fallido.", "en": "Wild Pokémon don't counterattack after the first failed throw." }
+  },
+  "oblivious": {
+    "effects": [{ "kind": "focusLabelFloor", "labels": ["chat", "social"], "value": 0.8 }],
+    "description": { "es": "Ignora las distracciones: el chat y las redes cuentan como 80% de Foco para él.", "en": "Ignores distractions: chat and social count as 80% Focus for it." }
+  },
+  "thick-fat": {
+    "effects": [{ "kind": "statMod", "stat": "energyCost", "mult": 0.85, "scope": "self" }],
+    "description": { "es": "Gasta un 15% menos de Energía por acción.", "en": "Uses 15% less Energy per action." }
+  },
+  "pressure": {
+    "effects": [{ "kind": "maxFailedThrows", "add": 1 }],
+    "description": { "es": "Los salvajes aguantan 1 lanzamiento fallido más (no se acumula).", "en": "Wild Pokémon stay for 1 more failed throw (doesn't stack)." }
+  },
+  "flame-body": {
+    "effects": [{ "kind": "statMod", "stat": "exp", "mult": 1.1, "scope": "team" }],
+    "description": { "es": "+10% de EXP para todo el equipo (no se acumula).", "en": "+10% EXP for the whole team (doesn't stack)." }
+  }
+}

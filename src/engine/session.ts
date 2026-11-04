@@ -1,0 +1,935 @@
+/**
+ * Study sessions (GDD §3–§5, §7, §9–§11.3): start, simulate a completed
+ * session, and apply its result to the player state.
+ */
+import type { GameConfig, LeagueId, WildStatus } from './config'
+import { defaultContext, getSpecies, type EngineContext } from './context'
+import {
+  activeConditionTypes,
+  dominantSound,
+  pokemonConditionMult,
+  type ConditionEnv,
+  type WhenContext,
+  evaluateWhen,
+} from './conditions'
+import type { BaseStats, TypeSlug } from './data-types'
+import type { Effect, ModStat } from './effect-types'
+import { ofKind, passiveEffects, selfStatMult, teamStatMults, type SourcedEffect } from './effects'
+import { refreshEnergy } from './energy'
+import { finishEncounter } from './capture'
+import { leagueForPoints, leagueRank } from './league'
+import { getTechnique, type TechniqueInfo } from './moves'
+import { gainExp, levelCap, trainerLevelFromExp, type ProgressEvent } from './progression'
+import { chance, pick, type Rng } from './rng'
+import {
+  err,
+  ok,
+  type ActiveSession,
+  type Charge,
+  type EncounterState,
+  type EnergyContribution,
+  type FocusInputs,
+  type OwnedPokemon,
+  type PlayerState,
+  type Result,
+  type SessionSummary,
+  type SoundProfile,
+  type Wave,
+  type WaveGenParams,
+  type WeatherInput,
+} from './state'
+import {
+  actionIntervalSeconds,
+  basePointsPerAction,
+  bondMultiplier,
+  catchEnergyPerAction,
+  computeStats,
+  effectiveFocus,
+  energyCostPerAction,
+  masteryMultiplier,
+  noDamageMoveEnergy,
+  techniqueMultiplier,
+} from './stats'
+import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from './time'
+import { blockIndexAt, rollWaveSize, rollWild, waveCount } from './waves'
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Types used for conditions: the Tera type while active, else the species types. */
+export function conditionTypes(p: OwnedPokemon, at: number, ctx: EngineContext = defaultContext()): TypeSlug[] {
+  if (p.teraType && p.teraUntil !== null && at < p.teraUntil && p.teraSessionsLeft > 0) return [p.teraType]
+  return getSpecies(p.speciesSlug, ctx).types
+}
+
+const LABEL_ALIASES: Record<string, string> = {
+  estudiando: 'studying',
+  material_educativo: 'educational',
+  redes_sociales: 'social',
+  juego: 'game',
+  indeterminado: 'unknown',
+}
+
+/**
+ * Screenshot value (GDD §4.1): mean of label values, missed captures count as
+ * `missedCaptureValue`; no permission (or nothing to average) → `noPermissionValue`.
+ * `labelFloors` (focusLabelFloor) raise specific labels for one Pokémon.
+ */
+export function captureValue(inputs: FocusInputs, cfg: GameConfig, labelFloors: Partial<Record<string, number>> = {}): number {
+  if (inputs.screenshotLabels === null) return cfg.focus.noPermissionValue
+  const values: number[] = []
+  for (const raw of inputs.screenshotLabels) {
+    const label = LABEL_ALIASES[raw] ?? raw
+    const v = (cfg.focus.labelValues as Record<string, number>)[label] ?? cfg.focus.labelValues.unknown
+    values.push(Math.max(v, labelFloors[label] ?? 0))
+  }
+  for (let i = 0; i < Math.max(0, inputs.missedCaptures); i++) values.push(cfg.focus.missedCaptureValue)
+  if (values.length === 0) return cfg.focus.noPermissionValue
+  return values.reduce((a, b) => a + b, 0) / values.length
+}
+
+/** Reward factor from daily diminishing returns (GDD §3.3), pro-rated across thresholds. */
+export function dailyRewardFactor(minutesBefore: number, minutes: number, cfg: GameConfig): number {
+  if (minutes <= 0) return 0
+  const full = cfg.session.dailyFullRewardMinutes
+  const half = cfg.session.dailyHalfRewardMinutes
+  const seg = (a: number, b: number) => Math.max(0, Math.min(minutesBefore + minutes, b) - Math.max(minutesBefore, a))
+  return (seg(0, full) + seg(full, half) * cfg.session.dailyHalfRewardFactor) / minutes
+}
+
+/**
+ * Per-action activation chance of an activable technique (GDD §7.2):
+ * min(maxActivationChance, baseChance · Mult_Técnica · Mult_Dominio · techChance).
+ */
+export function activationChance(
+  baseChance: number,
+  specialDefense: number,
+  masteryMinutes: number,
+  techChanceMult: number,
+  cfg: GameConfig,
+): number {
+  return Math.min(
+    cfg.actions.maxActivationChance,
+    baseChance * techniqueMultiplier(specialDefense, cfg) * masteryMultiplier(masteryMinutes, cfg) * techChanceMult,
+  )
+}
+
+/** Validated minutes: min(planned, elapsed − paused), floored. */
+export function validatedMinutes(session: Pick<ActiveSession, 'startedAt' | 'plannedMinutes'>, endedAt: number, pausedSeconds: number): number {
+  const elapsed = (endedAt - session.startedAt) / MINUTE_MS - Math.max(0, pausedSeconds) / 60
+  return Math.max(0, Math.floor(Math.min(session.plannedMinutes, elapsed) + 1e-9))
+}
+
+/** Streak if a session happens on `dayKey` (GDD: Dragon, streakProtect). */
+export function projectStreak(
+  streak: PlayerState['streak'],
+  dayKey: string,
+  protectAvailable: boolean,
+): { current: number; usedProtect: boolean; missedDaysBeforeToday: number } {
+  if (streak.lastDayKey === null) return { current: 1, usedProtect: false, missedDaysBeforeToday: 0 }
+  const gap = daysBetween(streak.lastDayKey, dayKey)
+  if (gap <= 0) return { current: Math.max(1, streak.current), usedProtect: false, missedDaysBeforeToday: streak.gapBeforeLastDay }
+  if (gap === 1) return { current: streak.current + 1, usedProtect: false, missedDaysBeforeToday: 0 }
+  if (gap === 2 && protectAvailable) return { current: streak.current + 1, usedProtect: true, missedDaysBeforeToday: 1 }
+  return { current: 1, usedProtect: false, missedDaysBeforeToday: gap - 1 }
+}
+
+// ---------------------------------------------------------------------------
+// Start
+// ---------------------------------------------------------------------------
+
+export interface StartSessionInput {
+  plannedMinutes: number
+  startedAt: number
+  note?: string | null
+  subjectTag?: string | null
+}
+
+export type StartSessionError = 'session_active' | 'invalid_duration' | 'empty_team'
+
+/**
+ * Start a session. Enforces a single active session. Refreshes energy to
+ * `startedAt`, applies pending Wish heals, snapshots the team.
+ */
+export function startSession(
+  state: PlayerState,
+  input: StartSessionInput,
+  ctx: EngineContext = defaultContext(),
+): Result<{ state: PlayerState; session: ActiveSession }, StartSessionError> {
+  const cfg = ctx.config
+  if (state.activeSession) return err('session_active')
+  if (!(input.plannedMinutes >= cfg.session.minMinutes && input.plannedMinutes <= cfg.session.maxMinutes)) return err('invalid_duration')
+  const teamUids = state.team.filter((u) => state.pokemon[u])
+  if (teamUids.length === 0) return err('empty_team')
+  let s = refreshEnergy(state, input.startedAt, ctx)
+  const pokemon = { ...s.pokemon }
+  const startHeals: ActiveSession['startHeals'] = []
+  const maxOf = (uid: string) => computeStats(pokemon[uid] as OwnedPokemon, ctx).hp
+  const heal = (uid: string, pct: number, sourceUid: string) => {
+    const p = pokemon[uid]
+    if (!p) return
+    const max = maxOf(uid)
+    const amount = Math.min(max - p.energy.current, max * pct)
+    if (amount <= 0) return
+    pokemon[uid] = { ...p, energy: { ...p.energy, current: p.energy.current + amount } }
+    startHeals.push({ uid, amount, sourceUid })
+  }
+  for (const w of s.pendingWishes) {
+    if (w.target === 'team') for (const u of teamUids) heal(u, w.pct, w.sourceUid)
+    else if (w.target === 'self') {
+      if (teamUids.includes(w.sourceUid)) heal(w.sourceUid, w.pct, w.sourceUid)
+    } else {
+      let low: string | null = null
+      let lowFrac = Infinity
+      for (const u of teamUids) {
+        const f = (pokemon[u] as OwnedPokemon).energy.current / maxOf(u)
+        if (f < lowFrac) {
+          lowFrac = f
+          low = u
+        }
+      }
+      if (low) heal(low, w.pct, w.sourceUid)
+    }
+  }
+  const id = `s${s.counters.session + 1}`
+  const session: ActiveSession = {
+    id,
+    startedAt: input.startedAt,
+    plannedMinutes: input.plannedMinutes,
+    teamUids,
+    startEnergy: Object.fromEntries(teamUids.map((u) => [u, (pokemon[u] as OwnedPokemon).energy.current])),
+    asleepUids: teamUids.filter((u) => (pokemon[u] as OwnedPokemon).asleepNextSession),
+    note: input.note ?? null,
+    subjectTag: input.subjectTag ?? null,
+    startHeals,
+  }
+  s = { ...s, pokemon, pendingWishes: [], activeSession: session, counters: { ...s.counters, session: s.counters.session + 1 } }
+  return ok({ state: s, session })
+}
+
+/** Abandon the active session without rewards. */
+export function cancelSession(state: PlayerState): PlayerState {
+  return { ...state, activeSession: null }
+}
+
+// ---------------------------------------------------------------------------
+// Complete (simulation)
+// ---------------------------------------------------------------------------
+
+export interface CompleteSessionInput {
+  /** When the timer finished (or the user stopped). */
+  endedAt: number
+  /** When the user pressed Claim. */
+  claimedAt: number
+  pausedSeconds: number
+  focusInputs: FocusInputs
+  soundProfile?: SoundProfile | null
+  /** Defaults to `state.profile.weather`. */
+  weather?: WeatherInput | null
+  friendOverlap?: number | null
+}
+
+export interface TechniqueUse {
+  move: string
+  count: number
+}
+
+export interface MemberResult {
+  uid: string
+  speciesSlug: string
+  slot: number
+  /** Asleep from Rest: did not act (still gets EXP and Bond). */
+  asleep: boolean
+  actions: number
+  points: number
+  /** Catch energy produced (sum over types, before effectiveness). */
+  catchEnergy: number
+  energyStart: number
+  energyEnd: number
+  energyMax: number
+  energySpent: number
+  energyHealed: number
+  /** Session minute the Pokémon first hit 0 energy, or null. */
+  exhaustedAtMinute: number | null
+  techniques: TechniqueUse[]
+  /** Condition multiplier at the start of the session (after conditionBonusMult). */
+  conditionMult: number
+  conditionType: TypeSlug | null
+  focusEffective: number
+  exp: number
+  bondMinutes: number
+  masteryMinutes: Record<string, number>
+  /** Rest was used: asleep next session. */
+  rested: boolean
+}
+
+export interface ForcedCondition {
+  type: TypeSlug
+  atMinute: number
+  byUid: string
+  move: string
+}
+
+export interface SessionResult {
+  sessionId: string
+  startedAt: number
+  endedAt: number
+  claimedAt: number
+  plannedMinutes: number
+  minutes: number
+  pausedSeconds: number
+  dayKey: string
+  weekKey: string
+  monthKey: string
+  /** False when the session was shorter than `session.minMinutes`. */
+  valid: boolean
+  lateClaim: boolean
+  /** Daily diminishing-returns factor (0–1). */
+  rewardFactor: number
+  /** Player focus: screenshot value × late-claim multiplier. */
+  focus: number
+  captureValue: number
+  /** Types whose condition was active at the start (incl. Normal). */
+  conditions: TypeSlug[]
+  forcedConditions: ForcedCondition[]
+  members: MemberResult[]
+  totalPoints: number
+  dust: number
+  pokeBalls: number
+  /** Catch energy per type for each 25-min block (= wave). */
+  energyByBlock: Partial<Record<TypeSlug, number>>[]
+  waves: Wave[]
+  /** Status/reroll charges for this session's waves. */
+  charges: Charge[]
+  extraWild: number
+  wishes: PlayerState['pendingWishes']
+  streak: { current: number; usedProtect: boolean }
+  roamingAfter: PlayerState['roaming']
+  league: LeagueId
+  gen: WaveGenParams
+  env: EncounterState['env']
+  soundProfile: SoundProfile | null
+  weather: WeatherInput | null
+  screenshotLabels: string[] | null
+  /** Activations of techniques with limitPerWeek (key `uid:move`). */
+  weeklyUses: Record<string, number>
+  note: string | null
+  subjectTag: string | null
+}
+
+interface Sim {
+  uid: string
+  p: OwnedPokemon
+  slot: number
+  stats: BaseStats
+  max: number
+  energy: number
+  energyStart: number
+  types: TypeSlug[]
+  asleep: boolean
+  passives: SourcedEffect[]
+  /** statMods gained from activations (rest of the session). */
+  activated: SourcedEffect[]
+  damageMoves: TechniqueInfo[]
+  activables: TechniqueInfo[]
+  bond: number
+  focusEff: number
+  bonusMult: number
+  lastMult: number
+  nextT: number
+  actions: number
+  pointsRaw: number
+  lastPoints: number
+  spent: number
+  healed: number
+  catchEnergy: number
+  exhaustedAt: number | null
+  techCounts: Map<string, number>
+  statusCounts: Map<number, number>
+  bursts: { remaining: number; mult: number }[]
+  hot: number
+  rested: boolean
+  endHealPct: number
+}
+
+export type CompleteSessionError = 'no_active_session' | 'invalid_times'
+
+/**
+ * Simulate a completed session. Pure: `state` is not modified. Pass the result
+ * to `applySessionResult`. Deterministic for a given rng seed.
+ */
+export function completeSession(
+  state: PlayerState,
+  session: ActiveSession,
+  input: CompleteSessionInput,
+  rng: Rng,
+  ctx: EngineContext = defaultContext(),
+): Result<SessionResult, CompleteSessionError> {
+  const cfg = ctx.config
+  if (!state.activeSession || state.activeSession.id !== session.id) return err('no_active_session')
+  if (input.endedAt < session.startedAt || input.claimedAt < input.endedAt) return err('invalid_times')
+  const tz = state.profile.timezone
+  const local = toLocal(session.startedAt, tz)
+  const dayKey = local.dayKey
+  const weekKey = weekKeyOf(session.startedAt, tz)
+  const monthKey = monthKeyOf(session.startedAt, tz)
+  const weather = input.weather !== undefined ? input.weather : state.profile.weather
+  const soundProfile = input.soundProfile ?? null
+  const minutes = validatedMinutes(session, input.endedAt, input.pausedSeconds)
+  const valid = minutes >= cfg.session.minMinutes
+  const lateClaim = input.claimedAt - input.endedAt > cfg.session.claimWindowMinutes * MINUTE_MS
+  const lateMult = lateClaim ? cfg.session.lateClaimMultiplier : 1
+  const today = state.days[dayKey]
+  const rewardFactor = valid ? dailyRewardFactor(today?.minutes ?? 0, minutes, cfg) : 0
+  const baseCapture = captureValue(input.focusInputs, cfg)
+  const focus = baseCapture * lateMult
+  const totalSeconds = minutes * 60
+  const nWaves = waveCount(minutes, cfg)
+
+  // --- Team --------------------------------------------------------------
+  const members = session.teamUids.map((u) => state.pokemon[u]).filter((p): p is OwnedPokemon => Boolean(p))
+  const streakProtectAvailable =
+    state.streak.protectUsedWeek !== weekKey &&
+    members.some((p) => !session.asleepUids.includes(p.uid) && passiveEffects(p, ctx).some((e) => e.effect.kind === 'streakProtect'))
+  const streak = valid ? projectStreak(state.streak, dayKey, streakProtectAvailable) : { current: state.streak.current, usedProtect: false, missedDaysBeforeToday: 0 }
+  const env: ConditionEnv = {
+    minutes,
+    localHour: local.hour,
+    weekday: local.weekday,
+    startMinuteOfDay: local.minuteOfDay,
+    weather,
+    soundProfile,
+    pausedSeconds: input.pausedSeconds,
+    friendOverlap: input.friendOverlap ?? null,
+    sessionsEarlierToday: today?.sessions ?? 0,
+    minutesSincePreviousEnd: state.lastSessionEndedAt === null ? null : (session.startedAt - state.lastSessionEndedAt) / MINUTE_MS,
+    streakDays: streak.current,
+    missedDaysBeforeToday: streak.missedDaysBeforeToday,
+    yesterdayFirstStartMinute: state.days[addDays(dayKey, -1)]?.firstStartMinute ?? null,
+    bugCount: members.filter((p) => conditionTypes(p, session.startedAt, ctx).includes('bug')).length,
+  }
+  const baseWc: WhenContext = {
+    sessionMinutes: minutes,
+    localHour: local.hour,
+    weather,
+    weekend: local.weekday === 0 || local.weekday === 6,
+    noPauses: input.pausedSeconds <= 0,
+    targetLegendary: false,
+  }
+
+  const sims: Sim[] = members.map((p, slot) => {
+    const stats = computeStats(p, ctx)
+    const energyStart = Math.min(stats.hp, session.startEnergy[p.uid] ?? p.energy.current)
+    const passives = passiveEffects(p, ctx)
+    const wc: WhenContext = { ...baseWc, isLeader: slot === 0, energyFraction: stats.hp > 0 ? energyStart / stats.hp : 0 }
+    const flags = (k: Effect['kind']) => passives.filter((e) => e.effect.kind === k && evaluateWhen(e.effect.when, wc, cfg))
+    const immune = flags('lateClaimImmune').length > 0
+    const labelFloors: Record<string, number> = {}
+    for (const { effect: e } of ofKind(flags('focusLabelFloor'), 'focusLabelFloor')) {
+      for (const l of e.labels) labelFloors[l] = Math.max(labelFloors[l] ?? 0, e.value)
+    }
+    let f = captureValue(input.focusInputs, cfg, labelFloors) * (lateClaim && !immune ? cfg.session.lateClaimMultiplier : 1)
+    f = effectiveFocus(f, stats.defense, cfg)
+    for (const { effect: e } of ofKind(flags('focusFloor'), 'focusFloor')) f = Math.max(f, e.min)
+    const techs = p.equippedMoves.map((m) => getTechnique(m, ctx)).filter((t): t is TechniqueInfo => t !== null)
+    let bonusMult = 1
+    for (const { effect: e } of ofKind(flags('conditionBonusMult'), 'conditionBonusMult')) bonusMult = Math.max(bonusMult, e.mult)
+    let lastMult = 1
+    for (const { effect: e } of ofKind(flags('lastActionMult'), 'lastActionMult')) lastMult = Math.max(lastMult, e.mult)
+    return {
+      uid: p.uid,
+      p,
+      slot,
+      stats,
+      max: stats.hp,
+      energy: energyStart,
+      energyStart,
+      types: conditionTypes(p, session.startedAt, ctx),
+      asleep: session.asleepUids.includes(p.uid),
+      passives,
+      activated: [],
+      damageMoves: techs.filter((t) => t.kind === 'damage'),
+      activables: techs.filter((t) => t.kind === 'activable'),
+      bond: bondMultiplier(p.bondMinutes, cfg),
+      focusEff: f,
+      bonusMult,
+      lastMult,
+      nextT: 0,
+      actions: 0,
+      pointsRaw: 0,
+      lastPoints: 0,
+      spent: 0,
+      healed: 0,
+      catchEnergy: 0,
+      exhaustedAt: null,
+      techCounts: new Map(),
+      statusCounts: new Map(),
+      bursts: [],
+      hot: 0,
+      rested: false,
+      endHealPct: 0,
+    }
+  })
+  const active = sims.filter((s) => !s.asleep)
+  const byUid = new Map(sims.map((s) => [s.uid, s]))
+  const wcOf = (s: Sim): WhenContext => ({ ...baseWc, isLeader: s.slot === 0, energyFraction: s.max > 0 ? s.energy / s.max : 0 })
+  let teamProviders: SourcedEffect[] = active.flatMap((s) => s.passives)
+  let teamMods = teamStatMults(teamProviders, (u) => wcOf(byUid.get(u) as Sim), cfg)
+  const mult = (s: Sim, stat: ModStat, wc: WhenContext) => selfStatMult([...s.passives, ...s.activated], stat, wc, cfg) * (teamMods[stat] ?? 1)
+  const interval = (s: Sim) => actionIntervalSeconds(s.stats.speed, cfg) / Math.max(0.01, mult(s, 'pace', wcOf(s)))
+
+  const forced = new Map<TypeSlug, number>()
+  const forcedList: ForcedCondition[] = []
+  const charges: Charge[] = []
+  const wishes: PlayerState['pendingWishes'] = []
+  const weeklyUses: Record<string, number> = {}
+  let chargeN = state.counters.charge
+  let extraWild = 0
+  const contrib: Map<string, EnergyContribution>[] = Array.from({ length: nWaves }, () => new Map())
+  const effFloorsOf = (s: Sim) =>
+    ofKind(s.passives, 'effectivenessFloor')
+      .filter((e) => evaluateWhen(e.effect.when, wcOf(s), cfg))
+      .map((e) => ({ from: e.effect.from, to: e.effect.to }))
+
+  const addCharge = (kind: Charge['kind'], sourceUid: string, source: string, status?: WildStatus) => {
+    chargeN++
+    charges.push({ id: `c${chargeN}`, kind, sourceUid, source, ...(status ? { status } : {}) })
+  }
+  const healSim = (s: Sim, amount: number) => {
+    const real = Math.max(0, Math.min(s.max - s.energy, amount))
+    s.energy += real
+    s.healed += real
+  }
+
+  const applyEffect = (s: Sim, e: Effect, source: string, t: number) => {
+    const wc = wcOf(s)
+    if (!evaluateWhen(e.when, wc, cfg)) return
+    switch (e.kind) {
+      case 'statMod':
+        s.activated.push({ effect: e, uid: s.uid, source, sourceKind: 'technique' })
+        if (e.scope === 'team') {
+          teamProviders = [...teamProviders, { effect: e, uid: s.uid, source, sourceKind: 'technique' }]
+          teamMods = teamStatMults(teamProviders, (u) => wcOf(byUid.get(u) as Sim), cfg)
+        }
+        break
+      case 'heal': {
+        const timing = e.timing ?? 'now'
+        if (timing === 'nextSessionStart') wishes.push({ sourceUid: s.uid, pct: e.pct, target: e.target })
+        else if (timing === 'sessionEnd') s.endHealPct += e.pct
+        else if (e.target === 'self') healSim(s, s.max * e.pct)
+        else if (e.target === 'team') for (const o of active) healSim(o, o.max * e.pct)
+        else {
+          let low = s
+          for (const o of active) if (o.energy / o.max < low.energy / low.max) low = o
+          healSim(low, low.max * e.pct)
+        }
+        break
+      }
+      case 'healOverTime':
+        s.hot = Math.max(s.hot, e.pctPerAction)
+        break
+      case 'restFullHeal': {
+        healSim(s, s.max)
+        const noSleep = ofKind(s.passives, 'noSleepFromRest').some((n) => evaluateWhen(n.effect.when, wc, cfg))
+        if (!noSleep) s.rested = true
+        break
+      }
+      case 'wildStatus':
+      case 'statusOnAction':
+        addCharge('status', s.uid, source, e.status)
+        break
+      case 'rerollWild':
+        addCharge('reroll', s.uid, source)
+        break
+      case 'extraWild':
+        extraWild += e.count
+        break
+      case 'activateCondition':
+        if (!forced.has(e.type)) {
+          forced.set(e.type, t)
+          forcedList.push({ type: e.type, atMinute: t / 60, byUid: s.uid, move: source })
+        }
+        break
+      case 'pointsBurst':
+        s.bursts.push({ remaining: e.actions, mult: e.mult })
+        break
+      case 'lastActionMult':
+        s.lastMult = Math.max(s.lastMult, e.mult)
+        break
+      default:
+        // Other primitives are passive-only (flags read elsewhere).
+        break
+    }
+  }
+
+  // --- Action loop ---------------------------------------------------------
+  if (valid && rewardFactor > 0) {
+    for (const s of active) s.nextT = interval(s)
+    for (;;) {
+      let s: Sim | null = null
+      for (const c of active) if (c.nextT <= totalSeconds && (s === null || c.nextT < s.nextT)) s = c
+      if (!s) break
+      const t = s.nextT
+      if (s.energy <= 1e-9) {
+        s.nextT = t + interval(s)
+        continue
+      }
+      const forcedNow = new Set([...forced].filter(([, at]) => at < t).map(([ty]) => ty))
+      const wc = wcOf(s)
+      // Points
+      const cond = pokemonConditionMult(s.types, env, cfg, forcedNow, s.bonusMult).mult
+      let burst = 1
+      for (const b of s.bursts) {
+        if (b.remaining > 0) {
+          burst *= b.mult
+          b.remaining--
+        }
+      }
+      const pts = basePointsPerAction(s.stats.specialAttack, cfg) * cond * s.bond * s.focusEff * mult(s, 'points', wc) * burst
+      s.pointsRaw += pts
+      s.lastPoints = pts
+      // Catch energy
+      let type: TypeSlug = 'normal'
+      let amount: number
+      if (s.damageMoves.length > 0) {
+        const m = pick(rng, s.damageMoves)
+        type = m.type
+        amount = catchEnergyPerAction(s.stats.attack, m.power, cfg)
+      } else {
+        amount = noDamageMoveEnergy(s.stats.attack, cfg)
+      }
+      const block = contrib[blockIndexAt(t, nWaves, cfg)] as Map<string, EnergyContribution>
+      const key = `${s.uid}:${type}`
+      const c = block.get(key) ?? { uid: s.uid, type, amount: 0, amountVsLegendary: 0, effectivenessFloors: effFloorsOf(s) }
+      const capNormal = amount * mult(s, 'captureEnergy', { ...wc, targetLegendary: false })
+      c.amount += capNormal
+      c.amountVsLegendary += amount * mult(s, 'captureEnergy', { ...wc, targetLegendary: true })
+      block.set(key, c)
+      s.catchEnergy += capNormal
+      // Energy cost
+      const cost = energyCostPerAction(s.p.level, cfg) * mult(s, 'energyCost', wc)
+      s.spent += Math.min(cost, s.energy)
+      s.energy = Math.max(0, s.energy - cost)
+      s.actions++
+      // Activable techniques
+      for (const tech of s.activables) {
+        const def = tech.def
+        if (!def) continue
+        const used = s.techCounts.get(tech.slug) ?? 0
+        if (def.limitPerSession !== undefined && used >= def.limitPerSession) continue
+        const wkKey = `${s.uid}:${tech.slug}`
+        if (def.limitPerWeek !== undefined) {
+          const prev = state.techniqueWeekUses.weekKey === weekKey ? (state.techniqueWeekUses.uses[wkKey] ?? 0) : 0
+          if (prev + (weeklyUses[wkKey] ?? 0) >= def.limitPerWeek) continue
+        }
+        const p = activationChance(def.baseChance ?? 0, s.stats.specialDefense, s.p.moveMasteryMinutes[tech.slug] ?? 0, mult(s, 'techChance', wcOf(s)), cfg)
+        if (!chance(rng, p)) continue
+        s.techCounts.set(tech.slug, used + 1)
+        if (def.limitPerWeek !== undefined) weeklyUses[wkKey] = (weeklyUses[wkKey] ?? 0) + 1
+        for (const e of def.effects) applyEffect(s, e, tech.slug, t)
+      }
+      // Passive statusOnAction
+      s.passives.forEach((se, i) => {
+        const e = se.effect
+        if (e.kind !== 'statusOnAction' || !evaluateWhen(e.when, wcOf(s as Sim), cfg)) return
+        const n = (s as Sim).statusCounts.get(i) ?? 0
+        if (n >= e.limit || !chance(rng, e.chance)) return
+        ;(s as Sim).statusCounts.set(i, n + 1)
+        addCharge('status', (s as Sim).uid, se.source, e.status)
+      })
+      // Heal over time
+      if (s.hot > 0) healSim(s, s.max * s.hot)
+      if (s.energy <= 1e-9 && s.exhaustedAt === null) s.exhaustedAt = t / 60
+      s.nextT = t + interval(s)
+    }
+  }
+
+  // --- Session end -----------------------------------------------------------
+  for (const s of active) {
+    if (s.actions > 0 && s.lastMult > 1) s.pointsRaw += s.lastPoints * (s.lastMult - 1)
+    // Passive heals: sessionEnd (and 'now', applied at the end too); nextSessionStart → wish.
+    if (valid && rewardFactor > 0) {
+      for (const { effect: e, source } of ofKind(s.passives, 'heal')) {
+        if (!evaluateWhen(e.when, wcOf(s), cfg)) continue
+        if (e.timing === 'nextSessionStart') wishes.push({ sourceUid: s.uid, pct: e.pct, target: e.target })
+        else if (e.target === 'self') s.endHealPct += e.pct
+        else applyEffect(s, { ...e, timing: 'now' }, source, totalSeconds)
+      }
+    }
+    if (s.endHealPct > 0) healSim(s, s.max * s.endHealPct)
+  }
+
+  const rewarded = valid && rewardFactor > 0
+  const memberResults: MemberResult[] = sims.map((s) => {
+    const staticWc = { ...baseWc, isLeader: s.slot === 0, energyFraction: s.energyStart / s.max }
+    const expMult = selfStatMult(s.passives, 'exp', staticWc, cfg) * (teamMods.exp ?? 1)
+    const bondMult = selfStatMult(s.passives, 'bondGain', staticWc, cfg) * (teamMods.bondGain ?? 1)
+    const cm = pokemonConditionMult(s.types, env, cfg, new Set(), s.bonusMult)
+    return {
+      uid: s.uid,
+      speciesSlug: s.p.speciesSlug,
+      slot: s.slot,
+      asleep: s.asleep,
+      actions: s.actions,
+      points: Math.round(s.pointsRaw * rewardFactor),
+      catchEnergy: s.catchEnergy,
+      energyStart: s.energyStart,
+      energyEnd: s.energy,
+      energyMax: s.max,
+      energySpent: s.spent,
+      energyHealed: s.healed,
+      exhaustedAtMinute: s.exhaustedAt,
+      techniques: [...s.techCounts].map(([move, count]) => ({ move, count })),
+      conditionMult: cm.mult,
+      conditionType: cm.type,
+      focusEffective: s.focusEff,
+      exp: rewarded ? Math.round(cfg.rewards.expPerMinute * minutes * s.focusEff * expMult * rewardFactor) : 0,
+      bondMinutes: rewarded ? minutes * bondMult : 0,
+      masteryMinutes: rewarded && !s.asleep ? Object.fromEntries(s.p.equippedMoves.map((m) => [m, minutes])) : {},
+      rested: s.rested,
+    }
+  })
+  const totalPoints = memberResults.reduce((a, m) => a + m.points, 0)
+
+  // --- Waves -------------------------------------------------------------------
+  const league = leagueForPoints(state.league.weeklyPoints[weekKey] ?? 0, 'week', ctx)
+  const typeWeightMults: Partial<Record<TypeSlug, number>> = {}
+  let sync: WaveGenParams['syncNature'] = null
+  for (const s of active) {
+    for (const { effect: e } of ofKind(s.passives, 'encounterWeight')) {
+      if (!evaluateWhen(e.when, wcOf(s), cfg)) continue
+      if ('type' in e.match) typeWeightMults[e.match.type] = Math.max(typeWeightMults[e.match.type] ?? 1, e.mult)
+      else if (!sync || e.mult > sync.chance) sync = { nature: s.p.nature, chance: e.mult }
+    }
+  }
+  const gen: WaveGenParams = {
+    focus,
+    trainerLevel: state.trainer.level,
+    soundDominant: dominantSound(soundProfile),
+    teamTypes: [...new Set(members.flatMap((p) => getSpecies(p.speciesSlug, ctx).types))],
+    typeWeightMults,
+    syncNature: sync,
+  }
+  const waves: Wave[] = []
+  let roamingAfter = state.roaming
+  if (rewarded) {
+    const appeared = new Set<string>()
+    for (let i = 0; i < nWaves; i++) {
+      const blockEnd = (i + 1) * cfg.session.waveMinutes * 60
+      const forcedTypes = new Set([...forced].filter(([, at]) => at < blockEnd).map(([ty]) => ty))
+      const activeTypes = activeConditionTypes(env, cfg, forcedTypes)
+      const contributions = [...(contrib[i] as Map<string, EnergyContribution>).values()]
+      const size = rollWaveSize(rng, focus, league, i === 0 ? extraWild : 0, cfg)
+      const wilds = []
+      if (i === 0) {
+        for (const r of state.roaming) {
+          if (wilds.length >= size) break
+          if (chance(rng, cfg.encounters.roamingChance)) {
+            appeared.add(r.speciesSlug)
+            wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, forceSpecies: r.speciesSlug, isRoaming: true }, ctx))
+          }
+        }
+      }
+      while (wilds.length < size) wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions }, ctx))
+      waves.push({
+        index: i,
+        wilds,
+        studyBall: wilds.some((w) => w.studyBallEligible) ? 'available' : 'converted',
+        contributions,
+        activeConditionTypes: activeTypes,
+      })
+    }
+    roamingAfter = state.roaming
+      .filter((r) => !appeared.has(r.speciesSlug))
+      .map((r) => ({ ...r, sessionsLeft: r.sessionsLeft - 1 }))
+      .filter((r) => r.sessionsLeft > 0)
+  }
+
+  const energyByBlock = contrib.map((m) => {
+    const out: Partial<Record<TypeSlug, number>> = {}
+    for (const c of m.values()) out[c.type] = (out[c.type] ?? 0) + c.amount
+    return out
+  })
+
+  return ok({
+    sessionId: session.id,
+    startedAt: session.startedAt,
+    endedAt: input.endedAt,
+    claimedAt: input.claimedAt,
+    plannedMinutes: session.plannedMinutes,
+    minutes,
+    pausedSeconds: input.pausedSeconds,
+    dayKey,
+    weekKey,
+    monthKey,
+    valid,
+    lateClaim,
+    rewardFactor,
+    focus,
+    captureValue: baseCapture,
+    conditions: activeConditionTypes(env, cfg),
+    forcedConditions: forcedList,
+    members: memberResults,
+    totalPoints,
+    dust: rewarded ? Math.round(cfg.rewards.dustPerMinute * minutes * focus * rewardFactor) : 0,
+    pokeBalls: rewarded ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
+    energyByBlock,
+    waves,
+    charges: rewarded ? charges : [],
+    extraWild,
+    wishes,
+    streak: { current: streak.current, usedProtect: streak.usedProtect },
+    roamingAfter,
+    league,
+    gen,
+    env: { localHour: local.hour, weekend: baseWc.weekend ?? false, weather, noPauses: input.pausedSeconds <= 0, sessionMinutes: minutes },
+    soundProfile,
+    weather,
+    screenshotLabels: input.focusInputs.screenshotLabels ? input.focusInputs.screenshotLabels.map(String) : null,
+    weeklyUses,
+    note: session.note,
+    subjectTag: session.subjectTag,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Apply
+// ---------------------------------------------------------------------------
+
+export type ApplySessionError = 'session_mismatch' | 'already_applied'
+
+/**
+ * Apply a session result: energy, Rest, EXP/level-ups (events), Bond, Mastery,
+ * dust, balls, league points, streak, day counters, history, Pokédex (seen),
+ * pending Wish heals, roaming legendaries and the new encounter (waves).
+ * Idempotent per session id (a second call returns 'already_applied').
+ */
+export function applySessionResult(
+  state: PlayerState,
+  result: SessionResult,
+  ctx: EngineContext = defaultContext(),
+): Result<{ state: PlayerState; events: ProgressEvent[] }, ApplySessionError> {
+  const cfg = ctx.config
+  if (state.history.some((h) => h.id === result.sessionId)) return err('already_applied')
+  if (!state.activeSession || state.activeSession.id !== result.sessionId) return err('session_mismatch')
+  let s: PlayerState = state.encounter ? finishEncounter(state, ctx) : state
+  const events: ProgressEvent[] = []
+  const cap = levelCap(s, ctx)
+  const pokemon = { ...s.pokemon }
+  for (const m of result.members) {
+    let p = pokemon[m.uid]
+    if (!p) continue
+    p = {
+      ...p,
+      energy: { current: m.energyEnd, updatedAt: result.startedAt },
+      asleepNextSession: m.rested ? true : m.asleep ? false : p.asleepNextSession,
+      bondMinutes: p.bondMinutes + m.bondMinutes,
+      moveMasteryMinutes: { ...p.moveMasteryMinutes },
+      teraSessionsLeft: p.teraType && result.valid ? Math.max(0, p.teraSessionsLeft - 1) : p.teraSessionsLeft,
+    }
+    for (const [mv, min] of Object.entries(m.masteryMinutes)) p.moveMasteryMinutes[mv] = (p.moveMasteryMinutes[mv] ?? 0) + min
+    const g = gainExp(p, m.exp, cap, ctx)
+    pokemon[m.uid] = g.pokemon
+    events.push(...g.events)
+  }
+  const converted = result.waves.filter((w) => w.studyBall === 'converted').length
+  const inventory = { ...s.inventory, 'poke-ball': (s.inventory['poke-ball'] ?? 0) + result.pokeBalls + converted }
+
+  // League
+  const prevWeek = s.league.weeklyPoints[result.weekKey] ?? 0
+  const weekPts = prevWeek + result.totalPoints
+  const fromL = leagueForPoints(prevWeek, 'week', ctx)
+  const toL = leagueForPoints(weekPts, 'week', ctx)
+  if (toL !== fromL) events.push({ type: 'leagueUp', from: fromL, to: toL })
+  const league = {
+    weeklyPoints: { ...s.league.weeklyPoints, [result.weekKey]: weekPts },
+    monthlyPoints: { ...s.league.monthlyPoints, [result.monthKey]: (s.league.monthlyPoints[result.monthKey] ?? 0) + result.totalPoints },
+    bestLeague: leagueRank(toL, ctx) > leagueRank(s.league.bestLeague, ctx) ? toL : s.league.bestLeague,
+  }
+
+  // Streak & days
+  let streak = s.streak
+  if (result.valid) {
+    const isNewDay = streak.lastDayKey !== result.dayKey
+    streak = {
+      current: result.streak.current,
+      best: Math.max(streak.best, result.streak.current),
+      lastDayKey: result.dayKey,
+      gapBeforeLastDay: isNewDay ? (streak.lastDayKey === null ? 0 : Math.max(0, daysBetween(streak.lastDayKey, result.dayKey) - 1)) : streak.gapBeforeLastDay,
+      protectUsedWeek: result.streak.usedProtect ? result.weekKey : streak.protectUsedWeek,
+    }
+  }
+  const day = s.days[result.dayKey]
+  const localStart = toLocal(result.startedAt, s.profile.timezone)
+  const days: PlayerState['days'] = {}
+  for (const [k, v] of Object.entries(s.days)) if (daysBetween(k, result.dayKey) <= 14) days[k] = v
+  days[result.dayKey] = {
+    minutes: (day?.minutes ?? 0) + result.minutes,
+    sessions: (day?.sessions ?? 0) + (result.valid ? 1 : 0),
+    firstStartMinute: day ? day.firstStartMinute : localStart.minuteOfDay,
+  }
+
+  // Trainer
+  const trainerExp = s.trainer.exp + Math.round(result.minutes * cfg.trainer.expPerMinute)
+  const trainerLevel = trainerLevelFromExp(trainerExp, ctx)
+  if (trainerLevel > s.trainer.level) events.push({ type: 'trainerLevelUp', from: s.trainer.level, to: trainerLevel })
+
+  // Weekly technique uses
+  const twu = s.techniqueWeekUses.weekKey === result.weekKey ? { ...s.techniqueWeekUses.uses } : {}
+  for (const [k, n] of Object.entries(result.weeklyUses)) twu[k] = (twu[k] ?? 0) + n
+
+  const seen = new Set(s.pokedex.seen)
+  for (const w of result.waves) for (const x of w.wilds) seen.add(x.speciesSlug)
+
+  const summary: SessionSummary = {
+    id: result.sessionId,
+    startedAt: result.startedAt,
+    endedAt: result.endedAt,
+    claimedAt: result.claimedAt,
+    dayKey: result.dayKey,
+    weekKey: result.weekKey,
+    minutes: result.minutes,
+    pausedSeconds: result.pausedSeconds,
+    focus: result.focus,
+    screenshotLabels: result.screenshotLabels,
+    lateClaim: result.lateClaim,
+    rewardFactor: result.rewardFactor,
+    points: result.totalPoints,
+    exp: result.members.reduce((a, m) => a + m.exp, 0),
+    dust: result.dust,
+    pokeBalls: result.pokeBalls,
+    conditions: result.conditions,
+    soundProfile: result.soundProfile,
+    wilds: result.waves.reduce((a, w) => a + w.wilds.length, 0),
+    caught: 0,
+    techniqueActivations: result.members.reduce((a, m) => a + m.techniques.reduce((b, t) => b + t.count, 0), 0),
+    note: result.note,
+    subjectTag: result.subjectTag,
+  }
+
+  const maxCharge = result.charges.reduce((a, c) => Math.max(a, Number(c.id.slice(1)) || 0), s.counters.charge)
+  s = {
+    ...s,
+    pokemon,
+    inventory,
+    dust: s.dust + result.dust,
+    league,
+    streak,
+    days,
+    trainer: { level: trainerLevel, exp: trainerExp },
+    techniqueWeekUses: { weekKey: result.weekKey, uses: twu },
+    pokedex: { ...s.pokedex, seen: [...seen] },
+    history: [...s.history, summary].slice(-cfg.historyLimit),
+    pendingWishes: [...s.pendingWishes, ...result.wishes],
+    roaming: result.roamingAfter,
+    lastSessionEndedAt: result.endedAt,
+    activeSession: null,
+    counters: { ...s.counters, charge: maxCharge },
+    encounter:
+      result.waves.length > 0
+        ? { sessionId: result.sessionId, waves: result.waves, currentWave: 0, charges: result.charges, gen: result.gen, env: result.env }
+        : null,
+  }
+  return ok({ state: s, events })
+}

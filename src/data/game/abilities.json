@@ -1,0 +1,767 @@
+[
+  {
+    "slug": "sturdy",
+    "id": 5,
+    "names": {
+      "es": "Robustez",
+      "en": "Sturdy"
+    },
+    "shortEffect": {
+      "en": "Prevents being KOed from full HP, leaving 1 HP instead. Protects against the one-hit KO moves regardless of HP."
+    },
+    "flavorText": {
+      "es": "Evita que el rival pueda debilitarlo de un solo golpe cuando tiene los PS al máximo. También evita los movimientos fulminantes.",
+      "en": "The Pokémon cannot be knocked out by a single hit as long as its HP is full. One-hit KO moves will also fail to knock it out."
+    }
+  },
+  {
+    "slug": "sand-veil",
+    "id": 8,
+    "names": {
+      "es": "Velo Arena",
+      "en": "Sand Veil"
+    },
+    "shortEffect": {
+      "en": "Increases evasion to 1.25× during a sandstorm. Protects against sandstorm damage."
+    },
+    "flavorText": {
+      "es": "Aumenta su Evasión durante las tormentas de arena.",
+      "en": "Boosts the Pokémon's evasiveness in a sandstorm."
+    }
+  },
+  {
+    "slug": "static",
+    "id": 9,
+    "names": {
+      "es": "Electricidad Estática",
+      "en": "Static"
+    },
+    "shortEffect": {
+      "en": "Has a 30% chance of paralyzing attacking Pokémon on contact."
+    },
+    "flavorText": {
+      "es": "La electricidad estática que lo envuelve puede paralizar al mínimo contacto.",
+      "en": "The Pokémon is charged with static electricity and may paralyze attackers that make direct contact with it."
+    }
+  },
+  {
+    "slug": "volt-absorb",
+    "id": 10,
+    "names": {
+      "es": "Absorbe Electricidad",
+      "en": "Volt Absorb"
+    },
+    "shortEffect": {
+      "en": "Absorbs Electric moves, healing for 1/4 max HP."
+    },
+    "flavorText": {
+      "es": "Si le alcanza un movimiento de tipo Eléctrico, recupera PS en vez de sufrir daño.",
+      "en": "If hit by an Electric-type move, the Pokémon has its HP restored instead of taking damage."
+    }
+  },
+  {
+    "slug": "water-absorb",
+    "id": 11,
+    "names": {
+      "es": "Absorbe Agua",
+      "en": "Water Absorb"
+    },
+    "shortEffect": {
+      "en": "Absorbs Water moves, healing for 1/4 max HP."
+    },
+    "flavorText": {
+      "es": "Si le alcanza un movimiento de tipo Agua, recupera PS en vez de sufrir daño.",
+      "en": "If hit by a Water-type move, the Pokémon has its HP restored instead of taking damage."
+    }
+  },
+  {
+    "slug": "oblivious",
+    "id": 12,
+    "names": {
+      "es": "Despiste",
+      "en": "Oblivious"
+    },
+    "shortEffect": {
+      "en": "Prevents infatuation and protects against Captivate."
+    },
+    "flavorText": {
+      "es": "Su indiferencia evita que sea provocado o caiga presa del enamoramiento.",
+      "en": "The Pokémon is oblivious, keeping it from being infatuated, falling for taunts, or being affected by Intimidate."
+    }
+  },
+  {
+    "slug": "compound-eyes",
+    "id": 14,
+    "names": {
+      "es": "Ojo Compuesto",
+      "en": "Compound Eyes"
+    },
+    "shortEffect": {
+      "en": "Increases moves' accuracy to 1.3×."
+    },
+    "flavorText": {
+      "es": "Aumenta la precisión de sus movimientos.",
+      "en": "The Pokémon's compound eyes boost its accuracy."
+    }
+  },
+  {
+    "slug": "flash-fire",
+    "id": 18,
+    "names": {
+      "es": "Absorbe Fuego",
+      "en": "Flash Fire"
+    },
+    "shortEffect": {
+      "en": "Protects against Fire moves. Once one has been blocked, the Pokémon's own Fire moves inflict 1.5× damage until it leaves battle."
+    },
+    "flavorText": {
+      "es": "Si le alcanza algún movimiento de tipo Fuego, potencia sus propios movimientos de dicho tipo.",
+      "en": "If hit by a Fire-type move, the Pokémon absorbs the flames and uses them to power up its own Fire-type moves."
+    }
+  },
+  {
+    "slug": "shield-dust",
+    "id": 19,
+    "names": {
+      "es": "Polvo Escudo",
+      "en": "Shield Dust"
+    },
+    "shortEffect": {
+      "en": "Protects against incoming moves' extra effects."
+    },
+    "flavorText": {
+      "es": "El polvo de escamas que lo envuelve lo protege de los efectos secundarios de los ataques recibidos.",
+      "en": "Protective dust shields the Pokémon from the additional effects of moves."
+    }
+  },
+  {
+    "slug": "levitate",
+    "id": 26,
+    "names": {
+      "es": "Levitación",
+      "en": "Levitate"
+    },
+    "shortEffect": {
+      "en": "Evades Ground moves."
+    },
+    "flavorText": {
+      "es": "Su capacidad de flotar sobre el suelo le proporciona inmunidad frente a los movimientos de tipo Tierra.",
+      "en": "By floating in the air, the Pokémon receives full immunity to all Ground-type moves."
+    }
+  },
+  {
+    "slug": "synchronize",
+    "id": 28,
+    "names": {
+      "es": "Sincronía",
+      "en": "Synchronize"
+    },
+    "shortEffect": {
+      "en": "Copies burns, paralysis, and poison received onto the Pokémon that inflicted them."
+    },
+    "flavorText": {
+      "es": "Contagia el envenenamiento, las quemaduras o la parálisis al Pokémon que le cause ese estado.",
+      "en": "If the Pokémon is burned, paralyzed, or poisoned by another Pokémon, that Pokémon will be inflicted with the same status condition."
+    }
+  },
+  {
+    "slug": "lightning-rod",
+    "id": 31,
+    "names": {
+      "es": "Pararrayos",
+      "en": "Lightning Rod"
+    },
+    "shortEffect": {
+      "en": "Redirects single-target Electric moves to this Pokémon where possible. Absorbs Electric moves, raising Special Attack one stage."
+    },
+    "flavorText": {
+      "es": "Atrae y neutraliza los movimientos de tipo Eléctrico, que además le suben el Ataque Especial.",
+      "en": "The Pokémon draws in all Electric-type moves. Instead of taking damage from them, its Sp. Atk stat is boosted."
+    }
+  },
+  {
+    "slug": "chlorophyll",
+    "id": 34,
+    "names": {
+      "es": "Clorofila",
+      "en": "Chlorophyll"
+    },
+    "shortEffect": {
+      "en": "Doubles Speed during strong sunlight."
+    },
+    "flavorText": {
+      "es": "Sube su Velocidad cuando hace sol.",
+      "en": "Boosts the Pokémon's Speed stat in harsh sunlight."
+    }
+  },
+  {
+    "slug": "inner-focus",
+    "id": 39,
+    "names": {
+      "es": "Fuerza Mental",
+      "en": "Inner Focus"
+    },
+    "shortEffect": {
+      "en": "Prevents flinching."
+    },
+    "flavorText": {
+      "es": "Gracias a su profunda concentración, no se amedrenta ante los ataques del rival.",
+      "en": "The Pokémon's intense focus prevents it from flinching or being affected by Intimidate."
+    }
+  },
+  {
+    "slug": "magnet-pull",
+    "id": 42,
+    "names": {
+      "es": "Imán",
+      "en": "Magnet Pull"
+    },
+    "shortEffect": {
+      "en": "Prevents Steel opponents from fleeing or switching out."
+    },
+    "flavorText": {
+      "es": "Su magnetismo atrae a los Pokémon de tipo Acero y les impide huir.",
+      "en": "Prevents Steel-type Pokémon from fleeing by pulling them in with magnetism."
+    }
+  },
+  {
+    "slug": "rain-dish",
+    "id": 44,
+    "names": {
+      "es": "Cura Lluvia",
+      "en": "Rain Dish"
+    },
+    "shortEffect": {
+      "en": "Heals for 1/16 max HP after each turn during rain."
+    },
+    "flavorText": {
+      "es": "Recupera PS de forma gradual cuando llueve.",
+      "en": "The Pokémon gradually regains HP in rain."
+    }
+  },
+  {
+    "slug": "pressure",
+    "id": 46,
+    "names": {
+      "es": "Presión",
+      "en": "Pressure"
+    },
+    "shortEffect": {
+      "en": "Increases the PP cost of moves targetting the Pokémon by one."
+    },
+    "flavorText": {
+      "es": "Presiona al rival para que sus PP se acaben antes.",
+      "en": "Puts other Pokémon under pressure, causing them to expend more PP to use their moves."
+    }
+  },
+  {
+    "slug": "thick-fat",
+    "id": 47,
+    "names": {
+      "es": "Sebo",
+      "en": "Thick Fat"
+    },
+    "shortEffect": {
+      "en": "Halves damage from Fire and Ice moves."
+    },
+    "flavorText": {
+      "es": "Gracias a la gruesa capa de grasa que lo protege, reduce a la mitad el daño que recibe de ataques de tipo Fuego o Hielo.",
+      "en": "The Pokémon is protected by a layer of thick fat, which halves the damage taken from Fire- and Ice-type moves."
+    }
+  },
+  {
+    "slug": "early-bird",
+    "id": 48,
+    "names": {
+      "es": "Madrugar",
+      "en": "Early Bird"
+    },
+    "shortEffect": {
+      "en": "Makes sleep pass twice as quickly."
+    },
+    "flavorText": {
+      "es": "Si se duerme, tardará la mitad de tiempo en despertarse.",
+      "en": "The Pokémon awakens from sleep twice as fast as other Pokémon."
+    }
+  },
+  {
+    "slug": "flame-body",
+    "id": 49,
+    "names": {
+      "es": "Cuerpo Llama",
+      "en": "Flame Body"
+    },
+    "shortEffect": {
+      "en": "Has a 30% chance of burning attacking Pokémon on contact."
+    },
+    "flavorText": {
+      "es": "Puede quemar al mínimo contacto.",
+      "en": "Contact with the Pokémon may burn the attacker."
+    }
+  },
+  {
+    "slug": "run-away",
+    "id": 50,
+    "names": {
+      "es": "Fuga",
+      "en": "Run Away"
+    },
+    "shortEffect": {
+      "en": "Ensures success fleeing from wild battles."
+    },
+    "flavorText": {
+      "es": "Puede escaparse de todos los Pokémon salvajes.",
+      "en": "Enables a sure getaway from wild Pokémon."
+    }
+  },
+  {
+    "slug": "keen-eye",
+    "id": 51,
+    "names": {
+      "es": "Vista Lince",
+      "en": "Keen Eye"
+    },
+    "shortEffect": {
+      "en": "Prevents accuracy from being lowered."
+    },
+    "flavorText": {
+      "es": "Su aguda vista evita que le disminuya la Precisión.",
+      "en": "The Pokémon's keen eyes prevent its accuracy from being lowered."
+    }
+  },
+  {
+    "slug": "cute-charm",
+    "id": 56,
+    "names": {
+      "es": "Gran Encanto",
+      "en": "Cute Charm"
+    },
+    "shortEffect": {
+      "en": "Has a 30% chance of infatuating attacking Pokémon on contact."
+    },
+    "flavorText": {
+      "es": "Puede causar enamoramiento al rival que lo toque.",
+      "en": "The Pokémon may infatuate attackers that make direct contact with it."
+    }
+  },
+  {
+    "slug": "shed-skin",
+    "id": 61,
+    "names": {
+      "es": "Mudar",
+      "en": "Shed Skin"
+    },
+    "shortEffect": {
+      "en": "Has a 33% chance of curing any major status ailment after each turn."
+    },
+    "flavorText": {
+      "es": "Puede curar sus problemas de estado al mudar la piel.",
+      "en": "The Pokémon may cure its own status conditions by shedding its skin."
+    }
+  },
+  {
+    "slug": "guts",
+    "id": 62,
+    "names": {
+      "es": "Agallas",
+      "en": "Guts"
+    },
+    "shortEffect": {
+      "en": "Increases Attack to 1.5× with a major status ailment."
+    },
+    "flavorText": {
+      "es": "Si sufre un problema de estado, se viene arriba y aumenta su Ataque.",
+      "en": "It's so gutsy that having a status condition boosts the Pokémon's Attack stat."
+    }
+  },
+  {
+    "slug": "marvel-scale",
+    "id": 63,
+    "names": {
+      "es": "Escama Especial",
+      "en": "Marvel Scale"
+    },
+    "shortEffect": {
+      "en": "Increases Defense to 1.5× with a major status ailment."
+    },
+    "flavorText": {
+      "es": "Sube su Defensa si sufre un problema de estado.",
+      "en": "The Pokémon's marvelous scales boost its Defense stat if it has a status condition."
+    }
+  },
+  {
+    "slug": "overgrow",
+    "id": 65,
+    "names": {
+      "es": "Espesura",
+      "en": "Overgrow"
+    },
+    "shortEffect": {
+      "en": "Strengthens Grass moves to inflict 1.5× damage at 1/3 max HP or less."
+    },
+    "flavorText": {
+      "es": "Potencia sus movimientos de tipo Planta cuando le quedan pocos PS.",
+      "en": "Powers up Grass-type moves when the Pokémon's HP is low."
+    }
+  },
+  {
+    "slug": "blaze",
+    "id": 66,
+    "names": {
+      "es": "Mar Llamas",
+      "en": "Blaze"
+    },
+    "shortEffect": {
+      "en": "Strengthens Fire moves to inflict 1.5× damage at 1/3 max HP or less."
+    },
+    "flavorText": {
+      "es": "Potencia sus movimientos de tipo Fuego cuando le quedan pocos PS.",
+      "en": "Powers up Fire-type moves when the Pokémon's HP is low."
+    }
+  },
+  {
+    "slug": "torrent",
+    "id": 67,
+    "names": {
+      "es": "Torrente",
+      "en": "Torrent"
+    },
+    "shortEffect": {
+      "en": "Strengthens Water moves to inflict 1.5× damage at 1/3 max HP or less."
+    },
+    "flavorText": {
+      "es": "Potencia sus movimientos de tipo Agua cuando le quedan pocos PS.",
+      "en": "Powers up Water-type moves when the Pokémon's HP is low."
+    }
+  },
+  {
+    "slug": "rock-head",
+    "id": 69,
+    "names": {
+      "es": "Cabeza Roca",
+      "en": "Rock Head"
+    },
+    "shortEffect": {
+      "en": "Protects against recoil damage."
+    },
+    "flavorText": {
+      "es": "No puede dañarse con sus propios movimientos.",
+      "en": "Protects the Pokémon from recoil damage."
+    }
+  },
+  {
+    "slug": "tangled-feet",
+    "id": 77,
+    "names": {
+      "es": "Tumbos",
+      "en": "Tangled Feet"
+    },
+    "shortEffect": {
+      "en": "Doubles evasion when confused."
+    },
+    "flavorText": {
+      "es": "Sube su Evasión si está confuso.",
+      "en": "Boosts the Pokémon's evasiveness if it is confused."
+    }
+  },
+  {
+    "slug": "steadfast",
+    "id": 80,
+    "names": {
+      "es": "Impasible",
+      "en": "Steadfast"
+    },
+    "shortEffect": {
+      "en": "Raises Speed one stage upon flinching."
+    },
+    "flavorText": {
+      "es": "Cada vez que se amedrenta sube su Velocidad, debido a su voluntad inquebrantable.",
+      "en": "The Pokémon's determination boosts its Speed stat every time it flinches."
+    }
+  },
+  {
+    "slug": "snow-cloak",
+    "id": 81,
+    "names": {
+      "es": "Manto Níveo",
+      "en": "Snow Cloak"
+    },
+    "shortEffect": {
+      "en": "Increases evasion to 1.25× during hail. Protects against hail damage."
+    },
+    "flavorText": {
+      "es": "Sube la Evasión cuando graniza.",
+      "en": "Boosts the Pokémon's evasiveness in snow."
+    }
+  },
+  {
+    "slug": "adaptability",
+    "id": 91,
+    "names": {
+      "es": "Adaptable",
+      "en": "Adaptability"
+    },
+    "shortEffect": {
+      "en": "Increases the same-type attack bonus from 1.5× to 2×."
+    },
+    "flavorText": {
+      "es": "Potencia aún más los movimientos cuyo tipo coincida con el suyo.",
+      "en": "Powers up moves of the same type as the Pokémon."
+    }
+  },
+  {
+    "slug": "hydration",
+    "id": 93,
+    "names": {
+      "es": "Hidratación",
+      "en": "Hydration"
+    },
+    "shortEffect": {
+      "en": "Cures any major status ailment after each turn during rain."
+    },
+    "flavorText": {
+      "es": "Cura los problemas de estado si está lloviendo.",
+      "en": "Cures the Pokémon's status conditions in rain."
+    }
+  },
+  {
+    "slug": "solar-power",
+    "id": 94,
+    "names": {
+      "es": "Poder Solar",
+      "en": "Solar Power"
+    },
+    "shortEffect": {
+      "en": "Increases Special Attack to 1.5× but costs 1/8 max HP after each turn during strong sunlight."
+    },
+    "flavorText": {
+      "es": "Si hace sol, aumenta su Ataque Especial, pero pierde PS en cada turno.",
+      "en": "In harsh sunlight, the Pokémon's Sp. Atk stat is boosted, but its HP decreases every turn."
+    }
+  },
+  {
+    "slug": "quick-feet",
+    "id": 95,
+    "names": {
+      "es": "Pies Rápidos",
+      "en": "Quick Feet"
+    },
+    "shortEffect": {
+      "en": "Increases Speed to 1.5× with a major status ailment."
+    },
+    "flavorText": {
+      "es": "Aumenta la Velocidad si sufre problemas de estado.",
+      "en": "Boosts the Speed stat if the Pokémon has a status condition."
+    }
+  },
+  {
+    "slug": "magic-guard",
+    "id": 98,
+    "names": {
+      "es": "Muro Mágico",
+      "en": "Magic Guard"
+    },
+    "shortEffect": {
+      "en": "Protects against damage not directly caused by a move."
+    },
+    "flavorText": {
+      "es": "Solo recibe daño de ataques.",
+      "en": "The Pokémon only takes damage from attacks."
+    }
+  },
+  {
+    "slug": "no-guard",
+    "id": 99,
+    "names": {
+      "es": "Indefenso",
+      "en": "No Guard"
+    },
+    "shortEffect": {
+      "en": "Ensures all moves used by and against the Pokémon hit."
+    },
+    "flavorText": {
+      "es": "Al quedar ambos expuestos, tanto sus movimientos como los del rival acertarán siempre.",
+      "en": "The Pokémon employs no-guard tactics to ensure incoming and outgoing attacks always land."
+    }
+  },
+  {
+    "slug": "anticipation",
+    "id": 107,
+    "names": {
+      "es": "Anticipación",
+      "en": "Anticipation"
+    },
+    "shortEffect": {
+      "en": "Notifies all trainers upon entering battle if an opponent has a super-effective move, Self-Destruct, Explosion, or a one-hit KO move."
+    },
+    "flavorText": {
+      "es": "Prevé los movimientos peligrosos del rival.",
+      "en": "The Pokémon can sense an opposing Pokémon's dangerous moves."
+    }
+  },
+  {
+    "slug": "unaware",
+    "id": 109,
+    "names": {
+      "es": "Ignorante",
+      "en": "Unaware"
+    },
+    "shortEffect": {
+      "en": "Ignores other Pokémon's stat modifiers for damage and accuracy calculation."
+    },
+    "flavorText": {
+      "es": "Pasa por alto las mejoras en las características del rival al atacar.",
+      "en": "When attacking, the Pokémon ignores the target's stat changes."
+    }
+  },
+  {
+    "slug": "tinted-lens",
+    "id": 110,
+    "names": {
+      "es": "Cromolente",
+      "en": "Tinted Lens"
+    },
+    "shortEffect": {
+      "en": "Doubles damage inflicted with not-very-effective moves."
+    },
+    "flavorText": {
+      "es": "Potencia los movimientos que no son muy eficaces, que infligen ahora un daño normal.",
+      "en": "The Pokémon can use “not very effective” moves to deal regular damage."
+    }
+  },
+  {
+    "slug": "unnerve",
+    "id": 127,
+    "names": {
+      "es": "Nerviosismo",
+      "en": "Unnerve"
+    },
+    "shortEffect": {
+      "en": "Prevents opposing Pokémon from eating held Berries."
+    },
+    "flavorText": {
+      "es": "Pone nervioso al rival y le impide usar bayas.",
+      "en": "Unnerves opposing Pokémon and makes them unable to eat Berries."
+    }
+  },
+  {
+    "slug": "cursed-body",
+    "id": 130,
+    "names": {
+      "es": "Cuerpo Maldito",
+      "en": "Cursed Body"
+    },
+    "shortEffect": {
+      "en": "Has a 30% chance of Disabling any move that hits the Pokémon."
+    },
+    "flavorText": {
+      "es": "Puede anular el movimiento usado en su contra.",
+      "en": "May disable a move that has dealt damage to the Pokémon."
+    }
+  },
+  {
+    "slug": "friend-guard",
+    "id": 132,
+    "names": {
+      "es": "Compiescolta",
+      "en": "Friend Guard"
+    },
+    "shortEffect": {
+      "en": "Decreases all direct damage taken by friendly Pokémon to 0.75×."
+    },
+    "flavorText": {
+      "es": "Reduce el daño que sufren los aliados.",
+      "en": "Reduces damage dealt to allies."
+    }
+  },
+  {
+    "slug": "multiscale",
+    "id": 136,
+    "names": {
+      "es": "Multiescamas",
+      "en": "Multiscale"
+    },
+    "shortEffect": {
+      "en": "Halves damage taken from full HP."
+    },
+    "flavorText": {
+      "es": "Reduce el daño que sufre si sus PS están al máximo.",
+      "en": "Reduces the amount of damage the Pokémon takes while its HP is full."
+    }
+  },
+  {
+    "slug": "big-pecks",
+    "id": 145,
+    "names": {
+      "es": "Sacapecho",
+      "en": "Big Pecks"
+    },
+    "shortEffect": {
+      "en": "Protects against Defense drops."
+    },
+    "flavorText": {
+      "es": "Impide que el rival le baje la Defensa.",
+      "en": "Prevents the Pokémon from having its Defense stat lowered."
+    }
+  },
+  {
+    "slug": "sand-rush",
+    "id": 146,
+    "names": {
+      "es": "Ímpetu Arena",
+      "en": "Sand Rush"
+    },
+    "shortEffect": {
+      "en": "Doubles Speed during a sandstorm. Protects against sandstorm damage."
+    },
+    "flavorText": {
+      "es": "Aumenta su Velocidad durante las tormentas de arena.",
+      "en": "Boosts the Pokémon's Speed stat in a sandstorm."
+    }
+  },
+  {
+    "slug": "analytic",
+    "id": 148,
+    "names": {
+      "es": "Cálculo Final",
+      "en": "Analytic"
+    },
+    "shortEffect": {
+      "en": "Strengthens moves to 1.3× their power when moving last."
+    },
+    "flavorText": {
+      "es": "Aumenta la potencia de su movimiento si es el último en atacar.",
+      "en": "Boosts the power of the Pokémon's move if it is the last to act that turn."
+    }
+  },
+  {
+    "slug": "infiltrator",
+    "id": 151,
+    "names": {
+      "es": "Allanamiento",
+      "en": "Infiltrator"
+    },
+    "shortEffect": {
+      "en": "Bypasses Light Screen, Reflect, and Safeguard."
+    },
+    "flavorText": {
+      "es": "Ataca sorteando la barrera o el sustituto del rival.",
+      "en": "The Pokémon's moves are unaffected by the target's barriers, substitutes, and the like."
+    }
+  },
+  {
+    "slug": "magic-bounce",
+    "id": 156,
+    "names": {
+      "es": "Espejo Mágico",
+      "en": "Magic Bounce"
+    },
+    "shortEffect": {
+      "en": "Reflects most non-damaging moves back at their user."
+    },
+    "flavorText": {
+      "es": "Puede devolver los movimientos de estado lanzados por el rival, sin verse afectado por ellos.",
+      "en": "The Pokémon reflects status moves instead of getting hit by them."
+    }
+  }
+]

@@ -1,0 +1,335 @@
+[
+  {
+    "id": 1,
+    "slug": "master-ball",
+    "names": {
+      "es": "Master Ball",
+      "en": "Master Ball"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png"
+  },
+  {
+    "id": 2,
+    "slug": "ultra-ball",
+    "names": {
+      "es": "Ultra Ball",
+      "en": "Ultra Ball"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png"
+  },
+  {
+    "id": 3,
+    "slug": "great-ball",
+    "names": {
+      "es": "Super Ball",
+      "en": "Great Ball"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png"
+  },
+  {
+    "id": 4,
+    "slug": "poke-ball",
+    "names": {
+      "es": "Poké Ball",
+      "en": "Poké Ball"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
+  },
+  {
+    "id": 17,
+    "slug": "potion",
+    "names": {
+      "es": "Poción",
+      "en": "Potion"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/potion.png"
+  },
+  {
+    "id": 25,
+    "slug": "hyper-potion",
+    "names": {
+      "es": "Hiperpoción",
+      "en": "Hyper Potion"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/hyper-potion.png"
+  },
+  {
+    "id": 26,
+    "slug": "super-potion",
+    "names": {
+      "es": "Superpoción",
+      "en": "Super Potion"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/super-potion.png"
+  },
+  {
+    "id": 28,
+    "slug": "revive",
+    "names": {
+      "es": "Revivir",
+      "en": "Revive"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/revive.png"
+  },
+  {
+    "id": 50,
+    "slug": "rare-candy",
+    "names": {
+      "es": "Caramelo Raro",
+      "en": "Rare Candy"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/rare-candy.png"
+  },
+  {
+    "id": 81,
+    "slug": "moon-stone",
+    "names": {
+      "es": "Piedra Lunar",
+      "en": "Moon Stone"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/moon-stone.png"
+  },
+  {
+    "id": 82,
+    "slug": "fire-stone",
+    "names": {
+      "es": "Piedra Fuego",
+      "en": "Fire Stone"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/fire-stone.png"
+  },
+  {
+    "id": 83,
+    "slug": "thunder-stone",
+    "names": {
+      "es": "Piedra Trueno",
+      "en": "Thunder Stone"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/thunder-stone.png"
+  },
+  {
+    "id": 84,
+    "slug": "water-stone",
+    "names": {
+      "es": "Piedra Agua",
+      "en": "Water Stone"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/water-stone.png"
+  },
+  {
+    "id": 85,
+    "slug": "leaf-stone",
+    "names": {
+      "es": "Piedra Hoja",
+      "en": "Leaf Stone"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/leaf-stone.png"
+  },
+  {
+    "id": 685,
+    "slug": "ability-capsule",
+    "names": {
+      "es": "Cáps. Habilidad",
+      "en": "Ability Capsule"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ability-capsule.png"
+  },
+  {
+    "id": 836,
+    "slug": "bottle-cap",
+    "names": {
+      "es": "Chapa Plateada",
+      "en": "Bottle Cap"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/bottle-cap.png"
+  },
+  {
+    "id": 1289,
+    "slug": "lonely-mint",
+    "names": {
+      "es": "Menta Huraña",
+      "en": "Lonely Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/lonely-mint.png"
+  },
+  {
+    "id": 1290,
+    "slug": "adamant-mint",
+    "names": {
+      "es": "Menta Firme",
+      "en": "Adamant Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/adamant-mint.png"
+  },
+  {
+    "id": 1291,
+    "slug": "naughty-mint",
+    "names": {
+      "es": "Menta Pícara",
+      "en": "Naughty Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/naughty-mint.png"
+  },
+  {
+    "id": 1292,
+    "slug": "brave-mint",
+    "names": {
+      "es": "Menta Audaz",
+      "en": "Brave Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/brave-mint.png"
+  },
+  {
+    "id": 1293,
+    "slug": "bold-mint",
+    "names": {
+      "es": "Menta Osada",
+      "en": "Bold Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/bold-mint.png"
+  },
+  {
+    "id": 1294,
+    "slug": "impish-mint",
+    "names": {
+      "es": "Menta Agitada",
+      "en": "Impish Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/impish-mint.png"
+  },
+  {
+    "id": 1295,
+    "slug": "lax-mint",
+    "names": {
+      "es": "Menta Floja",
+      "en": "Lax Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/lax-mint.png"
+  },
+  {
+    "id": 1296,
+    "slug": "relaxed-mint",
+    "names": {
+      "es": "Menta Plácida",
+      "en": "Relaxed Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/relaxed-mint.png"
+  },
+  {
+    "id": 1297,
+    "slug": "modest-mint",
+    "names": {
+      "es": "Menta Modesta",
+      "en": "Modest Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/modest-mint.png"
+  },
+  {
+    "id": 1298,
+    "slug": "mild-mint",
+    "names": {
+      "es": "Menta Afable",
+      "en": "Mild Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/mild-mint.png"
+  },
+  {
+    "id": 1299,
+    "slug": "rash-mint",
+    "names": {
+      "es": "Menta Alocada",
+      "en": "Rash Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/rash-mint.png"
+  },
+  {
+    "id": 1300,
+    "slug": "quiet-mint",
+    "names": {
+      "es": "Menta Mansa",
+      "en": "Quiet Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/quiet-mint.png"
+  },
+  {
+    "id": 1301,
+    "slug": "calm-mint",
+    "names": {
+      "es": "Menta Serena",
+      "en": "Calm Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/calm-mint.png"
+  },
+  {
+    "id": 1302,
+    "slug": "gentle-mint",
+    "names": {
+      "es": "Menta Amable",
+      "en": "Gentle Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gentle-mint.png"
+  },
+  {
+    "id": 1303,
+    "slug": "careful-mint",
+    "names": {
+      "es": "Menta Cauta",
+      "en": "Careful Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/careful-mint.png"
+  },
+  {
+    "id": 1304,
+    "slug": "sassy-mint",
+    "names": {
+      "es": "Menta Grosera",
+      "en": "Sassy Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/sassy-mint.png"
+  },
+  {
+    "id": 1305,
+    "slug": "timid-mint",
+    "names": {
+      "es": "Menta Miedosa",
+      "en": "Timid Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/timid-mint.png"
+  },
+  {
+    "id": 1306,
+    "slug": "hasty-mint",
+    "names": {
+      "es": "Menta Activa",
+      "en": "Hasty Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/hasty-mint.png"
+  },
+  {
+    "id": 1307,
+    "slug": "jolly-mint",
+    "names": {
+      "es": "Menta Alegre",
+      "en": "Jolly Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/jolly-mint.png"
+  },
+  {
+    "id": 1308,
+    "slug": "naive-mint",
+    "names": {
+      "es": "Menta Ingenua",
+      "en": "Naive Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/naive-mint.png"
+  },
+  {
+    "id": 1309,
+    "slug": "serious-mint",
+    "names": {
+      "es": "Menta Seria",
+      "en": "Serious Mint"
+    },
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/serious-mint.png"
+  }
+]
