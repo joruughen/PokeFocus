@@ -32,8 +32,9 @@ services:
       # 1 when a reverse proxy (Caddy) sits in front: client IP from X-Forwarded-For.
       TRUST_PROXY: ${TRUST_PROXY:-0}
     ports:
-      # Only reachable from this machine: put Caddy (HTTPS) in front. Use '8787:8787' to expose it.
-      - '127.0.0.1:8787:8787'
+      # Host side: APP_BIND (default 127.0.0.1 = only this machine; put an HTTPS proxy
+      # such as Caddy or `tailscale serve` in front) and APP_PORT (default 8787).
+      - '${APP_BIND:-127.0.0.1}:${APP_PORT:-8787}:8787'
 
 volumes:
   pgdata:
