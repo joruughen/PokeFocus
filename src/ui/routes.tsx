@@ -26,6 +26,7 @@ const loaders = {
   team: () => import('./screens/team/Team'),
   dex: () => import('./screens/dex/Dex'),
   league: () => import('./screens/league/League'),
+  friends: () => import('./screens/friends/Friends'),
   missions: () => import('./screens/missions/Missions'),
   settings: () => import('./screens/Settings'),
 }
@@ -36,6 +37,7 @@ export const ROUTES: RouteDef[] = [
   { id: 'team', labelKey: 'nav.team', icon: 'team', component: lazy(loaders.team), nav: true, preload: loaders.team },
   { id: 'dex', labelKey: 'nav.dex', icon: 'dex', component: lazy(loaders.dex), nav: true, preload: loaders.dex },
   { id: 'league', labelKey: 'nav.league', icon: 'league', component: lazy(loaders.league), nav: true, preload: loaders.league },
+  { id: 'friends', labelKey: 'nav.friends', icon: 'friends', component: lazy(loaders.friends), nav: true, preload: loaders.friends },
   { id: 'missions', labelKey: 'nav.missions', icon: 'missions', component: lazy(loaders.missions), nav: true, preload: loaders.missions },
   { id: 'settings', labelKey: 'nav.settings', icon: 'settings', component: lazy(loaders.settings), nav: true, preload: loaders.settings },
 ]

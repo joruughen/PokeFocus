@@ -16,13 +16,14 @@ import {
 import { Button, HelpDot, IconButton, Panel, PixelIcon, ProgressBar, Sprite, toast } from '../../components'
 import { emitHintEvent, hintAnchor } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtInt, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { navigate } from '../../router'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { usePlayer } from '../../store/selectors'
+import { useBusy, usePlayer } from '../../store/selectors'
 import { lineRoot, useEvoCondition } from '../shared/EvoLine'
 
 const ctx = defaultContext()
@@ -55,6 +56,7 @@ export function Candies({ view, locked }: { view: PokemonView; locked: string | 
   const names = useNames()
   const player = usePlayer()
   const feed = useGame((s) => s.feedCandy)
+  const busy = useBusy()
   const lng = i18n.language
   const p = view.pokemon
   const name = names.species(p.speciesSlug)
@@ -97,11 +99,12 @@ export function Candies({ view, locked }: { view: PokemonView; locked: string | 
       ) : (
         <ul className="flex flex-col gap-3">
           {kinds.map((k) => (
-            <CandyRow key={k.key} label={k.label} have={k.have} exp={k.exp} cost={cost} dust={player.dust} disabled={Boolean(locked)} level={p.level} exp0={p.exp} cap={cap}
-              onUse={(n) => {
-                const r = feed(p.uid, k.kind, n)
+            <CandyRow key={k.key} label={k.label} have={k.have} exp={k.exp} cost={cost} dust={player.dust} disabled={Boolean(locked) || busy} level={p.level} exp0={p.exp} cap={cap}
+              onUse={async (n) => {
+                if (busy) return
+                const r = await feed(p.uid, k.kind, n)
                 if (!r.ok) {
-                  toast.add({ title: t(`errors.box.${r.error}`), type: 'danger' })
+                  toast.add({ title: errorText(r.error, 'box'), type: 'danger' })
                   return
                 }
                 sfx('claim', { volume: 0.6 })
@@ -156,6 +159,7 @@ function CandyRow({ label, have, exp, cost, dust, disabled, level, exp0, cap, on
 
 /** Evolution options now (engine `evolutionOptions`), with why each one is blocked. */
 export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locked: string | null; onEvolve: (to: string) => void }) {
+  const busy = useBusy()
   const { t } = useTranslation()
   const names = useNames()
   const player = usePlayer()
@@ -185,17 +189,19 @@ export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locke
       ) : (
         <ul className="flex flex-col gap-3">
           {view.evolutions.map((o) => (
-            <li key={o.to} className={cx('flex flex-wrap items-center gap-3 bg-dusk-900 p-3 inset-shadow-well', !o.blockedBy && 'outline-2 outline-volt-400')}>
-              <span className="grid h-14 w-16 place-items-center">
-                <Sprite kind="icon" slug={o.to} scale={2} alt="" className={cx(!player.pokedex.seen.includes(o.to) && 'brightness-0 opacity-60')} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-display text-lg leading-tight">{player.pokedex.seen.includes(o.to) ? names.species(o.to) : t('dex.unknownName')}</span>
-                <span className="block text-sm text-mist-300">{cond(o.evolution)}</span>
-                {o.blockedBy && <span className="block text-xs text-amber-400">{blocked(o)}</span>}
-                {o.evolution.trigger === 'item' && o.evolution.item && <span className="block text-xs text-mist-400">{t('evo.itemHave', { count: player.inventory[o.evolution.item] ?? 0 })}</span>}
-              </span>
-              <Button icon="sparkle" disabled={Boolean(o.blockedBy) || Boolean(locked)} onClick={() => onEvolve(o.to)} beacon={!o.blockedBy && !locked} data-sfx="none">
+            <li key={o.to} className={cx('flex flex-col gap-3 bg-dusk-900 p-3 inset-shadow-well', !o.blockedBy && 'outline-2 outline-volt-400')}>
+              <div className="flex items-center gap-3">
+                <span className="grid h-14 w-16 shrink-0 place-items-center">
+                  <Sprite kind="icon" slug={o.to} scale={2} alt="" className={cx(!player.pokedex.seen.includes(o.to) && 'brightness-0 opacity-60')} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-lg leading-tight">{player.pokedex.seen.includes(o.to) ? names.species(o.to) : t('dex.unknownName')}</span>
+                  <span className="block text-sm text-mist-300">{cond(o.evolution)}</span>
+                  {o.blockedBy && <span className="block text-xs text-amber-400">{blocked(o)}</span>}
+                  {o.evolution.trigger === 'item' && o.evolution.item && <span className="block text-xs text-mist-400">{t('evo.itemHave', { count: player.inventory[o.evolution.item] ?? 0 })}</span>}
+                </span>
+              </div>
+              <Button icon="sparkle" className="w-full justify-center" disabled={Boolean(o.blockedBy) || Boolean(locked) || busy} onClick={() => onEvolve(o.to)} beacon={!o.blockedBy && !locked} data-sfx="none">
                 {t('evo.button')}
               </Button>
             </li>
@@ -213,6 +219,7 @@ export function EnergyBond({ view, inSession }: { view: PokemonView; inSession: 
   const names = useNames()
   const player = usePlayer()
   const heal = useGame((s) => s.heal)
+  const busy = useBusy()
   const lng = i18n.language
   const p = view.pokemon
   const name = names.species(p.speciesSlug)
@@ -255,11 +262,11 @@ export function EnergyBond({ view, inSession }: { view: PokemonView; inSession: 
                   size="sm"
                   variant="secondary"
                   icon="potion"
-                  disabled={!usable || inSession}
+                  disabled={!usable || inSession || busy}
                   data-sfx="none"
-                  onClick={() => {
-                    const err = heal(p.uid, k)
-                    if (err) toast.add({ title: t(`errors.heal.${err}`), type: 'danger' })
+                  onClick={async () => {
+                    const err = await heal(p.uid, k)
+                    if (err) toast.add({ title: errorText(err, 'heal'), type: 'danger' })
                     else {
                       sfx('heal')
                       toast.add({ title: t('energy.healed', { name, item: names.item(k) }), type: 'success' })

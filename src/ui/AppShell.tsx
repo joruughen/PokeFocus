@@ -3,14 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 import { BALL_ORDER, missionsView } from '../engine'
 import { DevToggle } from './dev/DevPanel'
-import { BallIcon, Logo, PixelIcon, Tooltip } from './components'
+import { BallIcon, IconButton, Logo, PixelIcon, Tooltip } from './components'
 import { hintAnchor, useHintEvent } from './hints'
 import { cx } from './lib/cx'
+import { flagEmoji } from './lib/countries'
 import { fmtCountdown, fmtInt } from './lib/format'
 import { hrefTo, useRoute } from './router'
 import { findRoute, ROUTES } from './routes'
 import { useNow } from './store/clock'
+import { useAuth } from './store/auth'
 import { timerOf, useGame } from './store/game'
+import { useIncomingCount } from './store/social'
 import { usePhase, usePlayer } from './store/selectors'
 
 /**
@@ -85,6 +88,7 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
                 <span className="relative">
                   <PixelIcon name={r.icon} size={20} />
                   {r.id === 'missions' && <MissionsBadge active={active} />}
+                  {r.id === 'friends' && <FriendsBadge active={active} />}
                 </span>
                 <span className="max-xl:sr-only">{t(r.labelKey)}</span>
               </a>
@@ -120,6 +124,22 @@ function MissionsBadge({ active }: { active: boolean }) {
   )
 }
 
+/** Friend requests waiting for an answer, on the nav icon. */
+function FriendsBadge({ active }: { active: boolean }) {
+  const { t } = useTranslation()
+  const n = useIncomingCount()
+  useHintEvent('friendRequest', n > 0 && !active)
+  if (n === 0) return null
+  return (
+    <span
+      className={cx('absolute -top-2 -left-2 grid h-4 min-w-4 place-items-center px-0.5 font-num text-sm leading-none shadow-frame', active ? 'bg-ink text-volt-300' : 'bg-cheek-500 text-mist-50')}
+      aria-label={t('friends.badge', { count: n })}
+    >
+      {n}
+    </span>
+  )
+}
+
 function LiveSessionChip() {
   const { t } = useTranslation()
   const now = useNow()
@@ -144,14 +164,27 @@ function LiveSessionChip() {
 function TrainerCard() {
   const { t, i18n } = useTranslation()
   const player = usePlayer()
+  const user = useAuth((s) => s.user)
+  const logout = useAuth((s) => s.logout)
   const streak = player.streak.current
   return (
     <div className="flex flex-col gap-3 bg-dusk-800 p-3 shadow-frame max-xl:items-center max-xl:p-2">
-      <div className="max-xl:hidden">
-        <p className="truncate font-display text-lg leading-tight">{player.profile.trainerName}</p>
+      <div className="flex items-start gap-2 max-xl:hidden">
+        <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-lg leading-tight">
+          {user?.trainerName ?? player.profile.trainerName}
+          {user && (
+            <span aria-hidden className="ml-1.5 text-base">
+              {flagEmoji(user.country)}
+            </span>
+          )}
+        </p>
         <p className="text-xs text-mist-300">{t('trainer.level', { level: player.trainer.level })}</p>
         {streak > 0 && <p className="text-xs text-volt-300">{t('trainer.streak', { count: streak })}</p>}
+        </div>
+        <IconButton icon="logout" size="sm" variant="ghost" label={t('account.logout')} onClick={() => void logout()} className="-mt-1 -mr-1 shrink-0" />
       </div>
+      <IconButton icon="logout" size="sm" variant="ghost" label={t('account.logout')} onClick={() => void logout()} className="xl:hidden" />
       <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 max-xl:flex-col" aria-label={t('trainer.bag')}>
         {BALL_ORDER.map((b) => (
           <Tooltip key={b} content={t('trainer.ballCount', { count: player.inventory[b] ?? 0 })}>

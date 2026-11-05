@@ -4,12 +4,13 @@ import { defaultContext, missionsView, type MissionReward, type MissionView, typ
 import { Button, HelpDot, Panel, PixelIcon, ProgressBar, Sprite, toast, Tooltip, TYPE_TEXT } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
 import { pick, useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { usePlayer } from '../../store/selectors'
+import { useBusy, usePlayer } from '../../store/selectors'
 
 /** Items with a sprite (mission-only placeholders like the Tera Shard get a pixel icon). */
 const KNOWN_ITEMS = new Set(defaultContext().data.items.map((i) => i.slug))
@@ -23,22 +24,29 @@ export default function Missions() {
   const player = usePlayer()
   const claim = useGame((s) => s.claimMission)
   const claimAll = useGame((s) => s.claimAllMissions)
+  const busy = useBusy()
   const minute = Math.floor(now / 60_000)
   const view = useMemo(() => missionsView(player, minute * 60_000), [player, minute])
 
-  const onClaim = (m: MissionView) => {
-    const r = claim(m.id)
+  const onClaim = async (m: MissionView) => {
+    if (busy) return
+    const r = await claim(m.id)
     if (!r.ok) {
-      toast.add({ title: t(`errors.mission.${r.error}`), type: 'danger' })
+      toast.add({ title: errorText(r.error, 'mission'), type: 'danger' })
       return
     }
     sfx('claim')
     setTimeout(() => sfx('heal', { volume: 0.5 }), 260)
     toast.add({ title: t('missions.claimed', { title: pick(m.title, names.lng) }), description: rewardText(r.reward), type: 'success' })
   }
-  const onClaimAll = () => {
-    const rs = claimAll()
-    if (rs.length === 0) return
+  const onClaimAll = async () => {
+    if (busy) return
+    const rs = await claimAll()
+    if (rs.length === 0) {
+      const err = useGame.getState().error
+      if (err) toast.add({ title: errorText(err, 'mission'), type: 'danger' })
+      return
+    }
     sfx('leagueUp')
     toast.add({ title: t('missions.claimedAll', { count: rs.length }), description: rs.map(rewardText).join(', '), type: 'success' })
   }
@@ -62,7 +70,7 @@ export default function Missions() {
           <p className="mt-1 max-w-[70ch] text-mist-300">{t('missions.subtitle')}</p>
         </div>
         {view.claimable > 0 && (
-          <Button icon="star" onClick={onClaimAll} data-sfx="none" beacon>
+          <Button icon="star" onClick={() => void onClaimAll()} disabled={busy} data-sfx="none" beacon>
             {t('missions.claimAll', { count: view.claimable })}
           </Button>
         )}
@@ -110,6 +118,7 @@ function MissionList({ list, onClaim, columns }: { list: MissionView[]; onClaim:
 }
 
 function MissionRow({ m, onClaim }: { m: MissionView; onClaim: () => void }) {
+  const busy = useBusy()
   const { t, i18n } = useTranslation()
   const names = useNames()
   const ready = m.completed && !m.claimed
@@ -126,7 +135,7 @@ function MissionRow({ m, onClaim }: { m: MissionView; onClaim: () => void }) {
             {t('missions.done')}
           </span>
         ) : ready ? (
-          <Button size="sm" icon="star" onClick={onClaim} data-sfx="none" className="shrink-0">
+          <Button size="sm" icon="star" onClick={onClaim} disabled={busy} data-sfx="none" className="shrink-0">
             {t('missions.claim')}
           </Button>
         ) : null}

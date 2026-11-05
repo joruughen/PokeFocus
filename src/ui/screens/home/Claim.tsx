@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { defaultContext, MINUTE_MS } from '../../../engine'
 import { Button, Platform, ProgressBar, Sprite, Stage, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
+import { errorText } from '../../lib/errors'
 import { fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
@@ -28,12 +29,13 @@ export function Claim({ late }: { late: boolean }) {
   const left = timer.endsAt + windowMs - now
   const scene = useScene(player, now)
 
-  const onClaim = () => {
+  const onClaim = async () => {
     if (busy) return
     setBusy(true)
-    // Idempotent: the engine refuses a second apply, and the store only claims an active session.
-    if (!claim()) {
-      toast.add({ title: t('errors.claimFailed'), type: 'danger' })
+    // Idempotent: the server claims an active session once; a second claim is refused.
+    if (!(await claim())) {
+      const code = useGame.getState().error
+      toast.add({ title: code && code !== 'not_finished' && code !== 'no_session' ? errorText(code) : t('errors.claimFailed'), type: 'danger' })
       setBusy(false)
       return
     }
@@ -81,7 +83,7 @@ export function Claim({ late }: { late: boolean }) {
           </p>
         )}
 
-        <Button {...hintAnchor('claim.button')} size="lg" icon="star" onClick={onClaim} disabled={busy} beacon={!late} data-sfx="none">
+        <Button {...hintAnchor('claim.button')} size="lg" icon="star" onClick={() => void onClaim()} disabled={busy} aria-busy={busy} beacon={!late} data-sfx="none">
           {t('claim.button')}
         </Button>
       </section>

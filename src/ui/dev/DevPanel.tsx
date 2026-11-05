@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { DAY_MS, HOUR_MS, type FocusLabel } from '../../engine'
 import { Button, IconButton, PixelIcon, Segmented, toast } from '../components'
 import { cx } from '../lib/cx'
+import { errorText } from '../lib/errors'
 import { fmtClock } from '../lib/format'
 
 const AudioLab = lazy(() => import('../../audio/AudioLab').then((m) => ({ default: m.AudioLab })))
@@ -63,6 +64,12 @@ export function DevPanel() {
   const resetHints = usePrefs((s) => s.resetHints)
   const player = useGame((s) => s.player)
   const game = useGame()
+  const busy = game.pending > 0
+  /** Dev actions run on the server (DEV_TOOLS=1 only): say why when it refuses. */
+  const run = async (p: Promise<string | null>) => {
+    const err = await p
+    if (err) toast.add({ title: errorText(err), type: 'danger' })
+  }
   const [seed, setSeed] = useState(dev.seed ?? '')
   const tz = player?.profile.timezone ?? 0
 
@@ -106,7 +113,7 @@ export function DevPanel() {
       </Section>
 
       <Section title={t('dev.session')}>
-        <Button size="sm" disabled={!player?.activeSession} onClick={() => game.devFinishNow()}>
+        <Button size="sm" disabled={!player?.activeSession} onClick={() => void game.devFinishNow()}>
           {t('dev.finishNow')}
         </Button>
         <label className="mt-3 flex flex-col gap-1">
@@ -127,22 +134,22 @@ export function DevPanel() {
 
       <Section title={t('dev.inventory')}>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" disabled={!player} onClick={() => game.devAddItems({ 'poke-ball': 10, 'great-ball': 5, 'ultra-ball': 3 })}>
+          <Button size="sm" variant="secondary" disabled={!player || busy} onClick={() => void run(game.devAddItems({ 'poke-ball': 10, 'great-ball': 5, 'ultra-ball': 3 }))}>
             {t('dev.addBalls')}
           </Button>
-          <Button size="sm" variant="secondary" disabled={!player} onClick={() => game.devAddDust(1000)}>
+          <Button size="sm" variant="secondary" disabled={!player || busy} onClick={() => void run(game.devAddDust(1000))}>
             {t('dev.addDust')}
           </Button>
-          <Button size="sm" variant="secondary" disabled={!player} onClick={() => game.devAddCandies(10)}>
+          <Button size="sm" variant="secondary" disabled={!player || busy} onClick={() => void run(game.devAddCandies(10))}>
             {t('dev.addCandies')}
           </Button>
-          <Button size="sm" variant="secondary" disabled={!player} onClick={() => game.devAddItems({ potion: 3, 'super-potion': 2, 'hyper-potion': 1, revive: 1, 'fire-stone': 1, 'water-stone': 1, 'thunder-stone': 1, 'leaf-stone': 1, 'moon-stone': 1 })}>
+          <Button size="sm" variant="secondary" disabled={!player || busy} onClick={() => void run(game.devAddItems({ potion: 3, 'super-potion': 2, 'hyper-potion': 1, revive: 1, 'fire-stone': 1, 'water-stone': 1, 'thunder-stone': 1, 'leaf-stone': 1, 'moon-stone': 1 }))}>
             {t('dev.addItems')}
           </Button>
-          <Button size="sm" variant="secondary" disabled={!player} onClick={() => game.devLevelUp(5)}>
+          <Button size="sm" variant="secondary" disabled={!player || busy} onClick={() => void run(game.devLevelUp(5))}>
             {t('dev.levelUp')}
           </Button>
-          <Button size="sm" variant="secondary" disabled={!player} onClick={() => game.devAddRandomPokemon(10)}>
+          <Button size="sm" variant="secondary" disabled={!player || busy} onClick={() => void run(game.devAddRandomPokemon(10))}>
             {t('dev.addPokemon')}
           </Button>
         </div>

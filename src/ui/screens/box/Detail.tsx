@@ -4,13 +4,14 @@ import { defaultContext, pokemonView } from '../../../engine'
 import { Button, Dialog, DialogClose, EmptyState, HelpDot, IconButton, IvQuality, Panel, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, StatRow, STAT_ORDER, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { navigate } from '../../router'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { usePlayer, useScene } from '../../store/selectors'
+import { useBusy, usePlayer, useScene } from '../../store/selectors'
 import { lineRoot } from '../shared/EvoLine'
 import { EvolveMoment } from './EvolveMoment'
 import { filteredMons, useBoxFilters } from './filters'
@@ -32,6 +33,7 @@ export function Detail({ uid }: { uid: string }) {
   const setTeam = useGame((s) => s.setTeam)
   const setLeader = useGame((s) => s.setLeader)
   const evolve = useGame((s) => s.evolve)
+  const busy = useBusy()
   const [confirmRelease, setConfirmRelease] = useState(false)
   const [moment, setMoment] = useState<{ from: string; to: string; shiny: boolean } | null>(null)
   const minute = Math.floor(now / 60_000)
@@ -62,9 +64,9 @@ export function Detail({ uid }: { uid: string }) {
   const releaseGain = cfg.progression.candiesOnRelease[view.species.stage - 1] ?? 1
   const statScale = Math.max(50, Math.ceil(Math.max(...STAT_ORDER.map((k) => view.stats[k])) / 50) * 50)
 
-  const teamAction = () => {
-    const err = inTeam ? setTeam(player.team.filter((u) => u !== uid)) : setTeam([...player.team, uid])
-    if (err) toast.add({ title: t(`errors.box.${err}`), type: 'danger' })
+  const teamAction = async () => {
+    const err = await (inTeam ? setTeam(player.team.filter((u) => u !== uid)) : setTeam([...player.team, uid]))
+    if (err) toast.add({ title: errorText(err, 'box'), type: 'danger' })
     else toast.add({ title: inTeam ? t('detail.removed', { name }) : t('detail.added', { name }), type: 'success' })
   }
 
@@ -127,20 +129,20 @@ export function Detail({ uid }: { uid: string }) {
               {inTeam ? (
                 <>
                   {slot !== 0 && (
-                    <Button size="sm" icon="crown" disabled={inSession} onClick={() => {
-                      const err = setLeader(uid)
-                      if (err) toast.add({ title: t(`errors.box.${err}`), type: 'danger' })
+                    <Button size="sm" icon="crown" disabled={inSession || busy} onClick={async () => {
+                      const err = await setLeader(uid)
+                      if (err) toast.add({ title: errorText(err, 'box'), type: 'danger' })
                       else toast.add({ title: t('team.newLeader', { name }), type: 'success' })
                     }}>
                       {t('team.makeLeader')}
                     </Button>
                   )}
-                  <Button size="sm" variant="secondary" icon="minus" disabled={inSession || player.team.length <= 1} onClick={teamAction}>
+                  <Button size="sm" variant="secondary" icon="minus" disabled={inSession || busy || player.team.length <= 1} onClick={() => void teamAction()}>
                     {t('detail.removeTeam')}
                   </Button>
                 </>
               ) : (
-                <Button size="sm" icon="plus" disabled={Boolean(player.activeSession) || player.team.length >= 6} onClick={teamAction}>
+                <Button size="sm" icon="plus" disabled={Boolean(player.activeSession) || busy || player.team.length >= 6} onClick={() => void teamAction()}>
                   {player.team.length >= 6 ? t('detail.teamFull') : t('detail.addTeam')}
                 </Button>
               )}
@@ -164,11 +166,12 @@ export function Detail({ uid }: { uid: string }) {
             <Evolution
               view={view}
               locked={locked}
-              onEvolve={(to) => {
+              onEvolve={async (to) => {
+                if (busy) return
                 const from = p.speciesSlug
-                const r = evolve(uid, to)
+                const r = await evolve(uid, to)
                 if (!r.ok) {
-                  toast.add({ title: t(`errors.box.${r.error}`), type: 'danger' })
+                  toast.add({ title: errorText(r.error, 'box'), type: 'danger' })
                   return
                 }
                 setMoment({ from, to, shiny: p.isShiny })
@@ -251,11 +254,12 @@ export function Detail({ uid }: { uid: string }) {
             <Button
               variant="danger"
               icon="trash"
-              onClick={() => {
-                const err = release(uid)
+              disabled={busy}
+              onClick={async () => {
+                const err = await release(uid)
                 setConfirmRelease(false)
                 if (err) {
-                  toast.add({ title: t(`errors.box.${err}`), type: 'danger' })
+                  toast.add({ title: errorText(err, 'box'), type: 'danger' })
                   return
                 }
                 sfx('flee')

@@ -4,10 +4,12 @@ import { activationChance, defaultContext, type PokemonView, type TechniqueInfo 
 import { Button, CategoryChip, HelpDot, Panel, PixelIcon, Stars, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useGame } from '../../store/game'
+import { useBusy } from '../../store/selectors'
 
 const cfg = defaultContext().config
 const SLOT_LEVELS = cfg.progression.techniqueSlots
@@ -21,6 +23,7 @@ export function Techniques({ view, locked }: { view: PokemonView; locked: string
   const { t, i18n } = useTranslation()
   const names = useNames()
   const equip = useGame((s) => s.equip)
+  const busy = useBusy()
   const [pending, setPending] = useState<string | null>(null)
   const p = view.pokemon
   const equipped = p.equippedMoves
@@ -28,10 +31,11 @@ export function Techniques({ view, locked }: { view: PokemonView; locked: string
   const available = view.equippable.filter((m) => !equipped.includes(m.slug))
   const name = names.species(p.speciesSlug)
 
-  const save = (moves: string[], msg: string) => {
-    const err = equip(p.uid, moves)
+  const save = async (moves: string[], msg: string) => {
+    if (busy) return
+    const err = await equip(p.uid, moves)
     if (err) {
-      toast.add({ title: t(`errors.box.${err}`), type: 'danger' })
+      toast.add({ title: errorText(err, 'box'), type: 'danger' })
       return
     }
     sfx(moves.length > equipped.length ? 'newMove' : 'uiClose', { volume: 0.7 })
@@ -80,11 +84,11 @@ export function Techniques({ view, locked }: { view: PokemonView; locked: string
               <TechCard info={info} view={view} lng={i18n.language} />
               <div className="mt-3 flex justify-end gap-2">
                 {pending ? (
-                  <Button size="sm" icon="reroll" onClick={() => onReplace(i)} disabled={Boolean(locked)}>
+                  <Button size="sm" icon="reroll" onClick={() => onReplace(i)} disabled={Boolean(locked) || busy}>
                     {t('tech.replaceHere')}
                   </Button>
                 ) : (
-                  <Button size="sm" variant="ghost" icon="minus" disabled={Boolean(locked)} onClick={() => save(equipped.filter((m) => m !== slug), t('tech.unequipped', { move: names.move(slug) }))}>
+                  <Button size="sm" variant="ghost" icon="minus" disabled={Boolean(locked) || busy} onClick={() => save(equipped.filter((m) => m !== slug), t('tech.unequipped', { move: names.move(slug) }))}>
                     {t('tech.unequip')}
                   </Button>
                 )}
@@ -113,7 +117,7 @@ export function Techniques({ view, locked }: { view: PokemonView; locked: string
           {available.map((m) => (
             <li key={m.slug} className={cx('grid grid-cols-1 items-center gap-3 bg-dusk-900 p-3 inset-shadow-well sm:grid-cols-[minmax(0,1fr)_auto]', pending === m.slug && 'outline-3 outline-volt-400')}>
               <TechCard info={m} view={view} lng={i18n.language} />
-              <Button size="sm" variant={pending === m.slug ? 'primary' : 'secondary'} icon="plus" disabled={Boolean(locked)} onClick={() => onEquip(m.slug)} aria-pressed={pending === m.slug}>
+              <Button size="sm" variant={pending === m.slug ? 'primary' : 'secondary'} icon="plus" disabled={Boolean(locked) || busy} onClick={() => onEquip(m.slug)} aria-pressed={pending === m.slug}>
                 {free > 0 ? t('tech.equip') : t('tech.swap')}
               </Button>
             </li>

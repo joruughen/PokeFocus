@@ -28,7 +28,7 @@ export function SessionWatcher() {
       setHintsSuppressed(phase === 'focus' || phase === 'paused')
       const timer = timerOf(s)
       if ((phase === 'claim' || phase === 'late') && timer && !timer.notified && isLeaderTab()) {
-        s.markNotified()
+        void s.markNotified()
         if (!sessionEndScheduled(timer.sessionId)) chime()
         notify(t('notify.doneTitle'), t('notify.doneBody'))
         if (document.hidden) document.title = t('notify.tabTitle')

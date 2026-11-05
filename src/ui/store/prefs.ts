@@ -74,8 +74,25 @@ const DEFAULT_DEV: DevSettings = {
   rngCounter: 0,
 }
 
+/**
+ * Server clock skew (ms): `serverNow - Date.now()` measured on the last game
+ * response (see game.ts). The server decides when a session ends, so "real"
+ * time in the UI is the browser clock corrected by this offset; the countdown
+ * then matches the server even if the device clock is a bit off. Not persisted.
+ */
+let serverOffset = 0
+
+/** Record the skew from a server response (ignored while the dev clock is active). */
+export function setServerOffset(ms: number): void {
+  if (Number.isFinite(ms)) serverOffset = ms
+}
+
+export function getServerOffset(): number {
+  return serverOffset
+}
+
 function virtualFrom(anchor: ClockAnchor | null, realNow: number): number {
-  return anchor ? anchor.virtual + (realNow - anchor.real) * anchor.rate : realNow
+  return anchor ? anchor.virtual + (realNow - anchor.real) * anchor.rate : realNow + serverOffset
 }
 
 export const usePrefs = create<PrefsState>()(
@@ -105,7 +122,7 @@ export const usePrefs = create<PrefsState>()(
         set((s) => {
           const real = Date.now()
           const virtual = virtualFrom(s.dev.anchor, real)
-          const anchor = rate === 1 && Math.abs(virtual - real) < 1000 ? null : { real, virtual, rate }
+          const anchor = rate === 1 && Math.abs(virtual - (real + serverOffset)) < 1000 ? null : { real, virtual, rate }
           return { dev: { ...s.dev, rate, anchor } }
         }),
       advanceClock: (ms) =>
@@ -148,7 +165,7 @@ export const usePrefs = create<PrefsState>()(
   ),
 )
 
-/** Current game time in epoch ms (real time unless the dev clock is active). */
+/** Current game time in epoch ms (server-corrected real time unless the dev clock is active). */
 export function now(): number {
   return virtualFrom(usePrefs.getState().dev.anchor, Date.now())
 }

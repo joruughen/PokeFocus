@@ -1,15 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, pokemonView, type MemberResult, type ProgressEvent, type TypeSlug } from '../../../engine'
-import { BallIcon, Button, Panel, PixelIcon, Platform, ProgressBar, Sprite, Stage, Tooltip, TypeBadge } from '../../components'
+import { BallIcon, Button, Panel, PixelIcon, Platform, ProgressBar, Sprite, Stage, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtInt, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { usePlayer, useScene } from '../../store/selectors'
+import { useBusy, usePlayer, useScene } from '../../store/selectors'
 
 const cfg = defaultContext().config
 
@@ -22,7 +23,12 @@ export function Results() {
   const player = usePlayer()
   const now = useNow()
   const outcome = useGame((s) => s.outcome)!
-  const dismiss = useGame((s) => s.dismissResults)
+  const dismissResults = useGame((s) => s.dismissResults)
+  const busy = useBusy()
+  const dismiss = async () => {
+    const err = await dismissResults()
+    if (err) toast.add({ title: errorText(err), type: 'danger' })
+  }
   const { result, events } = outcome
   const scene = useScene(player, now)
   const levelUps = events.filter((e): e is Extract<ProgressEvent, { type: 'levelUp' }> => e.type === 'levelUp')
@@ -162,14 +168,14 @@ export function Results() {
               <>
                 <p className="font-display text-xl">{t('results.wavesReady', { count: result.waves.length })}</p>
                 <p className="text-sm text-mist-300">{t('results.wavesNote')}</p>
-                <Button size="lg" icon="next" onClick={dismiss}>
+                <Button size="lg" icon="next" onClick={() => void dismiss()} disabled={busy}>
                   {t('results.toWaves')}
                 </Button>
               </>
             ) : (
               <>
                 <p className="text-mist-300">{t('results.noWaves')}</p>
-                <Button size="lg" onClick={dismiss}>
+                <Button size="lg" onClick={() => void dismiss()} disabled={busy}>
                   {t('results.done')}
                 </Button>
               </>

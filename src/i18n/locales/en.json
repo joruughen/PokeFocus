@@ -28,7 +28,8 @@
     "settings": "Settings",
     "sessionLive": "Session running",
     "sessionDone": "Session finished",
-    "missions": "Missions"
+    "missions": "Missions",
+    "friends": "Friends"
   },
   "trainer": {
     "level": "Trainer lv. {{level}}",
@@ -436,7 +437,8 @@
       "reroll": "Swap",
       "pick": "Pick a wild Pokémon to use it on.",
       "note": "Use them before throwing: an asleep or paralyzed Pokémon is easier to catch.",
-      "applyHere": "Use here"
+      "applyHere": "Use here",
+      "hasStatus": "It already has a status: pick another Pokémon."
     },
     "tries": "Tries",
     "studyEligibleTip": "Guaranteed catch with this wave's Study Ball.",
@@ -446,17 +448,15 @@
     "you": "trainer",
     "progress": "Step {{n}} of {{total}}",
     "steps": [
-      "About you",
+      "Language and time",
       "Your first partner",
       "How it works"
     ],
     "speech": [
-      "Hi! I'll keep you company while you study. What should I call you?",
-      "Nice to meet you, {{name}}. Pick your first partner: each one plays differently.",
+      "Hi, {{name}}! I'll keep you company while you study. First, confirm your language and time zone.",
+      "Great, {{name}}. Pick your first partner: each one plays differently.",
       "{{starter}} is ready! Here's how it works, in three steps."
     ],
-    "name": "Your trainer name",
-    "namePlaceholder": "For example, Ash",
     "language": "Language",
     "timezone": "Time zone",
     "timezoneNote": "Detected from your browser. It sets the time for conditions and the daily reset.",
@@ -503,7 +503,7 @@
     "dev": "Developer tools",
     "devNote": "Fast time, fixed seed and shortcuts for testing.",
     "reset": "Erase everything",
-    "resetNote": "Deletes your progress from this browser.",
+    "resetNote": "Deletes this account's game on the server (developer tools only).",
     "resetButton": "Erase progress",
     "resetTitle": "Erase all your progress?",
     "resetBody": "Your Pokémon, items and history in this browser will be deleted. This can't be undone.",
@@ -536,7 +536,7 @@
     },
     "about": {
       "title": "About",
-      "body": "PokeFocus turns your study hours into a Pokémon team that studies with you. This is a local prototype: your data lives only in this browser.",
+      "body": "PokeFocus turns your study hours into a Pokémon team that studies with you. Your progress is saved to your account on the server.",
       "credits": "Sprites from PokeAPI and Pokémon Showdown. Data from PokeAPI. Music and effects are synthesized in your browser.",
       "version": "Version {{version}}"
     }
@@ -567,7 +567,8 @@
       "wrong_charge_kind": "That charge can't do that.",
       "unknown_wild": "That Pokémon is gone.",
       "wild_resolved": "That Pokémon was already caught or fled.",
-      "wave_passed": "That wave has passed."
+      "wave_passed": "That wave has passed.",
+      "already_has_status": "That Pokémon already has a status."
     },
     "box": {
       "unknown_pokemon": "That Pokémon is gone.",
@@ -607,7 +608,53 @@
       "unknown_mission": "That mission is gone.",
       "not_completed": "You haven't completed that mission yet.",
       "already_claimed": "You already claimed that mission."
-    }
+    },
+    "no_player": "You don't have a game yet.",
+    "player_exists": "You already have a game.",
+    "invalid_starter": "That partner isn't available.",
+    "not_finished": "The session hasn't ended yet.",
+    "paused": "The session is paused.",
+    "no_session": "There's no session running.",
+    "no_break": "There's no break running.",
+    "session_active_elsewhere": "You already have a study session running on another device.",
+    "api": {
+      "network": "Can't reach the server. Check your connection and try again.",
+      "server": "The server had a problem. Try again in a moment.",
+      "generic": "Something went wrong. Try again.",
+      "dev_disabled": "Developer tools are off on this server.",
+      "http_403": "The server refused that action.",
+      "http_404": "We couldn't find that.",
+      "logged_out": "Your session ended. Sign in again.",
+      "body_too_large": "The request is too large.",
+      "json_required": "Invalid request. Reload the page.",
+      "unauthorized": "Your session ended. Sign in again."
+    },
+    "auth": {
+      "invalid_credentials": "Wrong email or password.",
+      "email_taken": "There's already an account with that email. Try signing in.",
+      "rate_limited_one": "Too many attempts. Wait {{count}} minute and try again.",
+      "rate_limited_other": "Too many attempts. Wait {{count}} minutes and try again.",
+      "bad_request": "Check the form fields.",
+      "wrong_password": "The current password is wrong.",
+      "invalid_password": "The current password is wrong.",
+      "unauthorized": "Your session ended. Sign in again.",
+      "invalid_body": "Check the form fields."
+    },
+    "friends": {
+      "not_found": "No trainer has that code.",
+      "unknown_code": "No trainer has that code.",
+      "self": "That's your own code.",
+      "already_friends": "You're already friends.",
+      "already_requested": "You already sent them a request.",
+      "invalid_code": "That code isn't valid.",
+      "unknown_friend_code": "No trainer has that code.",
+      "cannot_add_self": "That's your own code.",
+      "too_many_friends": "You've reached the friend limit. Remove someone to add another."
+    },
+    "already_finished": "That session already ended.",
+    "already_claimed": "That was already claimed.",
+    "no_encounter": "There's no active wave.",
+    "timezone_locked": "You can only change your time zone once every 30 days."
   },
   "dev": {
     "title": "Developer",
@@ -851,6 +898,10 @@
       "focus": {
         "title": "Focus",
         "body": "It measures how much you really studied (in the prototype the dev panel simulates it). It multiplies points, EXP and Dust, and each Pokémon's Grit softens drops."
+      },
+      "leaderboards": {
+        "title": "Leaderboards",
+        "body": "Compare your points this week or month with everyone, with your country or just your friends. Your row is highlighted."
       }
     },
     "break": {
@@ -863,6 +914,10 @@
       "audio": {
         "title": "Your sound",
         "body": "Set music and effects separately. You can keep music only during sessions, or mute it altogether."
+      },
+      "account": {
+        "title": "Your account",
+        "body": "Change your name or country and your password, and sign out on devices you no longer use."
       }
     },
     "missions": {
@@ -877,6 +932,20 @@
       "pokedex": {
         "title": "Pokédex milestones",
         "body": "They complete once, when you catch 10, 25 and 50 different species. They give evolution stones and other items."
+      }
+    },
+    "friends": {
+      "code": {
+        "title": "Your friend code",
+        "body": "Share it with your study buddies. They use it to send you a request and, once you accept, they show up on your friends leaderboard."
+      },
+      "add": {
+        "title": "Add by code",
+        "body": "Ask your friend for their 8-character code and type it here. If they already sent you a request, you're connected right away."
+      },
+      "request": {
+        "title": "You have a request",
+        "body": "Someone wants to be your friend. Open Friends to accept or decline."
       }
     }
   },
@@ -1191,5 +1260,170 @@
     "claimedAll_other": "You claimed {{count}} missions",
     "badge_one": "{{count}} mission ready",
     "badge_other": "{{count}} missions ready"
+  },
+  "auth": {
+    "modeLabel": "Sign in or create an account",
+    "freshStart": "Prototype saves (kept in this browser) don't carry over: everyone starts fresh.",
+    "email": "Email",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "passwordHint": "At least {{min}} characters.",
+    "trainerName": "Trainer name",
+    "trainerHint": "Others see it on the leaderboards. 3 to 20 letters, numbers, spaces or _.",
+    "country": "Country",
+    "countryHint": "For your country's leaderboard.",
+    "speech": {
+      "login": "Welcome back! Sign in with your email and we'll pick up where you left off.",
+      "register": "First time? Create your trainer account. Your name and country will show on the leaderboards."
+    },
+    "login": {
+      "title": "Sign in",
+      "tab": "Sign in",
+      "submit": "Sign in",
+      "busy": "Signing in…",
+      "noAccount": "I don't have an account"
+    },
+    "register": {
+      "title": "Create account",
+      "tab": "Create account",
+      "submit": "Create account",
+      "busy": "Creating…",
+      "haveAccount": "I already have an account"
+    },
+    "preview": {
+      "label": "Preview of your trainer card",
+      "caption": "How others will see you",
+      "placeholder": "Your name"
+    },
+    "invalid": {
+      "emailEmpty": "Enter your email.",
+      "email": "That email doesn't look right. Check it has an @ and a domain.",
+      "passwordEmpty": "Enter your password.",
+      "passwordShort": "The password needs at least {{min}} characters.",
+      "passwordLong": "The password can have up to {{max}} characters.",
+      "trainerLength": "The name must be 3 to 20 characters.",
+      "trainerChars": "Use only letters, numbers, spaces or _.",
+      "country": "Pick a country."
+    },
+    "splash": {
+      "loadingGame": "Loading your game…",
+      "offline": "We couldn't reach the server.",
+      "gameError": "We couldn't load your game.",
+      "retry": "Try again"
+    }
+  },
+  "account": {
+    "title": "Account",
+    "email": "Email",
+    "logout": "Sign out",
+    "profile": "Public profile",
+    "nameHint": "Shown on the leaderboards and in your friends' lists.",
+    "save": "Save changes",
+    "profileSaved": "Profile updated.",
+    "password": "Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "changePassword": "Change password",
+    "passwordChanged": "Password changed.",
+    "passwordChangedBody": "We signed you out on your other devices.",
+    "passwordNote": "Changing it signs you out on all your other devices.",
+    "samePassword": "The new password must be different from the current one.",
+    "sessions": "Signed-in devices",
+    "logoutAll": "Sign out everywhere",
+    "thisDevice": "This device",
+    "lastSeen": "Active {{when}}.",
+    "since": "Since {{date}}.",
+    "revoke": "Sign out on {{device}}",
+    "revoked": "Signed out on {{device}}.",
+    "device": "{{browser}} on {{os}}",
+    "unknownDevice": "Unknown device",
+    "logoutAllTitle": "Sign out on every device?",
+    "logoutAllBody": "This one too. Your progress is saved on the server; sign in again whenever you like.",
+    "logoutAllConfirm": "Sign out everywhere"
+  },
+  "leaderboard": {
+    "title": "Leaderboards",
+    "scopeLabel": "Leaderboard",
+    "scope": {
+      "global": "Global",
+      "country": "My country",
+      "friends": "Friends",
+      "countryOf": "My country: {{country}}"
+    },
+    "periodLabel": "Period",
+    "period": {
+      "week": "Week",
+      "month": "Month"
+    },
+    "total_one": "{{count}} trainer with points.",
+    "total_other": "{{count}} trainers with points.",
+    "caption": "{{scope}} leaderboard, {{period}}",
+    "col": {
+      "rank": "Rank",
+      "trainer": "Trainer",
+      "league": "League",
+      "points": "Points"
+    },
+    "you": "(you)",
+    "notRanked": "You have no points in this period yet. Finish a session to join the leaderboard.",
+    "weekKey": "Week {{week}} of {{year}}.",
+    "weekOf": "Week of {{date}}.",
+    "monthKey": "{{month}}.",
+    "empty": {
+      "title": "Nobody has scored yet",
+      "bodyWeek": "The weekly leaderboard fills up with every claimed session. Study and be first this week.",
+      "bodyMonth": "The monthly leaderboard fills up with every claimed session. Study and be first this month.",
+      "friendsTitle": "Compete with your friends",
+      "friendsBody": "Add friends with their code and you'll see who studied the most.",
+      "friendsCta": "Go to Friends"
+    }
+  },
+  "friends": {
+    "title": "Friends",
+    "subtitle": "Share your code, add your study buddies and see how their week is going.",
+    "myCode": "Your friend code",
+    "codeAria": "Your code: {{code}}",
+    "copy": "Copy",
+    "copiedShort": "Copied",
+    "copied": "Code copied.",
+    "copyFailed": "Couldn't copy. Select the code and copy it by hand.",
+    "codeNote": "Whoever types it sends you a request. You decide whether to accept it.",
+    "addTitle": "Add a friend",
+    "codeLabel": "Your friend's code",
+    "codeHint": "8 characters, no 0, O, 1 or I.",
+    "send": "Send request",
+    "sent": "Request sent.",
+    "sentBody": "They'll appear in your friends list once they accept.",
+    "invalidCode": "Codes have 8 characters: letters and numbers, no 0, O, 1 or I.",
+    "ownCode": "That's your own code.",
+    "incoming_one": "{{count}} new request",
+    "incoming_other": "{{count}} new requests",
+    "outgoing_one": "{{count}} request sent",
+    "outgoing_other": "{{count}} requests sent",
+    "listTitle": "Your friends ({{count}})",
+    "accept": "Accept",
+    "accepted": "You and {{name}} are now friends.",
+    "decline": "Decline",
+    "declined": "You declined {{name}}'s request.",
+    "waiting": "Waiting for an answer",
+    "cancelRequest": "Cancel",
+    "canceled": "You canceled your request to {{name}}.",
+    "teamOf": "{{name}}'s team",
+    "noTeam": "No team yet",
+    "member": "{{name}}, level {{level}}",
+    "leader": "Leader",
+    "removeOf": "Remove {{name}} from your friends",
+    "removeTitle": "Remove {{name}}?",
+    "removeBody": "You'll stop seeing each other on the friends leaderboard. You can add each other again with the code.",
+    "remove": "Remove",
+    "removed": "{{name}} is no longer your friend.",
+    "badge_one": "{{count}} friend request",
+    "badge_other": "{{count}} friend requests",
+    "empty": {
+      "title": "No friends here yet",
+      "body": "Share your code or type a classmate's. Once they accept, you'll see their level, league and team."
+    },
+    "connected": "You're friends now! They had already sent you a request."
   }
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // A fake audio clock: records every scheduled bell and whether it was stopped.
 const bells: { delaySec: number; stopped: boolean }[] = []
@@ -17,21 +17,26 @@ vi.mock('../../audio', async (importOriginal) => ({
 import { MINUTE_MS } from '../../engine'
 import { useGame } from '../store/game'
 import { usePrefs } from '../store/prefs'
+import { installFakeServer } from '../test/fakeServer'
 import { cancelSessionEnd, resyncSessionEnd, scheduleSessionEnd, sessionEndScheduled } from './sound'
 
 const live = () => bells.filter((b) => !b.stopped)
+const server = installFakeServer()
+afterAll(() => server.restore())
 
-beforeEach(() => {
+beforeEach(async () => {
   bells.length = 0
   cancelSessionEnd()
+  server.reset()
   usePrefs.setState((s) => ({ dev: { ...s.dev, anchor: null, rate: 1, seed: 'test', rngCounter: 0 } }))
-  useGame.getState().resetAll()
-  useGame.getState().createPlayer({ trainerName: 'Test', locale: 'es', timezone: 'America/Lima', starterSlug: 'squirtle' })
+  useGame.getState().clear()
+  await useGame.getState().load()
+  await useGame.getState().createPlayer({ locale: 'es', timezone: 'America/Lima', starterSlug: 'squirtle' })
 })
 
 describe('end-of-session bell vs the dev clock', () => {
-  it('re-times the scheduled bell when the clock rate changes mid-session', () => {
-    useGame.getState().start(25)
+  it('re-times the scheduled bell when the clock rate changes mid-session', async () => {
+    await useGame.getState().start(25)
     const timer = useGame.getState().timer!
     scheduleSessionEnd(timer.sessionId, timer.endsAt)
     expect(live()).toHaveLength(1)
@@ -45,8 +50,8 @@ describe('end-of-session bell vs the dev clock', () => {
     expect(sessionEndScheduled(timer.sessionId)).toBe(true)
   })
 
-  it('drops the bell when a time jump passes the end (the watcher rings it instead)', () => {
-    useGame.getState().start(25)
+  it('drops the bell when a time jump passes the end (the watcher rings it instead)', async () => {
+    await useGame.getState().start(25)
     const timer = useGame.getState().timer!
     scheduleSessionEnd(timer.sessionId, timer.endsAt)
     usePrefs.getState().advanceClock(30 * MINUTE_MS)
@@ -55,8 +60,8 @@ describe('end-of-session bell vs the dev clock', () => {
     expect(sessionEndScheduled(timer.sessionId)).toBe(false)
   })
 
-  it('does nothing in a tab that never scheduled a bell', () => {
-    useGame.getState().start(25)
+  it('does nothing in a tab that never scheduled a bell', async () => {
+    await useGame.getState().start(25)
     usePrefs.getState().setRate(60)
     resyncSessionEnd()
     expect(bells).toHaveLength(0)

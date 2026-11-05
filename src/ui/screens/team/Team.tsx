@@ -4,11 +4,12 @@ import { ALL_TYPES, defaultContext, isAsleepAt, pokemonView, typeEffectiveness, 
 import { Button, HelpDot, IconButton, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, RoleBadge, Sprite, Stage, toast, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { useNames } from '../../lib/names'
 import { navigate } from '../../router'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { usePlayer, useScene, useTeamViews } from '../../store/selectors'
+import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 
 const ctx = defaultContext()
 const SESSION_MIN = ctx.config.session.presets[0] ?? 25
@@ -25,6 +26,7 @@ export default function Team() {
   const views = useTeamViews(player, now)
   const scene = useScene(player, now)
   const locked = Boolean(player.activeSession)
+  const busy = useBusy()
   const minute = Math.floor(now / 60_000)
   const boxViews = useMemo(
     () =>
@@ -39,9 +41,9 @@ export default function Team() {
   const exhausted = views.filter((v) => v.energy <= 0 || asleep(v))
   useHintEvent('teamTired', exhausted.length > 0)
 
-  const apply = (uids: string[], msg?: string) => {
-    const err = setTeam(uids)
-    if (err) toast.add({ title: t(`errors.box.${err}`), type: 'danger' })
+  const apply = async (uids: string[], msg?: string) => {
+    const err = await setTeam(uids)
+    if (err) toast.add({ title: errorText(err, 'box'), type: 'danger' })
     else if (msg) toast.add({ title: msg, type: 'success' })
   }
   const move = (i: number, d: -1 | 1) => {
@@ -98,12 +100,12 @@ export default function Team() {
                 asleep={asleep(v)}
                 index={i}
                 count={views.length}
-                locked={locked}
+                locked={locked || busy}
                 onUp={() => move(i, -1)}
                 onDown={() => move(i, 1)}
-                onLeader={() => {
-                  const err = setLeader(v.pokemon.uid)
-                  if (err) toast.add({ title: t(`errors.box.${err}`), type: 'danger' })
+                onLeader={async () => {
+                  const err = await setLeader(v.pokemon.uid)
+                  if (err) toast.add({ title: errorText(err, 'box'), type: 'danger' })
                   else toast.add({ title: t('team.newLeader', { name: names.species(v.pokemon.speciesSlug) }), type: 'success' })
                 }}
                 onRemove={() => apply(player.team.filter((u) => u !== v.pokemon.uid), t('detail.removed', { name: names.species(v.pokemon.speciesSlug) }))}
@@ -153,7 +155,7 @@ export default function Team() {
                       size="sm"
                       variant="secondary"
                       icon="plus"
-                      disabled={locked || player.team.length >= 6}
+                      disabled={locked || busy || player.team.length >= 6}
                       onClick={() => apply([...player.team, v.pokemon.uid], t('detail.added', { name: names.species(v.pokemon.speciesSlug) }))}
                     >
                       {t('team.add')}

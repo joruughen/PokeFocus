@@ -17,6 +17,7 @@ import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { fmtInt, fmtPct } from '../../lib/format'
 import { navigate } from '../../router'
+import { Leaderboards } from './Leaderboards'
 import { useNow } from '../../store/clock'
 import { usePlayer } from '../../store/selectors'
 
@@ -130,6 +131,8 @@ export default function League() {
           </p>
         </div>
       </Panel>
+
+      <Leaderboards />
 
       {player.history.length === 0 ? (
         <div className="bg-dusk-800 shadow-plate">

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, MINUTE_MS, waveCount } from '../../../engine'
-import { Button, Dialog, DialogClose, Platform, ProgressBar, Sprite, Stage } from '../../components'
+import { Button, Dialog, DialogClose, Platform, ProgressBar, Sprite, Stage, toast } from '../../components'
 import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtClock, fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { timerOf, useGame } from '../../store/game'
-import { usePlayer, useScene } from '../../store/selectors'
+import { useBusy, usePlayer, useScene } from '../../store/selectors'
 
 const cfg = defaultContext().config
 
@@ -28,6 +29,7 @@ export function FocusSession() {
   const pause = useGame((s) => s.pause)
   const resume = useGame((s) => s.resume)
   const cancel = useGame((s) => s.cancel)
+  const busy = useBusy()
   const [confirm, setConfirm] = useState(false)
   const session = player.activeSession!
   const timer = timerOf({ player, timer: timerState })!
@@ -102,8 +104,10 @@ export function FocusSession() {
             <Button
               size="lg"
               icon="play"
-              onClick={() => {
-                resume()
+              disabled={busy}
+              onClick={async () => {
+                const err = await resume()
+                if (err) return void toast.add({ title: errorText(err), type: 'danger' })
                 const tm = useGame.getState().timer
                 if (tm) scheduleSessionEnd(tm.sessionId, tm.endsAt)
               }}
@@ -115,15 +119,17 @@ export function FocusSession() {
               size="lg"
               variant="secondary"
               icon="pause"
-              onClick={() => {
-                pause()
+              disabled={busy}
+              onClick={async () => {
+                const err = await pause()
+                if (err) return void toast.add({ title: errorText(err), type: 'danger' })
                 cancelSessionEnd()
               }}
             >
               {t('session.pause')}
             </Button>
           )}
-          <Button size="lg" variant="ghost" icon="close" onClick={() => setConfirm(true)}>
+          <Button size="lg" variant="ghost" icon="close" disabled={busy} onClick={() => setConfirm(true)}>
             {t('session.cancel')}
           </Button>
         </div>
@@ -140,8 +146,10 @@ export function FocusSession() {
             <DialogClose render={<Button variant="secondary">{t('session.keepGoing')}</Button>} />
             <Button
               variant="danger"
-              onClick={() => {
-                cancel()
+              disabled={busy}
+              onClick={async () => {
+                const err = await cancel()
+                if (err) return void toast.add({ title: errorText(err), type: 'danger' })
                 cancelSessionEnd()
                 setConfirm(false)
               }}

@@ -15,6 +15,7 @@ import { Button, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Segmented
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { conditionsNow, WEATHER_PRESETS, weatherKind, type WeatherKind } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { clampMinutes, fmtClock, fmtInt, fmtWeekday } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { primeSignals } from '../../lib/notify'
@@ -22,8 +23,9 @@ import { scheduleSessionEnd, sfx } from '../../lib/sound'
 import { BreakOffer, useBreakOffer } from './Break'
 import { Checklist } from './Checklist'
 import { useNow } from '../../store/clock'
+import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
-import { usePlayer, useScene, useTeamViews } from '../../store/selectors'
+import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { conditionRuleValues } from './conditionCopy'
 
 const cfg = defaultContext().config
@@ -37,6 +39,8 @@ export function PreSession() {
   const player = usePlayer()
   const start = useGame((s) => s.start)
   const setWeather = useGame((s) => s.setWeather)
+  const busy = useBusy()
+  const trainerName = useAuth((s) => s.user?.trainerName)
   const views = useTeamViews(player, now)
   const scene = useScene(player, now)
   const [choice, setChoice] = useState<string>('25')
@@ -57,11 +61,12 @@ export function PreSession() {
   const tired = awake.filter((v) => v.energy > 0 && (minutes * 60) / v.actionIntervalSeconds > v.actionsLeft)
   useHintEvent('energyLow', tired.length > 0 || allOut)
 
-  const onStart = () => {
+  const onStart = async () => {
+    if (busy) return
     primeSignals()
-    const err = start(minutes)
+    const err = await start(minutes)
     if (err) {
-      toast.add({ title: t(`errors.${err}`), type: 'danger' })
+      toast.add({ title: errorText(err), type: 'danger' })
       return
     }
     sfx('sessionStart')
@@ -87,7 +92,7 @@ export function PreSession() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl">{t('home.greeting', { name: player.profile.trainerName })}</h1>
+          <h1 className="text-3xl">{t('home.greeting', { name: trainerName ?? player.profile.trainerName })}</h1>
           <p className="mt-1 text-mist-300">
             {t('home.now', { day: fmtWeekday(now, tz, lng), time: fmtClock(now, tz, lng) })} {t(`timeOfDay.${scene.time}`)}
           </p>
@@ -152,7 +157,7 @@ export function PreSession() {
 
             <div {...hintAnchor('home.weather')}>
               <h3 className="mb-2 text-lg">{t('home.plan.weather')}</h3>
-              <Segmented label={t('home.plan.weather')} value={wk} onChange={(w) => setWeather(WEATHER_PRESETS[w])} options={weatherOptions} />
+              <Segmented label={t('home.plan.weather')} value={wk} onChange={(w) => void setWeather(WEATHER_PRESETS[w]).then((err) => err && toast.add({ title: errorText(err), type: 'danger' }))} options={weatherOptions} />
               <p className="mt-2 text-sm text-mist-400">{t(`weather.effect.${wk}`)}</p>
             </div>
 
@@ -169,7 +174,7 @@ export function PreSession() {
             )}
 
             <div className="flex flex-wrap items-center gap-4">
-              <Button {...hintAnchor('home.start')} size="lg" icon="play" onClick={onStart} className="min-w-64">
+              <Button {...hintAnchor('home.start')} size="lg" icon="play" onClick={() => void onStart()} disabled={busy} aria-busy={busy} className="min-w-64">
                 {t('home.plan.start')}
                 <span className="font-num text-4xl leading-none">{t('home.plan.startMinutes', { count: minutes })}</span>
               </Button>

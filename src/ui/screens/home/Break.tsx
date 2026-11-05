@@ -3,12 +3,13 @@ import { defaultContext, MINUTE_MS } from '../../../engine'
 import { Button, Panel, Platform, ProgressBar, Segmented, Sprite, Stage, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { usePlayer, useScene, useTeamViews } from '../../store/selectors'
+import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { useState } from 'react'
 
 const cfg = defaultContext().config
@@ -25,12 +26,19 @@ export function useBreakOffer(): boolean {
   return Boolean(last && last.minutes > 0 && !player.activeSession && !player.encounter && lastBreakFor !== last.id && now - last.claimedAt < BREAK_OFFER_MINUTES * MINUTE_MS)
 }
 
+/** Toast the error of a game action, if any. */
+async function report(p: Promise<string | null>) {
+  const err = await p
+  if (err) toast.add({ title: errorText(err), type: 'danger' })
+}
+
 /** Offer on Home after a session: rest for real and the team recovers Energy (GDD §5.3). */
 export function BreakOffer() {
   const { t, i18n } = useTranslation()
   const player = usePlayer()
   const startBreak = useGame((s) => s.startBreak)
   const skipBreak = useGame((s) => s.skipBreak)
+  const busy = useBusy()
   const last = player.history[player.history.length - 1]
   const suggested = last && last.minutes >= 75 ? '15' : last && last.minutes >= 50 ? '10' : '5'
   const [choice, setChoice] = useState<string>(suggested)
@@ -47,10 +55,10 @@ export function BreakOffer() {
         <span className="text-sm text-mist-400">{t('common.min')}</span>
       </div>
       <div className="mt-4 flex flex-wrap gap-3">
-        <Button icon="coffee" onClick={() => startBreak(Number(choice))}>
+        <Button icon="coffee" disabled={busy} onClick={() => void report(startBreak(Number(choice)))}>
           {t('break.start')}
         </Button>
-        <Button variant="ghost" onClick={skipBreak}>
+        <Button variant="ghost" disabled={busy} onClick={() => void report(skipBreak())}>
           {t('break.skip')}
         </Button>
       </div>
@@ -67,6 +75,7 @@ export function Break() {
   const player = usePlayer()
   const b = useGame((s) => s.breakTimer)!
   const endBreak = useGame((s) => s.endBreak)
+  const busy = useBusy()
   const views = useTeamViews(player, now)
   const scene = useScene(player, now)
   const left = b.endsAt - now
@@ -74,8 +83,14 @@ export function Break() {
   const total = b.minutes * MINUTE_MS
   const pct = cfg.energy.breakRecoverPct
 
-  const finish = () => {
-    const rewarded = endBreak()
+  const finish = async () => {
+    if (busy) return
+    const rewarded = await endBreak()
+    const err = useGame.getState().error
+    if (!rewarded && err) {
+      toast.add({ title: errorText(err), type: 'danger' })
+      return
+    }
     if (rewarded) {
       sfx('heal')
       toast.add({ title: t('break.healed', { pct: fmtPct(pct, i18n.language) }), type: 'success' })
@@ -121,11 +136,11 @@ export function Break() {
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           {done ? (
-            <Button size="lg" icon="potion" onClick={finish} beacon data-sfx="none">
+            <Button size="lg" icon="potion" onClick={() => void finish()} disabled={busy} beacon data-sfx="none">
               {t('break.collect', { pct: fmtPct(pct, i18n.language) })}
             </Button>
           ) : (
-            <Button size="lg" variant="ghost" icon="close" onClick={finish}>
+            <Button size="lg" variant="ghost" icon="close" onClick={() => void finish()} disabled={busy}>
               {t('break.early')}
             </Button>
           )}

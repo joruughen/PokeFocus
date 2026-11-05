@@ -4,16 +4,25 @@ import type { Locale } from '../../i18n'
 import { Button, Dialog, DialogClose, Logo, Panel, PixelIcon, Segmented, Select, Slider, Switch, toast } from '../components'
 import { hintAnchor, useHintScreen } from '../hints'
 import { WEATHER_PRESETS, weatherKind, type WeatherKind } from '../lib/conditions'
+import { errorText } from '../lib/errors'
 import { allTimeZones } from '../lib/format'
 import { sfx } from '../lib/sound'
 import { useGame } from '../store/game'
 import { devEnabled, usePrefs } from '../store/prefs'
-import { usePlayer } from '../store/selectors'
+import { useBusy, usePlayer } from '../store/selectors'
+import { AccountPanel } from './account/AccountPanel'
 
+// Enforced by the server (src/game/actions.ts TIMEZONE_LOCK_DAYS); shown here.
 const TZ_LOCK_DAYS = 30
 const DAY = 86_400_000
 
-/** Settings: language, time zone and weather, audio, tips, notifications, reset, about. */
+/** Toast the error of a game action, if any. */
+async function report(p: Promise<string | null>) {
+  const err = await p
+  if (err) toast.add({ title: errorText(err), type: 'danger' })
+}
+
+/** Settings: account, language, time zone and weather, audio, tips, notifications, reset, about. */
 export default function Settings() {
   useHintScreen('settings')
   const { t, i18n } = useTranslation()
@@ -22,19 +31,23 @@ export default function Settings() {
   const updateProfile = useGame((s) => s.updateProfile)
   const setWeather = useGame((s) => s.setWeather)
   const resetAll = useGame((s) => s.resetAll)
+  const busy = useBusy()
   const [confirm, setConfirm] = useState(false)
   const [tzPending, setTzPending] = useState<string | null>(null)
   const zones = useMemo(() => allTimeZones().map((z) => ({ value: z, label: z.replace(/_/g, ' ') })), [])
   const tz = String(player.profile.timezone)
   const [notif, setNotif] = useState<string>(typeof Notification === 'undefined' ? 'unsupported' : Notification.permission)
   const a = prefs.audio
-  const tzUnlockAt = prefs.tzChangedAt !== null ? prefs.tzChangedAt + TZ_LOCK_DAYS * DAY : 0
+  const tzChangedAt = player.profile.timezoneChangedAt ?? null
+  const tzUnlockAt = tzChangedAt !== null ? tzChangedAt + TZ_LOCK_DAYS * DAY : 0
   const tzLocked = tzUnlockAt > Date.now() && !devEnabled()
   const wk = weatherKind(player.profile.weather)
 
   return (
     <div className="flex max-w-3xl flex-col gap-8">
       <h1 className="text-3xl">{t('nav.settings')}</h1>
+
+      <AccountPanel />
 
       <Panel title={t('settings.general')}>
         <div className="flex flex-col gap-6">
@@ -44,7 +57,7 @@ export default function Settings() {
               value={prefs.locale}
               onChange={(l) => {
                 prefs.setLocale(l)
-                updateProfile({ locale: l })
+                void report(updateProfile({ locale: l }))
               }}
               options={[
                 { value: 'es', label: 'Español' },
@@ -69,7 +82,7 @@ export default function Settings() {
             <Segmented<WeatherKind>
               label={t('settings.weather')}
               value={wk}
-              onChange={(w) => setWeather(WEATHER_PRESETS[w])}
+              onChange={(w) => void report(setWeather(WEATHER_PRESETS[w]))}
               options={(['clear', 'sun', 'rain', 'cold'] as const).map((w) => ({
                 value: w,
                 ariaLabel: t(`weather.${w}`),
@@ -145,11 +158,14 @@ export default function Settings() {
           <Row label={t('settings.dev')} note={t('settings.devNote')}>
             <Switch checked={prefs.dev.panelOpen} onChange={(v) => prefs.setDev({ panelOpen: v })} label={t('settings.dev')} />
           </Row>
-          <Row label={t('settings.reset')} note={t('settings.resetNote')}>
-            <Button variant="danger" icon="trash" onClick={() => setConfirm(true)}>
-              {t('settings.resetButton')}
-            </Button>
-          </Row>
+          {/* Wiping the save is a dev tool on the server (DEV_TOOLS=1), so it only shows with dev mode on. */}
+          {devEnabled() && (
+            <Row label={t('settings.reset')} note={t('settings.resetNote')}>
+              <Button variant="danger" icon="trash" onClick={() => setConfirm(true)}>
+                {t('settings.resetButton')}
+              </Button>
+            </Row>
+          )}
         </div>
       </Panel>
 
@@ -159,7 +175,7 @@ export default function Settings() {
           <p className="max-w-[60ch]">{t('settings.about.body')}</p>
           <p className="max-w-[60ch]">{t('settings.about.credits')}</p>
           <p className="max-w-[60ch] text-mist-400">{t('app.disclaimer')}</p>
-          <p className="font-num text-lg text-mist-400">{t('settings.about.version', { version: '0.2 (F1)' })}</p>
+          <p className="font-num text-lg text-mist-400">{t('settings.about.version', { version: '0.3 (F2)' })}</p>
         </div>
       </Panel>
 
@@ -172,12 +188,14 @@ export default function Settings() {
           <>
             <DialogClose render={<Button variant="secondary">{t('common.cancel')}</Button>} />
             <Button
-              disabled={tzLocked}
-              onClick={() => {
+              disabled={tzLocked || busy}
+              onClick={async () => {
                 if (tzPending) {
-                  updateProfile({ timezone: tzPending })
-                  prefs.setTzChangedAt(Date.now())
-                  toast.add({ title: t('settings.tzDone', { zone: tzPending.replace(/_/g, ' ') }), type: 'success' })
+                  const err = await updateProfile({ timezone: tzPending })
+                  if (err) toast.add({ title: errorText(err), type: 'danger' })
+                  else {
+                    toast.add({ title: t('settings.tzDone', { zone: tzPending.replace(/_/g, ' ') }), type: 'success' })
+                  }
                 }
                 setTzPending(null)
               }}
@@ -198,8 +216,14 @@ export default function Settings() {
             <DialogClose render={<Button variant="secondary">{t('common.cancel')}</Button>} />
             <Button
               variant="danger"
-              onClick={() => {
-                resetAll()
+              disabled={busy}
+              onClick={async () => {
+                const err = await resetAll()
+                if (err) {
+                  toast.add({ title: errorText(err), type: 'danger' })
+                  setConfirm(false)
+                  return
+                }
                 prefs.resetHints()
                 prefs.setChecklistDismissed(false)
                 setConfirm(false)

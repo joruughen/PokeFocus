@@ -28,7 +28,8 @@
     "settings": "Ajustes",
     "sessionLive": "Sesión en curso",
     "sessionDone": "Sesión terminada",
-    "missions": "Misiones"
+    "missions": "Misiones",
+    "friends": "Amigos"
   },
   "trainer": {
     "level": "Entrenador nv. {{level}}",
@@ -436,7 +437,8 @@
       "reroll": "Cambiar",
       "pick": "Elige a qué salvaje aplicarla.",
       "note": "Úsalas antes de lanzar: un salvaje dormido o paralizado es más fácil de capturar.",
-      "applyHere": "Aplicar aquí"
+      "applyHere": "Aplicar aquí",
+      "hasStatus": "Ya tiene un estado: elige otro Pokémon."
     },
     "tries": "Intentos",
     "studyEligibleTip": "Captura asegurada con la Ball de Estudio de esta oleada.",
@@ -446,17 +448,15 @@
     "you": "entrenador",
     "progress": "Paso {{n}} de {{total}}",
     "steps": [
-      "Sobre ti",
+      "Idioma y hora",
       "Tu primer compañero",
       "Cómo funciona"
     ],
     "speech": [
-      "¡Hola! Voy a acompañarte mientras estudias. ¿Cómo te llamo?",
-      "Mucho gusto, {{name}}. Elige a tu primer compañero: cada uno rinde distinto.",
+      "¡Hola, {{name}}! Voy a acompañarte mientras estudias. Primero, confirma tu idioma y tu zona horaria.",
+      "Perfecto, {{name}}. Elige a tu primer compañero: cada uno rinde distinto.",
       "¡{{starter}} está listo! Así funciona, en tres pasos."
     ],
-    "name": "Tu nombre de entrenador",
-    "namePlaceholder": "Por ejemplo, Ash",
     "language": "Idioma",
     "timezone": "Zona horaria",
     "timezoneNote": "La detectamos de tu navegador. Decide la hora de las condiciones y el reinicio diario.",
@@ -503,7 +503,7 @@
     "dev": "Herramientas de desarrollo",
     "devNote": "Tiempo acelerado, semilla fija y atajos para probar.",
     "reset": "Borrar todo",
-    "resetNote": "Elimina tu progreso de este navegador.",
+    "resetNote": "Borra la partida de esta cuenta en el servidor (solo con herramientas de desarrollo).",
     "resetButton": "Borrar progreso",
     "resetTitle": "¿Borrar todo tu progreso?",
     "resetBody": "Se eliminan tus Pokémon, objetos e historial de este navegador. No se puede deshacer.",
@@ -536,7 +536,7 @@
     },
     "about": {
       "title": "Acerca de",
-      "body": "PokeFocus convierte tus horas de estudio en un equipo Pokémon que estudia contigo. Este es un prototipo local: tus datos viven solo en este navegador.",
+      "body": "PokeFocus convierte tus horas de estudio en un equipo Pokémon que estudia contigo. Tu progreso se guarda en tu cuenta, en el servidor.",
       "credits": "Sprites de PokeAPI y Pokémon Showdown. Datos de PokeAPI. Música y efectos sintetizados en tu navegador.",
       "version": "Versión {{version}}"
     }
@@ -567,7 +567,8 @@
       "wrong_charge_kind": "Esa carga no sirve para esto.",
       "unknown_wild": "Ese Pokémon ya no está.",
       "wild_resolved": "Ese Pokémon ya fue capturado o huyó.",
-      "wave_passed": "Esa oleada ya pasó."
+      "wave_passed": "Esa oleada ya pasó.",
+      "already_has_status": "Ese Pokémon ya tiene un estado."
     },
     "box": {
       "unknown_pokemon": "Ese Pokémon ya no está.",
@@ -607,7 +608,53 @@
       "unknown_mission": "Esa misión ya no está.",
       "not_completed": "Aún no completaste esa misión.",
       "already_claimed": "Ya reclamaste esa misión."
-    }
+    },
+    "no_player": "Aún no tienes partida.",
+    "player_exists": "Ya tienes una partida.",
+    "invalid_starter": "Ese compañero no está disponible.",
+    "not_finished": "La sesión aún no termina.",
+    "paused": "La sesión está en pausa.",
+    "no_session": "No hay ninguna sesión en curso.",
+    "no_break": "No hay ningún descanso en curso.",
+    "session_active_elsewhere": "Ya tienes una sesión de estudio en otro dispositivo.",
+    "api": {
+      "network": "Sin conexión con el servidor. Revisa tu internet y vuelve a intentarlo.",
+      "server": "El servidor tuvo un problema. Inténtalo de nuevo en un momento.",
+      "generic": "Algo salió mal. Inténtalo de nuevo.",
+      "dev_disabled": "Las herramientas de desarrollo están desactivadas en este servidor.",
+      "http_403": "El servidor rechazó la acción.",
+      "http_404": "No se encontró lo que buscabas.",
+      "logged_out": "Tu sesión terminó. Vuelve a entrar.",
+      "body_too_large": "La petición es demasiado grande.",
+      "json_required": "Petición no válida. Recarga la página.",
+      "unauthorized": "Tu sesión terminó. Vuelve a entrar."
+    },
+    "auth": {
+      "invalid_credentials": "Correo o contraseña incorrectos.",
+      "email_taken": "Ya existe una cuenta con ese correo. Prueba a entrar.",
+      "rate_limited_one": "Demasiados intentos. Espera {{count}} minuto y vuelve a intentarlo.",
+      "rate_limited_other": "Demasiados intentos. Espera {{count}} minutos y vuelve a intentarlo.",
+      "bad_request": "Revisa los datos del formulario.",
+      "wrong_password": "La contraseña actual no es correcta.",
+      "invalid_password": "La contraseña actual no es correcta.",
+      "unauthorized": "Tu sesión terminó. Vuelve a entrar.",
+      "invalid_body": "Revisa los datos del formulario."
+    },
+    "friends": {
+      "not_found": "No hay ningún entrenador con ese código.",
+      "unknown_code": "No hay ningún entrenador con ese código.",
+      "self": "Ese es tu propio código.",
+      "already_friends": "Ya son amigos.",
+      "already_requested": "Ya le enviaste una solicitud.",
+      "invalid_code": "El código no es válido.",
+      "unknown_friend_code": "No hay ningún entrenador con ese código.",
+      "cannot_add_self": "Ese es tu propio código.",
+      "too_many_friends": "Llegaste al máximo de amigos. Elimina alguno para agregar otro."
+    },
+    "already_finished": "Esa sesión ya terminó.",
+    "already_claimed": "Eso ya fue reclamado.",
+    "no_encounter": "No hay ninguna oleada activa.",
+    "timezone_locked": "Solo puedes cambiar la zona horaria una vez cada 30 días."
   },
   "dev": {
     "title": "Desarrollo",
@@ -851,6 +898,10 @@
       "focus": {
         "title": "Foco",
         "body": "Mide cuánto estudiaste de verdad (en el prototipo lo simula el panel de desarrollo). Multiplica puntos, EXP y Polvo, y el Aguante de cada Pokémon lo amortigua."
+      },
+      "leaderboards": {
+        "title": "Rankings",
+        "body": "Compara tus puntos de la semana o del mes con todo el mundo, con tu país o solo con tus amigos. Tu fila está resaltada."
       }
     },
     "break": {
@@ -863,6 +914,10 @@
       "audio": {
         "title": "Tu sonido",
         "body": "Ajusta música y efectos por separado. Puedes dejar la música solo durante la sesión, o silenciarla del todo."
+      },
+      "account": {
+        "title": "Tu cuenta",
+        "body": "Cambia tu nombre o tu país, tu contraseña, y cierra la sesión en los dispositivos que ya no uses."
       }
     },
     "missions": {
@@ -877,6 +932,20 @@
       "pokedex": {
         "title": "Hitos de Pokédex",
         "body": "Se cumplen una sola vez, al capturar 10, 25 y 50 especies distintas. Dan piedras evolutivas y otros objetos."
+      }
+    },
+    "friends": {
+      "code": {
+        "title": "Tu código de amigo",
+        "body": "Compártelo con tus compañeros de estudio. Con él te envían una solicitud y, al aceptarla, aparecen en tu ranking de amigos."
+      },
+      "add": {
+        "title": "Agrega por código",
+        "body": "Pide el código de 8 caracteres a tu amigo y escríbelo aquí. Si él ya te había enviado una solicitud, quedan conectados al instante."
+      },
+      "request": {
+        "title": "Tienes una solicitud",
+        "body": "Alguien quiere ser tu amigo. Ábrela en Amigos para aceptarla o rechazarla."
       }
     }
   },
@@ -1191,5 +1260,170 @@
     "claimedAll_other": "Reclamaste {{count}} misiones",
     "badge_one": "{{count}} misión lista",
     "badge_other": "{{count}} misiones listas"
+  },
+  "auth": {
+    "modeLabel": "Entrar o crear cuenta",
+    "freshStart": "Las partidas del prototipo (guardadas en este navegador) no se transfieren: todos empiezan de cero.",
+    "email": "Correo",
+    "password": "Contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "passwordHint": "Al menos {{min}} caracteres.",
+    "trainerName": "Nombre de entrenador",
+    "trainerHint": "Así te verán en los rankings. De 3 a 20 letras, números, espacios o _.",
+    "country": "País",
+    "countryHint": "Para el ranking de tu país.",
+    "speech": {
+      "login": "¡Hola de nuevo! Entra con tu correo y seguimos donde lo dejaste.",
+      "register": "¿Primera vez? Crea tu cuenta de entrenador. Tu nombre y tu país aparecerán en los rankings."
+    },
+    "login": {
+      "title": "Entrar",
+      "tab": "Entrar",
+      "submit": "Entrar",
+      "busy": "Entrando…",
+      "noAccount": "No tengo cuenta"
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "tab": "Crear cuenta",
+      "submit": "Crear cuenta",
+      "busy": "Creando…",
+      "haveAccount": "Ya tengo cuenta"
+    },
+    "preview": {
+      "label": "Vista previa de tu tarjeta de entrenador",
+      "caption": "Así te verán los demás",
+      "placeholder": "Tu nombre"
+    },
+    "invalid": {
+      "emailEmpty": "Escribe tu correo.",
+      "email": "Ese correo no parece válido. Revisa que tenga @ y un dominio.",
+      "passwordEmpty": "Escribe tu contraseña.",
+      "passwordShort": "La contraseña necesita al menos {{min}} caracteres.",
+      "passwordLong": "La contraseña admite hasta {{max}} caracteres.",
+      "trainerLength": "El nombre debe tener entre 3 y 20 caracteres.",
+      "trainerChars": "Usa solo letras, números, espacios o _.",
+      "country": "Elige un país."
+    },
+    "splash": {
+      "loadingGame": "Cargando tu partida…",
+      "offline": "No pudimos conectar con el servidor.",
+      "gameError": "No pudimos cargar tu partida.",
+      "retry": "Reintentar"
+    }
+  },
+  "account": {
+    "title": "Cuenta",
+    "email": "Correo",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil público",
+    "nameHint": "Aparece en los rankings y en la lista de tus amigos.",
+    "save": "Guardar cambios",
+    "profileSaved": "Perfil actualizado.",
+    "password": "Contraseña",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Contraseña nueva",
+    "changePassword": "Cambiar contraseña",
+    "passwordChanged": "Contraseña cambiada.",
+    "passwordChangedBody": "Cerramos la sesión en tus otros dispositivos.",
+    "passwordNote": "Al cambiarla se cierra la sesión en todos tus otros dispositivos.",
+    "samePassword": "La contraseña nueva debe ser distinta de la actual.",
+    "sessions": "Dispositivos con sesión iniciada",
+    "logoutAll": "Cerrar sesión en todos",
+    "thisDevice": "Este dispositivo",
+    "lastSeen": "Activo {{when}}.",
+    "since": "Desde el {{date}}.",
+    "revoke": "Cerrar sesión en {{device}}",
+    "revoked": "Sesión cerrada en {{device}}.",
+    "device": "{{browser}} en {{os}}",
+    "unknownDevice": "Dispositivo desconocido",
+    "logoutAllTitle": "¿Cerrar sesión en todos los dispositivos?",
+    "logoutAllBody": "Saldrás también en este. Tu progreso queda guardado en el servidor; vuelve a entrar cuando quieras.",
+    "logoutAllConfirm": "Cerrar sesión en todos"
+  },
+  "leaderboard": {
+    "title": "Rankings",
+    "scopeLabel": "Ranking",
+    "scope": {
+      "global": "Global",
+      "country": "Mi país",
+      "friends": "Amigos",
+      "countryOf": "Mi país: {{country}}"
+    },
+    "periodLabel": "Periodo",
+    "period": {
+      "week": "Semana",
+      "month": "Mes"
+    },
+    "total_one": "{{count}} entrenador con puntos.",
+    "total_other": "{{count}} entrenadores con puntos.",
+    "caption": "Ranking {{scope}}, {{period}}",
+    "col": {
+      "rank": "Puesto",
+      "trainer": "Entrenador",
+      "league": "Liga",
+      "points": "Puntos"
+    },
+    "you": "(tú)",
+    "notRanked": "Aún no tienes puntos en este periodo. Termina una sesión para entrar al ranking.",
+    "weekKey": "Semana {{week}} de {{year}}.",
+    "weekOf": "Semana del {{date}}.",
+    "monthKey": "{{month}}.",
+    "empty": {
+      "title": "Nadie ha sumado puntos todavía",
+      "bodyWeek": "El ranking semanal se llena con cada sesión reclamada. Estudia y sé el primero de la semana.",
+      "bodyMonth": "El ranking mensual se llena con cada sesión reclamada. Estudia y sé el primero del mes.",
+      "friendsTitle": "Compite con tus amigos",
+      "friendsBody": "Agrega amigos con su código y aquí verás quién estudió más.",
+      "friendsCta": "Ir a Amigos"
+    }
+  },
+  "friends": {
+    "title": "Amigos",
+    "subtitle": "Comparte tu código, agrega a tus compañeros de estudio y mira cómo va su semana.",
+    "myCode": "Tu código de amigo",
+    "codeAria": "Tu código: {{code}}",
+    "copy": "Copiar",
+    "copiedShort": "Copiado",
+    "copied": "Código copiado.",
+    "copyFailed": "No se pudo copiar. Selecciona el código y cópialo a mano.",
+    "codeNote": "Quien lo escriba te enviará una solicitud. Tú decides si la aceptas.",
+    "addTitle": "Agregar amigo",
+    "codeLabel": "Código de tu amigo",
+    "codeHint": "8 caracteres, sin 0, O, 1 ni I.",
+    "send": "Enviar solicitud",
+    "sent": "Solicitud enviada.",
+    "sentBody": "Aparecerá en su lista de amigos cuando la acepte.",
+    "invalidCode": "El código tiene 8 caracteres: letras y números, sin 0, O, 1 ni I.",
+    "ownCode": "Ese es tu propio código.",
+    "incoming_one": "{{count}} solicitud nueva",
+    "incoming_other": "{{count}} solicitudes nuevas",
+    "outgoing_one": "{{count}} solicitud enviada",
+    "outgoing_other": "{{count}} solicitudes enviadas",
+    "listTitle": "Tus amigos ({{count}})",
+    "accept": "Aceptar",
+    "accepted": "Ahora eres amigo de {{name}}.",
+    "decline": "Rechazar",
+    "declined": "Rechazaste la solicitud de {{name}}.",
+    "waiting": "Esperando respuesta",
+    "cancelRequest": "Cancelar",
+    "canceled": "Cancelaste la solicitud a {{name}}.",
+    "teamOf": "Equipo de {{name}}",
+    "noTeam": "Sin equipo todavía",
+    "member": "{{name}}, nivel {{level}}",
+    "leader": "Líder",
+    "removeOf": "Eliminar a {{name}} de tus amigos",
+    "removeTitle": "¿Eliminar a {{name}}?",
+    "removeBody": "Dejarán de verse en el ranking de amigos. Pueden volver a agregarse con el código.",
+    "remove": "Eliminar",
+    "removed": "{{name}} ya no está en tus amigos.",
+    "badge_one": "{{count}} solicitud de amistad",
+    "badge_other": "{{count}} solicitudes de amistad",
+    "empty": {
+      "title": "Aún no tienes amigos aquí",
+      "body": "Comparte tu código o escribe el de un compañero. Cuando acepten, verás su nivel, su liga y su equipo."
+    },
+    "connected": "¡Ya son amigos! Esa persona ya te había enviado una solicitud."
   }
 }

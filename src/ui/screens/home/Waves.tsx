@@ -18,12 +18,13 @@ import {
 import { ArtIcon, BallIcon, Button, HelpDot, IvQuality, Panel, Platform, PokemonCard, ProgressBar, Sprite, Stage, StudyBallIcon, toast, Tooltip, TypeBadge } from '../../components'
 import { emitHintEvent, hintAnchor, useHintEvent, useHintScreen, useHints } from '../../hints'
 import { cx } from '../../lib/cx'
+import { errorText } from '../../lib/errors'
 import { fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx, sfxLater } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { usePlayer, useScene } from '../../store/selectors'
+import { useBusy, usePlayer, useScene } from '../../store/selectors'
 
 const ctx = defaultContext()
 
@@ -51,6 +52,7 @@ export function Waves() {
   const reroll = useGame((s) => s.reroll)
   const nextWave = useGame((s) => s.nextWave)
   const finishWaves = useGame((s) => s.finishWaves)
+  const busy = useBusy()
   const enc = player.encounter!
   const wave = enc.waves[enc.currentWave]!
   const scene = useScene(player, now)
@@ -61,6 +63,8 @@ export function Waves() {
   const [selected, setSelected] = useState(Math.max(0, firstPending))
   const [ball, setBall] = useState<ThrowBall>(wave.studyBall === 'available' ? 'study-ball' : 'poke-ball')
   const [anim, setAnim] = useState<Anim | null>(null)
+  /** While the server rolls a throw: keep showing the wild as it was (no flash of the result). */
+  const [hold, setHold] = useState<{ wildIndex: number; before: WildPokemon } | null>(null)
   const [counterFx, setCounterFx] = useState<{ key: number; counter: CounterResult; energyBefore: number } | null>(null)
   const [targeting, setTargeting] = useState<Charge | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -98,16 +102,20 @@ export function Waves() {
   ]
   const ballOk = balls.find((b) => b.ball === ball)?.usable ?? false
   const chance = sel && sel.outcome === 'pending' ? wildCatchChance(player, sel, ball) : 0
-  const canThrow = Boolean(sel && sel.outcome === 'pending' && ballOk && !anim && !targeting)
+  const canThrow = Boolean(sel && sel.outcome === 'pending' && ballOk && !anim && !targeting && !busy)
 
-  const onThrow = () => {
+  const onThrow = async () => {
     if (!sel || !canThrow) return
     const ref = { waveIndex: enc.currentWave, wildIndex: selected }
     const before = sel
     const energyBefore = player.pokemon[leaderUid ?? '']?.energy.current ?? 0
-    const r = doThrow(ref, ball)
+    // The server rolls the throw; the animation plays once its answer is here
+    // (the wild keeps showing `before` until the result lands).
+    setHold({ wildIndex: selected, before })
+    const r = await doThrow(ref, ball)
     if (!r.ok) {
-      toast.add({ title: t(`errors.throw.${r.error}`, { level: studyMax }), type: 'danger' })
+      setHold(null)
+      toast.add({ title: errorText(r.error, 'throw', { level: studyMax }), type: 'danger' })
       return
     }
     const outcome = r.outcome
@@ -142,12 +150,14 @@ export function Waves() {
       if (ball === 'study-ball') setBall('poke-ball')
     }
     if (reduceMotion()) {
+      setHold(null)
       resultSfx()
       land()
       return
     }
     sfx('ballThrow')
     setAnim({ ref, ball, stage: 'throw', outcome, before })
+    setHold(null)
     timers.current.push(
       setTimeout(() => {
         setAnim((a) => (a ? { ...a, stage: 'wobble' } : a))
@@ -164,12 +174,22 @@ export function Waves() {
     timers.current.push(setTimeout(land, 550 + wobbleMs + 900))
   }
 
-  const onTarget = (i: number) => {
-    if (!targeting) return
+  const onTarget = async (i: number) => {
+    if (!targeting || busy) return
+    // A sleep/paralysis charge on a wild that already has a status would be wasted (the server refuses it).
+    if (targeting.kind === 'status' && wave.wilds[i]?.status) {
+      toast.add({ title: errorText('already_has_status', 'charge'), type: 'danger' })
+      return
+    }
     const ref = { waveIndex: enc.currentWave, wildIndex: i }
-    const err = targeting.kind === 'status' ? applyStatus(targeting.id, ref) : reroll(targeting.id, ref)
-    if (err) toast.add({ title: t(`errors.charge.${err}`), type: 'danger' })
+    const charge = targeting
     setTargeting(null)
+    const err = charge.kind === 'status' ? await applyStatus(charge.id, ref) : await reroll(charge.id, ref)
+    if (err) toast.add({ title: errorText(err, 'charge'), type: 'danger' })
+  }
+  const advance = async (fn: () => Promise<string | null>) => {
+    const err = await fn()
+    if (err) toast.add({ title: errorText(err), type: 'danger' })
   }
 
   const isLast = enc.currentWave >= enc.waves.length - 1
@@ -203,7 +223,7 @@ export function Waves() {
       <Stage time={scene.time} weather={scene.weather} variant="field" className="px-4 pt-6 pb-6">
         <ul className="flex flex-wrap justify-center gap-x-4 gap-y-6">
           {wave.wilds.map((w, i) => {
-            const showing = anim && anim.ref.wildIndex === i ? anim.before : w
+            const showing = anim && anim.ref.wildIndex === i ? anim.before : hold?.wildIndex === i ? hold.before : w
             return (
               <li key={`${enc.currentWave}-${i}-${w.speciesSlug}`} className={wave.wilds.length >= 5 ? 'w-[11.5rem]' : 'w-52'}>
                 <WildCard
@@ -216,9 +236,10 @@ export function Waves() {
                   hitters={hittersOf(wave.hits, i)}
                   anim={anim && anim.ref.wildIndex === i ? anim : null}
                   targeting={targeting}
+                  busy={busy}
                   night={scene.time === 'night'}
                   studyAvailable={wave.studyBall === 'available'}
-                  onSelect={() => (targeting ? onTarget(i) : setSelected(i))}
+                  onSelect={() => (targeting ? void onTarget(i) : setSelected(i))}
                 />
               </li>
             )
@@ -234,6 +255,7 @@ export function Waves() {
                 <Button
                   variant={targeting?.id === c.id ? 'primary' : 'secondary'}
                   icon={c.kind === 'reroll' ? 'reroll' : c.status === 'sleep' ? 'sleep' : 'bolt'}
+                  disabled={busy}
                   onClick={() => setTargeting(targeting?.id === c.id ? null : c)}
                   aria-pressed={targeting?.id === c.id}
                 >
@@ -292,7 +314,7 @@ export function Waves() {
           </fieldset>
 
           <div className="flex flex-col items-stretch gap-2 lg:items-end">
-            <Button {...hintAnchor('waves.throw')} data-sfx="none" size="lg" onClick={onThrow} disabled={!canThrow} beacon={canThrow && caughtHere === 0 && player.history.length <= 1}>
+            <Button {...hintAnchor('waves.throw')} data-sfx="none" size="lg" onClick={() => void onThrow()} disabled={!canThrow} aria-busy={busy} beacon={canThrow && caughtHere === 0 && player.history.length <= 1}>
               <BallIcon ball={ball} size={30} />
               {t('waves.throw')}
             </Button>
@@ -310,11 +332,11 @@ export function Waves() {
         </p>
         <div className="flex gap-3" {...hintAnchor('waves.next')}>
           {!isLast && (
-            <Button variant="ghost" onClick={finishWaves}>
+            <Button variant="ghost" onClick={() => void advance(finishWaves)} disabled={Boolean(anim) || busy}>
               {t('waves.finishAll')}
             </Button>
           )}
-          <Button variant={pending === 0 ? 'primary' : 'secondary'} icon="next" onClick={isLast ? finishWaves : nextWave} disabled={Boolean(anim)}>
+          <Button variant={pending === 0 ? 'primary' : 'secondary'} icon="next" onClick={() => void advance(isLast ? finishWaves : nextWave)} disabled={Boolean(anim) || busy}>
             {isLast ? t('waves.finish') : t('waves.next', { n: enc.currentWave + 2 })}
           </Button>
         </div>
@@ -406,6 +428,7 @@ function WildCard({
   maxFails,
   anim,
   targeting,
+  busy,
   night,
   studyAvailable,
   revealIvs,
@@ -422,6 +445,7 @@ function WildCard({
   maxFails: number
   anim: Anim | null
   targeting: Charge | null
+  busy: boolean
   night: boolean
   onSelect: () => void
 }) {
@@ -432,7 +456,9 @@ function WildCard({
   const done = wild.outcome !== 'pending'
   const left = Math.max(0, maxFails - wild.failedThrows)
   const result = anim?.stage === 'result' ? anim.outcome.kind : null
-  const disabled = (done && !targeting) || Boolean(anim) || (targeting !== null && done)
+  // A status charge can't target a wild that already sleeps or is paralyzed.
+  const statusTaken = targeting?.kind === 'status' && Boolean(wild.status)
+  const disabled = (done && !targeting) || Boolean(anim) || (targeting !== null && done) || statusTaken || (busy && targeting !== null)
   return (
     <button
       type="button"
@@ -446,12 +472,14 @@ function WildCard({
         wild.studyBallEligible && studyAvailable ? t('waves.studyEligibleTip') : '',
         t('waves.failsLeft', { count: left }),
         done ? t(wild.outcome === 'caught' ? 'waves.caught' : 'waves.fled') : '',
+        statusTaken ? t('waves.charges.hasStatus') : '',
       ]
         .filter(Boolean)
         .join('. ')}
       className={cx(
         'group relative flex w-full flex-col items-center text-left outline-offset-4 disabled:cursor-default',
-        targeting && !done && 'cursor-crosshair',
+        targeting && !done && !statusTaken && 'cursor-crosshair',
+        statusTaken && 'opacity-60',
       )}
     >
       <div className="relative flex h-40 w-full items-end justify-center">

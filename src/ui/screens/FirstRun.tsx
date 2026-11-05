@@ -2,18 +2,23 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, toLocal } from '../../engine'
 import type { Locale } from '../../i18n'
-import { Button, Logo, Mascot, type MascotPose, Platform, Segmented, Select, Sprite, Stage, TypeBadge } from '../components'
+import { Button, Logo, Mascot, type MascotPose, Platform, Segmented, Select, Sprite, Stage, toast, TypeBadge } from '../components'
 import { timeOfDay } from '../lib/conditions'
 import { cx } from '../lib/cx'
 import { allTimeZones, browserTimeZone } from '../lib/format'
 import { useNames } from '../lib/names'
+import { errorText } from '../lib/errors'
+import { useAuth } from '../store/auth'
 import { useGame } from '../store/game'
 import { usePrefs } from '../store/prefs'
 
 const ctx = defaultContext()
 const STARTERS = ctx.config.starters
 
-/** First run: who you are → your first partner → how it works (3 steps). */
+/**
+ * First run: language and time zone → your first partner → how it works (3 steps).
+ * The trainer name and country come from the account (chosen at registration).
+ */
 export function FirstRun() {
   const { t } = useTranslation()
   const names = useNames()
@@ -21,24 +26,25 @@ export function FirstRun() {
   const setLocale = usePrefs((s) => s.setLocale)
   const createPlayer = useGame((s) => s.createPlayer)
   const [step, setStep] = useState(0)
-  const [name, setName] = useState('')
+  const trainerName = useAuth((s) => s.user?.trainerName ?? '')
+  const busy = useGame((s) => s.pending > 0)
   const [tz, setTz] = useState(browserTimeZone())
   const [starter, setStarter] = useState<string | null>(null)
   const zones = useMemo(() => allTimeZones().map((z) => ({ value: z, label: z.replace(/_/g, ' ') })), [])
   const hour = toLocal(Date.now(), tz).hour
-  const trimmed = name.trim()
-  const canNext = step === 0 ? trimmed.length >= 1 && trimmed.length <= 20 : step === 1 ? starter !== null : true
+  const canNext = step === 1 ? starter !== null : true
 
   const speech: { pose: MascotPose; text: string }[] = [
-    { pose: 'idle', text: t('firstRun.speech.0') },
-    { pose: 'point', text: t('firstRun.speech.1', { name: trimmed || t('firstRun.you') }) },
+    { pose: 'idle', text: t('firstRun.speech.0', { name: trainerName || t('firstRun.you') }) },
+    { pose: 'point', text: t('firstRun.speech.1', { name: trainerName || t('firstRun.you') }) },
     { pose: 'cheer', text: t('firstRun.speech.2', { starter: starter ? names.species(starter) : '' }) },
   ]
   const s = speech[step]!
 
-  const finish = () => {
-    if (!starter) return
-    createPlayer({ trainerName: trimmed, locale, timezone: tz, starterSlug: starter })
+  const finish = async () => {
+    if (!starter || busy) return
+    const ok = await createPlayer({ locale, timezone: tz, starterSlug: starter })
+    if (!ok) toast.add({ title: errorText(useGame.getState().error ?? 'generic'), type: 'danger' })
   }
 
   return (
@@ -74,18 +80,6 @@ export function FirstRun() {
 
           {step === 0 && (
             <div className="grid gap-6 md:grid-cols-2">
-              <label className="flex flex-col gap-1.5 md:col-span-2">
-                <span className="font-display text-base text-mist-300">{t('firstRun.name')}</span>
-                <input
-                  autoFocus
-                  value={name}
-                  maxLength={20}
-                  onChange={(e) => setName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && canNext && setStep(1)}
-                  placeholder={t('firstRun.namePlaceholder')}
-                  className="min-h-12 bg-dusk-900 px-3 font-display text-xl text-mist-50 shadow-frame inset-shadow-well placeholder:text-mist-400"
-                />
-              </label>
               <div className="flex flex-col gap-1.5">
                 <span className="font-display text-base text-mist-300" id="fr-lang">
                   {t('firstRun.language')}
@@ -151,7 +145,7 @@ export function FirstRun() {
                 {t('common.continue')}
               </Button>
             ) : (
-              <Button size="lg" icon="play" onClick={finish}>
+              <Button size="lg" icon="play" onClick={() => void finish()} disabled={busy}>
                 {t('firstRun.finish')}
               </Button>
             )}

@@ -37,3 +37,8 @@ export function useScene(player: PlayerState, now: number): { time: TimeOfDay; w
   const hour = toLocal(now, player.profile.timezone).hour
   return { time: timeOfDay(hour), weather: weatherKind(player.profile.weather), hour }
 }
+
+/** True while a game action is in flight (disable the buttons that send one). */
+export function useBusy(): boolean {
+  return useGame((s) => s.pending > 0)
+}
