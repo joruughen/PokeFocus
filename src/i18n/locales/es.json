@@ -241,6 +241,7 @@
       "weather": "Clima donde estudias",
       "tired_one": "{{names}} podría agotarse antes del final.",
       "tired_other": "{{names}} podrían agotarse antes del final.",
+      "allExhausted": "Todo tu equipo está agotado, así que esta sesión no sumará puntos. Usa pociones o Revivir en la ficha de cada Pokémon, o espera a que se recargue la Energía.",
       "startNote": "Puedes pausar. El equipo no se puede cambiar hasta terminar.",
       "start": "Empezar",
       "startMinutes": "{{count}} min"
@@ -685,7 +686,7 @@
       },
       "checklist": {
         "title": "Primeros pasos",
-        "body": "Seis pasos para conocer PokeFocus. Ciérralo cuando quieras; puedes recuperarlo en Ajustes."
+        "body": "Siete pasos para conocer PokeFocus. Ciérralo cuando quieras; puedes recuperarlo en Ajustes."
       }
     },
     "claim": {
@@ -906,7 +907,7 @@
     "typeCandy": "Caramelos tipo {{type}}",
     "items": "Objetos",
     "noItems": "Sin objetos por ahora. Las pociones y piedras llegarán con las misiones.",
-    "healHow": "Úsala desde la ficha de un Pokémon"
+    "healHow": "Úsala en la ficha del Pokémon"
   },
   "box": {
     "count_one": "{{count}} Pokémon, {{team}} en el equipo.",
@@ -1149,6 +1150,10 @@
     "catch": {
       "title": "Captura tu primer Pokémon",
       "how": "Al terminar una sesión, usa la Ball de Estudio en la oleada."
+    },
+    "mission": {
+      "title": "Reclama tu primera misión",
+      "how": "En Misiones, pulsa Reclamar en una misión completada."
     },
     "team": {
       "title": "Suma un segundo miembro al equipo",

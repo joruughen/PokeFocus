@@ -15,8 +15,10 @@ export interface ProgressBarProps {
   variant?: BarVariant
   /** Accessible name, e.g. "Energía de Bulbasaur". */
   label: string
-  /** Visible text on the right ("31/45"). */
+  /** Visible text on the right ("31/45"). A string is also the meter's spoken value. */
   valueText?: ReactNode
+  /** Spoken value when the raw numbers mean nothing out loud (e.g. milliseconds): "40 %". */
+  ariaValueText?: string
   /** Previous value: drawn as a pale trail (damage taken, EXP gained). */
   from?: number
   size?: 'sm' | 'md' | 'lg'
@@ -34,7 +36,7 @@ function meterColor(f: number): string {
 const H = { sm: 'h-2', md: 'h-3', lg: 'h-5' }
 
 /** Pixel meter. Uses role="meter" with the real values for assistive tech. */
-export function ProgressBar({ value, max, variant = 'volt', label, valueText, from, size = 'md', ticks, className }: ProgressBarProps) {
+export function ProgressBar({ value, max, variant = 'volt', label, valueText, ariaValueText, from, size = 'md', ticks, className }: ProgressBarProps) {
   const safeMax = max > 0 ? max : 1
   const f = Math.max(0, Math.min(1, value / safeMax))
   const trail = from !== undefined ? Math.max(0, Math.min(1, from / safeMax)) : null
@@ -48,6 +50,7 @@ export function ProgressBar({ value, max, variant = 'volt', label, valueText, fr
         aria-valuemin={0}
         aria-valuemax={Math.round(safeMax)}
         aria-valuenow={Math.round(value)}
+        aria-valuetext={ariaValueText ?? (typeof valueText === 'string' ? valueText : undefined)}
         className={cx('relative flex-1 overflow-hidden bg-ink shadow-frame', H[size])}
       >
         {trail !== null && trail > f && (

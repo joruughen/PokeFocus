@@ -69,3 +69,13 @@ export function allTimeZones(): string[] {
   }
   return ['UTC', 'America/Lima', 'America/Bogota', 'America/Mexico_City', 'America/Santiago', 'America/Argentina/Buenos_Aires', 'Europe/Madrid', 'America/New_York']
 }
+
+/**
+ * Minutes typed in a free number field → a whole number inside [min, max]. An empty or non-numeric
+ * draft falls back to `fallback`. Used on blur, so typing "45" never gets clamped halfway ("4" → 15).
+ */
+export function clampMinutes(raw: string, fallback: number, min: number, max: number): number {
+  const n = raw.trim() === '' ? NaN : Number(raw)
+  const v = Number.isFinite(n) ? Math.round(n) : fallback
+  return Math.max(min, Math.min(max, v))
+}

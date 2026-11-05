@@ -17,7 +17,14 @@ export default function App() {
     <AudioBridge>
     <TooltipProvider delay={250}>
       <ToastViewport>
-        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:bg-volt-400 focus:px-3 focus:py-2 focus:text-ink">
+        {/* The app routes on the hash, so the skip link must not touch it: it moves focus to <main> instead. */}
+        <a
+          href="#main"
+          onClick={(e) => {
+            e.preventDefault()
+            document.getElementById('main')?.focus()
+          }}
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:bg-volt-400 focus:px-3 focus:py-2 focus:text-ink">
           {t('common.skipToContent')}
         </a>
         {hasPlayer ? <AppShell /> : <FirstRun />}

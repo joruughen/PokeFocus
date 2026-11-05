@@ -15,7 +15,7 @@ import { Button, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Segmented
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { conditionsNow, WEATHER_PRESETS, weatherKind, type WeatherKind } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
-import { fmtClock, fmtInt, fmtWeekday } from '../../lib/format'
+import { clampMinutes, fmtClock, fmtInt, fmtWeekday } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { primeSignals } from '../../lib/notify'
 import { scheduleSessionEnd, sfx } from '../../lib/sound'
@@ -41,6 +41,8 @@ export function PreSession() {
   const scene = useScene(player, now)
   const [choice, setChoice] = useState<string>('25')
   const [custom, setCustom] = useState(40)
+  // What is typed in the field; it is only clamped on blur so "45" can be typed (not clamped at "4").
+  const [draft, setDraft] = useState('40')
   const minutes = choice === 'custom' ? custom : Number(choice)
   const cond = conditionsNow(player, now, minutes)
   const tz = player.profile.timezone
@@ -49,8 +51,11 @@ export function PreSession() {
   const endsAt = now + minutes * MINUTE_MS
 
   // Who may run out of Energy before the end (engine view numbers; effects not included).
-  const tired = views.filter((v) => (minutes * 60) / v.actionIntervalSeconds > v.actionsLeft && !isAsleepAt(player, v.pokemon, now))
-  useHintEvent('energyLow', tired.length > 0)
+  const awake = views.filter((v) => !isAsleepAt(player, v.pokemon, now))
+  const allOut = awake.length > 0 && awake.every((v) => v.energy <= 0)
+  // Members already at 0 show "Agotado" on their card; only warn about the ones that will run out during the session.
+  const tired = awake.filter((v) => v.energy > 0 && (minutes * 60) / v.actionIntervalSeconds > v.actionsLeft)
+  useHintEvent('energyLow', tired.length > 0 || allOut)
 
   const onStart = () => {
     primeSignals()
@@ -122,8 +127,19 @@ export function PreSession() {
                     type="number"
                     min={cfg.session.minMinutes}
                     max={cfg.session.maxMinutes}
-                    value={custom}
-                    onChange={(e) => setCustom(Math.max(cfg.session.minMinutes, Math.min(cfg.session.maxMinutes, Number(e.target.value) || cfg.session.minMinutes)))}
+                    inputMode="numeric"
+                    value={draft}
+                    onChange={(e) => {
+                      setDraft(e.target.value)
+                      const n = Number(e.target.value)
+                      if (e.target.value.trim() !== '' && Number.isInteger(n) && n >= cfg.session.minMinutes && n <= cfg.session.maxMinutes) setCustom(n)
+                    }}
+                    onBlur={() => {
+                      const v = clampMinutes(draft, custom, cfg.session.minMinutes, cfg.session.maxMinutes)
+                      setCustom(v)
+                      setDraft(String(v))
+                    }}
+                    aria-invalid={clampMinutes(draft, custom, cfg.session.minMinutes, cfg.session.maxMinutes) !== Number(draft)}
                     className="h-11 w-24 bg-dusk-900 px-3 font-num text-2xl text-mist-50 shadow-frame inset-shadow-well"
                   />
                   <span className="text-mist-300">{t('common.min')}</span>
@@ -140,7 +156,12 @@ export function PreSession() {
               <p className="mt-2 text-sm text-mist-400">{t(`weather.effect.${wk}`)}</p>
             </div>
 
-            {tired.length > 0 && (
+            {allOut ? (
+              <p {...hintAnchor('home.energy')} className="flex items-start gap-2 bg-dusk-900 p-3 text-sm text-amber-400 inset-shadow-well" role="status">
+                <PixelIcon name="bolt" size={20} className="mt-0.5 shrink-0" />
+                <span>{t('home.plan.allExhausted')}</span>
+              </p>
+            ) : tired.length > 0 && (
               <p {...hintAnchor('home.energy')} className="flex items-start gap-2 bg-dusk-900 p-3 text-sm text-amber-400 inset-shadow-well">
                 <PixelIcon name="bolt" size={20} className="mt-0.5 shrink-0" />
                 <span>{t('home.plan.tired', { names: tired.map((v: PokemonView) => names.species(v.pokemon.speciesSlug)).join(', '), count: tired.length })}</span>

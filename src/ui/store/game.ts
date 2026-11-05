@@ -378,6 +378,7 @@ export const useGame = create<GameState>()(
         const r = claimMission(p, id, now())
         if (!r.ok) return { ok: false, error: r.error }
         set({ player: r.value.state })
+        usePrefs.getState().markMilestone('mission')
         return { ok: true, reward: r.value.reward }
       },
       claimAllMissions: () => {
@@ -385,6 +386,7 @@ export const useGame = create<GameState>()(
         if (!p) return []
         const r = claimAllMissions(p, now())
         set({ player: r.state })
+        if (r.rewards.length > 0) usePrefs.getState().markMilestone('mission')
         return r.rewards.map((x) => x.reward)
       },
 

@@ -323,9 +323,9 @@ The nav items carry the anchors `nav.home`, `nav.box`, `nav.team`, `nav.dex`, `n
 
 ## 10. Dev panel
 
-Open it with `?dev` in the URL or Settings → Developer tools. The wrench button sits at the bottom of the main column. It provides:
+Open it with `?dev` in the URL or Settings → Developer tools. The wrench button (`DevToggle`) sits at the bottom of the side rail, so it never covers page content (below 640px it floats at the top right; it is not shown on the first-run screen). The panel itself floats over the main column. It provides:
 
-- **Clock:** 1× or "1 min = 1 s", +1 h, +1 day, back to real time.
+- **Clock:** 1× or "1 min = 1 s", +1 h, +1 day, back to real time. A rate change or time jump re-times the end-of-session bell already scheduled on the audio clock (`resyncSessionEnd`, called by `SessionWatcher` when `dev.anchor` changes).
 - **Session:** finish the session now (jumps the clock to `endsAt`), and the simulated Focus label (studying, educational, chat, social, game, no permission), which becomes `screenshotLabels`.
 - **Items:** add Balls, Dust, or candies (for the team's chains and types).
 - **RNG:** a fixed seed.
@@ -346,7 +346,7 @@ Open it with `?dev` in the URL or Settings → Developer tools. The wrench butto
 | `#/league` | `screens/league/League.tsx` | League hero, one equal step per league (thresholds, "about N per wave, up to M" from `leagueWaveBonus`/`leagueMaxWaveSize`), reset countdown, monthly league; stats tiles; charts (minutes per day this week, points per session, Focus trend) and the session history table |
 | `#/missions` | `screens/missions/Missions.tsx` | Daily/weekly missions with renew countdowns, Pokédex milestones, progress bars, rewards, claim / claim all (`claimMission`, `claimAllMissions`). Nav badge = `missionsView().claimable` |
 | `#/settings` | `screens/Settings.tsx` | Language, time zone (confirm dialog + 30-day lock stored in `prefs.tzChangedAt`; dev mode bypasses), weather, audio (mute, master/music/sfx sliders with preview sounds, music during focus, focus level, background, vinyl), notifications, tips + replay (also restores the checklist), dev tools, reset, about |
-| Home extras | `screens/home/Break.tsx`, `Checklist.tsx` | Pomodoro break: offered on Home after a session (one per session, within 60 min; 5/10/15 min). Phase `break` shows a calm countdown; completing it calls the engine `completeBreak` (+`breakRecoverPct` Energy, previewed per member); ending early gives nothing. Getting-started checklist (6 steps; session/catch/team derived from the save, equip/candy/evolve are `prefs.milestones`), dismissible |
+| Home extras | `screens/home/Break.tsx`, `Checklist.tsx` | Pomodoro break: offered on Home after a session (one per session, within 60 min; 5/10/15 min). Phase `break` shows a calm countdown; completing it calls the engine `completeBreak` (+`breakRecoverPct` Energy, previewed per member); ending early gives nothing. Getting-started checklist (7 steps; session/catch/team derived from the save, mission/equip/candy/evolve are `prefs.milestones`), dismissible |
 | Waves extras | `screens/home/Waves.tsx` | IV quality row when `encounterModifiers().revealWildIvs`; "Golpes" row from `Wave.hits` (who weakened each wild); Study Ball limit from `studyBallMaxLevelFor` |
 
 Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspense` in `AppShell`). `vite.config.ts` splits `game-data` and `vendor` chunks: index ≈ 320 kB, game data ≈ 383 kB, vendor ≈ 484 kB, each screen 3–36 kB.
@@ -365,7 +365,7 @@ Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspe
 
 - `AudioBridge` (App root) mirrors `prefs.audio` through `AudioProvider` (which unlocks on the first gesture) and plays a delegated click sound: `uiClick` on buttons/links, `toggle` on switches and pressed keys. Opt out with `data-sfx="none"` (used where a screen plays its own sound) or name one with `data-sfx="<SfxName>"`.
 - `MusicDirector`: `focus` during focus/paused (any screen), `results` on Home claim/results, `encounter` on waves, `home` elsewhere. The engine crossfades and honours "music during focus".
-- `lib/sound.ts`: `sfx`, `sfxLater`, and the session-end bells scheduled on the audio clock at Start/Resume (`scheduleSessionEnd`, cancelled on pause/cancel and on dev clock jumps). `SessionWatcher` only plays `sessionEnd` itself if nothing was scheduled (reload) and also signals the end of a break. The old chime in `notify.ts` now calls the sfx.
+- `lib/sound.ts`: `sfx`, `sfxLater`, and the session-end bells scheduled on the audio clock at Start/Resume (`scheduleSessionEnd`, cancelled on pause/cancel, re-timed by `resyncSessionEnd` when the dev clock changes). `SessionWatcher` only plays `sessionEnd` itself if nothing was scheduled (reload) and also signals the end of a break. The old chime in `notify.ts` now calls the sfx.
 - SFX: sessionStart, claim, pointsTick (count-up on Results, rising pitch), levelUp / leagueUp / newMove after the count, waveAppear + wildAppear per wild (panned) + shinyAppear, ballThrow, ballShake, catchSuccess/catchFail, counterHit/counterMiss, exhausted, flee, evolveStart/evolveDone, heal (potions, break), hintPop (automatic hints), error (every `danger` toast, via `toast.add`). `AudioLab` is in the dev panel (Sound section).
 
 ### Hints added (`src/ui/hints/partB.ts`)

@@ -241,6 +241,7 @@
       "weather": "Weather where you study",
       "tired_one": "{{names}} may run out of Energy before the end.",
       "tired_other": "{{names}} may run out of Energy before the end.",
+      "allExhausted": "Your whole team is out of Energy, so this session won't earn points. Use potions or Revive on each Pokémon's page, or wait for Energy to refill.",
       "startNote": "You can pause. The team can't change until you finish.",
       "start": "Start",
       "startMinutes": "{{count}} min"
@@ -685,7 +686,7 @@
       },
       "checklist": {
         "title": "Getting started",
-        "body": "Six steps to learn PokeFocus. Close it whenever you like; you can bring it back in Settings."
+        "body": "Seven steps to learn PokeFocus. Close it whenever you like; you can bring it back in Settings."
       }
     },
     "claim": {
@@ -906,7 +907,7 @@
     "typeCandy": "{{type}} candies",
     "items": "Items",
     "noItems": "No items yet. Potions and stones will come with missions.",
-    "healHow": "Use it from a Pokémon's page"
+    "healHow": "Use it on a Pokémon's page"
   },
   "box": {
     "count_one": "{{count}} Pokémon, {{team}} in your team.",
@@ -1149,6 +1150,10 @@
     "catch": {
       "title": "Catch your first Pokémon",
       "how": "After a session, use the Study Ball in the wave."
+    },
+    "mission": {
+      "title": "Claim your first mission",
+      "how": "In Missions, press Claim on a completed mission."
     },
     "team": {
       "title": "Add a second team member",

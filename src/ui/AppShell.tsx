@@ -2,6 +2,7 @@ import { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 import { BALL_ORDER, missionsView } from '../engine'
+import { DevToggle } from './dev/DevPanel'
 import { BallIcon, Logo, PixelIcon, Tooltip } from './components'
 import { hintAnchor, useHintEvent } from './hints'
 import { cx } from './lib/cx'
@@ -32,7 +33,7 @@ export function AppShell() {
   return (
     <div className="min-h-dvh xl:grid xl:grid-cols-[15rem_minmax(0,1fr)] max-xl:sm:grid max-xl:sm:grid-cols-[5rem_minmax(0,1fr)]">
       <Rail route={route} focusing={focusing} />
-      <main id="main" className={cx('min-w-0 px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
+      <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
           <Suspense fallback={<ScreenLoading />}>
             <Screen />
@@ -95,6 +96,7 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
         <LiveSessionChip />
         <TrainerCard />
       </div>
+      <DevToggle />
     </nav>
   )
 }

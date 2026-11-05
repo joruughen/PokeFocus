@@ -296,8 +296,9 @@ export function Waves() {
               <BallIcon ball={ball} size={30} />
               {t('waves.throw')}
             </Button>
-            <p className="text-right text-sm text-mist-300">
-              {sel && sel.outcome === 'pending' && ballOk ? t('waves.chance', { pct: fmtPct(chance, lng) }) : ' '}
+            {/* When the chosen ball can't be thrown, say why in plain sight (the option's tooltip is hover-only). */}
+            <p className={cx('text-right text-sm', sel && sel.outcome === 'pending' && !ballOk ? 'max-w-[28ch] text-amber-400' : 'text-mist-300')} aria-live="polite">
+              {sel && sel.outcome === 'pending' ? (ballOk ? t('waves.chance', { pct: fmtPct(chance, lng) }) : (balls.find((b) => b.ball === ball)?.reason ?? t('errors.throw.no_ball'))) : ' '}
             </p>
           </div>
         </Panel>

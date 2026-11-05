@@ -6,6 +6,7 @@
  *   SessionWatcher only plays it itself when nothing was scheduled (e.g. after a reload).
  */
 import { audio, type SfxHandle, type SfxName, type SfxOptions } from '../../audio'
+import { timerOf, useGame } from '../store/game'
 import { now, usePrefs } from '../store/prefs'
 
 export function sfx(name: SfxName, opts?: SfxOptions): void {
@@ -39,6 +40,24 @@ export function scheduleSessionEnd(sessionKey: string, endsAt: number): void {
     handle = null
   }
   endHandle = { sessionKey, handle }
+}
+
+/**
+ * The dev clock changed (rate switch or time jump): re-time the bell this tab had scheduled, because
+ * its delay was computed with the old rate. If the end is now in the past, or the session is
+ * paused/gone, the bell is dropped and SessionWatcher rings it instead. Does nothing when this tab
+ * never scheduled a bell (another tab owns it).
+ */
+export function resyncSessionEnd(): void {
+  if (!endHandle) return
+  const key = endHandle.sessionKey
+  const s = useGame.getState()
+  const timer = timerOf(s)
+  if (!timer || timer.sessionId !== key || timer.pausedAt !== null || now() >= timer.endsAt) {
+    cancelSessionEnd()
+    return
+  }
+  scheduleSessionEnd(key, timer.endsAt)
 }
 
 export function cancelSessionEnd(): void {

@@ -223,7 +223,7 @@ function Bag() {
                 </span>
                 <span className="min-w-0 flex-1 text-sm">
                   {names.item(k)}
-                  {HEAL_ITEMS.includes(k) && <span className="block text-xs text-mist-400">{t('bag.healHow')}</span>}
+                  {HEAL_ITEMS.includes(k) && <span className="block text-xs leading-snug text-mist-400 [overflow-wrap:anywhere]">{t('bag.healHow')}</span>}
                 </span>
                 <span className="font-num text-xl leading-none tabular">{n}</span>
               </li>

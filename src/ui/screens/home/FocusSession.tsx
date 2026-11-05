@@ -4,7 +4,7 @@ import { defaultContext, MINUTE_MS, waveCount } from '../../../engine'
 import { Button, Dialog, DialogClose, Platform, ProgressBar, Sprite, Stage } from '../../components'
 import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
-import { fmtClock, fmtCountdown } from '../../lib/format'
+import { fmtClock, fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
 import { useNow } from '../../store/clock'
@@ -90,7 +90,7 @@ export function FocusSession() {
         </p>
 
         <div className="mt-8 w-full">
-          <ProgressBar value={studied} max={totalMs} ticks={ticks} label={t('session.progress')} size="lg" />
+          <ProgressBar value={studied} max={totalMs} ticks={ticks} label={t('session.progress')} ariaValueText={fmtPct(studied / totalMs, i18n.language)} size="lg" />
           <div className="mt-2 flex justify-between text-sm text-mist-400">
             <span>{t(ticks.length > 0 ? 'session.waveLegend' : 'session.waveOne', { count: waveCount(session.plannedMinutes, cfg) })}</span>
             <span>{t('session.teamWorking')}</span>

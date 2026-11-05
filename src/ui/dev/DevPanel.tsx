@@ -1,15 +1,48 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DAY_MS, HOUR_MS, type FocusLabel } from '../../engine'
 import { Button, IconButton, PixelIcon, Segmented, toast } from '../components'
 import { cx } from '../lib/cx'
 import { fmtClock } from '../lib/format'
-import { cancelSessionEnd } from '../lib/sound'
 
 const AudioLab = lazy(() => import('../../audio/AudioLab').then((m) => ({ default: m.AudioLab })))
 import { useNow } from '../store/clock'
 import { useGame } from '../store/game'
-import { usePrefs } from '../store/prefs'
+import { devEnabled, usePrefs } from '../store/prefs'
+
+// Open/closed state of the panel, shared with the wrench button that lives in the side rail.
+let panelOpen = false
+const panelListeners = new Set<() => void>()
+function setPanelOpen(v: boolean) {
+  panelOpen = v
+  panelListeners.forEach((l) => l())
+}
+function usePanelOpen(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      panelListeners.add(l)
+      return () => panelListeners.delete(l)
+    },
+    () => panelOpen,
+    () => panelOpen,
+  )
+}
+
+/**
+ * The wrench that opens the dev panel. It lives in the side rail (AppShell) so it never covers
+ * page content; below 640px, where the rail is a bottom bar, it floats at the top right.
+ */
+export function DevToggle() {
+  const { t } = useTranslation()
+  usePrefs((s) => s.dev.panelOpen) // `?dev` or Settings → Developer tools
+  const open = usePanelOpen()
+  if (!devEnabled() || open) return null
+  return (
+    <div className="max-sm:fixed max-sm:top-2 max-sm:right-2 max-sm:z-[55] sm:p-4 sm:pt-0">
+      <IconButton icon="wrench" label={t('dev.open')} onClick={() => setPanelOpen(true)} />
+    </div>
+  )
+}
 
 const LABELS: (FocusLabel | 'none')[] = ['studying', 'educational', 'chat', 'social', 'game', 'none']
 
@@ -19,7 +52,8 @@ const LABELS: (FocusLabel | 'none')[] = ['studying', 'educational', 'chat', 'soc
  */
 export function DevPanel() {
   const { t, i18n } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const open = usePanelOpen()
+  const setOpen = setPanelOpen
   const now = useNow()
   const dev = usePrefs((s) => s.dev)
   const setDev = usePrefs((s) => s.setDev)
@@ -32,13 +66,7 @@ export function DevPanel() {
   const [seed, setSeed] = useState(dev.seed ?? '')
   const tz = player?.profile.timezone ?? 0
 
-  if (!open) {
-    return (
-      <div className="fixed bottom-4 left-4 z-[55] sm:left-24 xl:left-[16rem]">
-        <IconButton icon="wrench" label={t('dev.open')} onClick={() => setOpen(true)} />
-      </div>
-    )
-  }
+  if (!open) return null
 
   return (
     <aside aria-label={t('dev.title')} className="fixed bottom-4 left-4 z-[55] max-h-[calc(100dvh-2rem)] sm:left-24 xl:left-[16rem] w-80 overflow-y-auto bg-dusk-950 p-4 text-sm shadow-plate">
@@ -58,26 +86,17 @@ export function DevPanel() {
         <Segmented
           label={t('dev.rate')}
           value={String(dev.rate)}
-          onChange={(v) => {
-            cancelSessionEnd()
-            setRate(Number(v))
-          }}
+          onChange={(v) => setRate(Number(v))}
           options={[
             { value: '1', label: '1×' },
             { value: '60', label: t('dev.fast') },
           ]}
         />
         <div className="mt-2 flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={() => {
-            cancelSessionEnd()
-            advance(HOUR_MS)
-          }}>
+          <Button size="sm" variant="secondary" onClick={() => advance(HOUR_MS)}>
             +1 h
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => {
-            cancelSessionEnd()
-            advance(DAY_MS)
-          }}>
+          <Button size="sm" variant="secondary" onClick={() => advance(DAY_MS)}>
             {t('dev.plusDay')}
           </Button>
           <Button size="sm" variant="ghost" disabled={Boolean(player?.activeSession)} onClick={resetClock}>
@@ -87,10 +106,7 @@ export function DevPanel() {
       </Section>
 
       <Section title={t('dev.session')}>
-        <Button size="sm" disabled={!player?.activeSession} onClick={() => {
-          cancelSessionEnd()
-          game.devFinishNow()
-        }}>
+        <Button size="sm" disabled={!player?.activeSession} onClick={() => game.devFinishNow()}>
           {t('dev.finishNow')}
         </Button>
         <label className="mt-3 flex flex-col gap-1">

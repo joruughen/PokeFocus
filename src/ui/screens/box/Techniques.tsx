@@ -155,10 +155,9 @@ function TechCard({ info, view, lng, dim }: { info: TechniqueInfo; view: Pokemon
   const eff = def?.baseChance && m ? activationChance(def.baseChance, view.stats.specialDefense, m.minutes, 1, cfg) : null
   return (
     <div className={cx('min-w-0', dim && 'opacity-70')}>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-display text-lg leading-tight text-mist-50">{names.move(info.slug)}</span>
-        <CategoryChip kind={info.kind} />
-        <TypeBadge type={info.type} />
+      {/* Same layout in every card: name on the left, Mastery stars at the top right, chips on their own row. */}
+      <div className="flex items-start justify-between gap-3">
+        <span className="min-w-0 font-display text-lg leading-tight text-mist-50">{names.move(info.slug)}</span>
         {m && (
           <Tooltip
             variant="help"
@@ -170,11 +169,15 @@ function TechCard({ info, view, lng, dim }: { info: TechniqueInfo; view: Pokemon
               </span>
             }
           >
-            <button type="button" className="ml-auto inline-flex items-center" aria-label={t('tech.masteryAria', { stars: m.stars })}>
+            <button type="button" className="mt-0.5 inline-flex shrink-0 items-center" aria-label={t('tech.masteryAria', { stars: m.stars })}>
               <Stars value={m.stars} max={5} label="" />
             </button>
           </Tooltip>
         )}
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        <CategoryChip kind={info.kind} />
+        <TypeBadge type={info.type} />
       </div>
       <p className="mt-1 text-sm leading-snug text-mist-300">{desc}</p>
       <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-mist-400">

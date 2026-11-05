@@ -32,7 +32,7 @@ export interface DevSettings {
 }
 
 /** Getting-started steps that can't be read from the save (the others are derived). */
-export type Milestone = 'equip' | 'candy' | 'evolve'
+export type Milestone = 'equip' | 'candy' | 'evolve' | 'mission'
 
 export interface PrefsState {
   locale: Locale

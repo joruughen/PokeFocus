@@ -108,9 +108,23 @@ export function FirstRun() {
           )}
 
           {step === 1 && (
-            <div role="radiogroup" aria-label={t('firstRun.steps.1')} className="grid gap-5 md:grid-cols-3">
-              {STARTERS.map((slug) => (
-                <StarterCard key={slug} slug={slug} checked={starter === slug} onPick={() => setStarter(slug)} />
+            <div
+              role="radiogroup"
+              aria-label={t('firstRun.steps.1')}
+              className="grid gap-5 md:grid-cols-3"
+              // Radio-group keyboard pattern: arrows move the selection, Tab enters/leaves the group once.
+              onKeyDown={(e) => {
+                const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+                if (!dir) return
+                e.preventDefault()
+                const from = starter ? STARTERS.indexOf(starter) : dir > 0 ? -1 : 0
+                const to = STARTERS[(from + dir + STARTERS.length) % STARTERS.length]!
+                setStarter(to)
+                requestAnimationFrame(() => e.currentTarget.querySelector<HTMLElement>(`[data-starter="${to}"]`)?.focus())
+              }}
+            >
+              {STARTERS.map((slug, i) => (
+                <StarterCard key={slug} slug={slug} checked={starter === slug} tabbable={starter ? starter === slug : i === 0} onPick={() => setStarter(slug)} />
               ))}
             </div>
           )}
@@ -174,7 +188,7 @@ function LoopStep({ n, title, body, icon }: { n: number; title: string; body: st
   )
 }
 
-function StarterCard({ slug, checked, onPick }: { slug: string; checked: boolean; onPick: () => void }) {
+function StarterCard({ slug, checked, tabbable, onPick }: { slug: string; checked: boolean; tabbable: boolean; onPick: () => void }) {
   const { t } = useTranslation()
   const names = useNames()
   const sp = ctx.speciesBySlug.get(slug)!
@@ -184,6 +198,8 @@ function StarterCard({ slug, checked, onPick }: { slug: string; checked: boolean
       type="button"
       role="radio"
       aria-checked={checked}
+      tabIndex={tabbable ? 0 : -1}
+      data-starter={slug}
       onClick={onPick}
       className={cx(
         'group flex flex-col items-stretch text-left shadow-raised transition-[translate,background-color] duration-100',

@@ -6,10 +6,11 @@ import { navigate } from '../../router'
 import { useGame } from '../../store/game'
 import { usePrefs } from '../../store/prefs'
 
-type StepId = 'session' | 'catch' | 'team' | 'equip' | 'candy' | 'evolve'
+type StepId = 'session' | 'catch' | 'mission' | 'team' | 'equip' | 'candy' | 'evolve'
 const STEPS: { id: StepId; to: string }[] = [
   { id: 'session', to: 'home' },
   { id: 'catch', to: 'home' },
+  { id: 'mission', to: 'missions' },
   { id: 'team', to: 'team' },
   { id: 'equip', to: 'box' },
   { id: 'candy', to: 'box' },
@@ -30,6 +31,7 @@ export function Checklist() {
   const done: Record<StepId, boolean> = {
     session: player.history.length > 0,
     catch: Object.values(player.pokemon).some((p) => p.caughtBall !== 'starter'),
+    mission: Boolean(milestones.mission),
     team: player.team.length >= 2,
     equip: Boolean(milestones.equip),
     candy: Boolean(milestones.candy),

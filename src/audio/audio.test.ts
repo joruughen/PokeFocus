@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createRng, hashSeed } from './rng'
 import {
   SCALES,
@@ -17,6 +17,7 @@ import { SFX, SFX_NAMES } from './presets'
 import { presetDuration, pulseCoefficients, renderPreset, voiceEnd, type SfxPreset } from './synth'
 import { TRACKS, TRACK_IDS, TrackGenerator } from './tracks'
 import { DEFAULT_AUDIO_SETTINGS, sanitizeAudioSettings } from './settings'
+import { AudioEngine } from './engine'
 
 describe('rng', () => {
   it('is deterministic per seed and in range', () => {
@@ -303,5 +304,18 @@ describe('settings', () => {
     expect(s.muted).toBe(false)
     expect(s.enabled).toBe(false)
     expect(sanitizeAudioSettings(null)).toEqual(DEFAULT_AUDIO_SETTINGS)
+  })
+})
+
+describe('autoplay policy', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  it('does not touch the AudioContext before the first user gesture', () => {
+    const ctor = vi.fn()
+    vi.stubGlobal('window', { AudioContext: ctor })
+    vi.stubGlobal('navigator', { userActivation: { hasBeenActive: false } })
+    const engine = new AudioEngine()
+    expect(engine.sfx('uiClick')).toBeNull()
+    expect(engine.sfxAt('sessionEnd', 5)).toBeNull()
+    expect(ctor).not.toHaveBeenCalled() // no "AudioContext was not allowed to start" warnings
   })
 })

@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { setHintsSuppressed } from './hints'
 import { chime, electLeader, isLeaderTab, notify } from './lib/notify'
-import { sessionEndScheduled } from './lib/sound'
+import { resyncSessionEnd, sessionEndScheduled } from './lib/sound'
 import { onTick } from './store/clock'
 import { phaseOf, timerOf, useGame } from './store/game'
-import { now } from './store/prefs'
+import { now, usePrefs } from './store/prefs'
 
 const breaksNotified = new Set<string>()
 
@@ -42,7 +42,15 @@ export function SessionWatcher() {
       }
     }
     check()
-    return onTick(check)
+    // Dev clock rate/jump: the end bell was scheduled with the old rate, so re-time it.
+    const offClock = usePrefs.subscribe((s, prev) => {
+      if (s.dev.anchor !== prev.dev.anchor) resyncSessionEnd()
+    })
+    const offTick = onTick(check)
+    return () => {
+      offClock()
+      offTick()
+    }
   }, [t])
   return null
 }

@@ -280,9 +280,19 @@ export class AudioEngine {
     return this.playSfx(name, Math.max(0, delaySec), { ...opts, force: true })
   }
 
+  /** True once the page has had a user gesture (or when the browser can't tell, e.g. tests). */
+  private userHasInteracted(): boolean {
+    if (this.ctx?.state === 'running') return true
+    const ua = typeof navigator !== 'undefined' ? (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation : undefined
+    return !ua || ua.hasBeenActive
+  }
+
   private playSfx(name: SfxName, delay: number, opts: SfxOptions): SfxHandle | null {
     const s = this.settings
     if (!s.enabled || s.muted || s.sfx <= 0 || s.master <= 0) return null
+    // Before the first user gesture the browser refuses to start audio and logs a console warning on
+    // every attempt (a reload straight onto the waves screen produced ~50). Skip until the user has interacted.
+    if (!this.userHasInteracted()) return null
     if (!this.ctx) void this.init() // inside a gesture handler this also unlocks audio
     const ctx = this.ctx
     const b = this.buses
