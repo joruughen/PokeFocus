@@ -5,6 +5,14 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    // API in dev: `npm run dev:server` (Hono on 8787). Same-origin for the browser,
+    // so the session cookie and the Origin check just work. SSE (/api/events) is
+    // streamed through as is (http-proxy does not buffer).
+    proxy: {
+      '/api': { target: 'http://localhost:8787', changeOrigin: false },
+    },
+  },
   build: {
     // The game data (species, moves…) is most of the JS; keep it, the vendor libs
     // and the app code in separate chunks so each caches on its own and loads in parallel.
@@ -22,6 +30,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts', 'server/**/*.test.ts'],
   },
 })

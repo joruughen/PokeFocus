@@ -14,3 +14,7 @@ data/cache
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# local database (PGlite) and env
+.data/
+.env
