@@ -1,13 +1,15 @@
 # Pendientes — 2026-11-04
 
-El prototipo F1 está **completo y jugable**. Este archivo resume el estado y lo que queda, para que un agente nuevo pueda continuar sin contexto previo.
+El prototipo F1 está **completo y jugable** y la **F2 (servidor propio, cuentas, amigos y rankings) está implementada** (ver `docs/F2-plan.md` y `docs/server.md`). Este archivo resume el estado y lo que queda, para que un agente nuevo pueda continuar sin contexto previo.
 
 ## Cómo arrancar
 
 ```bash
 npm install
-npm run dev          # app en http://localhost:5173  (añade ?dev para el panel de desarrollo)
-npm test             # 198 tests
+npm run dev          # app (5173) + API (8787, PGlite en .data/pglite, DEV_TOOLS=1); ?dev = panel de desarrollo
+npm test             # 243 tests (motor, reducer, servidor, UI)
+npm start            # producción: API + dist/ en un solo origen (requiere npm run build)
+docker compose up --build   # PostgreSQL 17 + app (cuando haya Docker)
 npm run simulate     # simulador de balance → docs/balance-report.md
 ```
 
@@ -62,8 +64,12 @@ Balance a vigilar:
 
 ## Fases siguientes (GDD §20)
 
-- **F2 — Online:** Supabase (cuentas, amigos, sesiones y tiradas en el servidor, rankings de amigos, zona y global). El almacenamiento de la UI ya está preparado para cambiar de backend (`docs/ui-foundation.md`).
-- **F3 — Foco real:** capturas de pantalla en momentos aleatorios clasificadas con Claude Haiku 5.5 (`focus.model` en la config) y perfil sonoro con el micrófono.
+- **F2 — Online: HECHA.** Pendientes menores de la F2:
+  - Probar el driver postgres-js (`DATABASE_URL`) con un PostgreSQL real (solo se probó PGlite).
+  - Probar de punta a punta: cambio de contraseña, revocar otra sesión, cerrar sesión en todos los dispositivos, rate limit (cubiertos por tests de integración, no por la prueba con navegador).
+  - El bus de eventos y el rate limit viven en memoria: una sola instancia del servidor.
+  - Recuperación de contraseña por correo (no hay envío de correos todavía).
+- **F3 — Foco real** (ahora posible: el servidor puede llamar a Haiku sin exponer la clave): capturas de pantalla en momentos aleatorios clasificadas con Claude Haiku 5.5 (`focus.model` en la config) y perfil sonoro con el micrófono.
 - **F4 — Progresión profunda:** Teracristalización, MT, Mentas, Chapas, Cápsula Habilidad.
 - **F5:** intercambios entre amigos (evoluciones por intercambio) y más packs de especies (proceso de curación en GDD §20.1).
 - **graphify:** generar el grafo de conocimiento del código con `/graphify` (opcional).
