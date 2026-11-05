@@ -3,14 +3,15 @@ import { ArtSvg } from './ArtSvg'
 
 /**
  * `/art/logo.svg` (83×16 grid) inlined so its colors follow the theme: on our
- * dark surfaces "Focus" and the outline use the light mist color.
+ * dark surfaces only the "Focus" text turns light; the ball keeps its own
+ * colors so its outline and clock stay readable.
  * `height` should be a multiple of 16 (32, 48) to keep pixels crisp.
  */
 export function Logo({ height = 32, className, onLight = false }: { height?: 16 | 32 | 48 | 64; className?: string; onLight?: boolean }) {
   const width = (height / 16) * 83
   const vars = onLight
     ? undefined
-    : ({ '--logo-accent': 'var(--color-mist-50)', '--logo-primary': 'var(--color-cheek-400)', '--logo-paper': 'var(--color-mist-50)' } as React.CSSProperties)
+    : ({ '--logo-text': 'var(--color-mist-50)', '--logo-primary': 'var(--color-cheek-400)' } as React.CSSProperties)
   return (
     <ArtSvg
       name="logo"

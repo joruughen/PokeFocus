@@ -3,7 +3,8 @@
  *
  * Fills are CSS variables so the UI can theme the logo:
  *   --logo-primary (ball top, "Poke")   default #e3463b
- *   --logo-accent  (outline, "Focus")   default #2b3566
+ *   --logo-accent  (ball outline/band)   default #2b3566
+ *   --logo-text    ("Focus")             default #2b3566
  *   --logo-paper   (ball bottom, face)  default #ffffff
  */
 import type { Fill, Sprite } from './lib.ts';
@@ -13,6 +14,7 @@ export const LOGO_DEFAULTS = { primary: '#e3463b', accent: '#2b3566', paper: '#f
 export const LOGO_PALETTE: Record<string, Fill> = {
   P: { svg: `var(--logo-primary, ${LOGO_DEFAULTS.primary})`, png: LOGO_DEFAULTS.primary },
   A: { svg: `var(--logo-accent, ${LOGO_DEFAULTS.accent})`, png: LOGO_DEFAULTS.accent },
+  T: { svg: `var(--logo-text, ${LOGO_DEFAULTS.accent})`, png: LOGO_DEFAULTS.accent },
   W: { svg: `var(--logo-paper, ${LOGO_DEFAULTS.paper})`, png: LOGO_DEFAULTS.paper },
 };
 
@@ -196,7 +198,7 @@ function place(dst: string[][], src: string[], x: number, y: number): void {
 
 function wordmarkRows(): string[] {
   const poke = word('Poke', 'P');
-  const focus = word('Focus', 'A');
+  const focus = word('Focus', 'T');
   return poke.map((r, y) => `${r}.${focus[y]}`);
 }
 
