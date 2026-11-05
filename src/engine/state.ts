@@ -238,6 +238,8 @@ export interface PlayerProfile {
   /** IANA zone (e.g. 'America/Lima') or fixed UTC offset in minutes. */
   timezone: TimeZoneSpec
   city: string | null
+  /** Last time the timezone was changed (ms). Changes are locked for 30 days (anti-cheat on day/week keys). */
+  timezoneChangedAt?: number | null
   /** Placeholder for the city's current weather (set by the app; null = unknown). */
   weather: WeatherInput | null
   createdAt: number

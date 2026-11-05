@@ -381,6 +381,13 @@ describe('throwing balls (GDD §11.1)', () => {
     expect(wildCatchChance(r.value, after, 'poke-ball')).toBeCloseTo(Math.min(1, before * cfg.capture.statusMult.sleep))
     expect(r.value.encounter!.charges).toHaveLength(0)
   })
+
+  it('refuses a status charge on a wild that already has a status (the charge is kept)', () => {
+    const w = { ...wild('pidgey', 10), status: 'paralysis' as const }
+    const s = withEncounter(makePlayer([makeMon('squirtle', 10)]), [w])
+    expect(applyStatusCharge(s, 'c1', { waveIndex: 0, wildIndex: 0 })).toEqual({ ok: false, error: 'already_has_status' })
+    expect(s.encounter!.charges).toHaveLength(1)
+  })
 })
 
 describe('reroll charges', () => {

@@ -321,7 +321,7 @@ function addRoaming(list: PlayerState['roaming'], slug: string, cfg: GameConfig)
   return [...list.filter((r) => r.speciesSlug !== slug), { speciesSlug: slug, sessionsLeft: cfg.encounters.roamingSessions }]
 }
 
-export type ChargeError = 'no_encounter' | 'unknown_charge' | 'wrong_charge_kind' | 'unknown_wild' | 'wild_resolved' | 'wave_passed'
+export type ChargeError = 'no_encounter' | 'unknown_charge' | 'wrong_charge_kind' | 'unknown_wild' | 'wild_resolved' | 'wave_passed' | 'already_has_status'
 
 function chargeTarget(state: PlayerState, chargeId: string, kind: 'status' | 'reroll', ref: WildRef) {
   const enc = state.encounter
@@ -341,6 +341,8 @@ export function applyStatusCharge(state: PlayerState, chargeId: string, ref: Wil
   const r = chargeTarget(state, chargeId, 'status', ref)
   if (!r.ok) return r
   const { enc, charge, wild } = r.value
+  // A wild that is already asleep/paralyzed would waste the charge.
+  if (wild.status) return err('already_has_status')
   const next = replaceWild(enc, ref, { ...wild, status: charge.status ?? null })
   return ok({ ...state, encounter: { ...next, charges: enc.charges.filter((c) => c.id !== chargeId) } })
 }
