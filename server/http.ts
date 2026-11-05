@@ -92,13 +92,13 @@ export function setSessionCookie(c: Ctx, env: Env, token: string): void {
     httpOnly: true,
     sameSite: 'Lax',
     path: '/',
-    secure: env.production,
+    secure: env.cookieSecure,
     maxAge: Math.floor(SESSION_TTL_MS / 1000),
   })
 }
 
 export function clearSessionCookie(c: Ctx, env: Env): void {
-  deleteCookie(c, SESSION_COOKIE, { path: '/', httpOnly: true, sameSite: 'Lax', secure: env.production })
+  deleteCookie(c, SESSION_COOKIE, { path: '/', httpOnly: true, sameSite: 'Lax', secure: env.cookieSecure })
 }
 
 export function sessionToken(c: Ctx): string | null {

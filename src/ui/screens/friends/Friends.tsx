@@ -116,6 +116,24 @@ export default function Friends() {
   )
 }
 
+/**
+ * Clipboard API when available; otherwise (plain-HTTP origins are not a secure
+ * context, so navigator.clipboard is undefined) the legacy execCommand path.
+ */
+async function copyText(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text)
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.setAttribute('readonly', '')
+  ta.style.position = 'fixed'
+  ta.style.opacity = '0'
+  document.body.appendChild(ta)
+  ta.select()
+  const ok = document.execCommand('copy')
+  ta.remove()
+  if (!ok) throw new Error('copy_failed')
+}
+
 /** My code on a light "trainer ID" plate, with a copy button. */
 function MyCode() {
   const { t } = useTranslation()
@@ -124,7 +142,7 @@ function MyCode() {
   if (!user) return null
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(user.friendCode)
+      await copyText(user.friendCode)
       setCopied(true)
       toast.add({ title: t('friends.copied'), type: 'success' })
       setTimeout(() => setCopied(false), 2000)

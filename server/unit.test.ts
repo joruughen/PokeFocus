@@ -43,6 +43,12 @@ describe('env', () => {
     expect(loadEnv({ APP_ORIGIN: 'https://a.example/, https://b.example' }).appOrigins).toEqual(['https://a.example', 'https://b.example'])
     expect(() => loadEnv({ PORT: 'abc' })).toThrow(/PORT/)
   })
+  it('COOKIE_SECURE: auto follows production, explicit values override', () => {
+    expect(loadEnv({}).cookieSecure).toBe(false)
+    expect(loadEnv({ NODE_ENV: 'production' }).cookieSecure).toBe(true)
+    expect(loadEnv({ NODE_ENV: 'production', COOKIE_SECURE: '0' }).cookieSecure).toBe(false)
+    expect(loadEnv({ COOKIE_SECURE: '1' }).cookieSecure).toBe(true)
+  })
 })
 
 describe('rate limiter', () => {

@@ -21,6 +21,12 @@ const schema = z.object({
   TRUST_PROXY: flag,
   /** Built client served in production (SPA fallback). */
   STATIC_DIR: z.string().min(1).default('dist'),
+  /**
+   * `Secure` flag on the session cookie. auto = on in production. Set 0 only when
+   * the site is served over plain HTTP inside an already-encrypted network
+   * (e.g. http://<tailscale-ip>:8787); browsers drop Secure cookies over http.
+   */
+  COOKIE_SECURE: z.enum(['auto', '0', '1']).default('auto'),
 })
 
 export interface Env {
@@ -33,6 +39,7 @@ export interface Env {
   devTools: boolean
   trustProxy: boolean
   staticDir: string
+  cookieSecure: boolean
 }
 
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
@@ -54,5 +61,6 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     devTools: production ? false : e.DEV_TOOLS,
     trustProxy: e.TRUST_PROXY,
     staticDir: e.STATIC_DIR,
+    cookieSecure: e.COOKIE_SECURE === 'auto' ? production : e.COOKIE_SECURE === '1',
   }
 }

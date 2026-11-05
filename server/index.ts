@@ -32,6 +32,7 @@ timer.unref()
 const server = serve({ fetch: app.fetch, port: env.port }, (info) => {
   const db = database.driver === 'pglite' ? `PGlite (${env.pgliteDir})` : 'PostgreSQL'
   console.log(`[server] listening on http://localhost:${info.port} · ${env.nodeEnv} · ${db}${env.devTools ? ' · DEV_TOOLS=1' : ''}`)
+  if (env.production && !env.cookieSecure) console.warn('[server] COOKIE_SECURE=0: session cookie without Secure — only serve this over an encrypted network (e.g. Tailscale)')
 })
 
 let stopping = false
