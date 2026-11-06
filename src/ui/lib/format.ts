@@ -52,6 +52,15 @@ export function fmtWeekday(ts: number, tz: TimeZoneSpec, lng: string): string {
   }
 }
 
+/** "5 de noviembre" / "November 5" in the profile's time zone. */
+export function fmtDate(ts: number, tz: TimeZoneSpec, lng: string): string {
+  try {
+    return new Intl.DateTimeFormat(lng, { day: 'numeric', month: 'long', timeZone: intlZone(tz) }).format(ts)
+  } catch {
+    return new Intl.DateTimeFormat(lng, { day: 'numeric', month: 'long' }).format(ts)
+  }
+}
+
 export function browserTimeZone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'

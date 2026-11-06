@@ -60,6 +60,16 @@ export function conditionsNow(state: PlayerState, now: number, plannedMinutes: n
   return { env, rows, member }
 }
 
+/** Types the team plays for conditions at `at` (a Tera type replaces the species types while it lasts). */
+export function teamConditionTypes(state: PlayerState, at: number): Set<TypeSlug> {
+  const out = new Set<TypeSlug>()
+  for (const uid of state.team) {
+    const p = state.pokemon[uid]
+    if (p) conditionTypes(p, at, ctx).forEach((t) => out.add(t))
+  }
+  return out
+}
+
 export type TimeOfDay = 'morning' | 'day' | 'evening' | 'night'
 
 /** Sky phase for the route band, aligned with the condition windows. */

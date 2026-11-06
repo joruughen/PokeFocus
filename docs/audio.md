@@ -66,6 +66,12 @@ unlock just records the request; music starts as soon as the context runs.
 | `ducking` | `true` | Auto-duck music under fanfares/jingles |
 | `vinylHiss` | `true` | Hiss + crackle bed on the focus track |
 
+`focusMusicAudible(settings)` says whether the focus track can be heard, and
+`focusMusicPatch(settings, audible)` is the patch for the session screen's mute
+button. Muting only sets `musicDuringFocus: false`, so volumes stay and sound
+effects (the end-of-session chime) keep playing; unmuting also lifts a global
+mute or a zero volume, so the button never does nothing.
+
 Volumes are linear gains. Store the object in the persisted prefs and push it
 with `applyAudioSettings(settings)` (or `<AudioProvider settings={...}>`). The
 existing `prefs.sound` boolean can map to `enabled`.

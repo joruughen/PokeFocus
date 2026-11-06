@@ -59,3 +59,30 @@ export function sanitizeAudioSettings(input: unknown, base: AudioSettings = DEFA
     vinylHiss: bool(p.vinylHiss, base.vinylHiss),
   }
 }
+
+/**
+ * Can the focus track be heard? False when anything silences it: the master
+ * switch, the mute, a zero volume, or the "music during focus" option.
+ */
+export function focusMusicAudible(s: AudioSettings): boolean {
+  return s.enabled && !s.muted && s.master > 0 && s.music > 0 && s.focusMusicLevel > 0 && s.musicDuringFocus
+}
+
+/**
+ * Settings patch for the session's mute button. Muting only turns off "music
+ * during focus", so volumes stay as they are and sound effects (the end-of-session
+ * chime) keep playing. Unmuting makes the focus music audible again: it also lifts
+ * a global mute or a zero volume, which would otherwise leave the button doing nothing.
+ */
+export function focusMusicPatch(s: AudioSettings, audible: boolean): Partial<AudioSettings> {
+  if (!audible) return { musicDuringFocus: false }
+  const d = DEFAULT_AUDIO_SETTINGS
+  return {
+    enabled: true,
+    muted: false,
+    musicDuringFocus: true,
+    master: s.master > 0 ? s.master : d.master,
+    music: s.music > 0 ? s.music : d.music,
+    focusMusicLevel: s.focusMusicLevel > 0 ? s.focusMusicLevel : d.focusMusicLevel,
+  }
+}

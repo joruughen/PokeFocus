@@ -11,6 +11,7 @@ import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { timerOf, useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { MuteMusicButton } from './MuteMusicButton'
 
 const cfg = defaultContext().config
 
@@ -132,6 +133,7 @@ export function FocusSession() {
           <Button size="lg" variant="ghost" icon="close" disabled={busy} onClick={() => setConfirm(true)}>
             {t('session.cancel')}
           </Button>
+          <MuteMusicButton />
         </div>
         <p className="mt-4 max-w-[52ch] text-sm text-mist-400">{t('session.rockNote')}</p>
       </section>

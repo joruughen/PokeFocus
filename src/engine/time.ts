@@ -121,10 +121,10 @@ export function resetDayKeyOf(ts: number, tz: TimeZoneSpec, resetHour: number): 
   return l.hour < resetHour ? addDays(l.dayKey, -1) : l.dayKey
 }
 
-/** Epoch ms of local 00:00 on `dayKey` (DST-aware for IANA zones). */
-export function startOfLocalDay(dayKey: string, tz: TimeZoneSpec): number {
+/** Epoch ms of local `minuteOfDay` (0–1440; 1440 = next midnight) on `dayKey` (DST-aware for IANA zones). */
+export function localToTs(dayKey: string, minuteOfDay: number, tz: TimeZoneSpec): number {
   const [y, m, d] = dayKey.split('-').map(Number) as [number, number, number]
-  const wall = Date.UTC(y, m - 1, d)
+  const wall = Date.UTC(y, m - 1, d, 0, minuteOfDay)
   let ts = wall
   for (let i = 0; i < 3; i++) {
     const l = toLocal(ts, tz)
@@ -134,6 +134,11 @@ export function startOfLocalDay(dayKey: string, tz: TimeZoneSpec): number {
     ts = next
   }
   return ts
+}
+
+/** Epoch ms of local 00:00 on `dayKey` (DST-aware for IANA zones). */
+export function startOfLocalDay(dayKey: string, tz: TimeZoneSpec): number {
+  return localToTs(dayKey, 0, tz)
 }
 
 /** Hour `h` is inside [start, end) — windows may wrap midnight (e.g. [20, 5]). */
