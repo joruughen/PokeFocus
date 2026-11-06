@@ -15,6 +15,7 @@ import { teamConditionTypes } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
 import { fmtWeekday } from '../../lib/format'
 import { useNow } from '../../store/clock'
+import { useSessionWeather } from '../../lib/weather'
 import { usePlayer } from '../../store/selectors'
 import { conditionRuleValues } from './conditionCopy'
 import { activationText, whenText, type GuideTextEnv } from './typesGuideText'
@@ -52,6 +53,7 @@ function GuideBody({ minutes }: { minutes: number }) {
   const player = usePlayer()
   const now = useNow()
   const tz = player.profile.timezone
+  const todayWeather = useSessionWeather(player.profile).effective
 
   // What the player changed. Untouched fields follow the clock and the panel's duration.
   const [dayOffset, setDayOffset] = useState(0)
@@ -76,9 +78,9 @@ function GuideBody({ minutes }: { minutes: number }) {
   const sameDay = toLocal(from, tz).dayKey === today.dayKey
 
   const outlook = useMemo(
-    // Today's weather is the one the player set; another day's cannot be known.
-    () => conditionOutlook(player, from, length, sameDay ? {} : { weather: null }),
-    [player, from, length, sameDay],
+    // Today's weather is the detected one (none if unknown); another day's cannot be known.
+    () => conditionOutlook(player, from, length, { weather: sameDay ? todayWeather : null }),
+    [player, from, length, sameDay, todayWeather],
   )
   const team = useMemo(() => teamConditionTypes(player, from), [player, from])
   const rows = useMemo(() => sortRows(outlook, team), [outlook, team])

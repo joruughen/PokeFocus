@@ -3,6 +3,7 @@
  * "study style" indicator (FocusSession) and the style line (Results).
  * The analysis itself lives in `lib/mic/`.
  */
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, dominantSound, type SessionResult, type SoundProfile } from '../../../engine'
 import { PixelIcon, Switch, Tooltip } from '../../components'
@@ -12,14 +13,22 @@ import { dominantOf } from '../../lib/mic/classify'
 import { micUnavailable, probeMic, useMic } from '../../lib/mic/monitor'
 import { useNames } from '../../lib/names'
 import { usePrefs } from '../../store/prefs'
+import { HeadphonesSwitch, MicCalibrationDialog } from '../MicSettings'
 
 const cfg = defaultContext().config
 
-/** PreSession: "Analyse my study sound" switch with a one-line status. */
+/**
+ * PreSession: "Analyse my study sound" switch with a one-line status. The
+ * first time it is switched on, it offers the calibration wizard (optional,
+ * re-runnable from Settings); while on, the headphones option shows below.
+ */
 export function MicToggle() {
   const { t } = useTranslation()
   const enabled = usePrefs((s) => s.micEnabled)
   const setEnabled = usePrefs((s) => s.setMicEnabled)
+  const offered = usePrefs((s) => s.micCalibrationOffered)
+  const setOffered = usePrefs((s) => s.setMicCalibrationOffered)
+  const [calOpen, setCalOpen] = useState(false)
   const status = useMic((s) => s.status)
   const why = micUnavailable()
   const blocked = why ?? (status === 'denied' || status === 'unsupported' || status === 'error' ? status : null)
@@ -29,21 +38,33 @@ export function MicToggle() {
     // Ask now, inside the click, so the session never starts with a pending prompt.
     const st = await probeMic()
     setEnabled(st === 'off')
+    if (st === 'off' && !offered) {
+      setOffered(true)
+      setCalOpen(true)
+    }
   }
 
   const note = blocked ? t(`mic.status.${blocked}`) : enabled ? t('mic.onNote') : t('mic.offNote')
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <p className="flex items-center gap-2 font-display text-lg">
-          <PixelIcon name="mic" size={18} />
-          {t('mic.toggle')}
-        </p>
-        <p className={cx('text-sm', blocked ? 'text-amber-400' : 'text-mist-400')} role={blocked ? 'status' : undefined}>
-          {note}
-        </p>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 font-display text-lg">
+            <PixelIcon name="mic" size={18} />
+            {t('mic.toggle')}
+          </p>
+          <p className={cx('text-sm', blocked ? 'text-amber-400' : 'text-mist-400')} role={blocked ? 'status' : undefined}>
+            {note}
+          </p>
+        </div>
+        <Switch checked={enabled && !why} disabled={why !== null} onChange={(v) => void onChange(v)} label={t('mic.toggle')} />
       </div>
-      <Switch checked={enabled && !why} disabled={why !== null} onChange={(v) => void onChange(v)} label={t('mic.toggle')} />
+      {enabled && !blocked && (
+        <div className="border-l-2 border-dusk-600 pl-3">
+          <HeadphonesSwitch compact />
+        </div>
+      )}
+      <MicCalibrationDialog open={calOpen} onOpenChange={setCalOpen} />
     </div>
   )
 }

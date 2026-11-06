@@ -225,20 +225,22 @@
       "clear": "Sin efectos de clima.",
       "sun": "Activa la condición de Fuego.",
       "rain": "Activa la condición de Agua.",
-      "cold": "Activa la condición de Hielo."
+      "cold": "Activa la condición de Hielo.",
+      "none": "Sin clima: Agua y Hielo no se activan; Fuego, solo de 12:00 a 18:00."
     },
     "kindTemp": "{{kind}} · {{temp}} °C",
-    "checking": "Consultando el clima de tu ciudad…",
-    "unavailable": "No se pudo consultar el clima ahora; se usa el clima manual.",
-    "noCity": "Sin ciudad en tu perfil: se usa el clima manual. Pon tu ciudad en Ajustes para usar el clima real.",
+    "checking": "Consultando el clima…",
+    "unavailable": "No se pudo consultar el clima ahora: la sesión empieza sin clima.",
     "detected": "Clima real en {{place}}: {{weather}}. Se fija al empezar la sesión.",
-    "devOverride": "Clima real en {{place}}: {{weather}}. Modo desarrollo: manda el clima manual.",
-    "notFound": "No se pudo obtener el clima de «{{city}}»; se usa el clima manual.",
-    "manual": "Clima manual",
-    "manualNote": "Respaldo cuando no se puede detectar el clima de tu ciudad (en modo desarrollo, lo sustituye).",
+    "devOverride": "Modo desarrollo: se usa el clima manual ({{weather}}).",
+    "notFound": "No se pudo obtener el clima de «{{city}}»: la sesión empieza sin clima.",
     "city": "Ciudad",
     "cityPlaceholder": "Ej.: Lima, Perú",
-    "citySave": "Guardar ciudad"
+    "citySave": "Guardar ciudad",
+    "noSource": "Sin ubicación ni ciudad: no se usa clima.",
+    "yourLocation": "tu ubicación",
+    "locationFailed": "No se pudo obtener el clima de tu ubicación: la sesión empieza sin clima.",
+    "cityFallback": "Ciudad (si no hay ubicación)"
   },
   "home": {
     "greeting": "Hola, {{name}}",
@@ -521,7 +523,6 @@
     "resetBody": "Se eliminan tus Pokémon, objetos e historial de este navegador. No se puede deshacer.",
     "resetConfirm": "Borrar",
     "weather": "Clima donde estudias",
-    "weatherNote": "Hasta que conectemos tu ciudad, lo eliges tú. También puedes cambiarlo en Inicio.",
     "tzNote": "Decide la hora de tus condiciones, la recarga de Energía y el lunes de la liga. Solo puedes cambiarla una vez cada {{days}} días.",
     "tzLocked": "Podrás volver a cambiarla el {{date}}.",
     "tzConfirmTitle": "¿Cambiar la zona horaria?",
@@ -707,7 +708,10 @@
     "levelUp": "+5 niveles al equipo",
     "addPokemon": "+10 Pokémon",
     "audio": "Sonido",
-    "audioLab": "Laboratorio de audio"
+    "audioLab": "Laboratorio de audio",
+    "weather": "Clima (sustituye al real)",
+    "weatherReal": "Real",
+    "weatherNote": "Solo con DEV_TOOLS=1 en el servidor."
   },
   "hints": {
     "home": {
@@ -725,7 +729,7 @@
       },
       "weather": {
         "title": "El clima donde estudias",
-        "body": "Por ahora lo eliges tú. La lluvia potencia al tipo Agua, el sol al Fuego y el frío al Hielo."
+        "body": "Se usa el clima real de tu ubicación o tu ciudad (Ajustes). La lluvia potencia al tipo Agua, el sol al Fuego y el frío al Hielo."
       },
       "league": {
         "title": "Tu liga de la semana",
@@ -1300,7 +1304,7 @@
       "windowOn": "Activa hasta las {{time}}.",
       "windowOff": "Se activa {{when}}.",
       "fireOff": "Se activa {{when}}, o antes si hace sol.",
-      "fireWeatherOn": "Activa por el clima que marcaste.",
+      "fireWeatherOn": "Activa por el clima de hoy.",
       "weekendOn": "Activa todo el fin de semana.",
       "weekendOff": "Se activa {{when}}.",
       "firstOfDayOn": "Activa: es la primera sesión del día.",
@@ -1308,7 +1312,7 @@
       "sameHourOn": "Activa si empiezas hasta las {{time}}.",
       "sameHourOff": "Se activa {{when}}, si empiezas entre las {{from}} y las {{to}}.",
       "sameHourNone": "Se activa si empiezas a la misma hora que el día anterior (± {{window}} min). Hace falta haber estudiado ese día.",
-      "weatherOn": "Activa con el clima que marcaste.",
+      "weatherOn": "Activa con el clima de hoy.",
       "rainOff": "Se activa si llueve en tu ciudad.",
       "coldOff": "Se activa con {{cold}} °C o menos, o con nieve.",
       "durationOn": "Activa: tu sesión dura {{minutes}} min.",
@@ -1813,6 +1817,70 @@
       "noise": "Ruido ambiente"
     },
     "resultStyle": "Estilo de estudio: {{style}} ({{pct}}).",
-    "resultTypes": "Atrae un poco más a: {{types}}."
+    "resultTypes": "Atrae un poco más a: {{types}}.",
+    "settingsTitle": "Micrófono",
+    "headphones": "Escucho música con audífonos",
+    "headphonesNote": "Para música con audífonos, que el micrófono no oye: los ratos en silencio cuentan como música. Lo declaras tú.",
+    "speakerNote": "La música por parlantes, también la música de enfoque de la app, la oye el micrófono y cuenta como música.",
+    "meter": {
+      "title": "Probar el micrófono",
+      "label": "Nivel del micrófono",
+      "now": "Ahora detecto: {{kind}}",
+      "start": "Probar",
+      "stop": "Detener"
+    },
+    "cal": {
+      "title": "Calibrar el micrófono",
+      "intro": "Unos 15 s para que el micrófono reconozca tu cuarto, tu voz y tu música. Se analiza en tu navegador: el audio no sale de tu dispositivo.",
+      "start": "Empezar",
+      "later": "Ahora no",
+      "step": "Paso {{n}} de {{total}}",
+      "silence": "Quédate en silencio 5 s",
+      "silenceNote": "Mide el ruido de tu cuarto y de tu micrófono.",
+      "voice": "Habla 5 s",
+      "voiceNote": "Con tu voz normal: lee algo en voz alta o cuenta hasta veinte.",
+      "musicAsk": "¿Estudias con música?",
+      "musicAskNote": "Ponla 5 s por los parlantes, a tu volumen de siempre. Si la escuchas con audífonos el micrófono no la oye: sáltalo.",
+      "musicPlay": "Poner mi música 5 s",
+      "musicSkip": "Saltar: uso audífonos",
+      "music": "Deja sonar tu música 5 s",
+      "musicNote": "No hables mientras tanto.",
+      "measuring": "Midiendo… {{s}} s",
+      "done": "Micrófono calibrado",
+      "failed": "No se pudo calibrar",
+      "summary": "Ajustado a: {{parts}}. Lo demás usa los valores estándar.",
+      "verify": "Comprueba el medidor: calla, habla o pon música.",
+      "redo": "Repetir",
+      "finish": "Listo",
+      "run": "Calibrar",
+      "again": "Volver a calibrar",
+      "never": "Sin calibrar: se usan valores estándar. Opcional, unos 15 s.",
+      "lastAt": "Calibrado el {{date}} (en este dispositivo).",
+      "notes": {
+        "noSilence": "No llegó sonido del micrófono. Revísalo e inténtalo otra vez.",
+        "voiceTooQuiet": "Tu voz casi no se oyó: para la voz se usan los valores estándar.",
+        "musicTooQuiet": "La música casi no se oyó: para la música se usan los valores estándar.",
+        "noisyRoom": "Tu cuarto es algo ruidoso: ese ruido de fondo contará como silencio."
+      }
+    }
+  },
+  "location": {
+    "title": "Ubicación",
+    "note": "Para el clima real. Se redondea a unos 10 km en tu dispositivo antes de enviarla, y solo se guarda esa zona aproximada. Si no la usas, se usa tu ciudad.",
+    "on": "Usando tu ubicación aproximada (zona de unos 10 km). Tiene prioridad sobre la ciudad.",
+    "use": "Usar mi ubicación",
+    "update": "Actualizar ubicación",
+    "asking": "Pidiendo ubicación…",
+    "clear": "Quitar ubicación",
+    "saved": "Ubicación guardada (aprox. 10 km).",
+    "cleared": "Ubicación quitada. Se usa tu ciudad, si la pusiste.",
+    "privacyShort": "Aproximada, a unos 10 km.",
+    "error": {
+      "insecure": "La ubicación necesita HTTPS (o localhost). Escribe tu ciudad en Ajustes.",
+      "unsupported": "Este navegador no da la ubicación. Escribe tu ciudad en Ajustes.",
+      "denied": "Permiso de ubicación denegado. Puedes escribir tu ciudad en Ajustes.",
+      "unavailable": "No se pudo obtener tu ubicación ahora.",
+      "timeout": "La ubicación tardó demasiado. Inténtalo otra vez."
+    }
   }
 }

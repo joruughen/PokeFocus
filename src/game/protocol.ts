@@ -79,7 +79,7 @@ export const EMPTY_DOC: GameDoc = { player: null, timer: null, outcome: null, br
 
 export type GameAction =
   | { type: 'createPlayer'; locale: 'es' | 'en'; timezone: TimeZoneSpec; starterSlug: string }
-  | { type: 'updateProfile'; patch: { locale?: 'es' | 'en'; timezone?: TimeZoneSpec; city?: string | null } }
+  | { type: 'updateProfile'; patch: { locale?: 'es' | 'en'; timezone?: TimeZoneSpec; city?: string | null; location?: { lat: number; lon: number } | null } }
   | { type: 'setWeather'; weather: WeatherInput | null }
   // Study session
   | { type: 'start'; minutes: number }

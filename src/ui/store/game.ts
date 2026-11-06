@@ -80,7 +80,8 @@ export interface GameState extends GameDoc {
   dispatch: <A extends GameAction>(action: A, opts?: { background?: boolean }) => Promise<ActionOutcome<A['type']>>
 
   createPlayer: (input: { locale: Locale; timezone: TimeZoneSpec; starterSlug: string }) => Promise<boolean>
-  updateProfile: (patch: { locale?: Locale; timezone?: TimeZoneSpec; city?: string | null }) => Promise<GameActionError | null>
+  updateProfile: (patch: { locale?: Locale; timezone?: TimeZoneSpec; city?: string | null; location?: { lat: number; lon: number } | null }) => Promise<GameActionError | null>
+  /** Dev panel only (the server refuses it without DEV_TOOLS=1). */
   setWeather: (weather: WeatherInput | null) => Promise<GameActionError | null>
 
   start: (minutes: number) => Promise<StartSessionError | GameActionError | null>

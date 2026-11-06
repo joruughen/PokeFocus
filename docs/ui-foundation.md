@@ -29,7 +29,7 @@ src/
 **Concept: "the study route at dusk".** The chrome is a calm, deep-indigo surface that can stay on screen for hours. Above it sits the route band: a pixel landscape (sky, sun or moon, weather, grass and battle platforms) where your team stands. This band is the one bold element of the app, and it carries information:
 
 - The sky follows the player's local time (morning, afternoon, evening, night). These use the same windows as the type conditions, so night is also when Ghost is active.
-- The weather selector changes the band (rain streaks, snow, a bigger sun).
+- The detected weather (device location or city; the dev panel can override it) changes the band (rain streaks, snow, a bigger sun).
 - Platforms come from the battle screens. Empty team slots appear as dashed ghost platforms that explain how to fill them.
 - On the waves screen the band becomes a field with tall grass. During a focus session it is dimmed.
 
@@ -169,7 +169,7 @@ Utilities (from `index.css`):
 
 Actions (each one calls the engine and stores what it returns):
 
-- **Setup:** `createPlayer`, `updateProfile`, `setWeather`.
+- **Setup:** `createPlayer`, `updateProfile` (incl. `location`). `setWeather` is a dev-panel action only (the server refuses it without DEV_TOOLS=1).
 - **Session:** `start(minutes)`, `pause`, `resume`, `cancel`, `claim()`, `markNotified`, `dismissResults`.
 - **Waves:** `throwBall(ref, ball)`, `applyStatus(chargeId, ref)`, `reroll(chargeId, ref)`, `nextWave`, `finishWaves`.
 - **Dev:** `devAddItems`, `devAddDust`, `devAddCandies`, `devFinishNow`, `resetAll`.
@@ -345,7 +345,7 @@ Open it with `?dev` in the URL or Settings → Developer tools. The wrench butto
 | `#/dex` | `screens/dex/Dex.tsx` | Level-cap ladder (config `levelCaps`), 56 species as caught (color + check) / seen (dimmed) / unknown (silhouette, "???"), entry with genus, flavor text (es/en), types, role and `EvoLine` |
 | `#/league` | `screens/league/League.tsx` | League hero, one equal step per league (thresholds, "about N per wave, up to M" from `leagueWaveBonus`/`leagueMaxWaveSize`), reset countdown, monthly league; stats tiles; charts (minutes per day this week, points per session, Focus trend) and the session history table |
 | `#/missions` | `screens/missions/Missions.tsx` | Daily/weekly missions with renew countdowns, Pokédex milestones, progress bars, rewards, claim / claim all (`claimMission`, `claimAllMissions`). Nav badge = `missionsView().claimable` |
-| `#/settings` | `screens/Settings.tsx` | Language, time zone (confirm dialog + 30-day lock stored in `prefs.tzChangedAt`; dev mode bypasses), weather, audio (mute, master/music/sfx sliders with preview sounds, music during focus, focus level, background, vinyl), notifications, tips + replay (also restores the checklist), dev tools, reset, about |
+| `#/settings` | `screens/Settings.tsx` | Language, time zone (confirm dialog + 30-day lock stored in `prefs.tzChangedAt`; dev mode bypasses), weather ("Usar mi ubicación" rounded to ~10 km / remove it, typed city as fallback, detected weather line; no manual weather), audio (mute, master/music/sfx sliders with preview sounds, music during focus, focus level, background, vinyl), microphone (calibration wizard, "Escucho música con audífonos", live meter), notifications, tips + replay (also restores the checklist), dev tools, reset, about |
 | Home extras | `screens/home/Break.tsx`, `Checklist.tsx` | Pomodoro break: offered on Home after a session (one per session, within 60 min; 5/10/15 min). Phase `break` shows a calm countdown; completing it calls the engine `completeBreak` (+`breakRecoverPct` Energy, previewed per member); ending early gives nothing. Getting-started checklist (7 steps; session/catch/team derived from the save, mission/equip/candy/evolve are `prefs.milestones`), dismissible |
 | Waves extras | `screens/home/Waves.tsx` | IV quality row when `encounterModifiers().revealWildIvs`; "Golpes" row from `Wave.hits` (who weakened each wild); Study Ball limit from `studyBallMaxLevelFor` |
 

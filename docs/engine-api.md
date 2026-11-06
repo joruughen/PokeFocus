@@ -64,7 +64,7 @@ Starter (`config.starters`) at `starterLevel`, 1 technique equipped, `starterPok
      endedAt, claimedAt, pausedSeconds,
      focusInputs: { screenshotLabels: string[] | null /* null = no permission */, missedCaptures },
      soundProfile?: { silence, music, voice, noise } | null,
-     weather?: { rain, sun, snow?, tempC } | null,   // default: state.profile.weather
+     weather?: { rain, sun, snow?, tempC } | null,   // default: state.profile.weather (the app always passes it: the manual weather is dev-only)
      friendOverlap?: number | null,                  // 0–1 accompanied share (study group, server-computed); Fairy = 1 + (fairy − 1) × overlap
    }, rng): Result<SessionResult, 'no_active_session' | 'invalid_times'>
    ```

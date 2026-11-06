@@ -78,6 +78,9 @@ const weather = z.object({
   tempC: z.number().min(-100).max(100).nullable(),
 })
 
+/** Device location for the weather; the client rounds it to ~0.1°, the reducer rounds again before storing. */
+const geoCell = z.object({ lat: z.number().finite().min(-90).max(90), lon: z.number().finite().min(-180).max(180) })
+
 /** Microphone shares (0–1 each); rounding may push the sum a bit over 1. */
 export const soundProfileSchema = z
   .object({ silence: z.number().min(0).max(1), music: z.number().min(0).max(1), voice: z.number().min(0).max(1), noise: z.number().min(0).max(1) })
@@ -88,7 +91,12 @@ const act = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) => z.
 export const gameActionBody = z.discriminatedUnion('type', [
   act('createPlayer', { locale, timezone, starterSlug: slug }),
   act('updateProfile', {
-    patch: z.object({ locale: locale.optional(), timezone: timezone.optional(), city: z.string().trim().max(80).nullable().optional() }),
+    patch: z.object({
+      locale: locale.optional(),
+      timezone: timezone.optional(),
+      city: z.string().trim().max(80).nullable().optional(),
+      location: geoCell.nullable().optional(),
+    }),
   }),
   act('setWeather', { weather: weather.nullable() }),
   act('start', { minutes: z.number().int().min(session.minMinutes).max(session.maxMinutes) }),

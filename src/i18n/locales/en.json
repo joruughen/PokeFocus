@@ -225,20 +225,22 @@
       "clear": "No weather effects.",
       "sun": "Turns on the Fire condition.",
       "rain": "Turns on the Water condition.",
-      "cold": "Turns on the Ice condition."
+      "cold": "Turns on the Ice condition.",
+      "none": "No weather: Water and Ice stay off; Fire only from 12:00 to 18:00."
     },
     "kindTemp": "{{kind}} · {{temp}} °C",
-    "checking": "Checking your city's weather…",
-    "unavailable": "The weather could not be checked right now; the manual weather is used.",
-    "noCity": "No city on your profile: the manual weather is used. Set your city in Settings to use the real weather.",
-    "detected": "Real weather in {{place}}: {{weather}}. It is fixed when the session starts.",
-    "devOverride": "Real weather in {{place}}: {{weather}}. Dev mode: the manual weather wins.",
-    "notFound": "Could not get the weather for “{{city}}”; the manual weather is used.",
-    "manual": "Manual weather",
-    "manualNote": "Fallback when your city's weather cannot be detected (in dev mode, it overrides it).",
+    "checking": "Checking the weather…",
+    "unavailable": "The weather could not be checked right now: the session starts with no weather.",
+    "detected": "Real weather at {{place}}: {{weather}}. It is fixed when the session starts.",
+    "devOverride": "Dev mode: the manual weather is used ({{weather}}).",
+    "notFound": "Could not get the weather for “{{city}}”: the session starts with no weather.",
     "city": "City",
     "cityPlaceholder": "E.g. Lima, Peru",
-    "citySave": "Save city"
+    "citySave": "Save city",
+    "noSource": "No location or city: no weather is used.",
+    "yourLocation": "your location",
+    "locationFailed": "Could not get the weather for your location: the session starts with no weather.",
+    "cityFallback": "City (when there is no location)"
   },
   "home": {
     "greeting": "Hi, {{name}}",
@@ -521,7 +523,6 @@
     "resetBody": "Your Pokémon, items and history in this browser will be deleted. This can't be undone.",
     "resetConfirm": "Erase",
     "weather": "Weather where you study",
-    "weatherNote": "Until we connect your city, you choose it. You can also change it on Home.",
     "tzNote": "It sets the time for your conditions, the Energy refill and the league's Monday. You can change it once every {{days}} days.",
     "tzLocked": "You can change it again on {{date}}.",
     "tzConfirmTitle": "Change time zone?",
@@ -707,7 +708,10 @@
     "levelUp": "+5 levels to team",
     "addPokemon": "+10 Pokémon",
     "audio": "Sound",
-    "audioLab": "Audio lab"
+    "audioLab": "Audio lab",
+    "weather": "Weather (overrides the real one)",
+    "weatherReal": "Real",
+    "weatherNote": "Only with DEV_TOOLS=1 on the server."
   },
   "hints": {
     "home": {
@@ -725,7 +729,7 @@
       },
       "weather": {
         "title": "Weather where you study",
-        "body": "For now you pick it yourself. Rain boosts Water types, sun boosts Fire and cold boosts Ice."
+        "body": "The real weather of your location or city (Settings) is used. Rain boosts Water types, sun boosts Fire and cold boosts Ice."
       },
       "league": {
         "title": "This week's league",
@@ -1300,7 +1304,7 @@
       "windowOn": "Active until {{time}}.",
       "windowOff": "Activates {{when}}.",
       "fireOff": "Activates {{when}}, or sooner if it's sunny.",
-      "fireWeatherOn": "Active because of the weather you set.",
+      "fireWeatherOn": "Active because of today’s weather.",
       "weekendOn": "Active all weekend.",
       "weekendOff": "Activates {{when}}.",
       "firstOfDayOn": "Active: it's the first session of the day.",
@@ -1308,7 +1312,7 @@
       "sameHourOn": "Active if you start by {{time}}.",
       "sameHourOff": "Activates {{when}}, if you start between {{from}} and {{to}}.",
       "sameHourNone": "Activates if you start at the same time as the day before (± {{window}} min). You need to have studied that day.",
-      "weatherOn": "Active with the weather you set.",
+      "weatherOn": "Active with today’s weather.",
       "rainOff": "Activates if it rains in your city.",
       "coldOff": "Activates at {{cold}} °C or less, or with snow.",
       "durationOn": "Active: your session is {{minutes}} min.",
@@ -1813,6 +1817,70 @@
       "noise": "Ambient noise"
     },
     "resultStyle": "Study style: {{style}} ({{pct}}).",
-    "resultTypes": "Slightly more likely: {{types}}."
+    "resultTypes": "Slightly more likely: {{types}}.",
+    "settingsTitle": "Microphone",
+    "headphones": "I listen to music on headphones",
+    "headphonesNote": "For headphone music, which the mic cannot hear: quiet stretches count as music. You declare it yourself.",
+    "speakerNote": "Music through speakers, the app’s own focus music included, is heard by the mic and counts as music.",
+    "meter": {
+      "title": "Test the microphone",
+      "label": "Microphone level",
+      "now": "Now I hear: {{kind}}",
+      "start": "Test",
+      "stop": "Stop"
+    },
+    "cal": {
+      "title": "Calibrate the microphone",
+      "intro": "About 15 s so the mic learns your room, your voice and your music. It is analysed in your browser: audio never leaves your device.",
+      "start": "Start",
+      "later": "Not now",
+      "step": "Step {{n}} of {{total}}",
+      "silence": "Stay silent for 5 s",
+      "silenceNote": "Measures the noise of your room and your mic.",
+      "voice": "Talk for 5 s",
+      "voiceNote": "In your normal voice: read something aloud or count to twenty.",
+      "musicAsk": "Do you study with music?",
+      "musicAskNote": "Play it through your speakers for 5 s at your usual volume. If you listen on headphones the mic cannot hear it: skip this.",
+      "musicPlay": "Play my music for 5 s",
+      "musicSkip": "Skip: I use headphones",
+      "music": "Let your music play for 5 s",
+      "musicNote": "Don’t talk meanwhile.",
+      "measuring": "Measuring… {{s}} s",
+      "done": "Microphone calibrated",
+      "failed": "Calibration failed",
+      "summary": "Tuned for: {{parts}}. The rest uses the standard values.",
+      "verify": "Check the meter: stay quiet, talk or play music.",
+      "redo": "Redo",
+      "finish": "Done",
+      "run": "Calibrate",
+      "again": "Calibrate again",
+      "never": "Not calibrated: standard values are used. Optional, about 15 s.",
+      "lastAt": "Calibrated on {{date}} (on this device).",
+      "notes": {
+        "noSilence": "No sound came from the microphone. Check it and try again.",
+        "voiceTooQuiet": "Your voice was barely heard: standard values are used for voice.",
+        "musicTooQuiet": "The music was barely heard: standard values are used for music.",
+        "noisyRoom": "Your room is a bit noisy: that background noise will count as silence."
+      }
+    }
+  },
+  "location": {
+    "title": "Location",
+    "note": "For the real weather. It is rounded to about 10 km on your device before it is sent, and only that rough area is stored. Without it, your city is used.",
+    "on": "Using your approximate location (an area of about 10 km). It takes priority over the city.",
+    "use": "Use my location",
+    "update": "Update location",
+    "asking": "Asking for location…",
+    "clear": "Remove location",
+    "saved": "Location saved (about 10 km).",
+    "cleared": "Location removed. Your city is used, if you set one.",
+    "privacyShort": "Approximate, about 10 km.",
+    "error": {
+      "insecure": "Location needs HTTPS (or localhost). Type your city in Settings.",
+      "unsupported": "This browser does not provide a location. Type your city in Settings.",
+      "denied": "Location permission denied. You can type your city in Settings.",
+      "unavailable": "Your location could not be found right now.",
+      "timeout": "The location took too long. Try again."
+    }
   }
 }

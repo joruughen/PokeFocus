@@ -1,7 +1,8 @@
 /**
  * Weather the next session would use, from GET /api/weather (real weather of
- * the profile city, or the manual fallback). Cached for the tab and refetched
- * when the city or the manual weather changes, or after 10 min.
+ * the profile location or city; the manual one only in dev). Cached for the
+ * tab and refetched when the location, city or dev weather changes, or after
+ * 10 min. Unknown (offline, still loading) = no weather.
  */
 import { useEffect } from 'react'
 import { create } from 'zustand'
@@ -13,7 +14,7 @@ const STALE_MS = 10 * 60_000
 
 interface WeatherState {
   data: WeatherResponse | null
-  /** City + manual weather the data was fetched for. */
+  /** Location + city + dev weather the data was fetched for. */
   key: string | null
   at: number
   loading: boolean
@@ -22,7 +23,7 @@ interface WeatherState {
 export const useWeatherStore = create<WeatherState>()(() => ({ data: null, key: null, at: 0, loading: false }))
 
 function keyOf(profile: PlayerState['profile']): string {
-  return JSON.stringify([profile.city?.trim().toLowerCase() ?? null, profile.weather])
+  return JSON.stringify([profile.location ?? null, profile.city?.trim().toLowerCase() ?? null, profile.weather])
 }
 
 export async function refreshWeather(profile: PlayerState['profile']): Promise<void> {
@@ -33,7 +34,7 @@ export async function refreshWeather(profile: PlayerState['profile']): Promise<v
     const data = await weatherApi.get()
     useWeatherStore.setState({ data, key, at: Date.now(), loading: false })
   } catch {
-    // Offline or server error: keep the manual weather as the preview.
+    // Offline or server error: no weather in the preview.
     useWeatherStore.setState({ data: null, key, at: Date.now(), loading: false })
   }
 }
@@ -50,5 +51,5 @@ export function useSessionWeather(profile: PlayerState['profile']): { data: Weat
     if (!fresh && !s.loading) void refreshWeather(profile)
   })
   const data = s.key === key ? s.data : null
-  return { data, effective: data ? data.weather : profile.weather, loading: s.loading }
+  return { data, effective: data ? data.weather : null, loading: s.loading }
 }

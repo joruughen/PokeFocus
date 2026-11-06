@@ -261,6 +261,18 @@ export function classifyWindow(w: WindowFeatures, floorDb: number | null = null,
   return 'noise'
 }
 
+/**
+ * "I listen to music on headphones" (self-declared, opt-in): the mic cannot
+ * hear headphone music, so silent windows count as music. Everything else is
+ * kept (talking or room noise is still heard).
+ *
+ * Music played through speakers — including the app's own focus music — is
+ * picked up by the mic and already counts as music; that is fine.
+ */
+export function applyHeadphones(kind: SoundKind, headphones: boolean): SoundKind {
+  return headphones && kind === 'silence' ? 'music' : kind
+}
+
 // ---------------------------------------------------------------------------
 // Accumulation
 // ---------------------------------------------------------------------------

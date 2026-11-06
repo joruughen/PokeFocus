@@ -10,6 +10,7 @@ import { useGame } from '../store/game'
 import { devEnabled, usePrefs } from '../store/prefs'
 import { useBusy, usePlayer } from '../store/selectors'
 import { AccountPanel } from './account/AccountPanel'
+import { MicSettings } from './MicSettings'
 import { WeatherSettings } from './WeatherSettings'
 
 // Enforced by the server (src/game/actions.ts TIMEZONE_LOCK_DAYS); shown here.
@@ -22,7 +23,7 @@ async function report(p: Promise<string | null>) {
   if (err) toast.add({ title: errorText(err), type: 'danger' })
 }
 
-/** Settings: account, language, time zone and weather, audio, tips, notifications, reset, about. */
+/** Settings: account, language, time zone and weather (location / city), audio, microphone, tips, notifications, reset, about. */
 export default function Settings() {
   useHintScreen('settings')
   const { t, i18n } = useTranslation()
@@ -106,6 +107,10 @@ export default function Settings() {
             </>
           )}
         </div>
+      </Panel>
+
+      <Panel title={t('mic.settingsTitle')}>
+        <MicSettings />
       </Panel>
 
       <Panel title={t('settings.session')}>

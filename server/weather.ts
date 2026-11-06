@@ -1,29 +1,40 @@
 /**
- * Real weather of the profile city (GDD §9.2 "Clima") from Open-Meteo: no API
- * key, geocoding by name + current conditions. Used when a session starts.
+ * Real weather where the player studies (GDD §9.2 "Clima") from Open-Meteo,
+ * no API key. Used when a session starts and by GET /api/weather.
  *
- * - Results are cached per city (`ttlMs`, ~30 min); a failure is cached for a
- *   short `failTtlMs` so a dead API is not hit on every start.
+ * - The profile location (a ~0.1° cell rounded by the client) goes straight
+ *   to the forecast API, no geocoding. Without a location, or if its lookup
+ *   fails, the typed city is geocoded by name.
+ * - Results are cached per cell / per city (`ttlMs`, ~30 min); a failure is
+ *   cached for a short `failTtlMs` so a dead API is not hit on every start.
+ *   Coordinates are only kept in this in-memory cache (bounded, never logged).
  * - `current()` never waits more than `deadlineMs` (2 s): a slow lookup keeps
  *   running in the background and fills the cache for the next call, but the
- *   caller gets null and falls back to the manual weather.
- * - Concurrent lookups of the same city share one request.
+ *   caller gets null (= no weather).
+ * - Concurrent lookups of the same key share one request.
  * - `fetch` is injected (Deps) so tests use a fake.
  */
 import type { WeatherInput } from '../src/engine'
+import { toGeoCell, type GeoCell, type WeatherVia } from '../src/game/weather'
 
 export type FetchLike = (input: string, init?: { signal?: AbortSignal; headers?: Record<string, string> }) => Promise<Response>
 
 export interface DetectedWeather {
   weather: WeatherInput
-  /** Place the geocoder matched ("Lima, Peru"). */
-  place: string
+  /** Place the geocoder matched ("Lima, Peru"); null for a location. */
+  place: string | null
+  via: WeatherVia
   fetchedAt: number
 }
 
+export interface WeatherQuery {
+  location?: GeoCell | null
+  city?: string | null
+}
+
 export interface WeatherService {
-  /** Current weather of `city`, or null (no city, unknown city, network error or timeout). */
-  current(city: string | null | undefined): Promise<DetectedWeather | null>
+  /** Current weather of the location, else of the city, or null (nothing set, unknown city, network error or timeout). */
+  current(query: WeatherQuery): Promise<DetectedWeather | null>
 }
 
 export interface WeatherOptions {
@@ -49,7 +60,7 @@ interface Entry {
 }
 
 export function cityKey(city: string): string {
-  return city.trim().replace(/\s+/g, ' ').toLowerCase()
+  return 'city:' + city.trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
 export function createWeatherService(opts: WeatherOptions): WeatherService {
@@ -81,37 +92,56 @@ export function createWeatherService(opts: WeatherOptions): WeatherService {
     cache.set(key, { value, expiresAt: opts.clock() + (value ? ttl : failTtl) })
   }
 
-  const lookup = async (city: string, key: string): Promise<DetectedWeather | null> => {
-    try {
-      const place = await geocode(getJson, city)
-      if (!place) {
-        store(key, null)
-        return null
-      }
-      const url = `${FORECAST_URL}?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code,is_day,rain,showers,snowfall&timezone=auto`
-      const weather = parseCurrent(await getJson(url))
-      const value = weather ? { weather, place: place.label, fetchedAt: opts.clock() } : null
-      store(key, value)
-      return value
-    } catch {
-      store(key, null)
-      return null
-    } finally {
-      inflight.delete(key)
+  const forecast = async (lat: number, lon: number): Promise<WeatherInput | null> =>
+    parseCurrent(await getJson(`${FORECAST_URL}?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,rain,showers,snowfall&timezone=auto`))
+
+  /** Cached, de-duplicated lookup of one key. */
+  const cached = (key: string, run: () => Promise<DetectedWeather | null>): Promise<DetectedWeather | null> => {
+    const hit = cache.get(key)
+    if (hit && hit.expiresAt > opts.clock()) return Promise.resolve(hit.value)
+    let p = inflight.get(key)
+    if (!p) {
+      p = (async () => {
+        try {
+          const value = await run()
+          store(key, value)
+          return value
+        } catch {
+          store(key, null)
+          return null
+        } finally {
+          inflight.delete(key)
+        }
+      })()
+      inflight.set(key, p)
     }
+    return p
   }
 
+  const byCell = (cell: GeoCell) =>
+    cached(cellKey(cell), async () => {
+      const weather = await forecast(cell.lat, cell.lon)
+      return weather ? { weather, place: null, via: 'location' as const, fetchedAt: opts.clock() } : null
+    })
+
+  const byCity = (city: string) =>
+    cached(cityKey(city), async () => {
+      const place = await geocode(getJson, city)
+      if (!place) return null
+      const weather = await forecast(place.latitude, place.longitude)
+      return weather ? { weather, place: place.label, via: 'city' as const, fetchedAt: opts.clock() } : null
+    })
+
   return {
-    async current(city) {
-      if (!city || !city.trim()) return null
-      const key = cityKey(city)
-      const hit = cache.get(key)
-      if (hit && hit.expiresAt > opts.clock()) return hit.value
-      let p = inflight.get(key)
-      if (!p) {
-        p = lookup(city.trim(), key)
-        inflight.set(key, p)
-      }
+    async current(query) {
+      // Re-round on the server: whatever was stored, only the cell is ever sent out.
+      const cell = query.location ? toGeoCell(query.location.lat, query.location.lon) : null
+      const city = query.city?.trim() || null
+      if (!cell && !city) return null
+      const p = (async () => {
+        const a = cell ? await byCell(cell) : null
+        return a ?? (city ? await byCity(city) : null)
+      })()
       let timer: ReturnType<typeof setTimeout> | undefined
       const timeout = new Promise<null>((resolve) => {
         timer = setTimeout(() => resolve(null), deadline)
@@ -123,6 +153,10 @@ export function createWeatherService(opts: WeatherOptions): WeatherService {
       }
     },
   }
+}
+
+export function cellKey(cell: GeoCell): string {
+  return `@${cell.lat.toFixed(1)},${cell.lon.toFixed(1)}`
 }
 
 // ---------------------------------------------------------------------------
