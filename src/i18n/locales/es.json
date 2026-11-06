@@ -1335,7 +1335,9 @@
     }
   },
   "focus": {
-    "muteMusic": "Silenciar la música"
+    "muteMusic": "Silenciar la música",
+    "musicOn": "Música",
+    "muteMusicHint": "Activa o silencia solo la música de la sesión. Los sonidos y el aviso de fin siguen sonando."
   },
   "missions": {
     "title": "Misiones",

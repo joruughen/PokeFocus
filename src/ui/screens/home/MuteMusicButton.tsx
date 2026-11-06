@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { focusMusicAudible, focusMusicPatch } from '../../../audio'
-import { IconButton } from '../../components'
+import { Button } from '../../components'
 import { usePrefs } from '../../store/prefs'
 
 /**
@@ -16,13 +16,16 @@ export function MuteMusicButton({ className }: { className?: string }) {
   const setAudio = usePrefs((s) => s.setAudio)
   const audible = focusMusicAudible(settings)
   return (
-    <IconButton
+    <Button
       size="lg"
+      variant="ghost"
       icon={audible ? 'volume' : 'volumeOff'}
-      label={t('focus.muteMusic')}
       aria-pressed={!audible}
+      title={t('focus.muteMusicHint')}
       onClick={() => setAudio(focusMusicPatch(settings, !audible))}
       className={className}
-    />
+    >
+      {t('focus.musicOn')}
+    </Button>
   )
 }

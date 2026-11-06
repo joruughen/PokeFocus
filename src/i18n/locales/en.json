@@ -1335,7 +1335,9 @@
     }
   },
   "focus": {
-    "muteMusic": "Mute the music"
+    "muteMusic": "Mute the music",
+    "musicOn": "Music",
+    "muteMusicHint": "Turns only the session music on or off. Sounds and the end chime keep playing."
   },
   "missions": {
     "title": "Missions",
