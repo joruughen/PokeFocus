@@ -192,7 +192,7 @@ describe('rule-only types', () => {
     expect(act('flying', s)).toEqual({ kind: 'sound', sharePct: 30 })
     expect(act('bug', s)).toEqual({ kind: 'team', have: 0, perBugPct: 7 })
     expect(act('rock', s)).toEqual({ kind: 'noPause' })
-    expect(act('fairy', s)).toEqual({ kind: 'friend', overlapPct: 80 })
+    expect(act('fairy', s)).toEqual({ kind: 'friend', maxPct: 40 })
   })
 
   it('Bug counts the Bug-type members of the team', () => {

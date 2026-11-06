@@ -84,6 +84,6 @@ export function activationText(env: GuideTextEnv, o: ConditionOutlook): string {
       if (o.active) return t(k('comebackOn'), { count: a.have })
       return a.at === null ? t(k('comebackNoDate'), { needed: a.needed }) : t(k('comebackOff'), { needed: a.needed, when: day(a.at) })
     case 'friend':
-      return t(k('friendOff'), { pct: a.overlapPct })
+      return t(k('friendOff'), { pct: a.maxPct })
   }
 }

@@ -1315,7 +1315,7 @@
       "comebackOn": "Activa: vuelves tras {{count}} días sin estudiar.",
       "comebackOff": "Se activa el día que vuelves tras {{needed}} días o más sin estudiar. Si vuelves {{when}}, ya cuenta.",
       "comebackNoDate": "Se activa el día que vuelves tras {{needed}} días o más sin estudiar.",
-      "friendOff": "Se activa estudiando en grupo con amigos (al menos el {{pct}}% del tiempo a la vez)."
+      "friendOff": "Se activa estudiando en grupo con amigos: hasta +{{pct}}%, en proporción al tiempo que estudiáis a la vez."
     }
   },
   "focus": {

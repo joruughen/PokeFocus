@@ -62,8 +62,8 @@ export type Activation =
   | { kind: 'streak'; needed: number; have: number; at: number | null }
   /** Dark: coming back after `needed` days without study. `have`: days missed right before the start day. `at`: first local day it applies if you do not study until then. */
   | { kind: 'comeback'; needed: number; have: number; at: number | null }
-  /** Fairy: a simultaneous session with a friend (overlap of at least `overlapPct`%). */
-  | { kind: 'friend'; overlapPct: number }
+  /** Fairy: a group session with friends; up to +`maxPct`% in proportion to the time accompanied. */
+  | { kind: 'friend'; maxPct: number }
 
 export interface ConditionOutlook {
   type: TypeSlug
@@ -210,7 +210,7 @@ function activationFor(type: TypeSlug, env: ConditionEnv, state: PlayerState, fr
     case 'steel':
       return steelActivation(active, state, from, tz, cfg)
     case 'fairy':
-      return { kind: 'friend', overlapPct: Math.round(c.fairyOverlap * 100) }
+      return { kind: 'friend', maxPct: Math.round((c.fairy - 1) * 100) }
   }
 }
 

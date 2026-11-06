@@ -1315,7 +1315,7 @@
       "comebackOn": "Active: you're back after {{count}} days without studying.",
       "comebackOff": "Activates the day you come back after {{needed}} or more days without studying. If you come back {{when}}, it counts.",
       "comebackNoDate": "Activates the day you come back after {{needed}} or more days without studying.",
-      "friendOff": "Activates when you study in a group with friends (at least {{pct}}% of the time together)."
+      "friendOff": "Activates when you study in a group with friends: up to +{{pct}}%, in proportion to the time you study together."
     }
   },
   "focus": {
