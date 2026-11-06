@@ -17,6 +17,8 @@ import { authRoutes } from './routes/auth'
 import { eventRoutes } from './routes/events'
 import { gameRoutes } from './routes/game'
 import { friendRoutes, leaderboardRoutes } from './routes/social'
+import { weatherRoutes } from './routes/weather'
+import { createWeatherService, type FetchLike, type WeatherService } from './weather'
 
 export const BODY_LIMIT = 64 * 1024
 
@@ -26,15 +28,22 @@ export interface AppOptions {
   bus?: EventBus
   limiter?: RateLimiter
   clock?: () => number
+  /** Outbound HTTP for Open-Meteo (default: global fetch). */
+  fetch?: FetchLike
+  weather?: WeatherService
 }
 
 export function createApp(opts: AppOptions) {
+  const clock = opts.clock ?? Date.now
+  const fetchFn: FetchLike = opts.fetch ?? ((url, init) => fetch(url, init))
   const deps: Deps = {
     env: opts.env,
     db: opts.db,
     bus: opts.bus ?? new EventBus(),
     limiter: opts.limiter ?? new RateLimiter(),
-    clock: opts.clock ?? Date.now,
+    clock,
+    fetch: fetchFn,
+    weather: opts.weather ?? createWeatherService({ fetch: fetchFn, clock }),
   }
   const { env } = deps
   const app = new Hono<AppEnv>()
@@ -59,6 +68,7 @@ export function createApp(opts: AppOptions) {
   api.route('/friends', friendRoutes(deps))
   api.route('/leaderboard', leaderboardRoutes(deps))
   api.route('/events', eventRoutes(deps))
+  api.route('/weather', weatherRoutes(deps))
   api.get('/health', (c) => c.json({ ok: true }))
   api.all('*', () => {
     throw new ApiError(404, 'not_found')

@@ -2,6 +2,7 @@
 import { useMemo } from 'react'
 import { pokemonView, toLocal, type PlayerState, type PokemonView } from '../../engine'
 import { timeOfDay, weatherKind, type TimeOfDay, type WeatherKind } from '../lib/conditions'
+import { useSessionWeather } from '../lib/weather'
 import { phaseOf, useGame, type Phase } from './game'
 import { useNow } from './clock'
 
@@ -32,10 +33,15 @@ export function usePhase(): Phase {
   return phaseOf({ player, timer, outcome, breakTimer }, now)
 }
 
-/** Sky and weather of the route band for the player's local time. */
+/**
+ * Sky and weather of the route band for the player's local time. Weather: the
+ * active session's (fixed at start), else what a session started now would use.
+ */
 export function useScene(player: PlayerState, now: number): { time: TimeOfDay; weather: WeatherKind; hour: number } {
   const hour = toLocal(now, player.profile.timezone).hour
-  return { time: timeOfDay(hour), weather: weatherKind(player.profile.weather), hour }
+  const { effective } = useSessionWeather(player.profile)
+  const sessionWeather = player.activeSession?.weather
+  return { time: timeOfDay(hour), weather: weatherKind(sessionWeather !== undefined ? sessionWeather : effective), hour }
 }
 
 /** True while a game action is in flight (disable the buttons that send one). */

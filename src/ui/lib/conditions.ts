@@ -21,8 +21,9 @@ import {
 
 const ctx = defaultContext()
 
-export function conditionEnvNow(state: PlayerState, now: number, plannedMinutes: number): ConditionEnv {
-  return conditionEnvAt(state, now, plannedMinutes)
+/** `weather`: what the session would use (detected or manual); defaults to `profile.weather`. */
+export function conditionEnvNow(state: PlayerState, now: number, plannedMinutes: number, weather?: WeatherInput | null): ConditionEnv {
+  return conditionEnvAt(state, now, plannedMinutes, weather !== undefined ? { weather } : {})
 }
 
 export interface ConditionRow {
@@ -34,8 +35,13 @@ export interface ConditionRow {
 }
 
 /** Every type with its multiplier now, sorted: team types first, then active, then the rest. */
-export function conditionsNow(state: PlayerState, now: number, plannedMinutes: number): { env: ConditionEnv; rows: ConditionRow[]; member: Record<string, { mult: number; type: TypeSlug | null }> } {
-  const env = conditionEnvNow(state, now, plannedMinutes)
+export function conditionsNow(
+  state: PlayerState,
+  now: number,
+  plannedMinutes: number,
+  weather?: WeatherInput | null,
+): { env: ConditionEnv; rows: ConditionRow[]; member: Record<string, { mult: number; type: TypeSlug | null }> } {
+  const env = conditionEnvNow(state, now, plannedMinutes, weather)
   const cfg = ctx.config
   const member: Record<string, { mult: number; type: TypeSlug | null }> = {}
   const teamTypes = new Set<TypeSlug>()

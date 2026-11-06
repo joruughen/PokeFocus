@@ -11,6 +11,7 @@ import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { timerOf, useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { MicIndicator } from './SoundStyle'
 
 const cfg = defaultContext().config
 
@@ -134,6 +135,7 @@ export function FocusSession() {
           </Button>
         </div>
         <p className="mt-4 max-w-[52ch] text-sm text-mist-400">{t('session.rockNote')}</p>
+        <div className="mt-4"><MicIndicator /></div>
       </section>
 
       <Dialog

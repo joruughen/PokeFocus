@@ -222,11 +222,23 @@
     "rain": "Lluvia",
     "cold": "Frío",
     "effect": {
-      "clear": "Sin efectos de clima. Por ahora el clima lo eliges tú.",
+      "clear": "Sin efectos de clima.",
       "sun": "Activa la condición de Fuego.",
       "rain": "Activa la condición de Agua.",
       "cold": "Activa la condición de Hielo."
-    }
+    },
+    "kindTemp": "{{kind}} · {{temp}} °C",
+    "checking": "Consultando el clima de tu ciudad…",
+    "unavailable": "No se pudo consultar el clima ahora; se usa el clima manual.",
+    "noCity": "Sin ciudad en tu perfil: se usa el clima manual. Pon tu ciudad en Ajustes para usar el clima real.",
+    "detected": "Clima real en {{place}}: {{weather}}. Se fija al empezar la sesión.",
+    "devOverride": "Clima real en {{place}}: {{weather}}. Modo desarrollo: manda el clima manual.",
+    "notFound": "No se pudo obtener el clima de «{{city}}»; se usa el clima manual.",
+    "manual": "Clima manual",
+    "manualNote": "Respaldo cuando no se puede detectar el clima de tu ciudad (en modo desarrollo, lo sustituye).",
+    "city": "Ciudad",
+    "cityPlaceholder": "Ej.: Lima, Perú",
+    "citySave": "Guardar ciudad"
   },
   "home": {
     "greeting": "Hola, {{name}}",
@@ -1425,5 +1437,28 @@
       "body": "Comparte tu código o escribe el de un compañero. Cuando acepten, verás su nivel, su liga y su equipo."
     },
     "connected": "¡Ya son amigos! Esa persona ya te había enviado una solicitud."
+  },
+  "mic": {
+    "toggle": "Perfil sonoro (micrófono)",
+    "offNote": "Opcional. Detecta si estudias en silencio, con música, voz o ruido, y eso cambia un poco qué salvajes aparecen.",
+    "onNote": "Se analiza en tu navegador cada 2 s. El audio nunca sale de tu dispositivo: solo se envían los porcentajes.",
+    "status": {
+      "insecure": "El micrófono necesita HTTPS (o localhost). La sesión sigue sin perfil sonoro.",
+      "unsupported": "Este navegador o dispositivo no tiene micrófono disponible. La sesión sigue sin perfil sonoro.",
+      "denied": "Permiso de micrófono denegado. La sesión sigue sin perfil sonoro.",
+      "error": "No se pudo usar el micrófono. La sesión sigue sin perfil sonoro."
+    },
+    "listening": "Escuchando…",
+    "style": "Estilo: {{style}}",
+    "now": "Ahora: {{kind}}. El audio no sale de tu dispositivo.",
+    "private": "El audio se analiza en tu navegador y nunca sale de tu dispositivo.",
+    "kind": {
+      "silence": "Silencio",
+      "music": "Música",
+      "voice": "Voz",
+      "noise": "Ruido ambiente"
+    },
+    "resultStyle": "Estilo de estudio: {{style}} ({{pct}}).",
+    "resultTypes": "Atrae un poco más a: {{types}}."
   }
 }

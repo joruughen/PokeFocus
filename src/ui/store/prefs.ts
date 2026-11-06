@@ -46,6 +46,8 @@ export interface PrefsState {
   tzChangedAt: number | null
   /** Hint id → epoch ms (real time) when it was seen or dismissed. */
   seenHints: Record<string, number>
+  /** Opt-in: analyse the microphone during sessions (sound profile, GDD §4.3). */
+  micEnabled: boolean
   dev: DevSettings
   setLocale: (l: Locale) => void
   setTipsEnabled: (on: boolean) => void
@@ -53,6 +55,7 @@ export interface PrefsState {
   markMilestone: (m: Milestone) => void
   setChecklistDismissed: (v: boolean) => void
   setTzChangedAt: (t: number | null) => void
+  setMicEnabled: (on: boolean) => void
   markHintSeen: (id: string) => void
   resetHints: () => void
   setDev: (patch: Partial<DevSettings>) => void
@@ -105,6 +108,7 @@ export const usePrefs = create<PrefsState>()(
       checklistDismissed: false,
       tzChangedAt: null,
       seenHints: {},
+      micEnabled: false,
       dev: DEFAULT_DEV,
       setLocale: (locale) => {
         void i18n.changeLanguage(locale)
@@ -115,6 +119,7 @@ export const usePrefs = create<PrefsState>()(
       markMilestone: (m) => set((s) => (s.milestones[m] ? s : { milestones: { ...s.milestones, [m]: Date.now() } })),
       setChecklistDismissed: (checklistDismissed) => set({ checklistDismissed }),
       setTzChangedAt: (tzChangedAt) => set({ tzChangedAt }),
+      setMicEnabled: (micEnabled) => set({ micEnabled }),
       markHintSeen: (id) => set((s) => ({ seenHints: { ...s.seenHints, [id]: Date.now() } })),
       resetHints: () => set({ seenHints: {}, tipsEnabled: true }),
       setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
@@ -143,7 +148,7 @@ export const usePrefs = create<PrefsState>()(
       name: STORAGE_KEYS.prefs,
       storage: jsonStorage,
       version: 1,
-      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, tzChangedAt, seenHints, dev }) => ({
+      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, tzChangedAt, seenHints, micEnabled, dev }) => ({
         locale,
         tipsEnabled,
         audio,
@@ -151,6 +156,7 @@ export const usePrefs = create<PrefsState>()(
         checklistDismissed,
         tzChangedAt,
         seenHints,
+        micEnabled,
         dev,
       }),
       merge: (persisted, current) => {
@@ -159,7 +165,7 @@ export const usePrefs = create<PrefsState>()(
         const audio = sanitizeAudioSettings(p.audio ?? (p.sound === false ? { muted: true } : {}))
         const { sound: _legacy, ...rest } = p
         void _legacy
-        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
+        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, micEnabled: p.micEnabled === true, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
       },
     },
   ),

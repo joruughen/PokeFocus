@@ -40,8 +40,10 @@ import {
   type PlayerState,
   type Rng,
   type TypeSlug,
+  type WeatherInput,
 } from '../engine'
 import { EMPTY_DOC, type ActionResults, type GameAction, type GameActionType, type GameDoc, type SessionTimer } from './protocol'
+import { resolveSessionWeather } from './weather'
 
 /** Days a timezone change stays locked (prevents shifting day/week keys to farm streaks and leagues). */
 export const TIMEZONE_LOCK_DAYS = 30
@@ -54,6 +56,8 @@ export interface ActionEnv {
   dev: boolean
   /** Trainer name stored on the account; used by `createPlayer` (the client does not send it). */
   trainerName?: string
+  /** Real weather of the profile city at `start` (server fetch); null/absent = unknown → manual fallback. */
+  weather?: WeatherInput | null
   ctx?: EngineContext
 }
 
@@ -141,8 +145,10 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
     case 'start': {
       const r = startSession(p, { plannedMinutes: a.minutes, startedAt: t }, ctx)
       if (!r.ok) return fail(r.error)
+      const { weather } = resolveSessionWeather(env.weather, p.profile.weather, env.dev)
+      const started = r.value.state.activeSession
       return done({
-        player: r.value.state,
+        player: started ? { ...r.value.state, activeSession: { ...started, weather } } : r.value.state,
         timer: { sessionId: r.value.session.id, endsAt: t + a.minutes * MINUTE_MS, pausedAt: null, pausedMs: 0, notified: false },
         outcome: null,
         breakTimer: null,
@@ -186,6 +192,9 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
           claimedAt: t,
           pausedSeconds: timer.pausedMs / 1000,
           focusInputs: { screenshotLabels: label ? [label] : null, missedCaptures: 0 },
+          soundProfile: a.soundProfile ?? null,
+          // Fixed at start; older saves without it fall back to profile.weather.
+          ...(session.weather !== undefined ? { weather: session.weather } : {}),
         },
         rng,
         ctx,

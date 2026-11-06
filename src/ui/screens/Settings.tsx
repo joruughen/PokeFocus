@@ -1,9 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Locale } from '../../i18n'
-import { Button, Dialog, DialogClose, Logo, Panel, PixelIcon, Segmented, Select, Slider, Switch, toast } from '../components'
+import { Button, Dialog, DialogClose, Logo, Panel, Segmented, Select, Slider, Switch, toast } from '../components'
 import { hintAnchor, useHintScreen } from '../hints'
-import { WEATHER_PRESETS, weatherKind, type WeatherKind } from '../lib/conditions'
 import { errorText } from '../lib/errors'
 import { allTimeZones } from '../lib/format'
 import { sfx } from '../lib/sound'
@@ -11,6 +10,7 @@ import { useGame } from '../store/game'
 import { devEnabled, usePrefs } from '../store/prefs'
 import { useBusy, usePlayer } from '../store/selectors'
 import { AccountPanel } from './account/AccountPanel'
+import { WeatherSettings } from './WeatherSettings'
 
 // Enforced by the server (src/game/actions.ts TIMEZONE_LOCK_DAYS); shown here.
 const TZ_LOCK_DAYS = 30
@@ -29,7 +29,6 @@ export default function Settings() {
   const player = usePlayer()
   const prefs = usePrefs()
   const updateProfile = useGame((s) => s.updateProfile)
-  const setWeather = useGame((s) => s.setWeather)
   const resetAll = useGame((s) => s.resetAll)
   const busy = useBusy()
   const [confirm, setConfirm] = useState(false)
@@ -41,7 +40,6 @@ export default function Settings() {
   const tzChangedAt = player.profile.timezoneChangedAt ?? null
   const tzUnlockAt = tzChangedAt !== null ? tzChangedAt + TZ_LOCK_DAYS * DAY : 0
   const tzLocked = tzUnlockAt > Date.now() && !devEnabled()
-  const wk = weatherKind(player.profile.weather)
 
   return (
     <div className="flex max-w-3xl flex-col gap-8">
@@ -78,23 +76,10 @@ export default function Settings() {
                 : t('settings.tzNote', { days: TZ_LOCK_DAYS })}
             </p>
           </div>
-          <Row label={t('settings.weather')} note={t('settings.weatherNote')}>
-            <Segmented<WeatherKind>
-              label={t('settings.weather')}
-              value={wk}
-              onChange={(w) => void report(setWeather(WEATHER_PRESETS[w]))}
-              options={(['clear', 'sun', 'rain', 'cold'] as const).map((w) => ({
-                value: w,
-                ariaLabel: t(`weather.${w}`),
-                label: (
-                  <>
-                    <PixelIcon name={w} size={20} />
-                    <span className="max-sm:sr-only">{t(`weather.${w}`)}</span>
-                  </>
-                ),
-              }))}
-            />
-          </Row>
+          <div>
+            <p className="mb-3 font-display text-lg">{t('settings.weather')}</p>
+            <WeatherSettings />
+          </div>
         </div>
       </Panel>
 

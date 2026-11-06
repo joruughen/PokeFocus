@@ -1,11 +1,11 @@
 /** /api/game — the player's document and the action endpoint. */
 import { randomBytes } from 'node:crypto'
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { createRng } from '../../src/engine'
 import { applyAction, isDevAction } from '../../src/game/actions'
 import { DEV_NOW_HEADER, DEV_SEED_HEADER, EMPTY_DOC, type ActionResponse, type GameDoc, type GameSnapshot } from '../../src/game/protocol'
-import type { Tx } from '../db/client'
+import type { Db, Tx } from '../db/client'
 import { activeStudySessions, leagueScores, playerDocs } from '../db/schema'
 import { ApiError, readBody, requireAuth, type AppEnv, type Ctx, type Deps } from '../http'
 import { asGameAction, gameActionBody } from '../validation'
@@ -42,11 +42,13 @@ export function gameRoutes(deps: Deps) {
     const now = gameNow(c)
     const seed = env.devTools ? c.req.header(DEV_SEED_HEADER) : undefined
     const rng = createRng(seed && seed.length <= 128 ? seed : randomBytes(16).toString('hex'))
+    // Real weather of the profile city, fixed on the session at start (≤ 2 s, cached; null → manual fallback).
+    const weather = action.type === 'start' ? (await deps.weather.current(await profileCity(db, user.id)))?.weather ?? null : undefined
 
     const out = await db.transaction(async (tx) => {
       const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
       const before = row?.doc ?? EMPTY_DOC
-      const r = applyAction(before, action, { now, rng, dev: env.devTools, trainerName: user.trainerName })
+      const r = applyAction(before, action, { now, rng, dev: env.devTools, trainerName: user.trainerName, weather })
       if (!r.ok) return r
       await syncActiveSession(tx, user.id, before, r.doc)
       if (action.type === 'resetAll') await tx.delete(leagueScores).where(eq(leagueScores.userId, user.id))
@@ -107,4 +109,13 @@ async function syncLeagueScores(tx: Tx, userId: string, before: GameDoc, after: 
         set: { points: ch.points, updatedAt: new Date(now) },
       })
   }
+}
+
+/** `player.profile.city` of the stored doc (null if none). */
+export async function profileCity(db: Db, userId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ city: sql<string | null>`${playerDocs.doc}->'player'->'profile'->>'city'` })
+    .from(playerDocs)
+    .where(eq(playerDocs.userId, userId))
+  return row?.city ?? null
 }

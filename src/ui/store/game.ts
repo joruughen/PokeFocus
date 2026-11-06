@@ -48,6 +48,7 @@ import {
 import type { Locale } from '../../i18n'
 import { errorCode } from '../api/client'
 import { gameApi } from '../api/endpoints'
+import { clearMicTallies, micProfileFor } from '../lib/mic/monitor'
 import { devEnabled, now, setServerOffset, usePrefs } from './prefs'
 
 export type { BreakTimer, LastOutcome, SessionTimer }
@@ -238,7 +239,11 @@ export const useGame = create<GameState>()((set, get) => {
     },
     claim: async () => {
       const label = usePrefs.getState().dev.focusLabel
-      const r = await dispatch({ type: 'claim', ...(devEnabled() ? { devFocusLabel: label } : {}) })
+      // Only the microphone shares go to the server (never audio).
+      const sid = get().player?.activeSession?.id
+      const soundProfile = sid ? micProfileFor(sid) : null
+      const r = await dispatch({ type: 'claim', ...(devEnabled() ? { devFocusLabel: label } : {}), ...(soundProfile ? { soundProfile } : {}) })
+      if (r.ok && sid) clearMicTallies()
       return r.ok
     },
     dismissResults: async () => errOf(await dispatch({ type: 'dismissResults' })),

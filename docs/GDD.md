@@ -149,13 +149,22 @@ Si el usuario no concedió el permiso de compartir pantalla: `valor_captura = 0.
 
 ### 4.3 Micrófono (perfil sonoro)
 
-- Es opcional y se analiza **en el navegador** con Web Audio API. **El audio nunca sale del dispositivo.**
-- Cada 2 s se clasifica la ventana actual como `silencio` / `voz` / `música` / `ruido_ambiente` (con RMS, detección de actividad de voz y rasgos espectrales simples).
-- Al final de la sesión se guardan los porcentajes, por ejemplo `{silencio: 0.62, música: 0.30, voz: 0.08}`.
-- **No afecta al Foco.** Solo modifica **qué tipos aparecen** en el grupo salvaje:
+- Es opcional (interruptor en la preparación de la sesión, recordado en el navegador) y se analiza **en el navegador** con Web Audio API. **El audio nunca sale del dispositivo.**
+- Solo funciona en un contexto seguro (`localhost` o HTTPS). Sin él, o sin permiso, se explica en una línea y la sesión sigue sin perfil.
+- Cada 2 s se clasifica la ventana actual como `silencio` / `voz` / `música` / `ruido_ambiente` con reglas simples: nivel RMS frente a un suelo de ruido adaptativo, planitud espectral (ruido), energía en la banda de voz (300–3400 Hz) con modulación y pausas (voz), y picos tonales con un espectro estable (música). Las pausas no cuentan, y el micrófono se libera al pausar, terminar o cancelar.
+- Al reclamar se envían solo los porcentajes, por ejemplo `{silencio: 0.62, música: 0.30, voz: 0.08, ruido: 0}` (cada uno entre 0 y 1, suma ≤ 1,05; hace falta al menos 1 min analizado).
+- **No afecta al Foco.** Activa las condiciones de Volador (música o ruido ≥ 30 %) y Psíquico (silencio ≥ 70 %) (§9.2), y el perfil dominante, o **estilo de estudio**, inclina **ligeramente** qué tipos aparecen en el grupo salvaje:
 
-| Perfil dominante | Tipos con más probabilidad (×1.5) |
+| Perfil dominante | Tipos con algo más de probabilidad (×1.2) |
 |---|---|
+| Silencio | Psíquico, Fantasma, Hielo |
+| Música | Hada, Normal, Eléctrico, Volador |
+| Voz | Normal, Lucha |
+| Ruido ambiente | Veneno, Roca, Acero |
+
+El peso era ×1.5; se bajó a ×1.2 (`encounters.soundProfileWeight`) para que sea un matiz y no domine sobre las condiciones activas (×2) ni sobre los tipos del equipo (×1.25). El estilo se muestra en Resultados.
+
+---|---|
 | Silencio | Psíquico, Fantasma, Hielo |
 | Música | Hada, Normal, Eléctrico, Volador |
 | Voz | Normal, Lucha |
@@ -455,7 +464,7 @@ Los tipos importan **dos veces**:
 | Social | Hada, Volador (ruido) |
 | Fin de semana | Tierra, Normal |
 
-**Clima:** se consulta en el servidor (por ejemplo con Open-Meteo, que no requiere API key) con la ciudad del perfil al iniciar la sesión.
+**Clima:** el servidor consulta Open-Meteo (geocodificación y tiempo actual, sin API key) con la ciudad del perfil al iniciar la sesión, y lo fija en la sesión activa. Se cachea 30 min por ciudad y nunca hace esperar más de 2 s. Si no hay ciudad o falla la consulta, se usa el clima manual de Ajustes (o ninguno). Lluvia, llovizna, chubascos y tormenta cuentan como lluvia; cielo despejado de día, como sol; los códigos de nieve, como nieve.
 
 ### 9.3 Doble tipo
 
@@ -509,7 +518,7 @@ Para cada hueco del grupo:
 1. **Tirada de legendario o mítico:** `0.2% × Foco` **[calibrar]**.
 2. Si no, se elige una especie con peso `= capture_rate` (dato de PokeAPI), multiplicado por:
    - ×2 si el tipo de la especie tiene su condición activa en ese momento (p. ej. Fantasma de noche),
-   - ×1.5 por el perfil sonoro (§4.3),
+   - ×1.2 por el perfil sonoro dominante (§4.3),
    - ×1.25 si comparte tipo con algún miembro del equipo.
 3. **Shiny:** `1/512 × (0.5 + Foco)`.
 

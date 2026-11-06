@@ -14,6 +14,7 @@ import type {
   OwnedPokemon,
   PlayerState,
   ProgressEvent,
+  SoundProfile,
   SessionResult,
   StartSessionError,
   ThrowBall,
@@ -85,8 +86,11 @@ export type GameAction =
   | { type: 'resume' }
   | { type: 'cancel' }
   | { type: 'markNotified' }
-  /** `devFocusLabel` is honored only when the server runs with DEV_TOOLS=1. */
-  | { type: 'claim'; devFocusLabel?: string | null }
+  /**
+   * `devFocusLabel` is honored only when the server runs with DEV_TOOLS=1.
+   * `soundProfile`: microphone shares measured in the browser (audio never leaves the device).
+   */
+  | { type: 'claim'; devFocusLabel?: string | null; soundProfile?: SoundProfile | null }
   | { type: 'dismissResults' }
   // Waves
   | { type: 'throwBall'; ref: WildRef; ball: ThrowBall }

@@ -13,7 +13,7 @@ import {
 } from '../../../engine'
 import { Button, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Segmented, Stage, toast, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
-import { conditionsNow, WEATHER_PRESETS, weatherKind, type WeatherKind } from '../../lib/conditions'
+import { conditionsNow } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { clampMinutes, fmtClock, fmtInt, fmtWeekday } from '../../lib/format'
@@ -27,6 +27,9 @@ import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { conditionRuleValues } from './conditionCopy'
+import { MicToggle } from './SoundStyle'
+import { WeatherPicker } from './WeatherPicker'
+import { useSessionWeather } from '../../lib/weather'
 
 const cfg = defaultContext().config
 const PRESETS = cfg.session.presets.map(String)
@@ -38,7 +41,6 @@ export function PreSession() {
   const now = useNow()
   const player = usePlayer()
   const start = useGame((s) => s.start)
-  const setWeather = useGame((s) => s.setWeather)
   const busy = useBusy()
   const trainerName = useAuth((s) => s.user?.trainerName)
   const views = useTeamViews(player, now)
@@ -48,7 +50,8 @@ export function PreSession() {
   // What is typed in the field; it is only clamped on blur so "45" can be typed (not clamped at "4").
   const [draft, setDraft] = useState('40')
   const minutes = choice === 'custom' ? custom : Number(choice)
-  const cond = conditionsNow(player, now, minutes)
+  const sessionWeather = useSessionWeather(player.profile).effective
+  const cond = conditionsNow(player, now, minutes, sessionWeather)
   const tz = player.profile.timezone
   const lng = i18n.language
   const waves = waveCount(minutes, cfg)
@@ -76,17 +79,6 @@ export function PreSession() {
   const breakOffer = useBreakOffer()
   useHintEvent('breakOffer', breakOffer)
 
-  const weatherOptions: { value: WeatherKind; label: React.ReactNode; ariaLabel: string }[] = (['clear', 'sun', 'rain', 'cold'] as const).map((w) => ({
-    value: w,
-    ariaLabel: t(`weather.${w}`),
-    label: (
-      <>
-        <PixelIcon name={w} size={20} />
-        <span>{t(`weather.${w}`)}</span>
-      </>
-    ),
-  }))
-  const wk = weatherKind(player.profile.weather)
 
   return (
     <div className="flex flex-col gap-8">
@@ -156,10 +148,10 @@ export function PreSession() {
             </div>
 
             <div {...hintAnchor('home.weather')}>
-              <h3 className="mb-2 text-lg">{t('home.plan.weather')}</h3>
-              <Segmented label={t('home.plan.weather')} value={wk} onChange={(w) => void setWeather(WEATHER_PRESETS[w]).then((err) => err && toast.add({ title: errorText(err), type: 'danger' }))} options={weatherOptions} />
-              <p className="mt-2 text-sm text-mist-400">{t(`weather.effect.${wk}`)}</p>
+              <WeatherPicker profile={player.profile} />
             </div>
+
+            <MicToggle />
 
             {allOut ? (
               <p {...hintAnchor('home.energy')} className="flex items-start gap-2 bg-dusk-900 p-3 text-sm text-amber-400 inset-shadow-well" role="status">

@@ -9,6 +9,7 @@ import type { Db } from './db/client'
 import { authSessions, users, type AuthSessionRow, type UserRow } from './db/schema'
 import type { EventBus } from './events'
 import type { RateLimiter } from './rate-limit'
+import type { FetchLike, WeatherService } from './weather'
 import { hashToken, looksLikeToken, SESSION_COOKIE, SESSION_RENEW_AFTER_MS, SESSION_TTL_MS } from './auth/tokens'
 import type { PublicUser } from '../src/game/protocol'
 
@@ -19,6 +20,10 @@ export interface Deps {
   limiter: RateLimiter
   /** Real time (ms). Game time may differ in dev (x-dev-now). */
   clock: () => number
+  /** Outbound HTTP (Open-Meteo); a fake in tests. */
+  fetch: FetchLike
+  /** Real weather per city, cached (built from `fetch` + `clock`). */
+  weather: WeatherService
 }
 
 export type AppEnv = {
