@@ -64,7 +64,7 @@ Balance a vigilar:
 
 Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
 
-## En curso: profundidad de la sesión (2026-11-05)
+## Hecho: profundidad de la sesión (2026-11-05)
 
 La especificación completa está en `docs/session-depth-plan.md`.
 
@@ -88,6 +88,17 @@ La especificación completa está en `docs/session-depth-plan.md`.
 - **F. Clima real con Open-Meteo**, por la ubicación del dispositivo (redondeada a ~10 km) o la ciudad escrita. Sin clima manual para jugadores (solo en el panel de desarrollo, con DEV_TOOLS=1): si no se detecta, no hay clima.
 - **G. Calibración del micrófono** (~15 s, por dispositivo; el silencio es obligatorio para activarlo), perfil del ruido propio del micrófono restado en cada fotograma, comprobación y medidor en vivo, y explicación en la sesión y en Resultados. Sin opción de audífonos: solo cuenta lo que oye el micrófono.
 
+Pendiente de esta tanda:
+- **Probar el micrófono con un micrófono real.** La resta del ruido propio solo se probó con espectros sintéticos, y el asistente no se probó en un navegador. Si un cuarto en silencio sigue dando "Ruido" o "Música", anotar el valor "+N dB" del medidor para ajustar los umbrales.
+- **Balance, decisiones abiertas** (`docs/balance-report.md` §10):
+  - más Ultra Balls para quien hace sesiones largas (una garantizada al aparecer un legendario, o en las misiones);
+  - bajar `encounters.legendaryChance` de 0.0016 a 0.00093 y los umbrales de liga (salen 3–3,5 legendarios nuevos en 12 semanas; el objetivo es 1–3).
+- **Grupos:**
+  - el botón "Empezar" normal sigue visible mientras tienes una sala abierta;
+  - el aviso sonoro de fin de una sesión iniciada por el servidor lo da el `SessionWatcher`.
+- **Oleadas:** con 3 o más Pokémon golpeando a un salvaje, la fila "Golpes" se desborda un poco.
+- **Despliegue:** `https://pokefocus.helicocraft.com` por un túnel propio de Cloudflare (`cloudflared-pokefocus.service`, configuración en `/etc/cloudflared/pokefocus.yml`), con `TRUST_PROXY=1`. Cuando solo se use el dominio, poner `COOKIE_SECURE=1` y quitar la URL de Tailscale de `APP_ORIGIN`.
+
 ## Fases siguientes (GDD §20)
 
 - **F2 — Online: HECHA.** Pendientes menores de la F2:
@@ -95,7 +106,8 @@ La especificación completa está en `docs/session-depth-plan.md`.
   - Probar de punta a punta: cambio de contraseña, revocar otra sesión, cerrar sesión en todos los dispositivos, rate limit (cubiertos por tests de integración, no por la prueba con navegador).
   - El bus de eventos y el rate limit viven en memoria: una sola instancia del servidor.
   - Recuperación de contraseña por correo (no hay envío de correos todavía).
-- **F3 — Foco real:** perfil sonoro con el micrófono (se mide el ruido en el navegador, sin enviar audio; activa Volador con ruido y Psíquico con silencio) y, opcional, clima real con Open-Meteo para Fuego/Hielo. El micrófono exige un contexto seguro: funciona en `localhost` (dev y Docker local) y en HTTPS, pero no en `http://<ip-tailscale>`. Sin dominio: `tailscale serve` da HTTPS en `https://<máquina>.<tailnet>.ts.net`. Con dominio: proxy inverso con HTTPS automático (p. ej. Caddy). Sin permiso o sin contexto seguro, la sesión sigue sin perfil sonoro.
+- **F3 — Foco real: HECHA** (micrófono con calibración y clima real, ver arriba). Texto original:
+  perfil sonoro con el micrófono (se mide el ruido en el navegador, sin enviar audio; activa Volador con ruido y Psíquico con silencio) y, opcional, clima real con Open-Meteo para Fuego/Hielo. El micrófono exige un contexto seguro: funciona en `localhost` (dev y Docker local) y en HTTPS, pero no en `http://<ip-tailscale>`. Sin dominio: `tailscale serve` da HTTPS en `https://<máquina>.<tailnet>.ts.net`. Con dominio: proxy inverso con HTTPS automático (p. ej. Caddy). Sin permiso o sin contexto seguro, la sesión sigue sin perfil sonoro.
   - **Descartado (2026-11-05):** capturas de pantalla clasificadas con IA. El Foco se queda en la etiqueta neutra; `focus.model` en la config queda sin uso.
 - **F4 — Progresión profunda:** Teracristalización, MT, Mentas, Chapas, Cápsula Habilidad.
 - **F5:** intercambios entre amigos (evoluciones por intercambio) y más packs de especies (proceso de curación en GDD §20.1).
