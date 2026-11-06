@@ -275,7 +275,7 @@
       "fighting": "Sesiones de {{fightingMin}} min o más.",
       "poison": "+{{poisonPct}}% por cada sesión que ya hiciste hoy (hasta +{{poisonMax}}%).",
       "ground": "Sábados y domingos.",
-      "flying": "Con música o ruido al menos el {{noise}}% del tiempo (requiere micrófono, próximamente).",
+      "flying": "Con música o ruido al menos el {{noise}}% del tiempo (requiere activar el micrófono).",
       "psychic": "En la primera sesión del día, o con silencio el {{silence}}% del tiempo.",
       "bug": "+{{bugPct}}% por cada Pokémon de tipo Bicho del equipo.",
       "rock": "Si no pausas la sesión.",
