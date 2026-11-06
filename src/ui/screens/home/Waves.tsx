@@ -9,6 +9,7 @@ import {
   wildCatchChance,
   type Charge,
   type CounterResult,
+  type PokemonView,
   type ThrowBall,
   type ThrowOutcome,
   type Wave,
@@ -66,6 +67,12 @@ export function Waves() {
   /** While the server rolls a throw: keep showing the wild as it was (no flash of the result). */
   const [hold, setHold] = useState<{ wildIndex: number; before: WildPokemon } | null>(null)
   const [counterFx, setCounterFx] = useState<{ key: number; counter: CounterResult; energyBefore: number } | null>(null)
+  /**
+   * The counter card as it was before the throw. The server answers before the
+   * animation starts and that answer already carries the counterattack, so
+   * without this the energy number would drop while the ball is still shaking.
+   */
+  const [frozenCard, setFrozenCard] = useState<PokemonView | null>(null)
   const [targeting, setTargeting] = useState<Charge | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
@@ -93,6 +100,7 @@ export function Waves() {
   const leaderUid = player.team.find((u) => (player.pokemon[u]?.energy.current ?? 0) > 0) ?? player.team[0]
   const leader = leaderUid ? pokemonView(player, leaderUid, now) : null
   const counterTarget = counterFx ? pokemonView(player, counterFx.counter.targetUid, now) : null
+  const card = frozenCard ?? counterTarget ?? leader
 
   const balls: { ball: ThrowBall; count: number | null; usable: boolean; reason?: string }[] = [
     ...(wave.studyBall === 'available'
@@ -112,9 +120,11 @@ export function Waves() {
     // The server rolls the throw; the animation plays once its answer is here
     // (the wild keeps showing `before` until the result lands).
     setHold({ wildIndex: selected, before })
+    setFrozenCard(card)
     const r = await doThrow(ref, ball)
     if (!r.ok) {
       setHold(null)
+      setFrozenCard(null)
       toast.add({ title: errorText(r.error, 'throw', { level: studyMax }), type: 'danger' })
       return
     }
@@ -122,6 +132,7 @@ export function Waves() {
     const resultSfx = () => sfx(outcome.kind === 'caught' ? 'catchSuccess' : 'catchFail')
     const land = () => {
       setAnim(null)
+      setFrozenCard(null)
       if (outcome.kind !== 'caught' && outcome.counter) {
         const c = outcome.counter
         sfx(c.missed ? 'counterMiss' : 'counterHit')
@@ -277,12 +288,12 @@ export function Waves() {
               {t('waves.counterTarget')}
               <HelpDot hint="waves.counter" />
             </p>
-            {(counterTarget ?? leader) && (
+            {card && (
               <PokemonCard
                 key={counterFx?.key}
-                view={(counterTarget ?? leader)!}
+                view={card}
                 variant="compact"
-                leader={(counterTarget ?? leader)!.pokemon.uid === player.team[0]}
+                leader={card.pokemon.uid === player.team[0]}
                 energyFrom={counterFx && !anim ? counterFx.energyBefore : undefined}
                 shake={Boolean(counterFx && !anim)}
                 floating={counterFx && !anim ? (counterFx.counter.missed ? t('waves.missed') : counterFx.counter.healed > 0 ? `+${Math.round(counterFx.counter.healed)}` : `-${Math.round(counterFx.counter.damage)}`) : undefined}

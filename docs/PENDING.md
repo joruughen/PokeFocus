@@ -59,8 +59,33 @@ Decisión tomada: **se puede iniciar una sesión con todo el equipo agotado**. S
 
 Balance a vigilar:
 - El maratonista se queda sin Ultra Balls para los legendarios: captura el 21% en el primer encuentro, frente al 52% del jugador constante. Opción: dar Ultra Balls como recompensa al subir de liga en la semana.
-- Los puntos de los grinders crecen mucho, porque su equipo sube más rápido de nivel. Se compensará con el Foco real por capturas de pantalla (F3).
+- Los puntos de los grinders crecen mucho, porque su equipo sube más rápido de nivel. **Aceptado (2026-11-05):** no se compensa. La ventana de 5 min para reclamar ya frena a quien deja el temporizador corriendo sin estudiar.
 - Los objetos Teralito y MT ya se ganan en misiones, pero todavía no sirven para nada (la Teracristalización y las MT llegan en F4).
+
+Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
+
+## En curso: profundidad de la sesión (2026-11-05)
+
+La especificación completa está en `docs/session-depth-plan.md`.
+
+- **A. Reparto del daño por Pokémon.**
+  - Cada Pokémon es una ficha "×N" con el desglose de ataques en un tooltip, y se asigna a un salvaje.
+  - Se puede reasignar hasta lanzar la primera Ball de la oleada.
+  - Botón Auto en la oleada.
+  - Preferencia "Auto": se puede cambiar antes, durante y en la pantalla de Reclamar, y queda fija al reclamar.
+  - Un agente de balance lo valida con el simulador. Un jugador hábil gana ventaja, pero los legendarios y los Pokémon de nivel alto siguen siendo un reto.
+- **B. Informe de la sesión.**
+  - Qué técnicas y habilidades pasivas se activaron, con qué probabilidad, y quién produjo cada carga de Sueño o Parálisis.
+  - Por qué salieron esos salvajes: hora, condiciones, estilo de estudio y habilidades.
+  - Va detrás de un botón o un tooltip, sin llenar la pantalla.
+- **C. Sesiones de estudio en grupo con amigos.**
+  - Se invita a amigos, que empiezan sincronizados.
+  - Pausar o abandonar = salir del grupo.
+  - El bonus Hada es proporcional al tiempo acompañado (solo para el tipo Hada), y siempre se informa al usuario.
+- **D. Guía de los 18 tipos**, con "cuándo se activa" y un planificador "¿Y si empiezo a las…?".
+- **D. Botón para silenciar la música** en la pantalla de la sesión de estudio.
+- **F. Micrófono**, analizado en el navegador sin enviar audio. Define estilos de estudio que influyen ligeramente en los tipos de salvajes y activa Volador y Psíquico.
+- **F. Clima real con Open-Meteo**, con el clima manual como respaldo.
 
 ## Fases siguientes (GDD §20)
 
@@ -69,7 +94,8 @@ Balance a vigilar:
   - Probar de punta a punta: cambio de contraseña, revocar otra sesión, cerrar sesión en todos los dispositivos, rate limit (cubiertos por tests de integración, no por la prueba con navegador).
   - El bus de eventos y el rate limit viven en memoria: una sola instancia del servidor.
   - Recuperación de contraseña por correo (no hay envío de correos todavía).
-- **F3 — Foco real** (ahora posible: el servidor puede llamar a Haiku sin exponer la clave): capturas de pantalla en momentos aleatorios clasificadas con Claude Haiku 5.5 (`focus.model` en la config) y perfil sonoro con el micrófono.
+- **F3 — Foco real:** perfil sonoro con el micrófono (se mide el ruido en el navegador, sin enviar audio; activa Volador con ruido y Psíquico con silencio) y, opcional, clima real con Open-Meteo para Fuego/Hielo. El micrófono exige un contexto seguro: funciona en `localhost` (dev y Docker local) y en HTTPS, pero no en `http://<ip-tailscale>`. Sin dominio: `tailscale serve` da HTTPS en `https://<máquina>.<tailnet>.ts.net`. Con dominio: proxy inverso con HTTPS automático (p. ej. Caddy). Sin permiso o sin contexto seguro, la sesión sigue sin perfil sonoro.
+  - **Descartado (2026-11-05):** capturas de pantalla clasificadas con IA. El Foco se queda en la etiqueta neutra; `focus.model` en la config queda sin uso.
 - **F4 — Progresión profunda:** Teracristalización, MT, Mentas, Chapas, Cápsula Habilidad.
 - **F5:** intercambios entre amigos (evoluciones por intercambio) y más packs de especies (proceso de curación en GDD §20.1).
 - **graphify:** generar el grafo de conocimiento del código con `/graphify` (opcional).
