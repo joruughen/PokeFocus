@@ -17,7 +17,10 @@ import {
   throwBall,
   wildCatchChance,
   encounterModifiers,
+  hpFractionAfter,
+  wildLevelRange,
   type BallSlug,
+  type Wave,
   type EngineContext,
   type PlayerState,
   type Rng,
@@ -32,9 +35,18 @@ import type { LegendaryEncounter, Tally } from './types.ts'
  * - `auto`: the "Auto" preference (claims in automatic mode: the engine's maxHp-weighted split).
  * - `concentrate-valuable`: every token on one wild: legendary > shiny > species not caught yet > highest level.
  * - `type-smart`: each token on the wild it damages most (absolute damage, type effectiveness included).
+ * - `concentrate-status`: a skilled concentrator: every token on the most valuable wild that the Study
+ *   Ball will not take anyway, the best status charge (sleep first) on that same wild, and sleep /
+ *   paralysis charges kept for a legendary or shiny of a later wave of the encounter.
+ * - `smart`: a realistic good player: `concentrate-status` when the wave has a legendary, a shiny or a
+ *   species not caught yet; otherwise the "Auto" split (status charges are still kept for later targets).
+ * - `best-ev`: an upper bound for skill: tokens one by one (biggest first) on the wild where they add the
+ *   most expected captured value (value × P(caught before it flees)), status handled as `concentrate-status`.
  */
-export type DamagePolicy = 'auto' | 'concentrate-valuable' | 'type-smart'
-export const DAMAGE_POLICIES: readonly DamagePolicy[] = ['auto', 'concentrate-valuable', 'type-smart']
+export type DamagePolicy = 'auto' | 'concentrate-valuable' | 'type-smart' | 'concentrate-status' | 'smart' | 'best-ev'
+export const DAMAGE_POLICIES: readonly DamagePolicy[] = ['auto', 'concentrate-valuable', 'type-smart', 'concentrate-status', 'smart', 'best-ev']
+/** Policies that aim status charges at the concentration target and keep them for later legendaries / shinies. */
+const STATUS_SMART: ReadonlySet<DamagePolicy> = new Set(['concentrate-status', 'smart', 'best-ev'])
 
 export interface CaptureCtx {
   /** Damage split policy (default `auto`). */
@@ -103,10 +115,11 @@ export function playEncounter(state: PlayerState, c: CaptureCtx): PlayerState {
     const enc = s.encounter
     const wi = enc.currentWave
     const last = wi === enc.waves.length - 1
-    s = allocateDamage(s, wi, c)
+    const alloc = allocateDamage(s, wi, c)
+    s = alloc.state
     registerWave(s, wi, c)
     s = useRerolls(s, wi, c)
-    s = useStatuses(s, wi, last, c)
+    s = useStatuses(s, wi, last, c, alloc.target)
     s = throwStudyBall(s, wi, c)
     s = throwRest(s, wi, c)
     s = advanceWave(s, c.ctx)
@@ -114,29 +127,60 @@ export function playEncounter(state: PlayerState, c: CaptureCtx): PlayerState {
   return s
 }
 
-/** Assign the wave's damage tokens with the policy (manual waves only; automatic ones are already split). */
-function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): PlayerState {
+/** A legendary, a shiny without a guarantee or a species not caught yet: worth concentrating on. */
+function isPrize(s: PlayerState, w: WildPokemon): boolean {
+  return w.isLegendary || (w.isShiny && !w.guaranteedBall) || !s.pokedex.caught.includes(w.speciesSlug)
+}
+
+/** Most valuable pending wild: legendary > shiny > species not caught yet > highest level. */
+function concentrateTarget(s: PlayerState, wave: Wave, pending: number[], exclude = -1): number {
+  const rank = (w: WildPokemon) => [w.isLegendary ? 1 : 0, w.isShiny ? 1 : 0, s.pokedex.caught.includes(w.speciesSlug) ? 0 : 1, w.level]
+  const better = (a: number[], b: number[]) => {
+    for (let k = 0; k < a.length; k++) if ((a[k] as number) !== (b[k] as number)) return (a[k] as number) > (b[k] as number)
+    return false
+  }
+  const cands = pending.length > 1 ? pending.filter((i) => i !== exclude) : pending
+  let target = cands[0] as number
+  for (const i of cands) if (better(rank(wave.wilds[i] as WildPokemon), rank(wave.wilds[target] as WildPokemon))) target = i
+  return target
+}
+
+/** P(caught before it flees) with the ball the policy would use, for a given HP fraction. */
+function catchWithin(s: PlayerState, w: WildPokemon, hp: number, v: number, throws: number, c: CaptureCtx): number {
+  if (w.guaranteedBall) return 1
+  const ball = chooseBall(s, w, v) ?? 'poke-ball'
+  const p = wildCatchChance(s, { ...w, hpFraction: hp }, ball, c.ctx)
+  return 1 - Math.pow(1 - p, throws)
+}
+
+/**
+ * Assign the wave's damage tokens with the policy (manual waves only; automatic ones are already split).
+ * Returns the wild the policy concentrated on (for the status charges), or -1.
+ */
+function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): { state: PlayerState; target: number } {
   const wave = state.encounter?.waves[wi]
-  if (!wave || !isManualWave(wave) || wave.damageLocked) return state
+  if (!wave || !isManualWave(wave) || wave.damageLocked) return { state, target: -1 }
   const policy = c.damagePolicy ?? 'auto'
   const pending = pendingIdx(state, wi)
   let s = state
-  if (policy !== 'auto' && pending.length > 0) {
-    const tokens = damageTokens(wave)
+  let target = -1
+  const assignAll = (to: number) => {
+    for (const tk of damageTokens(wave)) {
+      const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: to }, c.ctx)
+      if (r.ok) s = r.value
+    }
+  }
+  if (pending.length > 0) {
+    // The Study Ball takes one eligible wild for sure: a skilled player does not spend damage on it.
+    const study = wave.studyBall === 'available' ? studyBallTarget(s, wi, ownedCounts(s), c) : -1
     if (policy === 'concentrate-valuable') {
-      const rank = (w: WildPokemon) => [w.isLegendary ? 1 : 0, w.isShiny ? 1 : 0, s.pokedex.caught.includes(w.speciesSlug) ? 0 : 1, w.level]
-      const better = (a: number[], b: number[]) => {
-        for (let k = 0; k < a.length; k++) if ((a[k] as number) !== (b[k] as number)) return (a[k] as number) > (b[k] as number)
-        return false
-      }
-      let target = pending[0] as number
-      for (const i of pending) if (better(rank(wave.wilds[i] as WildPokemon), rank(wave.wilds[target] as WildPokemon))) target = i
-      for (const tk of tokens) {
-        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: target }, c.ctx)
-        if (r.ok) s = r.value
-      }
-    } else {
-      for (const tk of tokens) {
+      target = concentrateTarget(s, wave, pending)
+      assignAll(target)
+    } else if (policy === 'concentrate-status' || (policy === 'smart' && pending.some((i) => i !== study && isPrize(s, wave.wilds[i] as WildPokemon)))) {
+      target = concentrateTarget(s, wave, pending, study)
+      assignAll(target)
+    } else if (policy === 'type-smart') {
+      for (const tk of damageTokens(wave)) {
         let best = pending[0] as number
         let bestDmg = -1
         for (const i of pending) {
@@ -149,11 +193,72 @@ function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): PlayerSt
         const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: best }, c.ctx)
         if (r.ok) s = r.value
       }
+    } else if (policy === 'best-ev') {
+      const counts = ownedCounts(s)
+      const throws = encounterModifiers(s, c.ctx).maxFailedThrows
+      const cands = pending.length > 1 ? pending.filter((i) => i !== study) : pending
+      const values = new Map(cands.map((i) => [i, wildValue(s, wave.wilds[i] as WildPokemon, counts, c.ctx)]))
+      const dmg = new Map(cands.map((i) => [i, 0]))
+      const tokens = damageTokens(wave)
+        .map((tk) => ({ tk, est: new Map(cands.map((i) => [i, estimateTokenDamage(tk, wave.wilds[i] as WildPokemon, c.ctx).damage])) }))
+        .sort((a, b) => Math.max(...b.est.values()) - Math.max(...a.est.values()))
+      const cfg = c.ctx.config
+      for (const { tk, est } of tokens) {
+        let best = cands[0] as number
+        let bestGain = -Infinity
+        for (const i of cands) {
+          const w = wave.wilds[i] as WildPokemon
+          const v = values.get(i) as number
+          const d0 = dmg.get(i) as number
+          const d1 = d0 + (est.get(i) as number)
+          const gain = v * (catchWithin(s, w, hpFractionAfter(d1, w.maxHp, cfg), v, throws, c) - catchWithin(s, w, hpFractionAfter(d0, w.maxHp, cfg), v, throws, c))
+          if (gain > bestGain) {
+            bestGain = gain
+            best = i
+          }
+        }
+        dmg.set(best, (dmg.get(best) as number) + (est.get(best) as number))
+        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: best }, c.ctx)
+        if (r.ok) s = r.value
+      }
+      // Status target: the most valuable wild that is not guaranteed.
+      let bestV = -1
+      for (const i of cands) {
+        const w = wave.wilds[i] as WildPokemon
+        const v = values.get(i) as number
+        if (!w.guaranteedBall && v > bestV) {
+          bestV = v
+          target = i
+        }
+      }
     }
   }
   // Anything left (and the whole wave under `auto`) takes the automatic split.
   const r = autoAssignDamage(s, wi, c.ctx)
-  return r.ok ? r.value : s
+  return { state: r.ok ? r.value : s, target: STATUS_SMART.has(policy) ? target : -1 }
+}
+
+/** Non-legendary wild in the top quarter of the wild level range for the trainer level. */
+function isHighLevel(s: PlayerState, w: WildPokemon, c: CaptureCtx): boolean {
+  if (w.isLegendary) return false
+  const r = wildLevelRange(s.trainer.level, c.ctx.config)
+  return w.level >= r.min + 0.75 * (r.max - r.min)
+}
+
+/** Non-legendary final evolution (stage ≥ 2 with no evolution left). */
+function isFinalEvo(w: WildPokemon, c: CaptureCtx): boolean {
+  if (w.isLegendary) return false
+  const sp = getSpecies(w.speciesSlug, c.ctx)
+  return sp.stage >= 2 && sp.evolutions.length === 0
+}
+
+/** Prize wilds (legendary / shiny without guarantee) of later waves of the encounter. */
+function laterPrizes(s: PlayerState, wi: number): number {
+  const enc = s.encounter
+  if (!enc) return 0
+  let n = 0
+  for (const wave of enc.waves) if (wave.index > wi) for (const w of wave.wilds) if (w.outcome === 'pending' && w.status === null && (w.isLegendary || (w.isShiny && !w.guaranteedBall))) n++
+  return n
 }
 
 function registerWave(s: PlayerState, wi: number, c: CaptureCtx): void {
@@ -166,9 +271,16 @@ function registerWave(s: PlayerState, wi: number, c: CaptureCtx): void {
     t.statusCharges += enc.charges.filter((x) => x.kind === 'status').length
     t.rerollCharges += enc.charges.filter((x) => x.kind === 'reroll').length
   }
+  const floor = c.ctx.config.capture.minHpFraction
   for (const w of wave.wilds) {
     t.wildsSeen++
     c.ratios.push(w.maxHp > 0 ? w.damage / w.maxHp : 0)
+    if (w.maxHp > 0) {
+      t.dmgFrac += w.damage / w.maxHp
+      t.dmgFracWasted += Math.max(0, w.damage / w.maxHp - (1 - floor))
+    }
+    if (isHighLevel(s, w, c)) t.highSeen++
+    if (isFinalEvo(w, c)) t.finalSeen++
     if (w.hpFraction <= c.ctx.config.capture.minHpFraction + 1e-9) t.wildsAtHpFloor++
     if (w.isLegendary) {
       t.legendaryHpSum += w.hpFraction
@@ -205,19 +317,44 @@ function useRerolls(state: PlayerState, wi: number, c: CaptureCtx): PlayerState 
       c.tally.wildsSeen++
       if (fresh.isLegendary) c.tally.legendarySeen++
       if (fresh.isShiny) c.tally.shinySeen++
+      if (isHighLevel(s, fresh, c)) c.tally.highSeen++
+      if (isFinalEvo(fresh, c)) c.tally.finalSeen++
     }
     c.tally.rerollChargesUsed++
   }
 }
 
-function useStatuses(state: PlayerState, wi: number, last: boolean, c: CaptureCtx): PlayerState {
+function useStatuses(state: PlayerState, wi: number, last: boolean, c: CaptureCtx, target = -1): PlayerState {
   let s = state
+  const smart = STATUS_SMART.has(c.damagePolicy ?? 'auto')
+  let aimed = false
   for (;;) {
     const enc = s.encounter
     if (!enc) return s
     const charges = enc.charges.filter((x) => x.kind === 'status')
     const charge = [...charges].sort((a, b) => (a.status === 'sleep' ? 0 : 1) - (b.status === 'sleep' ? 0 : 1))[0]
     if (!charge) return s
+    if (smart) {
+      // Prize wilds of this wave (legendary / shiny without guarantee) and the concentration target first.
+      const prizes = pendingIdx(s, wi).filter((i) => {
+        const w = wildAt(s, wi, i) as WildPokemon
+        return w.status === null && (w.isLegendary || (w.isShiny && !w.guaranteedBall))
+      })
+      const t0 = wildAt(s, wi, target)
+      // The concentration target only gets a charge that is not kept for a later legendary / shiny.
+      const spare = charges.length > laterPrizes(s, wi)
+      const first = prizes[0] ?? (spare && !aimed && t0 && t0.outcome === 'pending' && t0.status === null && !t0.guaranteedBall ? target : -1)
+      if (first >= 0) {
+        aimed = true
+        const r = applyStatusCharge(s, charge.id, { waveIndex: wi, wildIndex: first })
+        if (!r.ok) return s
+        s = r.value
+        c.tally.statusChargesUsed++
+        continue
+      }
+      // Keep one charge per legendary / shiny of a later wave.
+      if (charges.length <= laterPrizes(s, wi)) return s
+    }
     const counts = ownedCounts(s)
     // The Study Ball target is already safe; do not waste a status on it.
     const studyTarget = enc.waves[wi]?.studyBall === 'available' ? studyBallTarget(s, wi, counts, c) : -1
@@ -260,7 +397,7 @@ function studyBallTarget(s: PlayerState, wi: number, counts: Map<string, number>
   return best
 }
 
-function recordThrow(ball: ThrowBall, w: WildPokemon, outcome: ThrowOutcome, leaderBefore: string | undefined, c: CaptureCtx): void {
+function recordThrow(s: PlayerState, ball: ThrowBall, w: WildPokemon, outcome: ThrowOutcome, leaderBefore: string | undefined, c: CaptureCtx): void {
   const t = c.tally
   t.throws[ball]++
   const cls = w.isLegendary ? 'legendary' : classOf(getSpecies(w.speciesSlug, c.ctx).captureRate)
@@ -268,8 +405,11 @@ function recordThrow(ball: ThrowBall, w: WildPokemon, outcome: ThrowOutcome, lea
   if (w.isLegendary) {
     t.legendaryThrows++
     if (w.status !== null) t.legendaryPrepared++
+    if (ball !== 'ultra-ball') t.legendaryThrowsNoUltra++
   }
   if (outcome.kind === 'caught') {
+    if (isHighLevel(s, w, c)) t.highCaught++
+    if (isFinalEvo(w, c)) t.finalCaught++
     t.catches[ball]++
     if (ball !== 'study-ball') t.catchesByClass[cls]++
     t.catchesTotal++
@@ -302,7 +442,7 @@ function throwStudyBall(state: PlayerState, wi: number, c: CaptureCtx): PlayerSt
   const wasNew = !state.pokedex.caught.includes(w.speciesSlug)
   const r = throwBall(state, { waveIndex: wi, wildIndex: idx }, 'study-ball', c.rng, c.now, c.ctx)
   if (!r.ok) return state
-  recordThrow('study-ball', w, r.value.outcome, state.team[0], c)
+  recordThrow(state, 'study-ball', w, r.value.outcome, state.team[0], c)
   if (r.value.outcome.kind === 'caught' && wasNew) c.tally.newSpecies++
   return r.value.state
 }
@@ -331,7 +471,7 @@ function throwRest(state: PlayerState, wi: number, c: CaptureCtx): PlayerState {
       const maxThrows = encounterModifiers(s, c.ctx).maxFailedThrows
       const r = throwBall(s, { waveIndex: wi, wildIndex: i }, ball, c.rng, c.now, c.ctx)
       if (!r.ok) break
-      recordThrow(ball, w, r.value.outcome, s.team[0], c)
+      recordThrow(s, ball, w, r.value.outcome, s.team[0], c)
       if (r.value.outcome.kind === 'caught' && wasNew) c.tally.newSpecies++
       if (w.isLegendary) {
         const rate = getSpecies(w.speciesSlug, c.ctx).captureRate

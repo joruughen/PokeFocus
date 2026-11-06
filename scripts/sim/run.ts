@@ -208,6 +208,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
     const capNow = claimedAt + MINUTE_MS
     if (o.captures && state.encounter) {
       const caughtBefore = new Set(state.pokedex.caught)
+      if (o.onLegendaryEncounter && state.encounter.waves.some((w) => w.wilds.some((x) => x.isLegendary))) o.onLegendaryEncounter(state, capNow)
       state = playEncounter(state, { damagePolicy, rng, now: capNow, ctx, tally, ratios: m.dmgRatioByWeek[weekIdx] ?? [], legendary: m.legendaryEncounters })
       for (const sl of state.pokedex.caught) if (!caughtBefore.has(sl)) m.speciesFirstCaughtDay[sl] = dayIdx
     } else if (state.encounter) {

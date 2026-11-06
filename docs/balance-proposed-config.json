@@ -1,3 +1,13 @@
 {
-  "_note": "Generado por npm run simulate. Solo las claves cambiadas respecto a src/data/game/custom-game-config.json; se usa con --config."
+  "_note": "Generado por npm run simulate. Solo las claves cambiadas respecto a src/data/game/custom-game-config.json; se usa con --config.",
+  "encounters": {
+    "legendaryChance": 0.00093
+  },
+  "leagues": {
+    "weeklyThresholds": {
+      "super": 5500,
+      "ultra": 57500,
+      "master": 92500
+    }
+  }
 }
