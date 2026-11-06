@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AuthSessionInfo } from '../../../game/protocol'
-import { Button, Dialog, DialogClose, IconButton, Panel, PixelIcon, Select, TextField, toast } from '../../components'
+import { COUNTRY_LOCK_DAYS, NAME_LOCK_DAYS, type AuthSessionInfo } from '../../../game/protocol'
+import type { ApiError } from '../../api/client'
+import { Button, Dialog, DialogClose, IconButton, Panel, PixelIcon, Select, Switch, TextField, toast } from '../../components'
 import { hintAnchor } from '../../hints'
-import { countryOptions } from '../../lib/countries'
+import { countryName, countryOptions, flagEmoji } from '../../lib/countries'
 import { requestErrorText } from '../../lib/errors'
 import { checkPassword, checkTrainerName, PASSWORD_MAX, PASSWORD_MIN, TRAINER_MAX } from '../../lib/validation'
-import { useAuth } from '../../store/auth'
+import { isAccountLockError, useAuth } from '../../store/auth'
+import { devEnabled } from '../../store/prefs'
+import { lockState, profileChange, type ProfileChange } from './accountLocks'
 
 /**
- * Settings → Account: email, trainer name and country (PATCH /auth/me),
- * password change, the list of signed-in devices (revoke one, or all) and
- * sign out.
+ * Settings → Account: email, trainer name and country (PATCH /auth/me; each
+ * locked for 30 days after a change, with a confirm before saving), the
+ * "anonymous in the rankings" privacy switch, password change, the list of
+ * signed-in devices (revoke one, or all) and sign out.
  */
 export function AccountPanel() {
   const { t } = useTranslation()
@@ -33,6 +37,7 @@ export function AccountPanel() {
         </div>
 
         <ProfileForm />
+        <PrivacyForm />
         <PasswordForm />
         <Sessions onLogoutAll={() => setConfirmAll(true)} />
       </div>
@@ -43,62 +48,173 @@ export function AccountPanel() {
 
 function ProfileForm() {
   const { t, i18n } = useTranslation()
+  const lng = i18n.language
   const user = useAuth((s) => s.user)!
   const updateMe = useAuth((s) => s.updateMe)
   const [name, setName] = useState(user.trainerName)
   const [country, setCountry] = useState(user.country)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const countries = useMemo(() => countryOptions(i18n.language), [i18n.language])
-  const nameErr = checkTrainerName(name)
-  const dirty = name.trim() !== user.trainerName || country !== user.country
+  const [pending, setPending] = useState<ProfileChange | null>(null)
+  const countries = useMemo(() => countryOptions(lng), [lng])
+  const now = Date.now()
+  const dev = devEnabled()
+  const nameLock = lockState(user.nameChangedAt, NAME_LOCK_DAYS, now, dev)
+  const countryLock = lockState(user.countryChangedAt, COUNTRY_LOCK_DAYS, now, dev)
+  const nameErr = nameLock.locked ? null : checkTrainerName(name)
+  // Only what really changes counts (a locked field cannot be edited; the same value is a no-op).
+  const change = profileChange(user, { name, country }, { name: nameLock.locked, country: countryLock.locked })
+  const dirty = change !== null
+  const dateOf = (at: number) => new Intl.DateTimeFormat(lng, { dateStyle: 'long' }).format(at)
 
-  const submit = async (e: FormEvent) => {
+  const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (nameErr || !dirty) return
+    if (busy || nameErr || !change) return
+    setError(null)
+    // A real change locks the field for 30 days, so ask first (the same value is a no-op and never gets here).
+    setPending(change)
+  }
+
+  const save = async (change: ProfileChange) => {
+    setPending(null)
     setBusy(true)
     setError(null)
     try {
-      const patch: { trainerName?: string; country?: string } = {}
-      if (name.trim() !== user.trainerName) patch.trainerName = name.trim()
-      if (country !== user.country) patch.country = country
-      await updateMe(patch)
+      const saved = await updateMe(change)
+      setName(saved.trainerName)
+      setCountry(saved.country)
       toast.add({ title: t('account.profileSaved'), type: 'success' })
     } catch (err) {
-      setError(requestErrorText(err))
+      if (isAccountLockError(err)) lockedMeanwhile(err)
+      else setError(requestErrorText(err))
     } finally {
       setBusy(false)
     }
   }
 
+  /** The server says a field is still locked (stale clock or state): the store already refreshed the user. */
+  const lockedMeanwhile = (err: ApiError) => {
+    const fresh = useAuth.getState().user
+    const isName = err.code === 'name_locked'
+    const lock = isName ? lockState(fresh?.nameChangedAt ?? null, NAME_LOCK_DAYS, Date.now(), false) : lockState(fresh?.countryChangedAt ?? null, COUNTRY_LOCK_DAYS, Date.now(), false)
+    if (fresh) {
+      if (isName) setName(fresh.trainerName)
+      else setCountry(fresh.country)
+    }
+    toast.add({
+      title: t(isName ? 'account.nameStillLocked' : 'account.countryStillLocked'),
+      // unlockAt comes from the refreshed user (changedAt + lock days, as the server computes it).
+      description: lock.unlockAt !== null && lock.unlockAt > Date.now() ? t('account.lockedUntil', { date: dateOf(lock.unlockAt) }) : requestErrorText(err),
+      type: 'danger',
+    })
+  }
+
   return (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-4" aria-labelledby="acc-profile">
-      <h3 id="acc-profile" className="text-lg">
-        {t('account.profile')}
+    <>
+      <form noValidate onSubmit={submit} className="flex flex-col gap-4" aria-labelledby="acc-profile">
+        <h3 id="acc-profile" className="text-lg">
+          {t('account.profile')}
+        </h3>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField
+            label={t('auth.trainerName')}
+            value={nameLock.locked ? user.trainerName : name}
+            maxLength={TRAINER_MAX}
+            autoComplete="nickname"
+            disabled={nameLock.locked}
+            onChange={(e) => setName(e.target.value)}
+            error={nameErr && name !== user.trainerName ? t(nameErr) : null}
+            hint={
+              nameLock.locked && nameLock.unlockAt !== null
+                ? t('account.lockedUntil', { date: dateOf(nameLock.unlockAt) })
+                : `${t('account.nameHint')} ${t('account.lockHint', { days: NAME_LOCK_DAYS })}`
+            }
+          />
+          {countryLock.locked && countryLock.unlockAt !== null ? (
+            <TextField
+              label={t('auth.country')}
+              value={`${flagEmoji(user.country)} ${countryName(user.country, lng)}`}
+              readOnly
+              disabled
+              hint={t('account.lockedUntil', { date: dateOf(countryLock.unlockAt) })}
+            />
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <Select label={t('auth.country')} options={countries} value={country} onChange={setCountry} />
+              <p className="text-sm text-mist-400">{t('account.lockHint', { days: COUNTRY_LOCK_DAYS })}</p>
+            </div>
+          )}
+        </div>
+        {error && (
+          <p role="alert" className="bg-dusk-900 p-3 text-cheek-400 inset-shadow-well">
+            {error}
+          </p>
+        )}
+        <div>
+          <Button type="submit" disabled={busy || !dirty || Boolean(nameErr)}>
+            {t('account.save')}
+          </Button>
+        </div>
+      </form>
+      <Dialog
+        open={pending !== null}
+        onOpenChange={(o) => !o && setPending(null)}
+        title={t('account.confirmTitle')}
+        description={
+          pending && (
+            <span className="flex flex-col gap-2">
+              {pending.trainerName !== undefined && <span>{t('account.confirmName', { name: pending.trainerName, days: NAME_LOCK_DAYS })}</span>}
+              {pending.country !== undefined && <span>{t('account.confirmCountry', { country: countryName(pending.country, lng), days: COUNTRY_LOCK_DAYS })}</span>}
+            </span>
+          )
+        }
+        footer={
+          <>
+            <DialogClose render={<Button variant="secondary">{t('common.cancel')}</Button>} />
+            <Button disabled={busy} onClick={() => pending && void save(pending)}>
+              {t('account.confirmSave')}
+            </Button>
+          </>
+        }
+      />
+    </>
+  )
+}
+
+/** Privacy: hide my name from the global and country leaderboards (saved right away, no lock). */
+function PrivacyForm() {
+  const { t } = useTranslation()
+  const user = useAuth((s) => s.user)!
+  const updateMe = useAuth((s) => s.updateMe)
+  // The value being saved, shown at once; null when nothing is in flight (then the account's value shows).
+  const [saving, setSaving] = useState<boolean | null>(null)
+  const checked = saving ?? user.anonymousRankings
+
+  const change = async (value: boolean) => {
+    setSaving(value)
+    try {
+      await updateMe({ anonymousRankings: value })
+      toast.add({ title: t(value ? 'account.anonymousOn' : 'account.anonymousOff'), type: 'success' })
+    } catch (err) {
+      toast.add({ title: requestErrorText(err), type: 'danger' })
+    } finally {
+      setSaving(null) // success: the new user already holds the value; failure: back to the old one.
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-4" aria-labelledby="acc-privacy">
+      <h3 id="acc-privacy" className="text-lg">
+        {t('account.privacy')}
       </h3>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <TextField
-          label={t('auth.trainerName')}
-          value={name}
-          maxLength={TRAINER_MAX}
-          autoComplete="nickname"
-          onChange={(e) => setName(e.target.value)}
-          error={nameErr && name !== user.trainerName ? t(nameErr) : null}
-          hint={t('account.nameHint')}
-        />
-        <Select label={t('auth.country')} options={countries} value={country} onChange={setCountry} />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-[44ch] min-w-0">
+          <p className="font-display text-lg">{t('account.anonymous')}</p>
+          <p className="text-sm text-mist-300">{t('account.anonymousHint')}</p>
+        </div>
+        <Switch checked={checked} onChange={(v) => void change(v)} label={t('account.anonymous')} disabled={saving !== null} />
       </div>
-      {error && (
-        <p role="alert" className="bg-dusk-900 p-3 text-cheek-400 inset-shadow-well">
-          {error}
-        </p>
-      )}
-      <div>
-        <Button type="submit" disabled={busy || !dirty || Boolean(nameErr)}>
-          {t('account.save')}
-        </Button>
-      </div>
-    </form>
+    </section>
   )
 }
 

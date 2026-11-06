@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, pokemonView } from '../../../engine'
-import { Button, Dialog, DialogClose, EmptyState, HelpDot, IconButton, IvQuality, Panel, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, StatRow, STAT_ORDER, toast, Tooltip, TypeBadge } from '../../components'
+import { Button, Dialog, DialogClose, EmptyState, HelpDot, IconButton, InfoTip, IvQuality, Panel, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, StatRow, STAT_ORDER, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
@@ -16,6 +16,7 @@ import { lineRoot } from '../shared/EvoLine'
 import { EvolveMoment } from './EvolveMoment'
 import { filteredMons, useBoxFilters } from './filters'
 import { Candies, EnergyBond, Evolution } from './Growth'
+import { roleNatureFit } from './roleNature'
 import { Techniques } from './Techniques'
 
 const ctx = defaultContext()
@@ -60,6 +61,7 @@ export function Detail({ uid }: { uid: string }) {
   const prev = idx > 0 ? order[idx - 1] : undefined
   const next = idx >= 0 && idx < order.length - 1 ? order[idx + 1] : undefined
   const nature = ctx.naturesBySlug.get(p.nature)
+  const fit = roleNatureFit(view.species.role, nature)
   const root = lineRoot(view.species)
   const releaseGain = cfg.progression.candiesOnRelease[view.species.stage - 1] ?? 1
   const statScale = Math.max(50, Math.ceil(Math.max(...STAT_ORDER.map((k) => view.stats[k])) / 50) * 50)
@@ -107,7 +109,6 @@ export function Detail({ uid }: { uid: string }) {
               {view.types.map((ty) => (
                 <TypeBadge key={ty} type={ty} size="md" />
               ))}
-              <RoleBadge role={view.species.role} onLight />
               {inTeam && (
                 <span className={cx('inline-flex h-7 items-center gap-1 px-2 font-display text-base shadow-frame', slot === 0 ? 'bg-volt-400' : 'bg-dusk-600 text-mist-50')}>
                   <PixelIcon name={slot === 0 ? 'crown' : 'team'} size={10} />
@@ -115,7 +116,18 @@ export function Detail({ uid }: { uid: string }) {
                 </span>
               )}
             </div>
-            {view.species.role && <p className="mt-2 text-sm text-dusk-700">{t(`roles.${view.species.role}.body`)}</p>}
+            {view.species.role && (
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <RoleBadge role={view.species.role} size="md" onLight />
+                <p className="min-w-0 flex-1 basis-44 text-sm text-dusk-700">{t(`roles.${view.species.role}.body`)}</p>
+              </div>
+            )}
+            {fit && (
+              <p className="mt-2 flex items-start gap-1.5 text-sm text-ink">
+                <PixelIcon name={fit.kind === 'against' ? 'down' : 'up'} size={10} className={cx('mt-[5px] shrink-0', fit.kind === 'against' ? 'text-cheek-700' : 'text-leaf-600')} />
+                <span>{t(`roleInfo.${fit.kind}.${fit.role}`, { nature: names.nature(p.nature) })}</span>
+              </p>
+            )}
             <div className="mt-3">
               <ProgressBar
                 variant="exp"
@@ -148,7 +160,8 @@ export function Detail({ uid }: { uid: string }) {
               )}
               <Tooltip content={inTeam ? t('detail.releaseInTeam') : t('detail.releaseTip', { count: releaseGain })}>
                 <span tabIndex={inTeam ? 0 : -1}>
-                  <Button size="sm" variant="ghost" icon="trash" disabled={inTeam} onClick={() => setConfirmRelease(true)} className="text-ink hover:bg-dusk-500/20">
+                  {/* Danger, not ghost: the nameplate is a light card, and a ghost button there is light text on a light background. */}
+                  <Button size="sm" variant="danger" icon="trash" disabled={inTeam} onClick={() => setConfirmRelease(true)}>
                     {t('detail.release')}
                   </Button>
                 </span>
@@ -195,7 +208,10 @@ export function Detail({ uid }: { uid: string }) {
 
             <dl className="mt-5 flex flex-col gap-4">
               <div>
-                <dt className="font-display text-base text-mist-300">{t('detail.nature')}</dt>
+                <dt className="flex items-center gap-2 font-display text-base text-mist-300">
+                  {t('detail.nature')}
+                  <InfoTip label={t('roleInfo.natureAria')} content={<span className="flex flex-col gap-1"><span className="font-display text-base">{t('detail.nature')}</span><span>{t('roleInfo.natureTip')}</span></span>} />
+                </dt>
                 <dd className="mt-0.5">
                   <span className="font-display text-lg text-mist-50">{names.nature(p.nature)}</span>{' '}
                   {nature?.increased && nature.decreased ? (

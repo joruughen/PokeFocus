@@ -11,6 +11,7 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { useState } from 'react'
+import { SoundUnlockChip } from './SoundUnlockChip'
 
 const cfg = defaultContext().config
 export const BREAK_OPTIONS = ['5', '10', '15'] as const
@@ -111,11 +112,14 @@ export function Break() {
       </Stage>
 
       <section className="mx-auto flex w-full max-w-3xl flex-col items-center text-center" {...hintAnchor('break.timer')}>
-        <h1 className="text-xl text-mist-300">{done ? t('break.doneTitle') : t('break.title', { count: b.minutes })}</h1>
+        <h1 id="break-title" tabIndex={-1} className="text-xl text-mist-300 outline-none">
+          {done ? t('break.doneTitle') : t('break.title', { count: b.minutes })}
+        </h1>
         <p role="timer" aria-live="off" className={cx('mt-2 font-num text-timer tabular', done ? 'text-leaf-400' : 'text-mist-50')}>
           {fmtCountdown(Math.max(0, left))}
         </p>
         <p className="mt-3 max-w-[52ch] text-mist-300">{done ? t('break.doneBody') : t('break.body')}</p>
+        <SoundUnlockChip focusAfterId="break-title" className="mt-4" />
         <ProgressBar className="mt-8 w-full" size="lg" variant="volt" value={Math.min(total, total - left)} max={total} label={t('break.progress')} />
 
         <ul className="mt-8 grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2 lg:grid-cols-3">

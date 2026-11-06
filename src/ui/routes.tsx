@@ -29,6 +29,8 @@ const loaders = {
   friends: () => import('./screens/friends/Friends'),
   missions: () => import('./screens/missions/Missions'),
   settings: () => import('./screens/Settings'),
+  changelog: () => import('./changelog/Changelog'),
+  admin: () => import('./screens/admin/Admin'),
 }
 
 export const ROUTES: RouteDef[] = [
@@ -40,6 +42,9 @@ export const ROUTES: RouteDef[] = [
   { id: 'friends', labelKey: 'nav.friends', icon: 'friends', component: lazy(loaders.friends), nav: true, preload: loaders.friends },
   { id: 'missions', labelKey: 'nav.missions', icon: 'missions', component: lazy(loaders.missions), nav: true, preload: loaders.missions },
   { id: 'settings', labelKey: 'nav.settings', icon: 'settings', component: lazy(loaders.settings), nav: true, preload: loaders.settings },
+  // Reachable from the version badge / Settings (changelog) and by URL (admin); not in the side rail.
+  { id: 'changelog', labelKey: 'nav.changelog', icon: 'star', component: lazy(loaders.changelog), nav: false, preload: loaders.changelog },
+  { id: 'admin', labelKey: 'nav.admin', icon: 'wrench', component: lazy(loaders.admin), nav: false },
 ]
 
 export function findRoute(id: string): RouteDef {

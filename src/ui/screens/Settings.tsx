@@ -1,11 +1,14 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Locale } from '../../i18n'
+import { StageBadge } from '../changelog/StageBadge'
+import { APP_VERSION } from '../changelog/release'
 import { Button, Dialog, DialogClose, Logo, Panel, Segmented, Select, Slider, Switch, toast } from '../components'
 import { hintAnchor, useHintScreen } from '../hints'
 import { errorText } from '../lib/errors'
 import { allTimeZones } from '../lib/format'
 import { sfx } from '../lib/sound'
+import { hrefTo } from '../router'
 import { useGame } from '../store/game'
 import { devEnabled, usePrefs } from '../store/prefs'
 import { useBusy, usePlayer } from '../store/selectors'
@@ -165,7 +168,13 @@ export default function Settings() {
           <p className="max-w-[60ch]">{t('settings.about.body')}</p>
           <p className="max-w-[60ch]">{t('settings.about.credits')}</p>
           <p className="max-w-[60ch] text-mist-400">{t('app.disclaimer')}</p>
-          <p className="font-num text-lg text-mist-400">{t('settings.about.version', { version: '0.3 (F2)' })}</p>
+          <p className="flex flex-wrap items-center gap-3 font-num text-lg text-mist-400">
+            {t('settings.about.version', { version: APP_VERSION })}
+            <StageBadge compact />
+          </p>
+          <a href={hrefTo('changelog')} className="w-fit text-volt-300 underline underline-offset-4 hover:text-volt-200">
+            {t('settings.about.changelog')}
+          </a>
         </div>
       </Panel>
 

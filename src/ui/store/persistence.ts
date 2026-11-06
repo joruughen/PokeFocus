@@ -1,15 +1,16 @@
 /**
  * Persistence adapter for the zustand stores.
  *
- * Today everything lives in `localStorage`. To move to Supabase (F2), replace
- * `storageBackend` with an adapter that implements the same three methods
- * (`getItem`, `setItem`, `removeItem`, sync or async): the stores do not know
- * where their data goes. Keys are namespaced with `pokefocus:`.
+ * Only per-device preferences (`usePrefs`) use this: they live in
+ * `localStorage` (with an in-memory fallback). The game itself lives on the
+ * server (`useGame` is a cache of the server document, see docs/F2-plan.md).
+ * A store does not know where its data goes: swap `storageBackend` for any
+ * adapter with the same three methods (`getItem`, `setItem`, `removeItem`).
+ * Keys are namespaced with `pokefocus:`.
  */
 import { createJSONStorage, type StateStorage } from 'zustand/middleware'
 
 export const STORAGE_KEYS = {
-  game: 'pokefocus:game',
   prefs: 'pokefocus:prefs',
 } as const
 

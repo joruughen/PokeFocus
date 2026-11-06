@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, toLocal } from '../../engine'
 import type { Locale } from '../../i18n'
-import { Button, Logo, Mascot, type MascotPose, Platform, Segmented, Select, Sprite, Stage, toast, TypeBadge } from '../components'
+import { Button, Logo, Mascot, type MascotPose, Platform, RoleBadge, Segmented, Select, Sprite, Stage, toast, TypeBadge } from '../components'
 import { timeOfDay } from '../lib/conditions'
 import { cx } from '../lib/cx'
 import { allTimeZones, browserTimeZone } from '../lib/format'
@@ -182,42 +182,46 @@ function LoopStep({ n, title, body, icon }: { n: number; title: string; body: st
   )
 }
 
-function StarterCard({ slug, checked, tabbable, onPick }: { slug: string; checked: boolean; tabbable: boolean; onPick: () => void }) {
+/**
+ * One starter. The radio is the button over the sprite, name and types; the role tag (a button
+ * of its own, with a help popover) sits below it, outside the radio, because buttons cannot nest.
+ * Clicking the role row still picks the card.
+ */
+export function StarterCard({ slug, checked, tabbable, onPick }: { slug: string; checked: boolean; tabbable: boolean; onPick: () => void }) {
   const { t } = useTranslation()
   const names = useNames()
   const sp = ctx.speciesBySlug.get(slug)!
   const role = sp.role ?? 'allrounder'
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={checked}
-      tabIndex={tabbable ? 0 : -1}
-      data-starter={slug}
-      onClick={onPick}
+    <div
       className={cx(
         'group flex flex-col items-stretch text-left shadow-raised transition-[translate,background-color] duration-100',
         checked ? 'translate-y-[3px] bg-dusk-600 shadow-pressed outline-3 outline-offset-4 outline-volt-400' : 'bg-dusk-700 hover:bg-dusk-600',
       )}
     >
-      <Stage time="day" weather="clear" celestial={false} className="h-44 shadow-none">
-        <div className="relative flex h-full items-end justify-center pb-3">
-          <Platform width={128} className="absolute bottom-3" />
-          <Sprite kind="showdown" slug={slug} scale={2} alt={names.species(slug)} className={cx('relative mb-3', checked && 'motion-safe:animate-bob')} />
-        </div>
-      </Stage>
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex items-center justify-between gap-2">
+      <button type="button" role="radio" aria-checked={checked} tabIndex={tabbable ? 0 : -1} data-starter={slug} onClick={onPick} className="flex flex-col items-stretch text-left">
+        <Stage time="day" weather="clear" celestial={false} className="h-44 shadow-none">
+          <div className="relative flex h-full items-end justify-center pb-3">
+            <Platform width={128} className="absolute bottom-3" />
+            <Sprite kind="showdown" slug={slug} scale={2} alt={names.species(slug)} className={cx('relative mb-3', checked && 'motion-safe:animate-bob')} />
+          </div>
+        </Stage>
+        <span className="flex items-center justify-between gap-2 px-4 pt-4">
           <span className="font-display text-xl">{names.species(slug)}</span>
           <span className="flex gap-1">
             {sp.types.map((ty) => (
               <TypeBadge key={ty} type={ty} />
             ))}
           </span>
-        </div>
-        <p className="font-display text-base text-volt-300">{t(`roles.${role}.name`)}</p>
+        </span>
+      </button>
+      {/* The click handler is a mouse convenience; the radio above is the accessible control. */}
+      <div className="flex flex-1 flex-col items-start gap-2 p-4 pt-2" onClick={onPick}>
+        <span onClick={(e) => e.stopPropagation()}>
+          <RoleBadge role={role} />
+        </span>
         <p className="text-sm text-mist-300">{t(`roles.${role}.body`)}</p>
       </div>
-    </button>
+    </div>
   )
 }

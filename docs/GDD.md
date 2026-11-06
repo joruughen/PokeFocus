@@ -2,12 +2,13 @@
 
 > Versión 0.1 · 2026-11-03 · Proyecto personal, uso privado entre amigos.
 > Este documento es la fuente de verdad del diseño. Los números marcados con **[calibrar]** son valores iniciales que se ajustarán con el simulador de balance (ver §20).
+> **Actualizado el 2026-11-06 con lo construido.** La F2 se hizo con un **servidor propio** (Node + Hono + PostgreSQL), no con Supabase, y el Foco por captura de pantalla con IA se **descartó** el 2026-11-05. Lo que cambió respecto al diseño inicial lleva la etiqueta "Diseño original (reemplazado por F2: …)". El detalle técnico de la F2 está en `docs/F2-plan.md` y `docs/server.md`; el estado y lo pendiente, en `docs/PENDING.md`.
 
 ---
 
 ## 0. Resumen
 
-PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pokémon. Cada sesión de estudio (pomodoro) hace que tu **equipo de 6 Pokémon** genere **Puntos de Equipo**, suba de nivel y aprenda técnicas. Al terminar la sesión aparece un **grupo de Pokémon salvajes** que puedes intentar capturar. Los Puntos de Equipo deciden tu **liga** y tu posición en los **rankings semanal y mensual** entre amigos.
+PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pokémon. Cada sesión de estudio (pomodoro) hace que tu **equipo de 6 Pokémon** genere **Puntos de Equipo**, suba de nivel y aprenda técnicas. Al terminar la sesión aparece un **grupo de Pokémon salvajes** que puedes intentar capturar. Los Puntos de Equipo deciden tu **liga** y tu posición en los **rankings semanal y mensual** (de tus amigos, de tu país y global).
 
 ### Pilares de diseño
 
@@ -15,7 +16,7 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 2. **Nunca castigar, siempre premiar.** Las condiciones de tipo solo suman, perder una racha no quita lo ganado, y el análisis de micrófono no tiene respuestas "malas".
 3. **Lo raro debe sentirse raro.** Los legendarios nunca están garantizados, pero el jugador puede prepararse para aumentar sus probabilidades.
 4. **Siempre hay algo que mejorar.** Individuos únicos (IVs, naturaleza, habilidad, técnicas extra), límites de nivel ligados a la Pokédex y objetos de mejora para que el juego no se agote.
-5. **Libertad para estudiar.** Puedes usar cualquier app o pestaña. El antitrampas se basa en que hacer trampa no compense, no en vigilar.
+5. **Libertad para estudiar.** Puedes usar cualquier app o pestaña. El antitrampas se basa en que hacer trampa no compense, no en vigilar. Cambiar de pestaña o de aplicación nunca reduce las recompensas: el temporizador se calcula con marcas de tiempo (`endsAt`) y ni el motor ni el servidor leen la visibilidad de la página.
 
 ---
 
@@ -24,7 +25,7 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 | Aspecto | Decisión |
 |---|---|
 | Plataforma v1 | **Web de escritorio** (Chrome, Edge, Firefox). Todas las funciones disponibles. |
-| Celular | **Fuera de alcance en v1.** Los navegadores móviles no permiten capturar pantalla ni mantener el micrófono en segundo plano. Más adelante se evaluará una app nativa. |
+| Celular | **Fuera de alcance en v1.** Los navegadores móviles no permiten mantener el micrófono en segundo plano. Más adelante se evaluará una app nativa. |
 | Usuarios | Grupo de amigos, pensado para crecer (cientos o miles de usuarios). |
 | Idioma | **Español e inglés** desde la v1 (i18n). El usuario lo elige en su perfil; por defecto, el idioma del navegador. Los nombres de Pokémon, técnicas, habilidades y naturalezas se toman de PokeAPI en ambos idiomas. |
 | Copyright | Uso personal y privado, sin publicar. Se usan sprites y datos oficiales vía PokeAPI. |
@@ -56,30 +57,36 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 
 ### 2.1 Cuentas, inicio y amigos
 
-**Cuenta** (Supabase Auth):
-- Registro con email y contraseña (con verificación de email) o con Google.
-- Inicio y cierre de sesión, sesión persistente y recuperación de contraseña.
-- **Nombre de usuario** único (3–20 caracteres: letras, números y `_`). Se puede cambiar una vez cada 30 días.
-- Eliminar la cuenta borra todos sus datos.
+> **Construido en F2 con un servidor propio** (Node + Hono + PostgreSQL), **no con Supabase**. Detalle en `docs/F2-plan.md` y `docs/server.md`.
+
+**Cuenta:**
+- Registro **solo con correo y contraseña** (8–128 caracteres), con un **nombre de entrenador** (3–20 caracteres: letras, números, espacios y `_`; no es único, lo que identifica a cada jugador es el código de amigo) y un **país**, que se elige al registrarse y decide el ranking por país (§14). Ambos se pueden cambiar en Ajustes → Cuenta, pero cada uno queda **bloqueado 30 días** tras cambiarlo (el primer cambio es libre, y cada campo tiene su propio bloqueo), porque el país decide en qué ranking apareces y el nombre es tu identidad pública.
+- Inicio y cierre de sesión. La sesión es un **token opaco en una cookie `HttpOnly`** (30 días deslizantes), no un JWT. Puedes tener **varias sesiones de login a la vez** (pestañas y dispositivos); en Ajustes → Cuenta se ven y se pueden cerrar una por una o todas a la vez, y se puede cambiar la contraseña (eso cierra las demás sesiones).
+- **El progreso vive en el servidor** y se guarda con cada acción: al iniciar sesión en otro dispositivo, tu partida ya está ahí. La partida local del prototipo (F1) no se migró.
+- Pendiente: recuperación de contraseña por correo (todavía no hay envío de correos).
 
 **Primer inicio (onboarding):**
-1. Idioma (ES/EN) y zona horaria (detectada automáticamente, se puede corregir). Ciudad opcional, para el clima (§9.2).
+1. Idioma (ES/EN) y zona horaria (detectada automáticamente, se puede corregir). El clima real se configura después, en Ajustes (ubicación o ciudad, §9.2).
 2. **Elegir un Pokémon inicial**: Bulbasaur, Charmander o Squirtle, a nivel 5, con 1 técnica. Así el equipo nunca empieza vacío.
 3. 5 Poké Balls de regalo.
-4. Explicación breve del bucle (sesión → oleadas → captura) y de los permisos de pantalla y micrófono, qué hacen y qué no se guarda (§4).
-
-**Perfil:**
-- Avatar: el sprite de uno de tus Pokémon.
-- Muestra liga actual, equipo con técnicas, medallas de liga, progreso de la Pokédex y minutos de la semana.
-- Opción de privacidad: aparecer o no con tu nombre en los rankings de zona y global. Si no, apareces como "Entrenador anónimo". En el ranking de amigos siempre apareces con tu nombre.
+4. Explicación breve del bucle (sesión → oleadas → captura). El micrófono es opcional y se pide más tarde, desde la preparación de la sesión (§4.3).
 
 **Amigos:**
-- Buscar por nombre de usuario o por **código de amigo** (8 caracteres, compartible).
-- Enviar, aceptar y rechazar solicitudes, eliminar amigos y bloquear usuarios.
-- Ver el perfil de un amigo y si está **estudiando ahora** (necesario para la condición Hada, §9.2).
-- Intercambiar Pokémon (§12.8).
+- Se agrega por **código de amigo** (8 caracteres, compartible; no hay búsqueda por nombre).
+- Enviar, aceptar, rechazar y cancelar solicitudes, y eliminar amigos. Si los dos se envían solicitud, quedan como amigos al instante.
+- La lista de amigos muestra su equipo (el líder primero), nivel de entrenador, puntos de la semana y liga.
+- **Estudiar con amigos:** una sala de grupo con invitaciones; el bonus del tipo Hada depende del tiempo acompañado (§9.2). Ver `docs/session-depth-plan.md` (paquete C).
+- Intercambiar Pokémon (§12.8): F5, todavía no existe.
 
-**Ajustes:** idioma, zona horaria y ciudad (bloqueadas 30 días tras cada cambio, §15), privacidad, notificaciones del navegador (fin de sesión, ventana de Reclamar), permisos y eliminar cuenta.
+**Ajustes:** idioma, zona horaria (bloqueada 30 días tras cada cambio, §15), clima (usar mi ubicación, redondeada a ~10 km, o escribir una ciudad; sin enfriamiento), audio, micrófono y su calibración, notificaciones del navegador (fin de sesión, ventana de Reclamar), cuenta (nombre y país, con su bloqueo de 30 días; privacidad; contraseña; sesiones abiertas) y consejos.
+
+**Diseño original (reemplazado por F2: servidor propio y solo correo, ver `docs/F2-plan.md`).** El diseño inicial usaba Supabase Auth e incluía varias cosas que F2 no construyó. Quedan como ideas, no como estado actual:
+- Registro con Google y verificación de correo (las decisiones de F2 son solo correo y contraseña; la verificación y la recuperación por correo esperan a que haya envío de correos).
+- Nombre de usuario único, con un cambio cada 30 días, y búsqueda de amigos por nombre.
+- Eliminar la cuenta desde Ajustes.
+- Opción de privacidad para aparecer como "Entrenador anónimo" en los rankings global y de zona. **Construida en v0.5.0** (Ajustes → Cuenta → Privacidad) para los rankings global y de país: los amigos y tu propia fila siguen viendo tu nombre, y el país se sigue mostrando.
+- Bloquear usuarios, y ver si un amigo está "estudiando ahora" (la condición Hada pasó a usar los grupos de estudio).
+- Perfil público con equipo y técnicas, medallas de liga, progreso de la Pokédex e historial.
 
 ---
 
@@ -110,7 +117,15 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 
 **Foco** es un valor de 0.0 a 1.0 por sesión. Afecta a las **recompensas** (puntos, EXP, Polvo) y a la **calidad de los encuentros** (número de Pokémon, probabilidad de raros y shiny).
 
-### 4.1 Componentes
+> **Estado (2026-11-05): la clasificación de pantalla con IA fue descartada.** El Foco no mira tu pantalla ni vigila otras pestañas o aplicaciones (principio 5). Hoy es una **etiqueta neutra**: el servidor usa el mismo valor base para todos (0.85) y, aparte de algunas habilidades (Foco Interno, Levitación…), lo único que lo cambia es reclamar a tiempo:
+>
+> `Foco = 0.85 × (1.0 si reclamó a tiempo, 0.5 si tarde)`, y después la Defensa del Pokémon lo sube (`Foco_efectivo`, §5.1).
+>
+> El 0.85 es el valor que el diseño original daba a "sin permiso de pantalla" (`focus.noPermissionValue` en la configuración) **[calibrar]**. En lugar de las capturas, la fase F3 entregó el **perfil sonoro con el micrófono** (§4.3) y el **clima real** con Open-Meteo (§9.2); ver `docs/PENDING.md` (F3). En la configuración, `focus.model` y las claves de las capturas (`screenshotsPerSession`, `screenshotWindow`, `screenshotMinGapMinutes`, `missedCaptureValue`) quedan sin uso. Solo el panel de desarrollo (`DEV_TOOLS=1`) puede simular una etiqueta de pantalla, para probar el motor.
+
+### 4.1 Componentes (diseño original, descartado el 2026-11-05)
+
+> **Diseño original (reemplazado: la captura de pantalla con IA se descartó el 2026-11-05).** De esta tabla solo sobrevive **Reclamar a tiempo**; el resto se conserva como historia del diseño y no describe lo construido.
 
 | Componente | Cómo se mide | Peso |
 |---|---|---|
@@ -134,7 +149,10 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 
 Si el usuario no concedió el permiso de compartir pantalla: `valor_captura = 0.85` **[calibrar]**. Es un valor neutro que no penaliza mucho, pero da un pequeño incentivo para activarlo.
 
-### 4.2 Captura de pantalla: implementación
+### 4.2 Captura de pantalla: implementación (diseño original, no construido)
+
+> **Diseño original, descartado el 2026-11-05.** Nada de esto existe en el código: no hay `getDisplayMedia`, ni llamada a un modelo de IA, ni captura que enviar. Se conserva por si algún día se retoma con otro enfoque.
+
 
 - Al iniciar la sesión, la app pide `navigator.mediaDevices.getDisplayMedia()`. El navegador muestra su diálogo y el indicador de "compartiendo".
 - **Número de capturas configurable:** `screenshots_per_session` (por defecto **1**) es un parámetro del servidor, no está fijado en el código. Subirlo solo multiplica el costo, así que se puede aumentar con más presupuesto o con un modelo más barato.
@@ -277,7 +295,7 @@ Cada Pokémon capturado es **único**. No existen "duplicados" idénticos.
 | PS (Energía) | 105 | 120 |
 | Ataque Esp. (Rendimiento) | 63 | 93 |
 
-La diferencia crece con el nivel; a nivel bajo casi no se nota. Si se quiere más variación entre individuos, el máximo de IV (`iv_max`, por defecto 31) es un parámetro de `game_config` **[calibrar]**.
+La diferencia crece con el nivel; a nivel bajo casi no se nota. Si se quiere más variación entre individuos, el máximo de IV (`ivMax`, por defecto 31) es un parámetro de la configuración del juego (`custom-game-config.json`, §19) **[calibrar]**.
 
 ### 6.2 Naturalezas
 
@@ -326,7 +344,7 @@ La lista completa del Pack 1 está en `data/overrides/custom-abilities.json` y s
 | Levitación | Reclamar tarde no reduce lo que genera |
 | Robustez | Los contraataques nunca lo dejan agotado |
 | Cálculo Final | Su última acción de cada sesión da el triple de puntos |
-| Despiste | Ignora las distracciones: el chat y las redes cuentan como 80% de Foco para él |
+| Despiste | Los salvajes se despistan al contraatacar: el 15% de sus contraataques falla contra cualquier miembro del equipo (no se acumula: si quien recibe el golpe ya tiene Velo Arena o Manto Níveo, vale el mayor de los dos) |
 | Sebo | Gasta un 15% menos de Energía por acción |
 
 La **Cápsula Habilidad** (objeto avanzado) cambia la habilidad.
@@ -435,7 +453,7 @@ Los tipos importan **dos veces**:
 
 - Las condiciones **solo suman**: sin condición, el multiplicador es ×1.0; con ella, ×1.25 a ×1.5 **[calibrar]**.
 - **Cada estilo de estudio tiene al menos 3 tipos a favor.**
-- La hora, el día y el clima se calculan con la **zona horaria y la ciudad del perfil**, que solo pueden cambiarse una vez cada 30 días (antitrampas).
+- La hora y el día se calculan con la **zona horaria del perfil**, que solo puede cambiarse una vez cada 30 días (antitrampas). El clima sale de la **ubicación o la ciudad del perfil** (ver "Clima" más abajo), que no tienen enfriamiento.
 
 ### 9.2 Condiciones de los 18 tipos
 
@@ -733,11 +751,13 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 
 | Ámbito | Quién aparece |
 |---|---|
-| **Amigos** | Tú y tus amigos |
-| **Zona** | Usuarios con el mismo desfase horario (UTC) en su perfil (p. ej. todos los de UTC−5) |
+| **Amigos** | Tú y tus amigos aceptados |
+| **País** | Usuarios del mismo país: el que elegiste al registrarte (§2.1) |
 | **Global** | Todos los usuarios |
 
-- **Cierres:** la semana de cada usuario va del lunes 00:00 al domingo 23:59 **de su zona horaria**, y el mes del día 1 al último día. El ranking de **zona** cierra a la vez para todos sus miembros. Los rankings de **amigos** y **global** comparan las semanas locales de cada uno y se cierran cuando termina la última zona (lunes ≈ 12:00 UTC).
+- **Diseño original (reemplazado por F2: ranking por país, ver `docs/F2-plan.md`).** El diseño inicial tenía un ámbito "Zona" que agrupaba a los usuarios con el mismo desfase horario (UTC) y una tabla `leaderboard_snapshots` cerrada por una tarea programada (`pg_cron`). F2 usa el país elegido al registrarse y no tiene tarea de cierre.
+- **Semanas y meses:** la semana de cada usuario va del lunes 00:00 al domingo 23:59 **de su zona horaria**, y el mes del día 1 al último día. Cada puntuación se guarda con la clave de su periodo (el lunes local, p. ej. `2026-11-02`; el mes, `2026-11`), y cada ranking compara las puntuaciones que tienen la misma clave. Lo que ves es el ranking de tu semana o mes en curso.
+- **Qué muestra:** solo los jugadores con puntos en el periodo, los 100 primeros más tu propia fila. Los empates comparten puesto (1, 2, 2, 4) y se ordenan por quién llegó antes a esa puntuación. Cada fila lleva el nombre de entrenador, el país, los puntos, la liga y el líder del equipo como avatar. Quien activa el modo anónimo (§2.1) aparece como «Entrenador anónimo» en los rankings global y de país; en el de amigos y en tu propia fila siempre se ve el nombre.
 - **Ligas** por umbral de puntos semanales **[calibrar con el simulador]**:
 
 | Liga | Puntos semanales (inicial) | Máximo de salvajes por grupo |
@@ -750,8 +770,8 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 - **La liga se reinicia cada semana:** el lunes a las 00:00 todos vuelven a la liga **Base** y suben a medida que acumulan puntos esa semana. La **liga actual** (la que fija el máximo de salvajes por oleada) es la que llevas en la semana en curso.
 - Consecuencia buscada: a principio de semana las oleadas son más pequeñas y crecen a medida que estudias. Cada semana es una escalada nueva.
 - La liga mensual usa los mismos nombres con umbrales ×4 y se reinicia el día 1 de cada mes. Es solo de ranking: no afecta al tamaño de las oleadas.
-- La mejor liga alcanzada se guarda como medalla en el perfil.
-- El perfil público muestra el equipo, las técnicas y el historial, para que los demás vean *cómo* conseguiste tus puntos.
+- La mejor liga alcanzada se guarda y se muestra en la pantalla de Liga.
+- Tus amigos ven tu equipo (el líder primero), tu nivel de entrenador y tus puntos y liga de la semana en su lista de amigos (§2.1), para ver *cómo* conseguiste tus puntos. Un perfil público con técnicas, medallas e historial es del diseño original y no está construido.
 
 ---
 
@@ -759,15 +779,15 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 
 1. **Servidor como autoridad:** la hora de inicio y fin y todas las tiradas al azar (acciones, encuentros, capturas) ocurren en el servidor. El cliente solo muestra resultados.
 2. **Una sola sesión activa por usuario**, en todas sus pestañas y dispositivos, y nunca más larga que su duración declarada:
-   - Se garantiza **en la base de datos**: un índice único parcial sobre `sessions(owner_id) WHERE status = 'active'`. Si dos pestañas pulsan "Iniciar" a la vez, solo una lo consigue, aunque las peticiones lleguen en el mismo milisegundo.
-   - La otra pestaña recibe el error y muestra *"Ya tienes una sesión activa"*, con una **vista de solo lectura** de esa sesión (temporizador y equipo, sincronizados con Supabase Realtime). No puede iniciar otra ni reclamar por duplicado.
-   - **Pestaña principal:** la que inició la sesión es la que tiene el permiso de compartir pantalla y hace las capturas. Si se cierra, la sesión sigue en el servidor y se puede **retomar** desde otra pestaña, que vuelve a pedir el permiso.
-   - Si toca una captura y no hay ninguna pestaña que pueda hacerla, esa captura cuenta como **0.6** **[calibrar]**. Así cerrar la pestaña para esquivar las capturas no compensa, pero un cierre accidental tampoco hunde la sesión.
+   - Se garantiza **en la base de datos**: la tabla `active_study_sessions` tiene al usuario como clave primaria. Se inserta al iniciar la sesión y se borra al reclamar o cancelar, en la misma transacción que guarda el documento del jugador (que además se bloquea con `SELECT … FOR UPDATE`). Si dos pestañas pulsan "Iniciar" a la vez, solo una lo consigue, aunque las peticiones lleguen en el mismo milisegundo; la otra recibe 409 `session_active` ("Ya tienes una sesión en curso").
+   - Todas las pestañas y dispositivos leen **el mismo documento del servidor**, y se les avisa de cada escritura por SSE (`GET /api/events`), así que ven la misma sesión en marcha con el mismo temporizador. No hace falta una vista aparte. Nadie puede iniciar otra sesión ni reclamar por duplicado. Se pueden tener varias sesiones de login a la vez (§2.1); lo único exclusivo es la sesión de estudio.
+   - **Pestaña líder:** una sola pestaña (un candado de Web Locks) envía la notificación de fin de sesión, para que no llegue repetida. No es necesaria para que la sesión siga: si se cierra, la sesión sigue en el servidor y se puede **retomar** desde cualquier otra pestaña o dispositivo.
+   - **Diseño original (reemplazado por F2: servidor propio, ver `docs/F2-plan.md`).** Tenía un índice único parcial sobre `sessions(owner_id) WHERE status = 'active'` y una vista de solo lectura sincronizada con Supabase Realtime. También daba la "pestaña principal" a la que tenía el permiso de compartir pantalla y hacía las capturas, y una captura sin pestaña que la hiciera contaba como 0.6 **[calibrar]**. Nada de eso se construyó: no hay capturas (§4).
    - Reclamar es **idempotente**: si se pulsa dos veces (o desde dos pestañas), las recompensas se entregan una sola vez.
 3. **Ventana de Reclamar** (§3.2).
 4. **Rendimiento decreciente diario** (§3.3).
-5. **Foco por captura de pantalla** (§4).
-6. **Zona horaria y ciudad bloqueadas** durante 30 días tras cada cambio.
+5. ~~Foco por captura de pantalla~~ (descartado el 2026-11-05, §4). El Foco ya no mide la pantalla: el antitrampas se apoya en el servidor como autoridad, la ventana de Reclamar y el rendimiento decreciente.
+6. **Zona horaria bloqueada** durante 30 días tras cada cambio. La ciudad y la ubicación del clima no tienen enfriamiento (§9.2).
 7. **Nota opcional** de una línea sobre qué estudiaste, visible para tus amigos (presión social).
 8. **Detección de anomalías** (fase posterior): patrones como sesiones 24/7 se marcan para revisión.
 
@@ -775,7 +795,7 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 
 ## 16. Estadísticas y gráficas
 
-Por sesión se guarda: inicio y fin, duración, pausas, Foco y sus componentes (etiqueta de la captura y confianza, reclamo a tiempo), perfil sonoro, puntos, EXP, Polvo, condiciones activas, encuentros y capturas, y la nota y etiqueta de materia (opcionales).
+Por sesión se guarda: inicio y fin, duración, pausas, Foco (y si se reclamó a tiempo), perfil sonoro, puntos, EXP, Polvo, condiciones activas, encuentros y capturas, y la nota y etiqueta de materia (opcionales).
 
 Vistas **diaria, semanal y mensual**:
 - Minutos estudiados y Foco medio.
@@ -796,7 +816,7 @@ Vistas **diaria, semanal y mensual**:
 | Tipos, objetos, Balls | Iconos pixel art | PokeAPI/sprites: `sprites/items/…` |
 
 - Estética general: **pixel art**, con una UI limpia que acompaña a los sprites.
-- En el prototipo se enlazan los sprites directamente desde el repositorio. Antes de usar la app en grupo, se copian los del pack activo al almacenamiento propio.
+- Los sprites del pack activo están copiados en `public/sprites/` (`npm run download:sprites`), y la app no los enlaza desde el repositorio de PokeAPI en tiempo de ejecución.
 - Hay que verificar las rutas exactas al montar el script de datos.
 
 ---
@@ -837,15 +857,20 @@ Unas **50 especies** elegidas para cubrir los 18 tipos, más 4 legendarios y mí
 | Capa | Tecnología |
 |---|---|
 | Frontend | React + Vite + TypeScript + Tailwind |
-| Backend | **Supabase**: Auth, Postgres con RLS, Edge Functions, `pg_cron`, Storage |
+| Backend | **Servidor propio** (`server/`): Node + Hono. Cuentas, el reducer del juego, amigos, rankings, grupos de estudio, avisos de mantenimiento y eventos en tiempo real. Detalle en `docs/server.md` |
+| Base de datos | **PostgreSQL con Drizzle** (migraciones en `server/db/migrations/`). En desarrollo, PGlite embebido (sin Docker); en producción, `DATABASE_URL` y `docker compose` |
+| Cuentas | Correo y contraseña (`scrypt`). Sesión con un token opaco en una cookie `HttpOnly` (`docs/F2-plan.md` §Seguridad) |
+| Estado del jugador | Un documento JSON por usuario (tabla `player_docs`) que **solo escribe el servidor**, con el reducer puro `src/game/actions.ts` y el mismo motor que usa el cliente para mostrar (`src/engine/`). Se guarda en cada acción |
+| Tiempo real | SSE (`GET /api/events`): otra pestaña cambió la partida, solicitudes de amistad, grupos de estudio, sesión cerrada |
 | Internacionalización | `i18next` (react-i18next), con textos en `es` y `en` |
-| Configuración del juego | Tabla `game_config` con parámetros editables sin desplegar: `screenshots_per_session`, `focus_model`, umbrales de liga, probabilidades |
-| Lógica del servidor (Edge Functions) | `session/start`, `session/claim` (cálculo de acciones, recompensas y encuentros), `capture/throw`, `focus/classify` (Claude Haiku 5.5), `weather/current` |
-| Tareas programadas (`pg_cron`) | Cierre de rankings semanal y mensual, rotación de misiones |
-| Datos de Pokémon | Datos propios en el repo, importados de PokeAPI con un script (ver §19.2). **La app nunca llama a PokeAPI.** |
+| Configuración del juego | `data/overrides/custom-game-config.json`, que `npm run build:data` copia a `src/data/game/`: umbrales de liga, probabilidades y demás parámetros. Vive en el repositorio, así que cambiarla exige desplegar |
+| Lógica del servidor | `POST /api/game/action` ejecuta cada acción con el reducer (`start`, `claim`, `throwBall`…); `GET /api/weather`; rutas de amigos, rankings y grupos |
+| Tareas programadas | Ninguna. Los rankings se separan por la clave del periodo (§14) y el motor renueva las misiones con la fecha. El servidor solo borra cada hora las sesiones de login caducadas |
+| Datos de Pokémon | Datos propios en el repo, importados de PokeAPI con un script (ver §19.0). **La app nunca llama a PokeAPI.** |
 | Clima | Open-Meteo (servidor) |
 | Audio | Web Audio API, análisis local |
-| Pantalla | `getDisplayMedia` + canvas para el fotograma |
+
+**Diseño original (reemplazado por F2: servidor propio, ver `docs/F2-plan.md`).** El diseño inicial usaba **Supabase** (Auth, Postgres con RLS, Edge Functions, `pg_cron`, Storage) con Edge Functions `session/start`, `session/claim`, `capture/throw`, `focus/classify` (Claude Haiku 5.5) y `weather/current`; `pg_cron` para cerrar los rankings y rotar las misiones; una tabla `game_config` editable sin desplegar (`screenshots_per_session`, `focus_model`…); y `getDisplayMedia` más un canvas para el fotograma. F2 lo reemplazó por lo de arriba, y la captura de pantalla se descartó (§4).
 
 ### 19.0 Datos del juego: PokeAPI solo como fuente
 
@@ -857,16 +882,32 @@ scripts/import-pokeapi   ──(una vez, o al añadir un pack)──►   data/g
 data/overrides/*.json   (ediciones a mano: stats, tipos, técnicas,     │  se fusionan;
                          capture_rate, efectos, textos ES/EN…)  ───────┤  el override gana
                                                                        ▼
-                                                              data/game/*.json  ──►  semilla de las tablas de Postgres
+                                                              src/data/game/*.json  (npm run build:data; lo importan
+                                                              la app y el servidor)
 ```
 
 - `data/generated/` lo escribe solo el script; nunca se edita a mano.
 - `data/overrides/` es donde se **edita cualquier dato**: la base de un stat de una especie, su tipo, su `capture_rate`, su learnset, los efectos de las técnicas… Cada override afecta solo a los campos que cambia.
 - Volver a importar de PokeAPI **no borra los overrides**. Un validador comprueba que los overrides apuntan a especies y campos que existen.
-- Los sprites siguen la misma idea: se copian los del pack activo al Storage propio (§17).
-- Los parámetros de balance (no los datos de especies) viven en `game_config` (§19).
+- Los sprites siguen la misma idea: `npm run download:sprites` descarga los del pack activo a `public/sprites/`, así que la app no los enlaza desde GitHub en tiempo de ejecución (§17).
+- Los parámetros de balance (no los datos de especies) viven en `data/overrides/custom-game-config.json` (§19).
 
-### 19.1 Modelo de datos (borrador)
+### 19.1 Modelo de datos
+
+**Construido en F2** (`server/db/schema.ts`; detalle en `docs/F2-plan.md` §Esquema y `docs/server.md`). Los datos del juego de cada jugador (equipo, Caja, objetos, Pokédex, misiones, historial, sesión activa, encuentro) **no están en tablas propias**: son un único documento JSON por usuario.
+
+| Tabla | Qué guarda |
+|---|---|
+| `users` | Correo, hash de la contraseña, nombre de entrenador, país y código de amigo |
+| `auth_sessions` | Sesiones de login (solo `sha256` del token), con caducidad deslizante |
+| `player_docs` | El documento del jugador (`doc` jsonb) y su `version` |
+| `active_study_sessions` | Una fila por usuario con sesión de estudio en marcha (garantiza que solo haya una, §15) |
+| `league_scores` | Puntos por usuario, periodo (`week` o `month`) y clave del periodo, para los rankings (§14) |
+| `friendships` | Solicitudes y amistades (`pending` o `accepted`) |
+| `study_groups`, `study_group_members`, `study_group_invites` | Estudiar con amigos: la sala, quién entró y cuándo salió, y las invitaciones |
+| `maintenance_windows` | Avisos programados de mantenimiento |
+
+**Diseño original (reemplazado por F2: un documento por jugador y servidor propio, ver `docs/F2-plan.md`).** El borrador inicial repartía todo en tablas relacionales de Supabase. Se conserva como referencia de qué datos tiene cada Pokémon y cada sesión; no es el esquema real (por ejemplo, no existen `profiles`, `species` ni `moves` como tablas, ni `leaderboard_snapshots`, ni `trades`, ni el estado `blocked`):
 
 ```
 profiles(id, username, username_changed_at, friend_code, avatar_pokemon_id, locale, timezone, utc_offset_zone,
@@ -898,10 +939,10 @@ trades(id, from_id, to_id, offered_pokemon_id, requested_pokemon_id, status, cre
 |---|---|
 | **F0 — Simulador de balance** | Script que simula semanas de estudio con distintos perfiles de jugador y equipos. Ajusta los valores [calibrar]: puntos, EXP, Polvo, ligas, probabilidades de captura. |
 | **F1 — Núcleo local** | Datos del Pack 1, temporizador, equipo y técnicas, encuentros, captura, caja y Pokédex. Sin backend (localStorage). |
-| **F2 — Online** | Registro e inicio de sesión, onboarding con inicial, perfil, amigos (solicitudes, código de amigo), sesiones y tiradas en el servidor, Puntos de Equipo, ligas, rankings de amigos, zona y global. |
-| **F3 — Foco** | Reclamar, captura de pantalla con IA, perfil sonoro, gráficas. |
-| **F4 — Progresión profunda** | Caramelos, Polvo, naturalezas, habilidades, límite de nivel, misiones, evoluciones especiales, nivel de entrenador, Tera. |
-| **F5 — Contenido y social** | Más packs, intercambios entre amigos, condición Hada, detección de anomalías. |
+| **F2 — Online** | **Hecha, con servidor propio** (Node + Hono + PostgreSQL), no con Supabase: registro con correo y contraseña (país al registrarse), inicio de sesión con cookie `HttpOnly`, onboarding con inicial, amigos (solicitudes, código de amigo), progreso, sesiones y tiradas en el servidor, Puntos de Equipo, ligas y rankings semanal y mensual de amigos, país y global. Ver `docs/F2-plan.md`. Pendientes: recuperación de contraseña por correo, probar con PostgreSQL real (`docs/PENDING.md`). |
+| **F3 — Foco** | **Hecha.** Reclamar, perfil sonoro con el micrófono (con calibración), clima real con Open-Meteo y gráficas (ver `docs/PENDING.md`, F3). **Descartada (2026-11-05): la captura de pantalla con IA**; el Foco se queda como una etiqueta neutra (§4). |
+| **F4 — Progresión profunda** | Los objetos avanzados y lo que se hace con ellos: la **Teracristalización** (§9.4) y las **MT** (§7), cuyos objetos (Teralitos y MT) ya caen de misiones pero todavía no sirven para nada, y las **Mentas** (§6.2), las **Chapas** (§6.1) y la **Cápsula Habilidad** (§6.3), que aún no existen. Salvo las MT, se desbloquean con el nivel de entrenador (§12.7). Lo demás que decía esta fase (Caramelos, Polvo, naturalezas, habilidades, límite de nivel, misiones, evoluciones especiales y nivel de entrenador) salió en F1. Ver `docs/PENDING.md`. |
+| **F5 — Contenido y social** | Más packs, intercambios entre amigos, detección de anomalías. La condición Hada ya existe: llegó con las sesiones de estudio en grupo (`docs/session-depth-plan.md`, paquete C). |
 
 ### 20.1 Estrategia de balance de stats
 
@@ -909,7 +950,7 @@ Los stats de PokeAPI fueron diseñados para combates, no para PokeFocus (§5.1),
 
 | Capa | Dónde | Qué hace | Ejemplo |
 |---|---|---|---|
-| **1. Transformación global por stat** | `game_config` | Una curva por stat que comprime los extremos antes de usarlo (p. ej. `efectiva = 50 + (base − 50) · k`, o una raíz) | Que la Velocidad de Ninjask (160) no le dé 30 veces más acciones que Shuckle (5) |
+| **1. Transformación global por stat** | Configuración del juego (`statCurves` en `custom-game-config.json`) | Una curva por stat que comprime los extremos antes de usarlo (p. ej. `efectiva = 50 + (base − 50) · k`, o una raíz) | Que la Velocidad de Ninjask (160) no le dé 30 veces más acciones que Shuckle (5) |
 | **2. Curación por especie en cada pack** | `data/overrides/` | **Cada especie que se añade se revisa** y se ajustan sus stats base según su identidad y el rol que debe tener en PokeFocus. Es un paso obligatorio de cada pack | Machamp: brutal en Captura, pero con un Rendimiento suficiente para no quedar fuera del ranking. Shedinja (1 PS base) necesita Energía jugable. Shuckle (Def. 230) y Blissey (PS 255) se moderan |
 | **3. Detección con el simulador** | F0 | Calcula un **"valor de estudio"** por especie (puntos esperados al día con perfiles de jugador típicos) y marca las especies fuera de banda | Ninguna evolución final por debajo del percentil 25 de su etapa; legendarios arriba, pero con techo |
 

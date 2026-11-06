@@ -29,7 +29,9 @@
     "sessionLive": "Sesión en curso",
     "sessionDone": "Sesión terminada",
     "missions": "Misiones",
-    "friends": "Amigos"
+    "friends": "Amigos",
+    "changelog": "Novedades",
+    "admin": "Administración"
   },
   "trainer": {
     "level": "Entrenador nv. {{level}}",
@@ -157,6 +159,28 @@
     "allrounder": {
       "name": "Equilibrado",
       "body": "Sin puntos débiles: encaja en cualquier equipo."
+    }
+  },
+  "roleInfo": {
+    "prefix": "Rol",
+    "aria": "Rol: {{name}}",
+    "species": "Rol de la especie: lo comparten todos los de su especie y resume en qué destaca (normalmente, su mejor estadística base). No tiene efecto propio.",
+    "notNature": "No es su naturaleza: esa es de este Pokémon y sí cambia sus estadísticas.",
+    "natureAria": "Qué es la naturaleza",
+    "natureTip": "La naturaleza es de este Pokémon, no de su especie: sube una estadística un 10% y baja otra un 10% (las neutras no cambian nada). El rol, en cambio, es de la especie y no cambia nada.",
+    "against": {
+      "scholar": "Su naturaleza {{nature}} baja el Rendimiento: es un Estudioso que da menos puntos de lo normal.",
+      "hunter": "Su naturaleza {{nature}} baja la Captura: es un Cazador que debilita menos a los salvajes de lo normal.",
+      "sprinter": "Su naturaleza {{nature}} baja el Ritmo: es un Velocista más lento de lo normal.",
+      "technician": "Su naturaleza {{nature}} baja la Técnica: es un Técnico que activa sus técnicas menos a menudo de lo normal.",
+      "guardian": "Su naturaleza {{nature}} baja el Aguante: es un Guardián que resiste menos de lo normal."
+    },
+    "with": {
+      "scholar": "Su naturaleza {{nature}} sube el Rendimiento: es un Estudioso que da más puntos de lo normal.",
+      "hunter": "Su naturaleza {{nature}} sube la Captura: es un Cazador que debilita más a los salvajes de lo normal.",
+      "sprinter": "Su naturaleza {{nature}} sube el Ritmo: es un Velocista más rápido de lo normal.",
+      "technician": "Su naturaleza {{nature}} sube la Técnica: es un Técnico que activa sus técnicas más a menudo de lo normal.",
+      "guardian": "Su naturaleza {{nature}} sube el Aguante: es un Guardián que resiste más de lo normal."
     }
   },
   "pokemon": {
@@ -580,7 +604,8 @@
       "title": "Acerca de",
       "body": "PokeFocus convierte tus horas de estudio en un equipo Pokémon que estudia contigo. Tu progreso se guarda en tu cuenta, en el servidor.",
       "credits": "Sprites de PokeAPI y Pokémon Showdown. Datos de PokeAPI. Música y efectos sintetizados en tu navegador.",
-      "version": "Versión {{version}}"
+      "version": "Versión {{version}}",
+      "changelog": "Ver las novedades de cada versión"
     }
   },
   "notify": {
@@ -680,7 +705,9 @@
       "wrong_password": "La contraseña actual no es correcta.",
       "invalid_password": "La contraseña actual no es correcta.",
       "unauthorized": "Tu sesión terminó. Vuelve a entrar.",
-      "invalid_body": "Revisa los datos del formulario."
+      "invalid_body": "Revisa los datos del formulario.",
+      "name_locked": "Cambiaste tu nombre hace poco. Inténtalo más adelante.",
+      "country_locked": "Cambiaste tu país hace poco. Inténtalo más adelante."
     },
     "friends": {
       "not_found": "No hay ningún entrenador con ese código.",
@@ -1366,7 +1393,10 @@
   "focus": {
     "muteMusic": "Silenciar la música",
     "musicOn": "Música",
-    "muteMusicHint": "Activa o silencia solo la música de la sesión. Los sonidos y el aviso de fin siguen sonando."
+    "muteMusicHint": "Activa o silencia solo la música de la sesión. Los sonidos y el aviso de fin siguen sonando.",
+    "soundLocked": "Toca para activar el sonido",
+    "soundLockedNote": "El navegador pausó el sonido al recargar la página. Actívalo para oír el aviso de fin aunque estés en otra pestaña.",
+    "soundOn": "Sonido activado"
   },
   "missions": {
     "title": "Misiones",
@@ -1467,7 +1497,20 @@
     "unknownDevice": "Dispositivo desconocido",
     "logoutAllTitle": "¿Cerrar sesión en todos los dispositivos?",
     "logoutAllBody": "Saldrás también en este. Tu progreso queda guardado en el servidor; vuelve a entrar cuando quieras.",
-    "logoutAllConfirm": "Cerrar sesión en todos"
+    "logoutAllConfirm": "Cerrar sesión en todos",
+    "lockHint": "Después de cambiarlo, no podrás volver a hacerlo durante {{days}} días.",
+    "lockedUntil": "Podrás cambiarlo de nuevo el {{date}}.",
+    "confirmTitle": "¿Guardar los cambios?",
+    "confirmName": "Tu nombre pasará a ser «{{name}}». No podrás volver a cambiarlo durante {{days}} días.",
+    "confirmCountry": "Tu país pasará a ser {{country}}. No podrás volver a cambiarlo durante {{days}} días.",
+    "confirmSave": "Confirmar cambios",
+    "nameStillLocked": "No se pudo cambiar el nombre.",
+    "countryStillLocked": "No se pudo cambiar el país.",
+    "privacy": "Privacidad",
+    "anonymous": "Aparecer como «Entrenador anónimo» en los rankings global y de país",
+    "anonymousHint": "Tus amigos siguen viendo tu nombre.",
+    "anonymousOn": "Ahora apareces como «Entrenador anónimo» en los rankings global y de país.",
+    "anonymousOff": "Tu nombre vuelve a verse en los rankings global y de país."
   },
   "leaderboard": {
     "title": "Rankings",
@@ -1493,6 +1536,8 @@
       "points": "Puntos"
     },
     "you": "(tú)",
+    "anonymous": "Entrenador anónimo",
+    "hidden": "Oculto para los demás",
     "notRanked": "Aún no tienes puntos en este periodo. Termina una sesión para entrar al ranking.",
     "weekKey": "Semana {{week}} de {{year}}.",
     "weekOf": "Semana del {{date}}.",
@@ -1946,6 +1991,92 @@
       "denied": "Permiso de ubicación denegado. Puedes escribir tu ciudad en Ajustes.",
       "unavailable": "No se pudo obtener tu ubicación ahora.",
       "timeout": "La ubicación tardó demasiado. Inténtalo otra vez."
+    }
+  },
+  "release": {
+    "version": "v{{version}}",
+    "unseen": "Hay novedades que no has visto",
+    "alpha": {
+      "label": "Alfa",
+      "title": "Estamos en alfa",
+      "tip": "Versión alfa: el juego está en construcción. Puede haber errores y cambios grandes entre versiones.",
+      "body": "PokeFocus está en construcción: lo básico ya funciona, pero todavía faltan funciones y hay cosas por pulir. Puede haber errores y cambios grandes entre versiones."
+    },
+    "beta": {
+      "label": "Beta",
+      "title": "Estamos en beta",
+      "tip": "Versión beta: el juego ya tiene lo esencial y seguimos puliéndolo y corrigiendo errores.",
+      "body": "PokeFocus ya tiene lo esencial. Seguimos puliendo detalles y corrigiendo errores, y aún puede haber algún cambio."
+    }
+  },
+  "changelog": {
+    "title": "Novedades",
+    "intro": "Esto es lo que cambió en cada versión de PokeFocus, de la más nueva a la más antigua.",
+    "versions": "Versiones",
+    "versionLabel": "Versión {{version}}",
+    "latest": "Última",
+    "roadmapTitle": "Lo que viene",
+    "roadmap": {
+      "progression": "Progresión profunda: Teracristalización, MT, Mentas, Chapas y Cápsula Habilidad.",
+      "trades": "Intercambios entre amigos y más packs de especies.",
+      "recovery": "Recuperar la contraseña por correo."
+    },
+    "roadmapNote": "Son planes, todavía sin fecha.",
+    "kind": {
+      "new": "Nuevo",
+      "improved": "Mejorado",
+      "fixed": "Corregido"
+    }
+  },
+  "maintenance": {
+    "upcomingTitle": "Mantenimiento programado",
+    "activeTitle": "Mantenimiento en curso",
+    "until": "Hasta {{until}}",
+    "upcomingAdvice": "Empieza {{when}}. Durante ese tiempo el juego puede no estar disponible: intenta no tener una sesión de estudio en curso.",
+    "activeAdvice": "Algunas funciones pueden no responder hasta que termine.",
+    "dismiss": "Ocultar aviso"
+  },
+  "admin": {
+    "title": "Administración",
+    "intro": "Herramientas para quien administra el servidor.",
+    "access": {
+      "title": "Acceso",
+      "body": "Escribe el token de administración (la variable ADMIN_TOKEN del servidor). Se recuerda solo mientras esta pestaña siga abierta.",
+      "token": "Token de administración",
+      "unlock": "Entrar",
+      "lock": "Salir de la administración"
+    },
+    "form": {
+      "title": "Programar un mantenimiento",
+      "start": "Inicio",
+      "end": "Fin",
+      "zone": "Las horas son de tu zona horaria ({{zone}}). Cada jugador verá el aviso en la suya.",
+      "note": "Mensaje (opcional)",
+      "noteHint": "{{count}}/{{max}} · Se muestra tal cual a los jugadores.",
+      "preview": "Así lo verán los jugadores",
+      "info": "Esto solo avisa: no detiene el servidor ni bloquea nada. El aviso se muestra desde que lo publicas hasta que termina la ventana.",
+      "publish": "Publicar aviso",
+      "published": "Aviso publicado"
+    },
+    "list": {
+      "title": "Avisos programados",
+      "empty": "No hay avisos programados.",
+      "active": "En curso",
+      "upcoming": "Programado",
+      "remove": "Quitar el aviso de {{when}}",
+      "removed": "Aviso quitado"
+    },
+    "errors": {
+      "admin_disabled": "Este servidor no tiene la administración activada. Define ADMIN_TOKEN (mínimo 24 caracteres) y reinícialo.",
+      "unauthorized": "Token incorrecto.",
+      "rate_limited_one": "Demasiados intentos. Espera {{count}} minuto y vuelve a intentarlo.",
+      "rate_limited_other": "Demasiados intentos. Espera {{count}} minutos y vuelve a intentarlo.",
+      "too_many": "Ya hay 20 avisos pendientes. Quita alguno antes de añadir otro.",
+      "invalid_body": "Revisa las fechas y el mensaje.",
+      "invalidDate": "Escribe una fecha y una hora válidas.",
+      "endBeforeStart": "El fin tiene que ser después del inicio.",
+      "endInPast": "El fin ya pasó.",
+      "tooLong": "La ventana puede durar 14 días como máximo."
     }
   }
 }

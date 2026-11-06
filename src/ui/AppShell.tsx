@@ -1,15 +1,17 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 import { BALL_ORDER, missionsView } from '../engine'
 import { DevToggle } from './dev/DevPanel'
+import { StageBadge } from './changelog/StageBadge'
 import { GroupInviteNotice } from './GroupInviteNotice'
+import { MaintenanceBanner } from './MaintenanceBanner'
 import { BallIcon, IconButton, Logo, PixelIcon, Tooltip } from './components'
 import { hintAnchor, useHintEvent } from './hints'
 import { cx } from './lib/cx'
 import { flagEmoji } from './lib/countries'
 import { fmtCountdown, fmtInt } from './lib/format'
-import { hrefTo, useRoute } from './router'
+import { hrefTo, useRoute, useRouteParams } from './router'
 import { findRoute, ROUTES } from './routes'
 import { useNow } from './store/clock'
 import { useAuth } from './store/auth'
@@ -27,6 +29,7 @@ export function AppShell() {
   const Screen = findRoute(route).component
   const phase = usePhase()
   const focusing = phase === 'focus' || phase === 'paused'
+  useFocusMainOnNavigate(route)
   // Prefetch the other screens once the browser is idle (they are small chunks).
   useEffect(() => {
     const go = () => ROUTES.forEach((r) => void r.preload?.())
@@ -40,6 +43,7 @@ export function AppShell() {
       <GroupInviteNotice />
       <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
+          <MaintenanceBanner className="mb-6" />
           <Suspense fallback={<ScreenLoading />}>
             <Screen />
           </Suspense>
@@ -47,6 +51,28 @@ export function AppShell() {
       </main>
     </div>
   )
+}
+
+/**
+ * Keyboard and screen-reader users: after navigating, put focus on <main> (the
+ * link or button they pressed is gone or no longer relevant), so the next Tab
+ * starts inside the new screen (QA R-07).
+ * - A different screen always takes focus.
+ * - Within one screen (`#/box` → `#/box/p12`, or Prev/Next in the detail) focus
+ *   moves only if it was lost, so pressing Next repeatedly keeps working.
+ * - Not on first load, so a reload does not skip the side menu.
+ */
+function useFocusMainOnNavigate(route: string) {
+  const params = useRouteParams().join('/')
+  const seen = useRef({ route, params })
+  useEffect(() => {
+    const before = seen.current
+    seen.current = { route, params }
+    if (before.route === route && before.params === params) return
+    const active = document.activeElement
+    const lost = !active || active === document.body || !document.body.contains(active)
+    if (before.route !== route || lost) document.getElementById('main')?.focus({ preventScroll: true })
+  }, [route, params])
 }
 
 function ScreenLoading() {
@@ -69,9 +95,16 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
         'sm:sticky sm:top-0 sm:flex sm:h-dvh sm:flex-col',
       )}
     >
-      <a href={hrefTo('home')} className="hidden px-5 pt-6 pb-5 xl:block" aria-label="PokeFocus">
-        <Logo height={32} />
-      </a>
+      <div className="hidden px-5 pt-6 pb-5 xl:flex xl:flex-col xl:items-start xl:gap-1">
+        <a href={hrefTo('home')} aria-label="PokeFocus">
+          <Logo height={32} />
+        </a>
+        <StageBadge />
+      </div>
+      {/* Icon-only rail (sm–xl): just the stage. Hidden in the phone's bottom bar (it is in Settings) and at xl (it sits under the logo). */}
+      <div className="mt-3 hidden justify-center sm:flex xl:hidden">
+        <StageBadge compact />
+      </div>
       <ul className="flex justify-around gap-1 p-2 sm:flex-col sm:justify-start sm:px-3 sm:py-4 xl:pt-0">
         {ROUTES.filter((r) => r.nav).map((r) => {
           const active = r.id === route

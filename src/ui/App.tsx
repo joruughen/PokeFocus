@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DevPanel } from './dev/DevPanel'
 import { AppShell } from './AppShell'
@@ -9,6 +10,7 @@ import { FirstRun } from './screens/FirstRun'
 import { Splash } from './screens/Splash'
 import { SessionWatcher } from './SessionWatcher'
 import { MicBridge } from './MicBridge'
+import { startAnnouncements } from './store/announcements'
 import { useAuth } from './store/auth'
 import { useGame } from './store/game'
 import { devEnabled, usePrefs } from './store/prefs'
@@ -19,6 +21,7 @@ function boot() {
   if (booted) return
   booted = true
   void useAuth.getState().refresh()
+  startAnnouncements()
 }
 
 /**
@@ -33,6 +36,15 @@ export default function App() {
   const hasPlayer = useGame((s) => s.player !== null)
   const ready = status === 'authed' && loaded
   usePrefs((s) => s.dev.panelOpen) // re-render when the dev panel is toggled
+  // Finishing the first run unmounts the button that had keyboard focus (focus falls to <body>): put it on <main> (QA R-07).
+  const sawFirstRun = useRef(false)
+  useEffect(() => {
+    if (ready && !hasPlayer) sawFirstRun.current = true
+    else if (ready && hasPlayer && sawFirstRun.current) {
+      sawFirstRun.current = false
+      document.getElementById('main')?.focus({ preventScroll: true })
+    }
+  }, [ready, hasPlayer])
   return (
     <AudioBridge>
     <TooltipProvider delay={250}>

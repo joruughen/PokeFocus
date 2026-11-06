@@ -20,6 +20,8 @@ export interface SoundPipeline {
   readonly pending: number
   /** Close the window: classify it and update the noise estimate. Null without frames. */
   endWindow(): { kind: SoundKind; w: WindowFeatures } | null
+  /** Drop the frames of this window unclassified (too few to judge); the noise estimate is untouched. */
+  discardWindow(): void
   /** Current noise estimate (null before the first window of an uncalibrated mic). */
   readonly noise: NoiseProfile | null
 }
@@ -47,6 +49,9 @@ export function createPipeline(opts: { thresholds: Thresholds; noise: NoiseProfi
         loud: w.rmsDb > opts.thresholds.maxSilenceDb,
       })
       return { kind, w }
+    },
+    discardWindow() {
+      frames = []
     },
     get noise() {
       return tracker.profile

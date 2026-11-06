@@ -1,16 +1,20 @@
 /**
  * In-memory stand-in for the game API, for store tests: a `fetch` replacement
  * that runs the real reducer (`src/game/actions.ts`) on one user's doc, the way
- * server/ does, honoring the dev headers (`x-dev-now`, `x-dev-seed`).
+ * server/ does, honoring the dev headers (`x-dev-now`, `x-dev-seed`). It also
+ * answers GET/PATCH /api/auth/me for one account with the name / country locks
+ * of src/game/protocol.ts ("Account changes").
  */
 import { vi } from 'vitest'
 import { createRng } from '../../engine'
 import { applyAction } from '../../game/actions'
-import { DEV_NOW_HEADER, DEV_SEED_HEADER, EMPTY_DOC, type GameAction, type GameDoc } from '../../game/protocol'
+import { COUNTRY_LOCK_DAYS, DEV_NOW_HEADER, DEV_SEED_HEADER, EMPTY_DOC, NAME_LOCK_DAYS, type GameAction, type GameDoc, type PublicUser } from '../../game/protocol'
 
 export interface FakeServer {
   doc: GameDoc
   version: number
+  /** The signed-in account (GET/PATCH /api/auth/me). Edit it to set up a locked name or country. */
+  user: PublicUser
   /** Every request seen: method, path, headers, body. */
   calls: { method: string; path: string; headers: Record<string, string>; body: unknown }[]
   /** Force the next response (e.g. a 401 or a network error). */
@@ -22,15 +26,33 @@ export interface FakeServer {
 const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } })
 
+const DAY_MS = 86_400_000
+
+function freshUser(trainerName: string): PublicUser {
+  return {
+    id: 'u1',
+    email: 'ash@example.com',
+    trainerName,
+    country: 'PE',
+    friendCode: 'ABCD2345',
+    createdAt: 0,
+    nameChangedAt: null,
+    countryChangedAt: null,
+    anonymousRankings: false,
+  }
+}
+
 export function installFakeServer(opts: { trainerName?: string; skewMs?: number } = {}): FakeServer {
   const server: FakeServer = {
     doc: EMPTY_DOC,
     version: 0,
+    user: freshUser(opts.trainerName ?? 'Test'),
     calls: [],
     failNext: null,
     reset() {
       server.doc = EMPTY_DOC
       server.version = 0
+      server.user = freshUser(opts.trainerName ?? 'Test')
       server.calls = []
       server.failNext = null
     },
@@ -64,6 +86,24 @@ export function installFakeServer(opts: { trainerName?: string; skewMs?: number 
       server.doc = r.doc
       server.version++
       return json(200, { doc: server.doc, version: server.version, serverNow: serverNow(), result: r.result })
+    }
+    if (path === '/api/auth/me' && method === 'GET') return json(200, { user: server.user })
+    if (path === '/api/auth/me' && method === 'PATCH') {
+      const patch = (body ?? {}) as { trainerName?: string; country?: string; anonymousRankings?: boolean }
+      const at = serverNow()
+      const u = server.user
+      // A change is a different value; the same value is a no-op. Any locked change fails the whole request.
+      const nameChange = patch.trainerName !== undefined && patch.trainerName !== u.trainerName
+      const countryChange = patch.country !== undefined && patch.country !== u.country
+      if (nameChange && u.nameChangedAt !== null && u.nameChangedAt + NAME_LOCK_DAYS * DAY_MS > at) return json(409, { error: 'name_locked', unlockAt: u.nameChangedAt + NAME_LOCK_DAYS * DAY_MS })
+      if (countryChange && u.countryChangedAt !== null && u.countryChangedAt + COUNTRY_LOCK_DAYS * DAY_MS > at) return json(409, { error: 'country_locked', unlockAt: u.countryChangedAt + COUNTRY_LOCK_DAYS * DAY_MS })
+      server.user = {
+        ...u,
+        ...(nameChange && { trainerName: patch.trainerName!, nameChangedAt: at }),
+        ...(countryChange && { country: patch.country!, countryChangedAt: at }),
+        ...(patch.anonymousRankings !== undefined && { anonymousRankings: patch.anonymousRankings }),
+      }
+      return json(200, { user: server.user })
     }
     return json(404, { error: 'not_found' })
   }

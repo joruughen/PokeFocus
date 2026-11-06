@@ -29,7 +29,9 @@
     "sessionLive": "Session running",
     "sessionDone": "Session finished",
     "missions": "Missions",
-    "friends": "Friends"
+    "friends": "Friends",
+    "changelog": "News",
+    "admin": "Admin"
   },
   "trainer": {
     "level": "Trainer lv. {{level}}",
@@ -157,6 +159,28 @@
     "allrounder": {
       "name": "All-rounder",
       "body": "No weak spots: fits any team."
+    }
+  },
+  "roleInfo": {
+    "prefix": "Role",
+    "aria": "Role: {{name}}",
+    "species": "Species role: every Pokémon of its species shares it. It sums up what the species is best at (usually its highest base stat) and has no effect of its own.",
+    "notNature": "It is not its nature: that one belongs to this Pokémon and does change its stats.",
+    "natureAria": "What a nature is",
+    "natureTip": "The nature belongs to this Pokémon, not to its species: it raises one stat by 10% and lowers another by 10% (neutral ones change nothing). The role belongs to the species and changes nothing.",
+    "against": {
+      "scholar": "Its {{nature}} nature lowers Output: it is a Scholar that earns fewer points than usual.",
+      "hunter": "Its {{nature}} nature lowers Catch: it is a Hunter that weakens wild Pokémon less than usual.",
+      "sprinter": "Its {{nature}} nature lowers Pace: it is a Sprinter that acts slower than usual.",
+      "technician": "Its {{nature}} nature lowers Technique: it is a Technician that triggers its techniques less often than usual.",
+      "guardian": "Its {{nature}} nature lowers Grit: it is a Guardian that holds up worse than usual."
+    },
+    "with": {
+      "scholar": "Its {{nature}} nature raises Output: it is a Scholar that earns more points than usual.",
+      "hunter": "Its {{nature}} nature raises Catch: it is a Hunter that weakens wild Pokémon more than usual.",
+      "sprinter": "Its {{nature}} nature raises Pace: it is a Sprinter that acts faster than usual.",
+      "technician": "Its {{nature}} nature raises Technique: it is a Technician that triggers its techniques more often than usual.",
+      "guardian": "Its {{nature}} nature raises Grit: it is a Guardian that holds up better than usual."
     }
   },
   "pokemon": {
@@ -580,7 +604,8 @@
       "title": "About",
       "body": "PokeFocus turns your study hours into a Pokémon team that studies with you. Your progress is saved to your account on the server.",
       "credits": "Sprites from PokeAPI and Pokémon Showdown. Data from PokeAPI. Music and effects are synthesized in your browser.",
-      "version": "Version {{version}}"
+      "version": "Version {{version}}",
+      "changelog": "See what changed in each version"
     }
   },
   "notify": {
@@ -680,7 +705,9 @@
       "wrong_password": "The current password is wrong.",
       "invalid_password": "The current password is wrong.",
       "unauthorized": "Your session ended. Sign in again.",
-      "invalid_body": "Check the form fields."
+      "invalid_body": "Check the form fields.",
+      "name_locked": "You changed your name recently. Try again later.",
+      "country_locked": "You changed your country recently. Try again later."
     },
     "friends": {
       "not_found": "No trainer has that code.",
@@ -1366,7 +1393,10 @@
   "focus": {
     "muteMusic": "Mute the music",
     "musicOn": "Music",
-    "muteMusicHint": "Turns only the session music on or off. Sounds and the end chime keep playing."
+    "muteMusicHint": "Turns only the session music on or off. Sounds and the end chime keep playing.",
+    "soundLocked": "Tap to turn sound on",
+    "soundLockedNote": "Your browser paused sound when the page reloaded. Turn it on to hear the end chime even from another tab.",
+    "soundOn": "Sound on"
   },
   "missions": {
     "title": "Missions",
@@ -1467,7 +1497,20 @@
     "unknownDevice": "Unknown device",
     "logoutAllTitle": "Sign out on every device?",
     "logoutAllBody": "This one too. Your progress is saved on the server; sign in again whenever you like.",
-    "logoutAllConfirm": "Sign out everywhere"
+    "logoutAllConfirm": "Sign out everywhere",
+    "lockHint": "Once you change it, you can't change it again for {{days}} days.",
+    "lockedUntil": "You can change it again on {{date}}.",
+    "confirmTitle": "Save these changes?",
+    "confirmName": "Your name will become “{{name}}”. You won't be able to change it again for {{days}} days.",
+    "confirmCountry": "Your country will become {{country}}. You won't be able to change it again for {{days}} days.",
+    "confirmSave": "Confirm changes",
+    "nameStillLocked": "Couldn't change your name.",
+    "countryStillLocked": "Couldn't change your country.",
+    "privacy": "Privacy",
+    "anonymous": "Appear as “Anonymous trainer” on the global and country leaderboards",
+    "anonymousHint": "Your friends still see your name.",
+    "anonymousOn": "You now appear as “Anonymous trainer” on the global and country leaderboards.",
+    "anonymousOff": "Your name shows again on the global and country leaderboards."
   },
   "leaderboard": {
     "title": "Leaderboards",
@@ -1493,6 +1536,8 @@
       "points": "Points"
     },
     "you": "(you)",
+    "anonymous": "Anonymous trainer",
+    "hidden": "Hidden from others",
     "notRanked": "You have no points in this period yet. Finish a session to join the leaderboard.",
     "weekKey": "Week {{week}} of {{year}}.",
     "weekOf": "Week of {{date}}.",
@@ -1946,6 +1991,92 @@
       "denied": "Location permission denied. You can type your city in Settings.",
       "unavailable": "Your location could not be found right now.",
       "timeout": "The location took too long. Try again."
+    }
+  },
+  "release": {
+    "version": "v{{version}}",
+    "unseen": "There is news you have not seen",
+    "alpha": {
+      "label": "Alpha",
+      "title": "We are in alpha",
+      "tip": "Alpha version: the game is under construction. Expect bugs and big changes between versions.",
+      "body": "PokeFocus is under construction: the basics work, but features are still missing and there is plenty to polish. Expect bugs and big changes between versions."
+    },
+    "beta": {
+      "label": "Beta",
+      "title": "We are in beta",
+      "tip": "Beta version: the game has the essentials and we keep polishing it and fixing bugs.",
+      "body": "PokeFocus has the essentials. We keep polishing details and fixing bugs, and a few changes may still happen."
+    }
+  },
+  "changelog": {
+    "title": "News",
+    "intro": "This is what changed in each version of PokeFocus, newest first.",
+    "versions": "Versions",
+    "versionLabel": "Version {{version}}",
+    "latest": "Latest",
+    "roadmapTitle": "Coming up",
+    "roadmap": {
+      "progression": "Deeper progression: Tera Crystallization, TMs, Mints, Badges and Ability Capsule.",
+      "trades": "Trading between friends and more species packs.",
+      "recovery": "Password recovery by email."
+    },
+    "roadmapNote": "These are plans, with no date yet.",
+    "kind": {
+      "new": "New",
+      "improved": "Improved",
+      "fixed": "Fixed"
+    }
+  },
+  "maintenance": {
+    "upcomingTitle": "Scheduled maintenance",
+    "activeTitle": "Maintenance in progress",
+    "until": "Until {{until}}",
+    "upcomingAdvice": "It starts {{when}}. During that time the game may be unavailable: try not to have a study session running.",
+    "activeAdvice": "Some features may not respond until it ends.",
+    "dismiss": "Hide notice"
+  },
+  "admin": {
+    "title": "Admin",
+    "intro": "Tools for whoever runs the server.",
+    "access": {
+      "title": "Access",
+      "body": "Enter the admin token (the server's ADMIN_TOKEN variable). It is remembered only while this tab stays open.",
+      "token": "Admin token",
+      "unlock": "Enter",
+      "lock": "Leave admin"
+    },
+    "form": {
+      "title": "Schedule maintenance",
+      "start": "Start",
+      "end": "End",
+      "zone": "Times are in your time zone ({{zone}}). Each player sees the notice in theirs.",
+      "note": "Message (optional)",
+      "noteHint": "{{count}}/{{max}} · Shown to players exactly as written.",
+      "preview": "How players will see it",
+      "info": "This only informs: it does not stop the server or block anything. The notice shows from the moment you publish it until the window ends.",
+      "publish": "Publish notice",
+      "published": "Notice published"
+    },
+    "list": {
+      "title": "Scheduled notices",
+      "empty": "No notices scheduled.",
+      "active": "Running",
+      "upcoming": "Scheduled",
+      "remove": "Remove the notice for {{when}}",
+      "removed": "Notice removed"
+    },
+    "errors": {
+      "admin_disabled": "Admin is not enabled on this server. Set ADMIN_TOKEN (at least 24 characters) and restart it.",
+      "unauthorized": "Wrong token.",
+      "rate_limited_one": "Too many attempts. Wait {{count}} minute and try again.",
+      "rate_limited_other": "Too many attempts. Wait {{count}} minutes and try again.",
+      "too_many": "There are already 20 pending notices. Remove one before adding another.",
+      "invalid_body": "Check the dates and the message.",
+      "invalidDate": "Enter a valid date and time.",
+      "endBeforeStart": "The end must be after the start.",
+      "endInPast": "The end is already in the past.",
+      "tooLong": "A window can last 14 days at most."
     }
   }
 }

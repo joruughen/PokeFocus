@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { audio } from '../audio'
 import { setHintsSuppressed } from './hints'
 import { chime, electLeader, isLeaderTab, notify } from './lib/notify'
-import { resyncSessionEnd, sessionEndScheduled } from './lib/sound'
+import { resyncSessionEnd, sessionEndScheduled, syncSessionEndToAudio } from './lib/sound'
 import { onTick } from './store/clock'
 import { phaseOf, timerOf, useGame } from './store/game'
 import { now, usePrefs } from './store/prefs'
@@ -15,7 +16,10 @@ const breaksNotified = new Set<string>()
  * - when the timer reaches 0, the leader tab notifies once (persisted flag),
  *   plays the `sessionEnd` bells (unless already scheduled on the audio clock
  *   at start) and changes the tab title;
- * - when a pomodoro break ends, the same signals (once per break).
+ * - when a pomodoro break ends, the same signals (once per break);
+ * - when the audio context starts running (first gesture after a reload, the
+ *   "tap to turn sound on" chip), put the end bell on the audio clock so it
+ *   rings on time in a hidden tab (a late claim would lower the reward).
  */
 export function SessionWatcher() {
   const { t } = useTranslation()
@@ -47,7 +51,14 @@ export function SessionWatcher() {
       if (s.dev.anchor !== prev.dev.anchor) resyncSessionEnd()
     })
     const offTick = onTick(check)
+    let audioState = audio.getSnapshot().state
+    const offAudio = audio.subscribe(() => {
+      const st = audio.getSnapshot().state
+      if (st === 'running' && audioState !== 'running') syncSessionEndToAudio(isLeaderTab())
+      audioState = st
+    })
     return () => {
+      offAudio()
       offClock()
       offTick()
     }

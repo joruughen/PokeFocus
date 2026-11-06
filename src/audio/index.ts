@@ -11,7 +11,7 @@
 import { AudioEngine, installAudioUnlock as installUnlock } from './engine'
 import type { AudioSettings } from './settings'
 
-export { AudioEngine } from './engine'
+export { AudioEngine, soundLocked } from './engine'
 export type { AudioSnapshot, MusicControls, SfxOptions } from './engine'
 export { DEFAULT_AUDIO_SETTINGS, focusMusicAudible, focusMusicPatch, sanitizeAudioSettings } from './settings'
 export type { AudioSettings } from './settings'

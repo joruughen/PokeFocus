@@ -15,6 +15,7 @@ import { useBusy, usePlayer, useScene } from '../../store/selectors'
 import { GroupSessionStatus } from './GroupStudy'
 import { MuteMusicButton } from './MuteMusicButton'
 import { MicIndicator } from './SoundStyle'
+import { SoundUnlockChip } from './SoundUnlockChip'
 
 const cfg = defaultContext().config
 
@@ -47,9 +48,12 @@ export function FocusSession() {
 
   useEffect(() => {
     const prev = document.title
-    document.title = `${fmtCountdown(remaining)} ${paused ? `(${t('session.paused')})` : ''} | PokeFocus`
+    // No double spaces: `document.title` reads back whitespace-collapsed, and the cleanup compares it.
+    const mine = `${fmtCountdown(remaining)}${paused ? ` (${t('session.paused')})` : ''} | PokeFocus`
+    document.title = mine
     return () => {
-      document.title = prev
+      // Keep a title someone else set meanwhile (SessionWatcher's "session over" in a hidden tab).
+      if (document.title === mine) document.title = prev
     }
   })
 
@@ -80,7 +84,7 @@ export function FocusSession() {
       </Stage>
 
       <section aria-labelledby="timer-title" className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
-        <h1 id="timer-title" className="text-xl text-mist-300">
+        <h1 id="timer-title" tabIndex={-1} className="text-xl text-mist-300 outline-none">
           {paused ? t('session.pausedTitle') : t('session.title', { count: session.plannedMinutes })}
         </h1>
         <p
@@ -94,6 +98,8 @@ export function FocusSession() {
         <p className="mt-3 text-mist-300">
           {paused ? t('session.pausedNote') : t('session.endsAt', { time: fmtClock(timer.endsAt, player.profile.timezone, i18n.language) })}
         </p>
+        {/* Shown only while sound is on but the browser keeps it suspended (e.g. after a reload). */}
+        <SoundUnlockChip focusAfterId="timer-title" className="mt-4" />
 
         <div className="mt-8 w-full">
           <ProgressBar value={studied} max={totalMs} ticks={ticks} label={t('session.progress')} ariaValueText={fmtPct(studied / totalMs, i18n.language)} size="lg" />

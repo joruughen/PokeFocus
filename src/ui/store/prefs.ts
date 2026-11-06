@@ -42,20 +42,20 @@ export interface PrefsState {
   /** Getting-started milestones reached (epoch ms). */
   milestones: Partial<Record<Milestone, number>>
   checklistDismissed: boolean
-  /** Last time zone change (real ms), for the 30-day lock. */
-  tzChangedAt: number | null
   /** Hint id → epoch ms (real time) when it was seen or dismissed. */
   seenHints: Record<string, number>
   /** Opt-in: analyse the microphone during sessions (sound profile, GDD §4.3). */
   micEnabled: boolean
+  /** Newest changelog version the player has looked at (null = never recorded: no "new" dot yet). */
+  lastSeenVersion: string | null
   dev: DevSettings
   setLocale: (l: Locale) => void
   setTipsEnabled: (on: boolean) => void
   setAudio: (patch: Partial<AudioSettings>) => void
   markMilestone: (m: Milestone) => void
   setChecklistDismissed: (v: boolean) => void
-  setTzChangedAt: (t: number | null) => void
   setMicEnabled: (on: boolean) => void
+  setLastSeenVersion: (version: string) => void
   markHintSeen: (id: string) => void
   resetHints: () => void
   setDev: (patch: Partial<DevSettings>) => void
@@ -106,9 +106,9 @@ export const usePrefs = create<PrefsState>()(
       audio: { ...DEFAULT_AUDIO_SETTINGS },
       milestones: {},
       checklistDismissed: false,
-      tzChangedAt: null,
       seenHints: {},
       micEnabled: false,
+      lastSeenVersion: null,
       dev: DEFAULT_DEV,
       setLocale: (locale) => {
         void i18n.changeLanguage(locale)
@@ -118,8 +118,8 @@ export const usePrefs = create<PrefsState>()(
       setAudio: (patch) => set((s) => ({ audio: sanitizeAudioSettings({ ...s.audio, ...patch }, s.audio) })),
       markMilestone: (m) => set((s) => (s.milestones[m] ? s : { milestones: { ...s.milestones, [m]: Date.now() } })),
       setChecklistDismissed: (checklistDismissed) => set({ checklistDismissed }),
-      setTzChangedAt: (tzChangedAt) => set({ tzChangedAt }),
       setMicEnabled: (micEnabled) => set({ micEnabled }),
+      setLastSeenVersion: (lastSeenVersion) => set({ lastSeenVersion }),
       markHintSeen: (id) => set((s) => ({ seenHints: { ...s.seenHints, [id]: Date.now() } })),
       resetHints: () => set({ seenHints: {}, tipsEnabled: true }),
       setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
@@ -148,27 +148,29 @@ export const usePrefs = create<PrefsState>()(
       name: STORAGE_KEYS.prefs,
       storage: jsonStorage,
       version: 1,
-      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, tzChangedAt, seenHints, micEnabled, dev }) => ({
+      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, seenHints, micEnabled, lastSeenVersion, dev }) => ({
         locale,
         tipsEnabled,
         audio,
         milestones,
         checklistDismissed,
-        tzChangedAt,
         seenHints,
         micEnabled,
+        lastSeenVersion,
         dev,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<PrefsState> & { sound?: boolean; micHeadphones?: unknown; micCalibrationOffered?: unknown }
+        const p = (persisted ?? {}) as Partial<PrefsState> & { sound?: boolean; micHeadphones?: unknown; micCalibrationOffered?: unknown; tzChangedAt?: unknown }
         // Part A saved `sound: boolean`; it becomes the audio mute.
         const audio = sanitizeAudioSettings(p.audio ?? (p.sound === false ? { muted: true } : {}))
-        // Dropped mic options (headphones declaration, "calibration offered") are ignored.
-        const { sound: _legacy, micHeadphones: _hp, micCalibrationOffered: _offered, ...rest } = p
+        // Dropped options are ignored: the mic headphones declaration, "calibration offered", and the
+        // time-zone change stamp (the 30-day lock is `profile.timezoneChangedAt` in the server document).
+        const { sound: _legacy, micHeadphones: _hp, micCalibrationOffered: _offered, tzChangedAt: _tz, ...rest } = p
         void _legacy
         void _hp
         void _offered
-        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, micEnabled: p.micEnabled === true, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
+        void _tz
+        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, micEnabled: p.micEnabled === true, lastSeenVersion: typeof p.lastSeenVersion === 'string' ? p.lastSeenVersion : null, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
       },
     },
   ),

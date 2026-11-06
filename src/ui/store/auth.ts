@@ -9,13 +9,25 @@
  */
 import { create } from 'zustand'
 import type { AuthSessionInfo, PublicUser } from '../../game/protocol'
-import { errorCode, isApiError, onUnauthorized } from '../api/client'
+import { errorCode, isApiError, onUnauthorized, type ApiError } from '../api/client'
 import { authApi, type RegisterInput } from '../api/endpoints'
 import { connectEvents, disconnectEvents, onServerEvent } from '../api/events'
 import { useGame } from './game'
 import { useFriends } from './social'
 
 export type AuthStatus = 'loading' | 'anon' | 'authed'
+
+/** Body of PATCH /auth/me (src/game/protocol.ts "Account changes"): every field is optional. */
+export interface UpdateMeInput {
+  trainerName?: string
+  country?: string
+  anonymousRankings?: boolean
+}
+
+/** 409 codes of PATCH /auth/me for a field still inside its lock window. */
+export function isAccountLockError(e: unknown): e is ApiError {
+  return isApiError(e) && e.status === 409 && (e.code === 'name_locked' || e.code === 'country_locked')
+}
 
 export interface AuthState {
   status: AuthStatus
@@ -29,7 +41,13 @@ export interface AuthState {
   register: (input: RegisterInput) => Promise<void>
   logout: () => Promise<void>
   logoutAll: () => Promise<void>
-  updateMe: (patch: { trainerName?: string; country?: string }) => Promise<PublicUser>
+  /**
+   * PATCH /auth/me: the answer (the new `PublicUser`) replaces `user`. A locked
+   * field answers 409 `name_locked` / `country_locked`; the clock or the cached
+   * user was stale, so it refreshes the user (the form then shows the real lock)
+   * and still throws.
+   */
+  updateMe: (patch: UpdateMeInput) => Promise<PublicUser>
   changePassword: (current: string, next: string) => Promise<void>
   listSessions: () => Promise<AuthSessionInfo[]>
   revokeSession: (id: string) => Promise<void>
@@ -55,7 +73,7 @@ function signedOut() {
   useAuth.setState({ status: 'anon', user: null })
 }
 
-export const useAuth = create<AuthState>()((set) => ({
+export const useAuth = create<AuthState>()((set, get) => ({
   status: 'loading',
   user: null,
   bootError: null,
@@ -91,9 +109,14 @@ export const useAuth = create<AuthState>()((set) => ({
     signedOut()
   },
   updateMe: async (patch) => {
-    const { user } = await authApi.updateMe(patch)
-    set({ user })
-    return user
+    try {
+      const { user } = await authApi.updateMe(patch)
+      set({ user })
+      return user
+    } catch (e) {
+      if (isAccountLockError(e)) await get().refresh()
+      throw e
+    }
   },
   changePassword: async (current, next) => {
     await authApi.changePassword(current, next)

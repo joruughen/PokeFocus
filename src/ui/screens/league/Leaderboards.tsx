@@ -138,7 +138,7 @@ export function Leaderboards() {
             </thead>
             <tbody>
               {data.rows.map((r) => (
-                <Row key={r.userId} row={r} />
+                <LeaderRow key={r.userId} row={r} scope={scope} />
               ))}
               {mineOutside && (
                 <>
@@ -147,7 +147,7 @@ export function Leaderboards() {
                       ⋮
                     </td>
                   </tr>
-                  <Row row={mineOutside} />
+                  <LeaderRow row={mineOutside} scope={scope} />
                 </>
               )}
             </tbody>
@@ -168,7 +168,13 @@ function ScopeLabel({ icon, text }: { icon: 'globe' | 'friends'; text: string })
   )
 }
 
-function Row({ row }: { row: LeaderboardRow }) {
+/**
+ * One table row. `trainerName === null` is a trainer who chose to be anonymous in
+ * the global and country rankings: shown muted as "Anonymous trainer" (the flag
+ * and country stay). On my own row, `anonymous` adds a "Hidden from others" tag
+ * (not in the friends scope, where friends do see my name).
+ */
+export function LeaderRow({ row, scope = 'global' }: { row: LeaderboardRow; scope?: LeaderboardScope }) {
   const { t, i18n } = useTranslation()
   const names = useNames()
   const lng = i18n.language
@@ -185,8 +191,14 @@ function Row({ row }: { row: LeaderboardRow }) {
           </span>
           <span className="min-w-0">
             <span className="block truncate font-display text-base">
-              {row.trainerName}
+              {row.trainerName ?? <span className="text-mist-400">{t('leaderboard.anonymous')}</span>}
               {row.me && <span className="ml-2 text-sm text-volt-300">{t('leaderboard.you')}</span>}
+              {row.me && row.anonymous && scope !== 'friends' && (
+                <span className="ml-2 inline-flex items-center gap-1 bg-dusk-700 px-1.5 text-sm text-mist-300 align-middle">
+                  <PixelIcon name="eyeOff" size={12} />
+                  {t('leaderboard.hidden')}
+                </span>
+              )}
             </span>
             <span className="block text-xs text-mist-400">
               <span aria-hidden>{flagEmoji(row.country)} </span>

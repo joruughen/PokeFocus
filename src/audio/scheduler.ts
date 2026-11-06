@@ -107,9 +107,17 @@ export function workerTickSource(): TickSource {
       try {
         const src = 'let id=null;onmessage=e=>{clearInterval(id);if(e.data>0)id=setInterval(()=>postMessage(0),e.data)}'
         url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }))
-        worker = new Worker(url)
-        worker.onmessage = onTick
-        worker.postMessage(ms)
+        const w = new Worker(url)
+        worker = w
+        w.onmessage = onTick
+        // A worker that fails to load (blocked Blob URLs, CSP) errors asynchronously: fall back then.
+        w.onerror = () => {
+          if (worker !== w) return
+          this.stop()
+          fallback = intervalTickSource()
+          fallback.start(ms, onTick)
+        }
+        w.postMessage(ms)
       } catch {
         fallback = intervalTickSource()
         fallback.start(ms, onTick)

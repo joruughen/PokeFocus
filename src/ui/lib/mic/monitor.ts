@@ -16,8 +16,17 @@
  *   uncalibrated device learns its noise from the first quiet windows.
  * - Only what the mic hears counts: music through the speakers (the app's own
  *   focus music included) is music; music on headphones is not heard.
+ * - Hidden tabs (studying in another tab must cost nothing): frames are read
+ *   every FRAME_MS from a Web Worker timer, which browsers do not throttle like
+ *   main-thread timers (those drop to ~1/s, then ~1/min), so a 2 s window
+ *   still gets ~20 frames. setInterval is the fallback if no Worker can start.
+ *   A window that still arrives with fewer than MIN_WINDOW_FRAMES frames (page
+ *   frozen or suspended) is dropped, neither classified nor credited, rather
+ *   than guessing its kind from one or two frames; time already credited is
+ *   never taken back.
  */
 import { create } from 'zustand'
+import { workerTickSource, type TickSource } from '../../../audio/scheduler'
 import type { SoundProfile } from '../../../engine'
 import { CONSTRAINTS, deviceIdOf, errorStatus, micUnavailable, openMicAnalyser, type MicAnalyser, type MicStatus } from './analyser'
 import { calibrationFor, isCalibrated } from './calibration-store'
@@ -44,8 +53,10 @@ export interface MicState {
 
 export const useMic = create<MicState>()(() => ({ status: 'off', sessionId: null, tally: EMPTY_TALLY, current: null, issue: null, calibrated: false }))
 
-const FRAME_MS = 100
-const WINDOW_MS = 2000
+export const FRAME_MS = 100
+export const WINDOW_MS = 2000
+/** A window with fewer frames than this (≈ a quarter of the usual 20) is not classified. */
+export const MIN_WINDOW_FRAMES = 5
 /** Credit at most this much time to one window (a throttled background tab may tick rarely). */
 const MAX_WINDOW_CREDIT_S = 60
 const STORAGE_PREFIX = 'pokefocus.mic.'
@@ -58,9 +69,25 @@ interface SessionRecord {
 
 interface Runtime {
   mic: MicAnalyser
-  timer: ReturnType<typeof setInterval>
+  timer: TickSource
   pipe: SoundPipeline
   windowStart: number
+}
+
+/** What the monitor needs from the browser; swapped in tests (`__setMicDeps`). */
+export interface MicDeps {
+  unavailable: () => 'insecure' | 'unsupported' | null
+  open: typeof openMicAnalyser
+  /** Periodic timer for the frames (Worker-backed in the browser). */
+  ticker: () => TickSource
+  now: () => number
+}
+const BROWSER_DEPS: MicDeps = { unavailable: micUnavailable, open: openMicAnalyser, ticker: workerTickSource, now: () => Date.now() }
+let deps: MicDeps = BROWSER_DEPS
+
+/** Tests only: replace browser pieces (null restores them). */
+export function __setMicDeps(d: Partial<MicDeps> | null): void {
+  deps = d ? { ...BROWSER_DEPS, ...d } : BROWSER_DEPS
 }
 
 let rt: Runtime | null = null
@@ -154,11 +181,11 @@ export async function startMic(sessionId: string): Promise<void> {
   const rec = s.sessionId === sessionId ? { tally: s.tally, issue: s.issue } : (loadRecord(sessionId) ?? { tally: EMPTY_TALLY, issue: null })
   useMic.setState({ sessionId, tally: rec.tally, issue: rec.issue, current: null })
   saveRecord() // the session had the mic switched on, even if it never starts
-  const why = micUnavailable()
+  const why = deps.unavailable()
   if (why) return setIssue(why, why)
   const gen = ++generation
   useMic.setState({ status: 'starting' })
-  const r = await openMicAnalyser()
+  const r = await deps.open()
   if (gen !== generation) {
     if (r.ok) r.mic.close()
     return
@@ -166,11 +193,12 @@ export async function startMic(sessionId: string): Promise<void> {
   if (!r.ok) return setIssue(r.status === 'off' || r.status === 'starting' || r.status === 'listening' ? 'error' : r.status, r.status)
   const runtime: Runtime = {
     mic: r.mic,
-    timer: setInterval(tick, FRAME_MS),
+    timer: deps.ticker(),
     pipe: createPipeline(calibrationFor(r.mic.deviceId)),
-    windowStart: Date.now(),
+    windowStart: deps.now(),
   }
   rt = runtime
+  runtime.timer.start(FRAME_MS, tick)
   r.mic.onEnded(() => {
     if (rt === runtime) {
       stopMic()
@@ -184,12 +212,15 @@ export async function startMic(sessionId: string): Promise<void> {
 function tick(): void {
   const r = rt
   if (!r) return
-  const now = Date.now()
+  const now = deps.now()
   const f = r.mic.frame()
   if (f) r.pipe.push(f)
   const elapsed = now - r.windowStart
   if (elapsed < WINDOW_MS) return
   r.windowStart = now
+  // Too few frames (frozen/suspended page): its features would be meaningless (no modulation,
+  // no pauses, full stability → voice read as music). Drop it, without teaching the noise tracker.
+  if (r.pipe.pending < MIN_WINDOW_FRAMES) return r.pipe.discardWindow()
   const out = r.pipe.endWindow()
   if (!out) return
   const s = useMic.getState()
@@ -205,7 +236,7 @@ export function stopMic(): void {
   const r = rt
   rt = null
   if (r) {
-    clearInterval(r.timer)
+    r.timer.stop()
     r.mic.close()
   }
   const st = useMic.getState().status

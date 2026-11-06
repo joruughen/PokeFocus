@@ -18,7 +18,7 @@ import { MINUTE_MS } from '../../engine'
 import { useGame } from '../store/game'
 import { usePrefs } from '../store/prefs'
 import { installFakeServer } from '../test/fakeServer'
-import { cancelSessionEnd, resyncSessionEnd, scheduleSessionEnd, sessionEndScheduled } from './sound'
+import { cancelSessionEnd, resyncSessionEnd, scheduleSessionEnd, sessionEndScheduled, syncSessionEndToAudio } from './sound'
 
 const live = () => bells.filter((b) => !b.stopped)
 const server = installFakeServer()
@@ -64,6 +64,41 @@ describe('end-of-session bell vs the dev clock', () => {
     await useGame.getState().start(25)
     usePrefs.getState().setRate(60)
     resyncSessionEnd()
+    expect(bells).toHaveLength(0)
+  })
+})
+
+describe('end-of-session bell when audio starts running (reload, then a tap)', () => {
+  it('the leader tab schedules the bell for the running session', async () => {
+    await useGame.getState().start(25)
+    const timer = useGame.getState().timer!
+    syncSessionEndToAudio(true)
+    expect(live()).toHaveLength(1)
+    expect(live()[0]!.delaySec).toBeGreaterThan(24 * 60)
+    expect(sessionEndScheduled(timer.sessionId)).toBe(true)
+  })
+
+  it('another tab does not (no double bell)', async () => {
+    await useGame.getState().start(25)
+    syncSessionEndToAudio(false)
+    expect(bells).toHaveLength(0)
+  })
+
+  it('re-times a bell this tab scheduled while the audio clock was frozen', async () => {
+    await useGame.getState().start(25)
+    const timer = useGame.getState().timer!
+    scheduleSessionEnd(timer.sessionId, timer.endsAt)
+    usePrefs.getState().advanceClock(10 * MINUTE_MS)
+    syncSessionEndToAudio(false)
+    expect(live()).toHaveLength(1)
+    expect(live()[0]!.delaySec).toBeLessThan(15 * 60 + 1)
+  })
+
+  it('nothing while paused or without a session', async () => {
+    syncSessionEndToAudio(true)
+    await useGame.getState().start(25)
+    await useGame.getState().pause()
+    syncSessionEndToAudio(true)
     expect(bells).toHaveLength(0)
   })
 })

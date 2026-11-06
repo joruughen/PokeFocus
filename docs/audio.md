@@ -84,7 +84,8 @@ import { AudioProvider, useAudio } from '../audio/useAudio'
 <AudioProvider settings={audioSettingsFromPrefs}>…</AudioProvider> // installs unlock + mirrors settings
 
 const { sfx, playMusic, stopMusic, setSettings, setDucking, init,
-        settings, track, playing, state, ready, ducked } = useAudio()
+        settings, track, playing, state, ready, supported, ducked } = useAudio()
+const locked = useSoundLocked() // sound on, but the context is not running yet
 ```
 
 `track` is what the app asked for; `playing` is what is actually audible
@@ -105,6 +106,26 @@ const { sfx, playMusic, stopMusic, setSettings, setDucking, init,
   (not throttled like main-thread timers) and uses a 2.5 s lookahead while
   hidden (0.6 s visible), falling back to `setInterval`. If the clock falls
   behind (laptop asleep), the backlog is dropped instead of bursting.
+- **Suspended after a reload** (QA R-01): browsers keep a new AudioContext
+  suspended until the next tap/click/key, so the end bell could be silent and a
+  player studying in another tab could miss the end and claim late (lower
+  reward). `soundLocked(snapshot)` (React: `useSoundLocked()`) is true while
+  sound effects are on but the context is not running; the focus session shows
+  "Toca para activar el sonido" (`screens/home/SoundUnlockChip.tsx`), whose
+  click calls `audio.init()` inside the gesture. The engine emits on every
+  `statechange`, so any other click that resumes audio hides the chip too, and
+  `SessionWatcher` then calls `syncSessionEndToAudio()` (re-times a bell
+  scheduled on a frozen clock, or the leader tab schedules it). `init()` also
+  resumes Safari's `interrupted` state.
+- **Microphone in a hidden tab** (`src/ui/lib/mic/monitor.ts`, its own
+  AudioContext, never connected to the speakers): frames are read every 100 ms
+  from the same Worker tick source (`workerTickSource`), so a 2 s window still
+  has ~20 frames when the tab is hidden (main-thread timers drop to ~1/s, then
+  ~1/min). Fallback: `setInterval`, also if the worker errors while loading. A
+  window with fewer than 5 frames (page frozen or suspended) is dropped: not
+  classified, not credited, and the noise estimate does not learn from it;
+  time already credited is never taken back. Switching tabs never costs
+  analysed time beyond such frozen stretches.
 - **Rate limiting**: each preset has `cooldownMs` and `maxInstances`; spammy
   ones (`uiHover` 70 ms, `pointsTick` 45 ms, `uiClick` 30 ms) are tight. `force: true` bypasses.
 - **Variance**: UI and impact sounds get a random ± cents detune per play.

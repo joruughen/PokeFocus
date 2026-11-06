@@ -4,8 +4,14 @@
  * like a session (same pipeline: noise subtraction and tracking, personal
  * thresholds of the device). It can also record the raw frames of a
  * calibration step. Nothing is stored or sent.
+ *
+ * Frames come from a Web Worker timer (`workerTickSource`, setInterval as the
+ * fallback), like the session monitor: main-thread timers are throttled in a
+ * hidden tab, and a calibration step would gather far fewer frames if the player
+ * switched tabs while it ran.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { workerTickSource, type TickSource } from '../../../audio/scheduler'
 import { openMicAnalyser, type MicStatus } from './analyser'
 import { calibrationFor } from './calibration-store'
 import type { SoundKind, Thresholds } from './classify'
@@ -64,7 +70,7 @@ export function useLiveMic(active: boolean, calibration: LiveCalibration | null 
   useEffect(() => {
     if (!active) return
     let cancelled = false
-    let timer: ReturnType<typeof setInterval> | undefined
+    let timer: TickSource | undefined
     let close = () => {}
     setStatus('starting')
     void openMicAnalyser().then((r) => {
@@ -78,13 +84,14 @@ export function useLiveMic(active: boolean, calibration: LiveCalibration | null 
       setDeviceId(mic.deviceId)
       setStatus('listening')
       mic.onEnded(() => {
-        clearInterval(timer)
+        timer?.stop()
         setStatus('error')
       })
       let usedCal: LiveCalibration | null | undefined
       let pipe: SoundPipeline | null = null
       let smooth: number | null = null
-      timer = setInterval(() => {
+      timer = workerTickSource()
+      timer.start(FRAME_MS, () => {
         // (Re)build the pipeline when the calibration in use changes.
         if (!pipe || usedCal !== calRef.current) {
           usedCal = calRef.current
@@ -106,11 +113,11 @@ export function useLiveMic(active: boolean, calibration: LiveCalibration | null 
         setKind(out.kind)
         setAbove(out.w.aboveDb)
         setWindows((n) => n + 1)
-      }, FRAME_MS)
+      })
     })
     return () => {
       cancelled = true
-      clearInterval(timer)
+      timer?.stop()
       close()
       rec.current = null
       setStatus('off')

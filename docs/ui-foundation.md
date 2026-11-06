@@ -14,7 +14,9 @@ src/
     SessionWatcher.tsx    end-of-session notification, hint suppression
     components/           UI kit (import from 'src/ui/components')
     hints/                hint engine (import from 'src/ui/hints')
-    store/                zustand stores: game.ts, prefs.ts, clock.ts, selectors.ts, persistence.ts
+    api/                  typed fetch client, endpoint helpers, SSE events (talks to server/)
+    changelog/            release stage + version, news page, version badge (see the last section)
+    store/                zustand stores: game.ts (server cache), auth.ts, social.ts, group.ts, announcements.ts, prefs.ts (per device), clock.ts, selectors.ts, persistence.ts
     lib/                  names (localized data), format, conditions preview, notify, cx
     screens/              FirstRun, home/* (core loop, break, checklist), box/, team/, dex/, league/, missions/, shared/, Settings
     dev/DevPanel.tsx      developer tools
@@ -159,42 +161,78 @@ Utilities (from `index.css`):
 
 ## 4. State (`src/ui/store`)
 
-### `useGame` (game.ts), persisted as `pokefocus:game`
+Since F2 the game does not live in the browser: **the server owns each player's document** (table `player_docs`, `docs/F2-plan.md` §Cliente, `docs/server.md`) and the game stores below are only caches of it. Nothing about the game is saved in `localStorage`: the prototype's `pokefocus:game` key no longer exists, and old local saves are not migrated.
+
+| Store | File | What it holds | Where the truth lives |
+|---|---|---|---|
+| `useAuth` | `auth.ts` | `status: 'loading' \| 'anon' \| 'authed'`, `user: PublicUser` (email, trainerName, country, friendCode), `bootError`; login, register, logout, password and sessions | The server. The login session is an HttpOnly cookie (`pf_session`) that the client never reads. A 401, or the SSE `logout` event, sends the store to `anon` |
+| `useGame` | `game.ts` | A cache of the `GameDoc` (below) | The server: `GET /api/game`, `POST /api/game/action` |
+| `useFriends`, `useGroups` | `social.ts`, `group.ts` | Friends and requests; the study-group lobby and invites | The server: `/api/friends`, `/api/groups` |
+| `useAnnouncements` | `announcements.ts` | Scheduled maintenance windows (public, polled) | The server: `/api/announcements` |
+| `usePrefs` | `prefs.ts` | Per-device UI preferences (below) | `localStorage`, key `pokefocus:prefs` |
+
+On sign-in, `useAuth` clears and reloads `useGame` and `useFriends` and opens the event stream (`api/events.ts`, `GET /api/events`); on sign-out it clears them and closes it. All HTTP goes through the typed client in `src/ui/api/` (`client.ts`, `endpoints.ts`).
+
+### `useGame` (game.ts): a client cache of the server document
 
 | Field | Meaning |
 |---|---|
 | `player: PlayerState \| null` | The engine state, untouched. `null` means the first run is showing |
 | `timer: SessionTimer \| null` | `{ sessionId, endsAt, pausedAt, pausedMs, notified }` in game time |
 | `outcome: LastOutcome \| null` | `{ result: SessionResult, events: ProgressEvent[], before, seen }` for the results screen |
+| `breakTimer: BreakTimer \| null`, `lastBreakFor` | The pomodoro break in progress, and the last session whose break was taken or skipped |
+| `version`, `loaded`, `loading`, `pending`, `error` | Client bookkeeping, not part of the document. `version` is the doc version we hold (−1 = nothing loaded); `pending` counts actions in flight (buttons disable while it is above 0); `error` is the last failure code |
 
-Actions (each one calls the engine and stores what it returns):
+The first five fields are the `GameDoc` of `src/game/protocol.ts`; the server stores it as one JSON document per user.
 
-- **Setup:** `createPlayer`, `updateProfile` (incl. `location`). `setWeather` is a dev-panel action only (the server refuses it without DEV_TOOLS=1).
+How it works:
+
+- **Every action is a request.** Each helper is `async`: it POSTs a `GameAction` to `/api/game/action`; the server runs the pure reducer (`src/game/actions.ts`, `applyAction`) with the engine, saves the new document in one transaction, and answers with the whole document and its `version`. The store adopts the response only if its `version` is newer than the one it holds, so slow or out-of-order responses are dropped. Progress is therefore saved on every action: there is no save step, and a reload or another device gets the same state from `GET /api/game`.
+- **The client never rolls dice or decides outcomes.** Rolls, points, captures and session times are decided by the server. The client only shows the result.
+- **Other tabs and devices.** After every write the server sends an SSE `game` event with the new `version`; the listener in `auth.ts` reloads the doc if that version is newer. A failed action (other than a network error) also triggers a quiet reload, in case the cache was stale. Several browsers can be signed in at once; only one study session can be active per user.
+- **Return values.** Helpers resolve to an error code or `null`, or to `{ ok, … }` objects, for the UI to map to `errors.*`. A failure that is not a game rule (network, 5xx, 403) comes back as `'network'` or `'http_<status>'` and is also kept in `error`.
+
+Actions:
+
+- **Setup:** `createPlayer` (language, time zone, starter; the trainer name comes from the account), `updateProfile` (language, time zone, city, `location`). `setWeather` is a dev-panel action only (the server refuses it without DEV_TOOLS=1).
 - **Session:** `start(minutes)`, `pause`, `resume`, `cancel`, `claim()`, `markNotified`, `dismissResults`.
-- **Waves:** `throwBall(ref, ball)`, `applyStatus(chargeId, ref)`, `reroll(chargeId, ref)`, `nextWave`, `finishWaves`.
-- **Dev:** `devAddItems`, `devAddDust`, `devAddCandies`, `devFinishNow`, `resetAll`.
+- **Waves:** `throwBall(ref, ball)`, `applyStatus(chargeId, ref)`, `reroll(chargeId, ref)`, `assignDamage`, `autoAssignDamage`, `setAutoDamage`, `nextWave`, `finishWaves`.
+- **Box, team, missions and breaks:** `release`, `feedCandy`, `equip`, `setTeam`, `setLeader`, `evolve`, `heal`, `claimMission`, `claimAllMissions`, `startBreak`, `endBreak`, `skipBreak`.
+- **Dev:** `devAddItems`, `devAddDust`, `devAddCandies`, `devFinishNow` (client-only: it moves the dev clock), `devLevelUp`, `devAddRandomPokemon`, `resetAll`.
 
-`claim()` is idempotent: it only works on an active session whose timer has ended, and `applySessionResult` refuses a second apply. For the Box/Team/Pokédex screens, add actions the same way: call `releasePokemon`, `useCandy`, `equipMoves`, `setTeam`, `setLeader`, `evolvePokemon` or `useHealItem`, then `set({ player: r.value.state })` and return the error code for the UI to map to `errors.*`.
+`claim()` is idempotent on the server: it only works on an active session whose timer has ended, and a second claim (for example from another tab) gets `no_session`, so rewards are never delivered twice. It sends only the microphone percentages (`soundProfile`), never audio.
+
+To add a mutation, extend the contract and the server, then the store (the checklist of `docs/session-depth-plan.md`): the action type and result in `src/game/protocol.ts`, its validation in `server/validation.ts`, a branch in the reducer (`src/game/actions.ts`) that calls the engine, a typed helper in `useGame` that calls `dispatch`, and tests.
 
 `phaseOf(state, now)` returns one of:
 
 ```
-'none' | 'idle' | 'focus' | 'paused' | 'claim' | 'late' | 'results' | 'waves'
+'none' | 'idle' | 'focus' | 'paused' | 'claim' | 'late' | 'results' | 'waves' | 'break'
 ```
 
-The phase is derived, never stored, so a reload always lands on the right screen. `usePhase()` is the hook.
+The phase is derived from the document and the clock, never stored, so a reload always lands on the right screen. `usePhase()` is the hook.
 
 ### `usePrefs` (prefs.ts), persisted as `pokefocus:prefs`
 
-It holds `locale`, `tipsEnabled`, `sound`, `seenHints` and `dev: { panelOpen, rate, anchor, focusLabel, seed, rngCounter }`.
+Per-device preferences only: it never touches `PlayerState` and is not synced between tabs or devices. It holds `locale`, `tipsEnabled`, `audio` (replaces the old `sound`), `seenHints`, `milestones` and `checklistDismissed` (getting-started checklist), `micEnabled` (microphone opt-in), `lastSeenVersion` (changelog dot) and `dev: { panelOpen, rate, anchor, focusLabel, seed, rngCounter }`. The old `tzChangedAt` is gone (a saved one is ignored when loading): the 30-day time-zone lock is `profile.timezoneChangedAt` in the server document.
 
-**Time:** always use `now()` from prefs.ts, never `Date.now()`. With the dev clock it equals `anchor.virtual + (realNow − anchor.real) × rate`. At rate 60, one study minute passes in one real second. React components use `useNow()` (clock.ts), which re-renders four times a second while visible and recomputes on `visibilitychange`; a Worker heartbeat keeps hidden tabs ticking.
+**Time:** always use `now()` from prefs.ts, never `Date.now()`. Without the dev clock it is the browser clock corrected by the server skew (`serverNow − Date.now()`, measured on every game response, so countdowns match the server even if the device clock is off). With the dev clock it equals `anchor.virtual + (realNow − anchor.real) × rate`, and the virtual time travels to the server as the `x-dev-now` header. At rate 60, one study minute passes in one real second. React components use `useNow()` (clock.ts), which re-renders four times a second while visible and recomputes on `visibilitychange`; a Worker heartbeat keeps hidden tabs ticking.
 
-**RNG:** `rng()` from game.ts. With a fixed dev seed it returns `createRng("<seed>:<n>")` with an increasing `n`, so runs are reproducible.
+**RNG:** the server rolls the dice. With a fixed dev seed, `nextSeed()` returns `"<seed>:<n>"` with an increasing `n` and it travels as the `x-dev-seed` header, so runs are reproducible. The server honors both dev headers only with `DEV_TOOLS=1` (never in production).
+
+### What is stored where
+
+| Where | What |
+|---|---|
+| **Server** (PostgreSQL / PGlite) | The account, the game document (team, Box, items, Pokédex, missions, history, the active session and its timer, results, breaks), the profile (language, time zone with its lock, city and rounded location), friends, study groups, rankings. Saved on every action |
+| **Browser `localStorage`, `pokefocus:prefs`** | `usePrefs` (above) |
+| **Browser, other keys** | The microphone calibration per device (`pokefocus.micCalibration.v2`, `lib/mic/calibration-store.ts`). The microphone tally, last problem and last result of a session in `sessionStorage` (`lib/mic/monitor.ts`), and the admin token in `sessionStorage` (`pokefocus:adminToken`) |
+| **Cookie `pf_session`** | The login. HttpOnly, so the client cannot read it |
+| **Memory only** | `useAuth`, `useGame`, `useFriends`, `useGroups` and `useAnnouncements` are rebuilt from the server on every page load |
 
 ### Persistence
 
-`persistence.ts` exports `storageBackend`: localStorage with an in-memory fallback. To move to Supabase, replace it with an adapter that has the same `getItem/setItem/removeItem` (async is fine). The stores don't know where their data goes. Tabs stay in sync through the `storage` event, which rehydrates.
+`persistence.ts` exports `storageBackend` (`localStorage` with an in-memory fallback), `jsonStorage` and `STORAGE_KEYS`. Only `usePrefs` uses it. It is not the place to persist game data: add a field to the `GameDoc` and an action instead (§4 above). `STORAGE_KEYS` only has `prefs`: the prototype's `game` key was removed.
 
 ### Selectors and helpers
 
@@ -288,7 +326,7 @@ The nav items carry the anchors `nav.home`, `nav.box`, `nav.team`, `nav.dex`, `n
 
 1. Create `src/ui/screens/Box.tsx` (or a folder). Start with `useHintScreen('box')`.
 2. Read the player with `usePlayer()`, time with `useNow()`, and derived numbers with engine views (`pokemonView`, `levelProgress`, `evolutionOptions`…).
-3. Mutations go through a `useGame` action that calls the engine (see §4).
+3. Mutations go through a `useGame` action that sends the intent to the server, which runs the engine and returns the new document (see §4).
 4. Default-export the screen and add it to `src/ui/routes.tsx` as a lazy route: `{ id: 'box', labelKey: 'nav.box', icon: 'box', component: lazy(loaders.box), nav: true, preload: loaders.box }`. Use `navigate('box', uid)` and `useRouteParams()` for detail views (`#/box/p12`).
 5. Add copy to both locale files and register the screen's hints (§6).
 6. Empty states teach: use `EmptyState` with what the area is, how to fill it, and an action.
@@ -326,7 +364,7 @@ The nav items carry the anchors `nav.home`, `nav.box`, `nav.team`, `nav.dex`, `n
 Open it with `?dev` in the URL or Settings → Developer tools. The wrench button (`DevToggle`) sits at the bottom of the side rail, so it never covers page content (below 640px it floats at the top right; it is not shown on the first-run screen). The panel itself floats over the main column. It provides:
 
 - **Clock:** 1× or "1 min = 1 s", +1 h, +1 day, back to real time. A rate change or time jump re-times the end-of-session bell already scheduled on the audio clock (`resyncSessionEnd`, called by `SessionWatcher` when `dev.anchor` changes).
-- **Session:** finish the session now (jumps the clock to `endsAt`), and the simulated Focus label (studying, educational, chat, social, game, no permission), which becomes `screenshotLabels`.
+- **Session:** finish the session now (jumps the clock to `endsAt`), and the simulated Focus label (studying, educational, chat, social, game, no permission), sent as `devFocusLabel` with the claim. Only a server with `DEV_TOOLS=1` honours it; in production Focus is always the neutral value.
 - **Items:** add Balls, Dust, or candies (for the team's chains and types).
 - **RNG:** a fixed seed.
 - **Hints:** reset tips.
@@ -345,7 +383,7 @@ Open it with `?dev` in the URL or Settings → Developer tools. The wrench butto
 | `#/dex` | `screens/dex/Dex.tsx` | Level-cap ladder (config `levelCaps`), 56 species as caught (color + check) / seen (dimmed) / unknown (silhouette, "???"), entry with genus, flavor text (es/en), types, role and `EvoLine` |
 | `#/league` | `screens/league/League.tsx` | League hero, one equal step per league (thresholds, "about N per wave, up to M" from `leagueWaveBonus`/`leagueMaxWaveSize`), reset countdown, monthly league; stats tiles; charts (minutes per day this week, points per session, Focus trend) and the session history table |
 | `#/missions` | `screens/missions/Missions.tsx` | Daily/weekly missions with renew countdowns, Pokédex milestones, progress bars, rewards, claim / claim all (`claimMission`, `claimAllMissions`). Nav badge = `missionsView().claimable` |
-| `#/settings` | `screens/Settings.tsx` | Language, time zone (confirm dialog + 30-day lock stored in `prefs.tzChangedAt`; dev mode bypasses), weather ("Usar mi ubicación" rounded to ~10 km / remove it, typed city as fallback, detected weather line; no manual weather), audio (mute, master/music/sfx sliders with preview sounds, music during focus, focus level, background, vinyl), microphone (calibration wizard: silence required, voice and speaker music optional, live check; live meter with the level over the mic noise), notifications, tips + replay (also restores the checklist), dev tools, reset, about |
+| `#/settings` | `screens/Settings.tsx` | Account (`account/AccountPanel.tsx`: email, trainer name and country, each behind a confirm dialog and a 30-day lock from `PublicUser.nameChangedAt` / `countryChangedAt` that disables the field and shows the unlock date, dev mode bypasses, a stale-clock 409 `name_locked` / `country_locked` refreshes the user and toasts the date; a privacy switch "anonymous in the global and country rankings" saves at once, and the Leaderboards then show `trainerName: null` rows as "Entrenador anónimo", with a "Oculto para los demás" tag on my own row; password, devices), language, time zone (confirm dialog + 30-day lock stored in the server document as `profile.timezoneChangedAt`; dev mode bypasses), weather ("Usar mi ubicación" rounded to ~10 km / remove it, typed city as fallback, detected weather line; no manual weather), audio (mute, master/music/sfx sliders with preview sounds, music during focus, focus level, background, vinyl), microphone (calibration wizard: silence required, voice and speaker music optional, live check; live meter with the level over the mic noise), notifications, tips + replay (also restores the checklist), dev tools, reset, about |
 | Home extras | `screens/home/Break.tsx`, `Checklist.tsx` | Pomodoro break: offered on Home after a session (one per session, within 60 min; 5/10/15 min). Phase `break` shows a calm countdown; completing it calls the engine `completeBreak` (+`breakRecoverPct` Energy, previewed per member); ending early gives nothing. Getting-started checklist (7 steps; session/catch/team derived from the save, mission/equip/candy/evolve are `prefs.milestones`), dismissible |
 | Waves extras | `screens/home/Waves.tsx` | IV quality row when `encounterModifiers().revealWildIvs`; "Golpes" row from `Wave.hits` (who weakened each wild); Study Ball limit from `studyBallMaxLevelFor` |
 
@@ -357,8 +395,8 @@ Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspe
 
 ### Stores
 
-- `useGame`: `release`, `feedCandy`, `equip`, `setTeam`, `setLeader`, `evolve`, `heal`, `claimMission`, `claimAllMissions`, `startBreak` / `endBreak` / `skipBreak` (`breakTimer`, `lastBreakFor` persisted), dev `devLevelUp(n)`, `devAddRandomPokemon(n)`. `phaseOf` has a `break` phase.
-- `usePrefs`: `audio: AudioSettings` (replaces part A's `sound`; a saved `sound: false` becomes muted), `milestones`, `checklistDismissed`, `tzChangedAt`.
+- `useGame`: `release`, `feedCandy`, `equip`, `setTeam`, `setLeader`, `evolve`, `heal`, `claimMission`, `claimAllMissions`, `startBreak` / `endBreak` / `skipBreak` (`breakTimer`, `lastBreakFor` live in the server document), dev `devLevelUp(n)`, `devAddRandomPokemon(n)`. `phaseOf` has a `break` phase.
+- `usePrefs`: `audio: AudioSettings` (replaces part A's `sound`; a saved `sound: false` becomes muted), `milestones`, `checklistDismissed`.
 - Engine helpers added (additive, tested in `src/engine/helpers.test.ts`): `ivQuality(ivs)`, `conditionEnvAt(state, now, minutes)` (now used by `lib/conditions.ts`).
 
 ### Audio wiring (`src/audio`, see `docs/audio.md`)
@@ -389,7 +427,7 @@ Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspe
 ### Leftovers
 
 - Missions only grant placeholder items (Tera Shard, TM) that show a pixel icon; nothing uses them yet.
-- Rankings (friends/zone/global), saved teams, mints/caps and trading are later phases.
+- Saved teams, mints/caps and trading are later phases (rankings and friends shipped in F2).
 - The detail sheet hides the name of evolutions you haven't seen ("???") on purpose.
 
 ---
@@ -405,3 +443,11 @@ Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspe
   - `MicIndicator` (FocusSession): "Silencio · 3 min analizados", "En pausa…", or "Micrófono detenido: permiso denegado / se desconectó…". The chip is `aria-live="off"`; an sr-only region announces problems at once and kind changes at most every 30 s.
   - `StudyStyleLine` (Results): the measured style with the four shares, or "No se aplicó el micrófono: …" from the local per-session record (`useMicResult`, saved at claim).
 - **Mute** (`screens/home/MuteMusicButton.tsx`): an icon toggle (`aria-pressed`, fixed label `focus.muteMusic`) next to Pause and Abandon in `FocusSession`. It only switches "music during focus", the same option as in Settings, so volumes and the end-of-session chime are untouched (`focusMusicPatch`, `docs/audio.md`). New pixel icons: `volume`, `volumeOff`.
+
+## Release stage, changelog and maintenance notices (2026-11-06)
+
+- **Stage and version** (`src/ui/changelog/release.ts`): `RELEASE_STAGE` (`'alpha' | 'beta'`) and `APP_VERSION` (the newest changelog entry). The game is in **alpha**. `StageBadge` ("ALFA v0.4.0", links to `#/changelog`) sits under the logo in the rail (xl), as an "ALFA" chip in the icon rail (sm–xl), on the sign-in screen and in Settings → About; the phone's bottom bar has no room for it. A red dot shows when `usePrefs().lastSeenVersion` differs from `APP_VERSION` (the first time a device runs the app it only records the version, so new players see no dot). Opening the news page records it.
+- **To ship a version:** add an entry at the top of `src/ui/changelog/entries.ts` (every text in ES and EN, short, player-facing) and bump `version` in `package.json` (`npm version X.Y.Z --no-git-tag-version`). `changelog.test.ts` checks the order, the dates, both languages and that `package.json` agrees. **To move to beta:** change `RELEASE_STAGE`; the texts for both stages are already in the locales.
+- **News page** (`#/changelog`, `changelog/Changelog.tsx`, not in the rail): the stage panel with what is coming, then one card per version with New / Improved / Fixed lines.
+- **Maintenance banner** (`MaintenanceBanner.tsx`, `store/announcements.ts`, `lib/maintenance.ts`): `GET /api/announcements` is public, so the banner also shows on the sign-in screen. It is polled every 2 minutes and when the tab becomes visible, and a failed poll keeps the last list. Windows are absolute instants and are written in each viewer's own time zone ("vie, 6 nov, 10:02 – 12:02 GMT-5"), compared against the server's clock (`skew`). A running window wins (red, cannot be closed); otherwise the soonest upcoming one (amber, "Empieza dentro de 59 minutos", can be closed until the next reload). The admin's note is shown as plain text.
+- **Admin** (`#/admin`, `screens/admin/Admin.tsx`, not linked anywhere): schedule and remove windows. It asks for the server's `ADMIN_TOKEN` (kept in `sessionStorage`, gone when the tab closes); it is not tied to the player account, and a wrong token must not sign the player out (`allow401` on every `adminApi` call). It previews the banner as players will see it. The notice only informs: the server does not block anything during a window (`docs/server.md` → Maintenance notices).

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { defaultContext, levelCapFor } from '../../../engine'
-import { HelpDot, Panel, PixelIcon, Platform, Segmented, Sprite, TypeBadge } from '../../components'
+import { HelpDot, Panel, PixelIcon, Platform, RoleBadge, Segmented, Sprite, TypeBadge } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { pick, useNames } from '../../lib/names'
@@ -155,9 +155,10 @@ function DexEntry({ slug, state, owned, known }: { slug: string; state: 'caught'
                 {state === 'caught' ? (owned > 0 ? t('dex.owned', { count: owned }) : t('dex.caughtNone')) : t('dex.seenOnly')}
               </p>
               {sp.role && (
-                <p className="text-sm text-mist-300">
-                  <span className="font-display text-base text-mist-100">{t(`roles.${sp.role}.name`)}</span> {t(`roles.${sp.role}.body`)}
-                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <RoleBadge role={sp.role} size="md" />
+                  <p className="min-w-0 flex-1 basis-44 text-sm text-mist-300">{t(`roles.${sp.role}.body`)}</p>
+                </div>
               )}
             </>
           )}

@@ -2,6 +2,8 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toLocal } from '../../../engine'
 import type { Locale } from '../../../i18n'
+import { StageBadge } from '../../changelog/StageBadge'
+import { MaintenanceBanner } from '../../MaintenanceBanner'
 import { Button, Logo, Mascot, Platform, Segmented, Select, Sprite, Stage, TextField, type MascotPose } from '../../components'
 import { timeOfDay } from '../../lib/conditions'
 import { countryName, countryOptions, flagEmoji, guessCountry } from '../../lib/countries'
@@ -30,9 +32,13 @@ export function AuthScreen() {
 
   return (
     <div className="min-h-dvh bg-dusk-950">
+      <MaintenanceBanner className="relative z-10" />
       <Stage time={timeOfDay(hour)} weather="clear" className="h-56 shadow-none">
         <div className="mx-auto flex h-full max-w-5xl items-start justify-between gap-4 px-6 pt-6">
-          <Logo height={48} />
+          <div className="flex flex-col items-start gap-1">
+            <Logo height={48} />
+            <StageBadge />
+          </div>
           <Segmented<Locale>
             label={t('firstRun.language')}
             value={locale}

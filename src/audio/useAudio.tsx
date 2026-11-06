@@ -2,7 +2,7 @@
  * React bindings for the audio engine (the only non-UI file importing React).
  */
 import { useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react'
-import { audio, applyAudioSettings, installAudioUnlock, type AudioSettings, type AudioSnapshot, type SfxName, type SfxOptions, type TrackId } from './index'
+import { audio, applyAudioSettings, installAudioUnlock, soundLocked, type AudioSettings, type AudioSnapshot, type SfxName, type SfxOptions, type TrackId } from './index'
 
 export interface UseAudio extends AudioSnapshot {
   init: () => Promise<void>
@@ -30,6 +30,18 @@ export function useAudio(): UseAudio {
     [],
   )
   return { ...snap, ...actions }
+}
+
+const lockedNow = () => soundLocked(audio.getSnapshot())
+
+/**
+ * True while sound effects are on but the AudioContext is not running (e.g.
+ * after a reload, until the next gesture). Re-renders only when it flips; the
+ * engine emits on every context `statechange`, so any click that resumes the
+ * context (not only a dedicated button) clears it.
+ */
+export function useSoundLocked(): boolean {
+  return useSyncExternalStore(audio.subscribe, lockedNow, lockedNow)
 }
 
 /**

@@ -27,6 +27,8 @@ export interface SfxOptions {
 }
 
 export interface AudioSnapshot {
+  /** This browser has Web Audio at all. */
+  supported: boolean
   /** AudioContext created. */
   ready: boolean
   /** AudioContext state ('none' before init). */
@@ -151,7 +153,8 @@ export class AudioEngine {
       this.emit()
     }
     const ctx = this.ctx
-    if (this.settings.enabled && ctx.state === 'suspended') {
+    // 'suspended' (autoplay rules, settings off) or Safari's 'interrupted': try to resume.
+    if (this.settings.enabled && ctx.state !== 'running' && ctx.state !== 'closed') {
       return ctx.resume().then(
         () => this.reconcile(),
         () => undefined,
@@ -395,6 +398,7 @@ export class AudioEngine {
 
   private makeSnapshot(): AudioSnapshot {
     return {
+      supported: audioContextCtor() !== null,
       ready: this.ctx !== null,
       state: this.ctx?.state ?? 'none',
       settings: this.settings,
@@ -428,6 +432,19 @@ export class AudioEngine {
     if (ctx) await ctx.close().catch(() => undefined)
     this.emit()
   }
+}
+
+/**
+ * True when sound effects are switched on (enabled, not muted, audible
+ * volumes) but the AudioContext is not running, so an effect scheduled now
+ * (the end-of-session bell) would stay silent. Typical after a page reload:
+ * browsers keep a new context suspended until the next tap/click/key. The UI
+ * offers a "tap to turn sound on" button while this holds.
+ */
+export function soundLocked(snap: AudioSnapshot): boolean {
+  const s = snap.settings
+  if (!snap.supported || !s.enabled || s.muted || s.master <= 0 || s.sfx <= 0) return false
+  return snap.state !== 'running'
 }
 
 /**

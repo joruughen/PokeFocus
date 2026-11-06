@@ -1,4 +1,4 @@
-# Pendientes — 2026-11-04
+# Pendientes — 2026-11-06
 
 El prototipo F1 está **completo y jugable** y la **F2 (servidor propio, cuentas, amigos y rankings) está implementada** (ver `docs/F2-plan.md` y `docs/server.md`). Este archivo resume el estado y lo que queda, para que un agente nuevo pueda continuar sin contexto previo.
 
@@ -7,7 +7,7 @@ El prototipo F1 está **completo y jugable** y la **F2 (servidor propio, cuentas
 ```bash
 npm install
 npm run dev          # app (5173) + API (8787, PGlite en .data/pglite, DEV_TOOLS=1); ?dev = panel de desarrollo
-npm test             # 243 tests (motor, reducer, servidor, UI)
+npm test             # 628 tests (motor, reducer, servidor, UI)
 npm start            # producción: API + dist/ en un solo origen (requiere npm run build)
 docker compose up --build   # PostgreSQL 17 + app (cuando haya Docker)
 npm run simulate     # simulador de balance → docs/balance-report.md
@@ -26,6 +26,7 @@ npm run simulate     # simulador de balance → docs/balance-report.md
 | `docs/qa-report.md` | Resultado del QA: qué se probó, fallos corregidos y pendientes |
 | `docs/ux-research.md` | Investigación de UX que guió el frontend |
 | `public/art/README.md` | Arte pixel generado por código (`npx tsx scripts/art/build.ts`) |
+| `graphify-out/` | Grafo de conocimiento del código y los documentos (`graph.html`, `GRAPH_REPORT.md`). Se actualiza con `graphify update .` (solo código) o `/graphify --update`. Está en `.gitignore` |
 
 ## Hecho
 
@@ -46,13 +47,11 @@ npm run simulate     # simulador de balance → docs/balance-report.md
 ## Pendiente del prototipo (menor)
 
 Del QA (`docs/qa-report.md`):
-1. **R-01 (media):** si recargas a mitad de sesión, el aviso sonoro de fin puede no sonar hasta que hagas clic (política de autoplay del navegador). Propuesta: un chip "toca para activar el sonido".
-2. **R-03 (baja):** con dos pestañas, si la sesión empezó en la pestaña que no es la principal, suenan las dos al terminar. La notificación sí llega una sola vez.
-3. **Otros menores:**
+1. **R-03 (baja):** con dos pestañas, si la sesión empezó en la pestaña que no es la principal, suenan las dos al terminar. La notificación sí llega una sola vez.
+2. **Otros menores:**
    - la animación del contraataque se pierde si recargas a mitad de un lanzamiento;
    - a 390 px se recortan los sprites de los extremos del equipo;
    - a 1024 px el número de Polvo se sale un poco de su tarjeta;
-   - el foco no se mueve al cambiar de pantalla;
    - la Ball de Estudio sigue seleccionada al elegir un salvaje que no es elegible.
 
 Decisión tomada: **se puede iniciar una sesión con todo el equipo agotado**. Solo se muestra un aviso, porque estudiar siempre compensa (GDD §5.3: los agotados ganan EXP).
@@ -63,6 +62,44 @@ Balance a vigilar:
 - Los objetos Teralito y MT ya se ganan en misiones, pero todavía no sirven para nada (la Teracristalización y las MT llegan en F4).
 
 Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
+
+## Hecho: estudiar con otras pestañas, y pendientes de UX y código (2026-11-06)
+
+**Regla de producto:** cambiar de pestaña o de app nunca descuenta recompensas (GDD, principio 5). El temporizador usa marcas de tiempo y ni el motor ni el servidor leen la visibilidad de la página: `src/game/tabSwitching.test.ts` falla si alguien lo introduce.
+
+- **Micrófono en pestaña oculta:** el muestreo va por un Worker (no lo frena el navegador) y las ventanas con menos de 5 muestras se descartan en vez de clasificarse mal. Antes, con la pestaña oculta, la voz podía salir como música o ruido. Pendiente de verificar con un navegador y un micrófono reales: que el Worker mantenga 100 ms con la pestaña oculta.
+- **R-01 (aviso de fin sin sonido tras recargar):** chip «Toca para activar el sonido» en la sesión y en el descanso, verificado en un navegador real. Re-sincroniza la campana en la pestaña líder.
+- **R-07 (foco del teclado):** al cambiar de pantalla y al terminar el primer inicio el foco va a `<main>`; con Anterior/Siguiente en la ficha se queda en el botón. Verificado en un navegador real.
+- **Rol vs naturaleza:** etiqueta de rol hueca con icono y pestaña «Rol» (distinta de los tipos), explicación en la ficha y en Estadísticas → Naturaleza, y un aviso cuando la naturaleza sube o baja la estadística del rol. El rol está curado a mano por especie (en 42 de 48 especies con estadística asociada coincide con su mejor estadística base; las excepciones son Charmander, Blastoise, Butterfree, Sandshrew, Umbreon y Houndoom). Sin efecto propio.
+- Arreglado además: el título «¡Sesión terminada!» de una pestaña oculta se sobrescribía al desmontarse la sesión.
+
+## Hecho: Despiste, cuenta y limpieza (2026-11-06, v0.5.0)
+
+- **Despiste** (Swinub y Piloswine) ya hace algo: `counterMiss` ahora tiene `scope: 'self' | 'team'`, y Despiste es un 15 % de fallo en el contraataque contra **cualquier** miembro del equipo. No se acumula: vale el mayor entre el fallo propio (Velo Arena / Manto Níveo, 25 %) y el de equipo. Es un −15 % de daño de contraataque, más no activar `counterReflect`, `counterStatus` ni `nextThrowBonus` cuando falla. Un portador agotado sigue contando (igual que el resto de efectos de equipo); uno que está en la Caja no. Se descartó copiar solo «el contraataque falla» porque ya existe en Velo Arena y Manto Níveo (y Swinub puede tener Manto Níveo). `focusLabelFloor` sigue siendo una primitiva válida pero ninguna habilidad la usa desde que se descartaron las capturas.
+- **Nombre y país bloqueados 30 días** tras cambiarlos (cada campo por separado, el primer cambio es libre, `DEV_TOOLS=1` los ignora como la zona horaria). Error 409 `name_locked` / `country_locked` con `unlockAt`. Migración `0003_account_locks_privacy`.
+- **Modo anónimo** («Entrenador anónimo») en los rankings global y de país; los amigos y tu propia fila siempre ven el nombre. Interruptor en Ajustes → Cuenta → Privacidad.
+- **Rol en Pokédex y en la elección de inicial** con la etiqueta nueva; el medidor del micrófono (`live.ts`) usa el Worker; quitados `prefs.tzChangedAt` y `STORAGE_KEYS.game`; fila de F4 del GDD corregida.
+- **`soundProfileWeight`:** la fuente (`data/overrides`) tenía el 1.5 original y solo la copia generada tenía el 1.2 que el GDD documenta («se bajó a ×1.2»). El juego usaba 1.2, pero `npm run build:data` lo habría vuelto a subir. Ya está en 1.2 en la fuente y `build:data` no cambia nada.
+
+## Revisión del 2026-11-06: abierto y por decidir
+
+- **Reclamar tarde sigue costando (decisión tuya).** Quien estudia en otra pestaña y no recibe el aviso de fin reclama pasados los 5 min y se le aplica `lateClaimMultiplier`. Con las medidas anteriores el aviso llega, pero Chrome (Ahorro de memoria / energía) puede congelar una pestaña oculta y en silencio durante mucho tiempo, y entonces no llegan ni la notificación ni la campana. Opciones: (a) avisos Web Push desde el servidor (Service Worker + claves VAPID, es lo más fiable, pero es trabajo de verdad); (b) ampliar la ventana de reclamo; (c) una regla del servidor más permisiva (no puede saber si la pestaña estaba oculta, y no debería fiarse del cliente). No toqué la regla.
+- **Probar con un navegador y un micrófono reales** que el Worker mantiene el muestreo a 100 ms con la pestaña oculta.
+- **Privacidad, lo que no se oculta** (a propósito, pero conviene saberlo): en los grupos de estudio, dos invitados del mismo anfitrión se ven el nombre aunque no sean amigos entre sí; y quien envía una solicitud a un código de amigo ve el nombre del dueño aunque sea anónimo.
+- **`ApiError` del cliente descarta el cuerpo de la respuesta**, así que `unlockAt` del 409 no llega a la interfaz: la fecha se recalcula con la misma fórmula (`changedAt + 30 días`) desde el usuario refrescado. Si se quiere usar `unlockAt` directo, añadir `body` a `ApiError` (`src/ui/api/client.ts`) y cambiar una línea en `AccountPanel.tsx` (`lockedMeanwhile`).
+- **Elección de inicial:** las etiquetas de rol son paradas extra al tabular dentro del grupo de radios, y el anillo de foco rodea solo la parte del radio, no toda la tarjeta (la etiqueta es un botón y no puede ir dentro del radio).
+- **Etiqueta «Oculto para los demás»** solo en los rankings global y de país (no en el de amigos).
+
+## Hecho: novedades, etapa y avisos de mantenimiento (2026-11-06)
+
+- **Etapa: Alfa** (`src/ui/changelog/release.ts`). Motivo: el ciclo principal funciona, pero faltan F4 y F5, la recuperación de contraseña por correo, hay decisiones de balance abiertas y dos piezas sin probar en real (micrófono y PostgreSQL). **Pasar a Beta** cuando F4/F5 estén hechas y lo que dice "Pendiente" más abajo esté probado: basta cambiar `RELEASE_STAGE` (los textos de beta ya existen).
+- **Página de novedades** (`#/changelog`): changelog por versión en ES y EN, con la etiqueta «ALFA v0.4.0» en el menú, en el inicio de sesión y en Ajustes → Acerca de. Cada versión nueva se añade en `src/ui/changelog/entries.ts` y se sube `version` en `package.json` (hay un test que lo comprueba). La versión vieja «0.3 (F2)» de Ajustes ya no está escrita a mano.
+- **Avisos de mantenimiento** con inicio y fin (día y hora) en la zona de cada jugador. Se programan en `#/admin` con `ADMIN_TOKEN` (API en `docs/server.md`). Solo informan: el servidor no se detiene ni bloquea nada.
+- Pendiente de esta tanda:
+  - **Poner `ADMIN_TOKEN` en el servidor desplegado** (≥ 24 caracteres, p. ej. `openssl rand -hex 24`) y reiniciarlo: sin eso `#/admin` responde «administración no activada». Reiniciar también aplica la migración `0002_maintenance_windows`.
+  - `#/admin` no tiene enlace en la interfaz (a propósito); hay que escribir la URL.
+  - Probado con un servidor real y navegador (crear, ver, borrar, token incorrecto sin cerrar sesión), pero no con PostgreSQL real, solo PGlite.
+  - Un aviso se ve desde que se publica hasta que termina la ventana (no hay «mostrar solo X horas antes»).
 
 ## Hecho: profundidad de la sesión (2026-11-05)
 
@@ -97,10 +134,6 @@ Pendiente de esta tanda:
   - el botón "Empezar" normal sigue visible mientras tienes una sala abierta;
   - el aviso sonoro de fin de una sesión iniciada por el servidor lo da el `SessionWatcher`.
 - **Oleadas:** con 3 o más Pokémon golpeando a un salvaje, la fila "Golpes" se desborda un poco.
-- **Rol de la especie vs naturaleza (UX):** el rol (Velocista, Estudioso, Cazador…) nunca se explica y se confunde con la naturaleza o con un tipo, porque su etiqueta va junto a los tipos con un estilo parecido. Ejemplo: un Pidgey "Sprinter" con naturaleza Relaxed (−Ritmo).
-  - Explicar en el tooltip y en la ayuda de la ficha que el rol es de la especie (lo comparten todos los Pidgey, sale de su estadística base más alta y no tiene efecto propio), y que la naturaleza es del individuo.
-  - Diferenciar visualmente la etiqueta del rol de las de tipo.
-  - Avisar cuando la naturaleza va contra el rol, p. ej. "Su naturaleza Relaxed baja el Ritmo: es un Velocista más lento de lo normal".
 - **Despliegue:** `https://pokefocus.helicocraft.com` por un túnel propio de Cloudflare (`cloudflared-pokefocus.service`, configuración en `/etc/cloudflared/pokefocus.yml`), con `TRUST_PROXY=1`. Cuando solo se use el dominio, poner `COOKIE_SECURE=1` y quitar la URL de Tailscale de `APP_ORIGIN`.
 
 ## Fases siguientes (GDD §20)
@@ -115,4 +148,7 @@ Pendiente de esta tanda:
   - **Descartado (2026-11-05):** capturas de pantalla clasificadas con IA. El Foco se queda en la etiqueta neutra; `focus.model` en la config queda sin uso.
 - **F4 — Progresión profunda:** Teracristalización, MT, Mentas, Chapas, Cápsula Habilidad.
 - **F5:** intercambios entre amigos (evoluciones por intercambio) y más packs de especies (proceso de curación en GDD §20.1).
-- **graphify:** generar el grafo de conocimiento del código con `/graphify` (opcional).
+- **graphify: HECHO (2026-11-06).** Grafo en `graphify-out/`. Lo que reveló y ya está arreglado:
+  - **Ciclo de imports en el motor** (`context` → `missions` → `individual` → `context` y variantes): eliminado moviendo `MISSION_KINDS` a `src/engine/mission-kinds.ts`. `src/engine/no-cycles.test.ts` falla si vuelve un ciclo de imports de valores.
+  - **Documentación desactualizada:** el GDD, `docs/ui-foundation.md` (§4 y Persistencia) y el README describen ya lo que existe (servidor propio, rankings por país, Foco neutro sin capturas, `useGame` como caché del servidor). El diseño original se conserva marcado como «Diseño original (reemplazado por F2…)».
+  - Lo que sigue abierto se lista en «Revisión del 2026-11-06» más abajo.

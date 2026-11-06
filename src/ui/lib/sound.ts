@@ -4,6 +4,12 @@
  * - The end-of-session chime is scheduled on the audio clock when a session
  *   starts or resumes (background-tab safe) and cancelled on pause/cancel.
  *   SessionWatcher only plays it itself when nothing was scheduled (e.g. after a reload).
+ * - When the audio context starts running (first gesture after a reload, the
+ *   "tap to turn sound on" chip, sound switched back on), SessionWatcher calls
+ *   `syncSessionEndToAudio`: a bell scheduled while the context was suspended
+ *   is re-timed (a suspended clock does not advance), and the leader tab puts
+ *   the bell on the audio clock if nothing was scheduled, so it rings on time
+ *   even if the tab is hidden by then.
  */
 import { audio, type SfxHandle, type SfxName, type SfxOptions } from '../../audio'
 import { timerOf, useGame } from '../store/game'
@@ -58,6 +64,23 @@ export function resyncSessionEnd(): void {
     return
   }
   scheduleSessionEnd(key, timer.endsAt)
+}
+
+/**
+ * The audio context just started running. Re-time the bell this tab scheduled (its delay was
+ * counted on a clock that may have been frozen), or, when this tab scheduled none and `owner`
+ * (the leader tab) is true, schedule it now for the running session. No-op when no session is
+ * counting down.
+ */
+export function syncSessionEndToAudio(owner: boolean): void {
+  if (endHandle) {
+    resyncSessionEnd() // drops a stale/ended bell, re-times a live one
+    if (endHandle) return
+  }
+  if (!owner) return
+  const timer = timerOf(useGame.getState())
+  if (!timer || timer.pausedAt !== null || now() >= timer.endsAt) return
+  scheduleSessionEnd(timer.sessionId, timer.endsAt)
 }
 
 export function cancelSessionEnd(): void {
