@@ -97,6 +97,10 @@ Pendiente de esta tanda:
   - el botón "Empezar" normal sigue visible mientras tienes una sala abierta;
   - el aviso sonoro de fin de una sesión iniciada por el servidor lo da el `SessionWatcher`.
 - **Oleadas:** con 3 o más Pokémon golpeando a un salvaje, la fila "Golpes" se desborda un poco.
+- **Rol de la especie vs naturaleza (UX):** el rol (Velocista, Estudioso, Cazador…) nunca se explica y se confunde con la naturaleza o con un tipo, porque su etiqueta va junto a los tipos con un estilo parecido. Ejemplo: un Pidgey "Sprinter" con naturaleza Relaxed (−Ritmo).
+  - Explicar en el tooltip y en la ayuda de la ficha que el rol es de la especie (lo comparten todos los Pidgey, sale de su estadística base más alta y no tiene efecto propio), y que la naturaleza es del individuo.
+  - Diferenciar visualmente la etiqueta del rol de las de tipo.
+  - Avisar cuando la naturaleza va contra el rol, p. ej. "Su naturaleza Relaxed baja el Ritmo: es un Velocista más lento de lo normal".
 - **Despliegue:** `https://pokefocus.helicocraft.com` por un túnel propio de Cloudflare (`cloudflared-pokefocus.service`, configuración en `/etc/cloudflared/pokefocus.yml`), con `TRUST_PROXY=1`. Cuando solo se use el dominio, poner `COOKIE_SECURE=1` y quitar la URL de Tailscale de `APP_ORIGIN`.
 
 ## Fases siguientes (GDD §20)
