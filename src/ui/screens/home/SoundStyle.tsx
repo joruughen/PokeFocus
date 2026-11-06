@@ -107,6 +107,9 @@ export function StudyStyleLine({ result }: { result: Pick<SessionResult, 'soundP
       <PixelIcon name="mic" size={16} />
       <span>{t('mic.resultStyle', { style: t(`mic.kind.${kind}`), pct: fmtPct(sp[kind], i18n.language) })}</span>
       <span>{t('mic.resultTypes', { types })}</span>
+      <span className="basis-full text-dusk-500">
+        {(['silence', 'voice', 'music', 'noise'] as const).map((k) => `${t(`mic.kind.${k}`)} ${fmtPct(sp[k], i18n.language)}`).join(' · ')}
+      </span>
     </p>
   )
 }

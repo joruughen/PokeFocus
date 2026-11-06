@@ -74,7 +74,6 @@ const MEASURED: Step[] = ['silence', 'voice', 'music']
 export function MicCalibrationDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { t } = useTranslation()
   const headphones = usePrefs((s) => s.micHeadphones)
-  const setHeadphones = usePrefs((s) => s.setMicHeadphones)
   const [step, setStep] = useState<Step>('intro')
   const [result, setResult] = useState<CalibrationResult | null>(null)
   const [left, setLeft] = useState(0)
@@ -190,10 +189,7 @@ export function MicCalibrationDialog({ open, onOpenChange }: { open: boolean; on
       <>
         <Button
           variant="secondary"
-          onClick={() => {
-            setHeadphones(true)
-            finish(null)
-          }}
+          onClick={() => finish(null)}
         >
           {t('mic.cal.musicSkip')}
         </Button>

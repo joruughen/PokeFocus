@@ -26,8 +26,11 @@ export function MicBridge() {
   }, [listen, sessionId])
 
   // Drop the tallies of sessions that no longer exist (claimed, cancelled, other tab).
+  // "Music on headphones" is declared per session: it switches off once no session is active.
   useEffect(() => {
-    if (loaded) clearMicTallies(sessionId)
+    if (!loaded) return
+    clearMicTallies(sessionId)
+    if (sessionId === null) usePrefs.getState().setMicHeadphones(false)
   }, [loaded, sessionId])
 
   useEffect(() => () => stopMic(), [])

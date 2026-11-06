@@ -1820,7 +1820,7 @@
     "resultTypes": "Slightly more likely: {{types}}.",
     "settingsTitle": "Microphone",
     "headphones": "I listen to music on headphones",
-    "headphonesNote": "For headphone music, which the mic cannot hear: quiet stretches count as music. You declare it yourself.",
+    "headphonesNote": "This session only. The mic cannot hear your headphone music, so quiet stretches count as music. It turns off when the session ends.",
     "speakerNote": "Music through speakers, the app’s own focus music included, is heard by the mic and counts as music.",
     "meter": {
       "title": "Test the microphone",
@@ -1842,7 +1842,7 @@
       "musicAsk": "Do you study with music?",
       "musicAskNote": "Play it through your speakers for 5 s at your usual volume. If you listen on headphones the mic cannot hear it: skip this.",
       "musicPlay": "Play my music for 5 s",
-      "musicSkip": "Skip: I use headphones",
+      "musicSkip": "Skip this step",
       "music": "Let your music play for 5 s",
       "musicNote": "Don’t talk meanwhile.",
       "measuring": "Measuring… {{s}} s",

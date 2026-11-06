@@ -1820,7 +1820,7 @@
     "resultTypes": "Atrae un poco más a: {{types}}.",
     "settingsTitle": "Micrófono",
     "headphones": "Escucho música con audífonos",
-    "headphonesNote": "Para música con audífonos, que el micrófono no oye: los ratos en silencio cuentan como música. Lo declaras tú.",
+    "headphonesNote": "Solo para esta sesión. El micrófono no oye la música de tus audífonos, así que los ratos en silencio cuentan como música. Se desactiva al terminar la sesión.",
     "speakerNote": "La música por parlantes, también la música de enfoque de la app, la oye el micrófono y cuenta como música.",
     "meter": {
       "title": "Probar el micrófono",
@@ -1842,7 +1842,7 @@
       "musicAsk": "¿Estudias con música?",
       "musicAskNote": "Ponla 5 s por los parlantes, a tu volumen de siempre. Si la escuchas con audífonos el micrófono no la oye: sáltalo.",
       "musicPlay": "Poner mi música 5 s",
-      "musicSkip": "Saltar: uso audífonos",
+      "musicSkip": "Saltar este paso",
       "music": "Deja sonar tu música 5 s",
       "musicNote": "No hables mientras tanto.",
       "measuring": "Midiendo… {{s}} s",
