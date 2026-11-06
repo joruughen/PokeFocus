@@ -566,6 +566,32 @@
       "unsupported": "Tu navegador no las admite."
     },
     "notifAsk": "Permitir notificaciones",
+    "push": {
+      "label": "Avisos aunque la pestaña esté dormida o cerrada",
+      "hint": "El servidor también avisará a este navegador cuando termine la sesión, aunque la página esté dormida o cerrada. Solo vale para este navegador.",
+      "state": {
+        "checking": "Comprobando…",
+        "unsupported": "Este navegador no admite avisos del servidor.",
+        "serverOff": "Este servidor no tiene los avisos activados.",
+        "denied": "Bloqueados en el navegador. Para desbloquearlos, pulsa el icono junto a la dirección de la página y permite las notificaciones.",
+        "off": "Desactivados en este navegador.",
+        "on": "Activados en este navegador."
+      },
+      "busy": "Un momento…",
+      "test": "Enviar aviso de prueba",
+      "testSent": "Aviso enviado",
+      "testNone": "El servidor no pudo entregar el aviso. Desactiva y vuelve a activar los avisos.",
+      "error": {
+        "no_subscription": "Este navegador no está registrado. Desactiva y vuelve a activar los avisos.",
+        "push_disabled": "Los avisos no están activados en este servidor.",
+        "rate_limited": "Demasiados intentos. Espera un poco y vuelve a probar.",
+        "network": "Sin conexión con el servidor. Vuelve a intentarlo.",
+        "too_many": "Tienes demasiados navegadores con avisos. Desactívalos en alguno que ya no uses.",
+        "dismissed": "No se activaron: hace falta permitir las notificaciones.",
+        "denied": "Las notificaciones están bloqueadas en este navegador.",
+        "generic": "No se pudieron activar los avisos. Inténtalo de nuevo."
+      }
+    },
     "advanced": "Avanzado",
     "dev": "Herramientas de desarrollo",
     "devNote": "Tiempo acelerado, semilla fija y atajos para probar.",

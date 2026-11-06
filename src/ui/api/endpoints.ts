@@ -18,6 +18,8 @@ import {
   type LeaderboardScope,
   type MaintenanceCreateRequest,
   type PublicUser,
+  type PushConfigResponse,
+  type PushSubscribeRequest,
 } from '../../game/protocol'
 import type { WeatherResponse } from '../../game/weather'
 import { now, usePrefs } from '../store/prefs'
@@ -81,6 +83,15 @@ export const weatherApi = {
 /** Public: scheduled maintenance windows that have not ended (works signed out). */
 export const announcementsApi = {
   get: () => api.get<AnnouncementsResponse>('/announcements', { allow401: true }),
+}
+
+/** Web Push for this browser (src/game/protocol.ts "Web Push"; flows in lib/push.ts). */
+export const pushApi = {
+  config: () => api.get<PushConfigResponse>('/push/config'),
+  subscribe: (body: PushSubscribeRequest) => api.post<void>('/push/subscribe', body),
+  // Also runs right before logout: a 401 there must not trigger the "session expired" path.
+  unsubscribe: (endpoint: string) => api.post<void>('/push/unsubscribe', { endpoint }, { allow401: true }),
+  test: () => api.post<{ sent: number }>('/push/test'),
 }
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` })

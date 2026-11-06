@@ -14,6 +14,7 @@ import { devEnabled, usePrefs } from '../store/prefs'
 import { useBusy, usePlayer } from '../store/selectors'
 import { AccountPanel } from './account/AccountPanel'
 import { MicSettings } from './MicSettings'
+import { PushSettings } from './PushSettings'
 import { WeatherSettings } from './WeatherSettings'
 
 // Enforced by the server (src/game/actions.ts TIMEZONE_LOCK_DAYS); shown here.
@@ -117,13 +118,16 @@ export default function Settings() {
       </Panel>
 
       <Panel title={t('settings.session')}>
-        <Row label={t('settings.notifications')} note={t(`settings.notif.${notif}`)}>
-          {notif === 'default' && (
-            <Button variant="secondary" onClick={() => void Notification.requestPermission().then(setNotif)}>
-              {t('settings.notifAsk')}
-            </Button>
-          )}
-        </Row>
+        <div className="flex flex-col gap-6">
+          <Row label={t('settings.notifications')} note={t(`settings.notif.${notif}`)}>
+            {notif === 'default' && (
+              <Button variant="secondary" onClick={() => void Notification.requestPermission().then(setNotif)}>
+                {t('settings.notifAsk')}
+              </Button>
+            )}
+          </Row>
+          <PushSettings permission={notif} onPermission={setNotif} />
+        </div>
       </Panel>
 
       <Panel title={t('settings.help')}>

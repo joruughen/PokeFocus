@@ -12,6 +12,7 @@ import type { AuthSessionInfo, PublicUser } from '../../game/protocol'
 import { errorCode, isApiError, onUnauthorized, type ApiError } from '../api/client'
 import { authApi, type RegisterInput } from '../api/endpoints'
 import { connectEvents, disconnectEvents, onServerEvent } from '../api/events'
+import { forgetPushOnSignOut, syncPushOnSignIn } from '../lib/push'
 import { useGame } from './game'
 import { useFriends } from './social'
 
@@ -62,6 +63,8 @@ function signedIn(user: PublicUser) {
     useFriends.getState().clear()
     void useGame.getState().load()
     void useFriends.getState().load()
+    // This browser's push subscription (if any) now belongs to this account.
+    void syncPushOnSignIn()
   }
   connectEvents()
 }
@@ -99,13 +102,21 @@ export const useAuth = create<AuthState>()((set, get) => ({
   },
   logout: async () => {
     try {
+      // While the cookie still works: the server forgets this browser's push subscription (never throws, gives up after 3 s).
+      await forgetPushOnSignOut()
       await authApi.logout()
     } finally {
       signedOut()
     }
   },
   logoutAll: async () => {
-    await authApi.logoutAll()
+    await forgetPushOnSignOut()
+    try {
+      await authApi.logoutAll()
+    } catch (e) {
+      void syncPushOnSignIn() // still signed in: give the subscription back
+      throw e
+    }
     signedOut()
   },
   updateMe: async (patch) => {

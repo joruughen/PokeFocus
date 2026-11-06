@@ -29,6 +29,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.6.0',
+    date: '2026-11-06',
+    title: { es: 'Avisos que llegan aunque la pestaña duerma', en: 'Notices that arrive even if the tab sleeps' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'En Ajustes → Sesiones puedes activar «Avisos aunque la pestaña esté dormida o cerrada»: el servidor también te avisa cuando termina tu sesión, así no pierdes la ventana de 5 minutos si tu navegador duerme la pestaña mientras estudias en otra.',
+          en: 'In Settings → Sessions you can turn on “Notices even when the tab is asleep or closed”: the server also tells you when your session ends, so you do not miss the 5-minute window if your browser puts the tab to sleep while you study in another one.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Con los avisos activados hay un botón «Enviar aviso de prueba» para comprobar que te llegan.',
+          en: 'With the notices on there is a “Send a test notice” button to check that they reach you.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.5.0',
     date: '2026-11-06',
     title: { es: 'Habilidad nueva, cuenta y ajustes', en: 'New ability, account and fixes' },

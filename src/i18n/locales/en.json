@@ -566,6 +566,32 @@
       "unsupported": "Your browser doesn't support them."
     },
     "notifAsk": "Allow notifications",
+    "push": {
+      "label": "Notices even when the tab is asleep or closed",
+      "hint": "The server will also tell this browser when your session ends, even if the page is asleep or closed. Only for this browser.",
+      "state": {
+        "checking": "Checking…",
+        "unsupported": "This browser doesn't support server notices.",
+        "serverOff": "Notices aren't enabled on this server.",
+        "denied": "Blocked in the browser. To unblock them, click the icon next to the page address and allow notifications.",
+        "off": "Off in this browser.",
+        "on": "On in this browser."
+      },
+      "busy": "One moment…",
+      "test": "Send a test notice",
+      "testSent": "Notice sent",
+      "testNone": "The server couldn't deliver the notice. Turn notices off and on again.",
+      "error": {
+        "no_subscription": "This browser isn't registered. Turn notices off and on again.",
+        "push_disabled": "Notices aren't enabled on this server.",
+        "rate_limited": "Too many tries. Wait a bit and try again.",
+        "network": "Can't reach the server. Try again.",
+        "too_many": "You have too many browsers with notices. Turn them off in one you no longer use.",
+        "dismissed": "Not turned on: notifications need to be allowed.",
+        "denied": "Notifications are blocked in this browser.",
+        "generic": "Couldn't turn notices on. Try again."
+      }
+    },
     "advanced": "Advanced",
     "dev": "Developer tools",
     "devNote": "Fast time, fixed seed and shortcuts for testing.",

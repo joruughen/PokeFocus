@@ -7,7 +7,7 @@ El prototipo F1 está **completo y jugable** y la **F2 (servidor propio, cuentas
 ```bash
 npm install
 npm run dev          # app (5173) + API (8787, PGlite en .data/pglite, DEV_TOOLS=1); ?dev = panel de desarrollo
-npm test             # 628 tests (motor, reducer, servidor, UI)
+npm test             # 692 tests (motor, reducer, servidor, UI)
 npm start            # producción: API + dist/ en un solo origen (requiere npm run build)
 docker compose up --build   # PostgreSQL 17 + app (cuando haya Docker)
 npm run simulate     # simulador de balance → docs/balance-report.md
@@ -81,9 +81,20 @@ Panel de desarrollo contra un servidor de producción: con `?dev` el panel se ab
 - **Rol en Pokédex y en la elección de inicial** con la etiqueta nueva; el medidor del micrófono (`live.ts`) usa el Worker; quitados `prefs.tzChangedAt` y `STORAGE_KEYS.game`; fila de F4 del GDD corregida.
 - **`soundProfileWeight`:** la fuente (`data/overrides`) tenía el 1.5 original y solo la copia generada tenía el 1.2 que el GDD documenta («se bajó a ×1.2»). El juego usaba 1.2, pero `npm run build:data` lo habría vuelto a subir. Ya está en 1.2 en la fuente y `build:data` no cambia nada.
 
+## Hecho: avisos push de respaldo (2026-11-06, v0.6.0)
+
+Si el navegador congela una pestaña oculta (Ahorro de memoria/energía de Chrome), nadie muestra el aviso de fin de sesión y el jugador reclama pasados los 5 minutos con el ×0.5. Ahora, además, **el servidor manda un aviso push** (Mozilla en Zen/Firefox, Google en Chrome, Apple en Safari).
+
+- **Regla** (`server/push.ts`, `src/game/protocol.ts` «Web Push»): se envía una vez por sesión si el jugador tiene alguna suscripción, el temporizador no está en pausa, la página **no** avisó ya (`timer.notified` es el dedupe: con la pestaña viva no se duplica), han pasado 20 s del fin y no más de 30 min. El programador corre cada 15 s.
+- **Interruptor** en Ajustes → Sesiones («Avisos aunque la pestaña esté dormida o cerrada», por navegador) y botón «Enviar aviso de prueba». El service worker (`public/sw.js`) no muestra nada si hay una ventana visible, y usa la misma etiqueta que la página para que un aviso reemplace al otro. Al cerrar sesión, el navegador deja de recibir los avisos de esa cuenta.
+- **Seguridad:** el servidor solo acepta endpoints `https` de servicios de push conocidos (FCM, Mozilla, Apple, Windows) para que nadie use el servidor para llamar a direcciones internas; 10 suscripciones por usuario como máximo; límites de peticiones.
+- **Para activarlo en el servidor desplegado:** `npm run vapid` genera las tres líneas (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:tu@correo`); ponlas en el entorno (en `docker-compose.yml` ya se pasan) y reinicia (la migración `0004_web_push` se aplica sola). Sin claves, el interruptor dice «Este servidor no tiene los avisos activados». **Guarda la clave privada en secreto y no la cambies:** si cambia, las suscripciones existentes dejan de valer.
+- **Verificado:** validación de endpoints, programador (envía solo la sesión vencida y sin aviso previo; no la que sigue en curso ni la que ya avisó la página) y que FCM acepta la firma VAPID y el cifrado (responde 410 al destinatario falso). **No verificado:** la suscripción real de un navegador y la llegada del aviso (el Chromium de pruebas no tiene servicio push). Pruébalo en tu Zen con el botón «Enviar aviso de prueba».
+- **Pendiente / detalles:** `web-push` está fijado en la 3.x (la 4.0.0 salió el mismo día; revisar más adelante); una sola instancia del servidor (el programador y el bus de eventos viven en memoria); un fallo al consultar `/api/push/config` aparece como «servidor sin avisos»; no hay un segundo recordatorio antes de que cierre la ventana de 5 minutos (se podría añadir).
+
 ## Revisión del 2026-11-06: abierto y por decidir
 
-- **Reclamar tarde sigue costando (decisión tuya).** Quien estudia en otra pestaña y no recibe el aviso de fin reclama pasados los 5 min y se le aplica `lateClaimMultiplier`. Con las medidas anteriores el aviso llega, pero Chrome (Ahorro de memoria / energía) puede congelar una pestaña oculta y en silencio durante mucho tiempo, y entonces no llegan ni la notificación ni la campana. Opciones: (a) avisos Web Push desde el servidor (Service Worker + claves VAPID, es lo más fiable, pero es trabajo de verdad); (b) ampliar la ventana de reclamo; (c) una regla del servidor más permisiva (no puede saber si la pestaña estaba oculta, y no debería fiarse del cliente). No toqué la regla.
+- **Reclamar tarde: decidido (2026-11-06).** La ventana **se queda en 5 minutos**. Para no perderla si el navegador duerme la pestaña, el servidor manda un aviso push de respaldo (ver «Hecho: avisos push»).
 - **Probar con un navegador y un micrófono reales** que el Worker mantiene el muestreo a 100 ms con la pestaña oculta.
 - **Privacidad, lo que no se oculta** (a propósito, pero conviene saberlo): en los grupos de estudio, dos invitados del mismo anfitrión se ven el nombre aunque no sean amigos entre sí; y quien envía una solicitud a un código de amigo ve el nombre del dueño aunque sea anónimo.
 - **`ApiError` del cliente descarta el cuerpo de la respuesta**, así que `unlockAt` del 409 no llega a la interfaz: la fecha se recalcula con la misma fórmula (`changedAt + 30 días`) desde el usuario refrescado. Si se quiere usar `unlockAt` directo, añadir `body` a `ApiError` (`src/ui/api/client.ts`) y cambiar una línea en `AccountPanel.tsx` (`lockedMeanwhile`).
