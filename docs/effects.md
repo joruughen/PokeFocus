@@ -19,7 +19,7 @@ Las técnicas (`data/overrides/custom-techniques.json`) y las habilidades (`data
 
 - **Pasivo** (técnica pasiva o habilidad): el efecto se aplica siempre que se cumpla su `when`.
 - **Activable**: en cada acción del Pokémon se tira `baseChance × Mult_Técnica × Mult_Dominio × techChance` (máx. `actions.maxActivationChance`). Si sale, se aplican sus efectos ahora. Cada técnica respeta su `limitPerSession`.
-- `scope: "team"` en un efecto pasivo: afecta a todo el equipo, pero **no se acumula** entre miembros: si dos miembros dan el mismo efecto de equipo sobre el mismo `stat`, se aplica el más fuerte.
+- `scope: "team"` en un efecto pasivo (`statMod` y `counterMiss`): afecta a todo el equipo, pero **no se acumula** entre miembros: si dos miembros dan el mismo efecto de equipo sobre el mismo `stat` (o `counterMiss`), se aplica el más fuerte.
 
 ## Condiciones (`when`)
 
@@ -56,7 +56,7 @@ Todas las claves presentes deben cumplirse (AND). Sin `when`, el efecto siempre 
 | `streakProtect` | — | Si el día anterior no hubo sesiones, la racha no se rompe (respeta `limitPerWeek`) |
 | `lateClaimImmune` | — | Reclamar tarde no le aplica `lateClaimMultiplier` |
 | `focusFloor` | `min` | Para este Pokémon, `Foco_efectivo = max(Foco_efectivo, min)` |
-| `focusLabelFloor` | `labels`, `value` | Para este Pokémon, las capturas con esas etiquetas valen al menos `value` |
+| `focusLabelFloor` | `labels`, `value` | Para este Pokémon, las capturas con esas etiquetas valen al menos `value`. **Hoy ninguna habilidad la usa:** el Foco por captura de pantalla se descartó el 2026-11-05 (Despiste era la única y ahora es un `counterMiss` de equipo). La primitiva se conserva, con sus pruebas, por si vuelve a hacer falta |
 | `effectivenessFloor` | `from`, `to` | Su Energía de captura: los multiplicadores de tipo iguales a `from` pasan a `to` |
 | `encounterWeight` | `match` (`{type}` o `{natureOfSelf: true}`), `mult` | Equipo, no acumulable. `{type}`: multiplica el peso de esas especies al generar oleadas. `{natureOfSelf}`: `mult` es la probabilidad de que el salvaje tenga la misma naturaleza que este Pokémon |
 | `ballMult` | `mult` | Equipo, no acumulable: multiplica la probabilidad de captura de cualquier Ball |
@@ -64,7 +64,7 @@ Todas las claves presentes deben cumplirse (AND). Sin `when`, el efecto siempre 
 | `revealWildIvs` | — | Equipo: la UI muestra la calidad (IVs) de los salvajes |
 | `counterImmuneType` | `type` | Si el contraataque es de ese tipo, cura el 25% de Energía en vez de dañar |
 | `counterMinHp1` | — | Un contraataque nunca le deja a 0 de Energía |
-| `counterMiss` | `chance` | Los contraataques contra él fallan con esa probabilidad |
+| `counterMiss` | `chance`, `scope?` (`self` por defecto, o `team`), `when?` | `self`: los contraataques contra él fallan con esa probabilidad (Velo Arena, Manto Níveo: `chance` 0.25). `team`: los contraataques contra **cualquier** miembro del equipo fallan con esa probabilidad; ejemplo, Despiste: `{ "kind": "counterMiss", "chance": 0.15, "scope": "team" }`. No se acumula: la probabilidad final es la **mayor** entre el `counterMiss` propio de quien recibe el golpe y el mejor `counterMiss` de equipo (nunca la suma ni el producto). Como los demás efectos de equipo, aporta todo miembro del equipo (también uno agotado, que no puede ser el objetivo) y su `when` se evalúa con su propio contexto; un Pokémon fuera del equipo no aporta. Solo se tira el dado si la probabilidad final es mayor que 0 |
 | `counterReflect` | `wildHpPct` | Al recibir un contraataque, el salvaje pierde ese % de vida (respetando el mínimo del 5%) |
 | `counterStatus` | `status`, `chance` | Al recibir un contraataque, con `chance`, el salvaje queda con ese estado |
 | `counterNoFirst` | — | Equipo: el primer fallo de cada salvaje no provoca contraataque |

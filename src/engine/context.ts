@@ -11,7 +11,8 @@ import missionsJson from '../data/game/custom-missions.json'
 import { buildConfig, type GameConfig, type GameConfigOverrides } from './config'
 import type { GameData, Move, Nature, Species, TypeChart } from './data-types'
 import { EFFECT_KINDS, type AbilityDef, type TechniqueDef } from './effect-types'
-import { MISSION_KINDS, type MissionsContent } from './missions'
+import { MISSION_KINDS } from './mission-kinds'
+import type { MissionsContent } from './missions'
 
 export interface EngineContext {
   config: GameConfig

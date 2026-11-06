@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { applySessionResult } from './session'
-import { advanceWave, applyStatusCharge, captureChance, counterDamage, rerollWild, resolveCounter, throwBall, wildCatchChance } from './capture'
+import { advanceWave, applyStatusCharge, captureChance, counterDamage, encounterModifiers, rerollWild, resolveCounter, throwBall, wildCatchChance } from './capture'
 import { createEngineContext, defaultContext, type EngineContext } from './context'
-import { createRng } from './rng'
+import type { AbilityDef } from './effect-types'
+import { passiveEffects } from './effects'
+import { createRng, type Rng } from './rng'
 import type { EncounterState, PlayerState, WildPokemon } from './state'
 import { computeStats } from './stats'
 import { makeMon, makePlayer, runSession, T0 } from './test-helpers'
@@ -312,6 +314,218 @@ describe('counter effects', () => {
     expect(r2.counter.statusInflicted).toBe('paralysis')
     const mach = makeMon('machop', 30, { uid: 'M', ability: 'steadfast' })
     expect(resolveCounter(withEncounter(makePlayer([mach]), [w]), w, createRng(1))!.wild.nextThrowBonus).toBe(1.15)
+  })
+})
+
+describe('Despiste: team-scope counterMiss', () => {
+  const DESPISTE: AbilityDef['effects'] = [{ kind: 'counterMiss', chance: 0.15, scope: 'team' }]
+  const wildSq = wild('squirtle', 20)
+
+  /** An Rng that records every draw, so tests can count how many a counter consumed. */
+  function recorder(seed: number | string): { rng: Rng; draws: number[] } {
+    const base = createRng(seed)
+    const draws: number[] = []
+    return {
+      draws,
+      rng: {
+        next() {
+          const u = base.next()
+          draws.push(u)
+          return u
+        },
+      },
+    }
+  }
+
+  /** `n` independent counterattacks against the same state, from one seeded stream. */
+  function counters(state: PlayerState, n: number, seed: number | string, c: EngineContext = ctx) {
+    const { rng, draws } = recorder(seed)
+    const results = []
+    for (let i = 0; i < n; i++) {
+      const before = draws.length
+      const r = resolveCounter(state, wildSq, rng, c)!
+      results.push({ counter: r.counter, used: draws.slice(before) })
+    }
+    return { results, draws }
+  }
+
+  const missRate = (rs: { counter: { missed: boolean } }[]) => rs.filter((r) => r.counter.missed).length / rs.length
+
+  function team(opts: { holderFirst?: boolean; holder?: Partial<Parameters<typeof makeMon>[2]>; c?: EngineContext } = {}) {
+    const c = opts.c ?? ctx
+    const leader = makeMon('charmander', 20, { uid: 'L', ability: null }, c)
+    const holder = makeMon('piloswine', 25, { uid: 'P', ability: 'oblivious', ...opts.holder }, c)
+    const members = opts.holderFirst ? [holder, leader] : [leader, holder]
+    return withEncounter(makePlayer(members, {}, c), [wildSq])
+  }
+
+  it('Swinub and Piloswine load it from the real data (es + en, numbers in sync)', () => {
+    expect(ctx.abilities.oblivious?.effects).toEqual(DESPISTE)
+    expect(ctx.warnings.filter((w) => w.includes('oblivious'))).toEqual([])
+    for (const slug of ['swinub', 'piloswine']) {
+      expect(getAbilitySlugs(slug)).toContain('oblivious')
+      const mon = makeMon(slug, 20, { ability: 'oblivious' })
+      expect(passiveEffects(mon, ctx).filter((e) => e.sourceKind === 'ability').map((e) => e.effect)).toEqual(DESPISTE)
+    }
+    const d = ctx.abilities.oblivious!.description
+    expect(d.es).toContain('15%')
+    expect(d.en).toContain('15%')
+    expect(d.es).not.toMatch(/Foco/)
+  })
+
+  function getAbilitySlugs(slug: string): string[] {
+    return ctx.speciesBySlug.get(slug)!.abilities.map((a) => a.slug)
+  }
+
+  it('applies to whoever is hit, even when the holder is not the target (~15% of counters miss)', () => {
+    const s = team()
+    const N = 6000
+    const { results, draws } = counters(s, N, 'despiste-team')
+    expect(results.every((r) => r.counter.targetUid === 'L')).toBe(true)
+    expect(encounterModifiers(s, ctx).teamCounterMiss).toBe(0.15)
+    // Exactly one draw per counter, and a miss exactly when that draw is below 15%.
+    expect(draws).toHaveLength(N)
+    for (const r of results) expect(r.counter.missed).toBe(r.used[0]! < 0.15)
+    expect(Math.abs(missRate(results) - 0.15)).toBeLessThan(0.02)
+    // Missed counters do no damage; the others hit as usual.
+    const plain = resolveCounter(team({ holder: { ability: null } }), wildSq, createRng(1))!.counter.damage
+    for (const r of results) expect(r.counter.damage).toBe(r.counter.missed ? 0 : plain)
+    // Deterministic with the same seed.
+    expect(counters(s, 500, 'despiste-team').results.map((r) => r.counter.missed)).toEqual(results.slice(0, 500).map((r) => r.counter.missed))
+  })
+
+  it('also applies when the holder leads and is the one hit', () => {
+    const { results } = counters(team({ holderFirst: true }), 4000, 'despiste-leader')
+    expect(results.every((r) => r.counter.targetUid === 'P')).toBe(true)
+    expect(Math.abs(missRate(results) - 0.15)).toBeLessThan(0.02)
+  })
+
+  it('without a holder nothing changes: no miss, no random draw', () => {
+    const s = team({ holder: { ability: null } })
+    expect(encounterModifiers(s, ctx).teamCounterMiss).toBe(0)
+    const { results, draws } = counters(s, 200, 'no-holder')
+    expect(draws).toHaveLength(0)
+    expect(results.some((r) => r.counter.missed)).toBe(false)
+  })
+
+  it('does not stack with the target\'s own counterMiss: the strongest wins (max, never a sum or product)', () => {
+    // Target with snow-cloak (self 25%) + Despiste on the team (15%) -> 25%.
+    const leader = makeMon('swinub', 20, { uid: 'L', ability: 'snow-cloak' })
+    const holder = makeMon('piloswine', 25, { uid: 'P', ability: 'oblivious' })
+    const s = withEncounter(makePlayer([leader, holder]), [wildSq])
+    const a = counters(s, 6000, 'max-self-wins')
+    expect(a.results.every((r) => r.counter.targetUid === 'L')).toBe(true)
+    expect(a.draws).toHaveLength(6000)
+    for (const r of a.results) expect(r.counter.missed).toBe(r.used[0]! < 0.25)
+    expect(Math.abs(missRate(a.results) - 0.25)).toBeLessThan(0.02)
+    // A weaker own counterMiss (10%) loses to the team's 15%.
+    const weak = createEngineContext({ abilities: { ...ctx.abilities, 'snow-cloak': { ...ctx.abilities['snow-cloak']!, effects: [{ kind: 'counterMiss', chance: 0.1 }] } } })
+    const l2 = makeMon('swinub', 20, { uid: 'L', ability: 'snow-cloak' }, weak)
+    const h2 = makeMon('piloswine', 25, { uid: 'P', ability: 'oblivious' }, weak)
+    const b = counters(withEncounter(makePlayer([l2, h2], {}, weak), [wildSq]), 3000, 'max-team-wins', weak)
+    for (const r of b.results) expect(r.counter.missed).toBe(r.used[0]! < 0.15)
+    // Two holders (and a self-scope 25% on the target) still give a single draw at the best chance.
+    const h3 = makeMon('swinub', 20, { uid: 'Q', ability: 'oblivious' })
+    const c = counters(withEncounter(makePlayer([leader, holder, h3]), [wildSq]), 500, 'two-holders')
+    expect(c.draws).toHaveLength(500)
+    for (const r of c.results) expect(r.counter.missed).toBe(r.used[0]! < 0.25)
+    const two = counters(withEncounter(makePlayer([makeMon('charmander', 20, { uid: 'L', ability: null }), holder, h3]), [wildSq]), 500, 'two-holders-2')
+    for (const r of two.results) expect(r.counter.missed).toBe(r.used[0]! < 0.15)
+  })
+
+  it('a team-scope effect on the target itself does not double count with the self rule', () => {
+    const s = team({ holderFirst: true })
+    const { results } = counters(s, 500, 'self-team')
+    expect(results.every((r) => r.used.length === 1)).toBe(true)
+    for (const r of results) expect(r.counter.missed).toBe(r.used[0]! < 0.15)
+  })
+
+  it('contributors count like the other team-scope effects: exhausted members still count, members outside the team do not', () => {
+    // Convention check: an exhausted holder keeps contributing its team effects (unnerve = counterNoFirst).
+    const exhaustedUnnerve = makeMon('houndour', 20, { uid: 'H', ability: 'unnerve', energy: { current: 0, updatedAt: T0 } })
+    const lead = makeMon('charmander', 20, { uid: 'L', ability: null })
+    expect(encounterModifiers(makePlayer([lead, exhaustedUnnerve]), ctx).counterNoFirst).toBe(true)
+    // Same for Despiste: the holder is exhausted (cannot be the target) but the team still gets it.
+    const s = team({ holder: { energy: { current: 0, updatedAt: T0 } } })
+    expect(encounterModifiers(s, ctx).teamCounterMiss).toBe(0.15)
+    const { results } = counters(s, 300, 'exhausted-holder')
+    expect(results.every((r) => r.counter.targetUid === 'L')).toBe(true)
+    for (const r of results) expect(r.counter.missed).toBe(r.used[0]! < 0.15)
+    // A holder in the box (not on the team) does nothing.
+    const solo = withEncounter(makePlayer([makeMon('charmander', 20, { uid: 'L', ability: null })]), [wildSq])
+    const away = { ...solo, pokemon: { ...solo.pokemon, P: makeMon('piloswine', 25, { uid: 'P', ability: 'oblivious' }) } }
+    expect(away.team).not.toContain('P')
+    expect(encounterModifiers(away, ctx).teamCounterMiss).toBe(0)
+    const none = counters(away, 100, 'box-holder')
+    expect(none.draws).toHaveLength(0)
+  })
+
+  it("each contributor's `when` is read against its own context (isLeader on the holder)", () => {
+    const c = createEngineContext({ abilities: { ...ctx.abilities, oblivious: { ...ctx.abilities.oblivious!, effects: [{ kind: 'counterMiss', chance: 0.15, scope: 'team', when: { isLeader: true } }] } } })
+    const notLeader = team({ c })
+    expect(encounterModifiers(notLeader, c).teamCounterMiss).toBe(0)
+    expect(counters(notLeader, 50, 'when-no', c).draws).toHaveLength(0)
+    const leader = team({ c, holderFirst: true })
+    expect(encounterModifiers(leader, c).teamCounterMiss).toBe(0.15)
+    expect(counters(leader, 50, 'when-yes', c).draws).toHaveLength(50)
+  })
+
+  it('a self-scope counterMiss on a non-target never leaks to the team (sand-veil second does nothing)', () => {
+    const lead = makeMon('charmander', 20, { uid: 'L', ability: null })
+    const veil = makeMon('sandshrew', 20, { uid: 'S', ability: 'sand-veil' })
+    const s = withEncounter(makePlayer([lead, veil]), [wildSq])
+    expect(encounterModifiers(s, ctx).teamCounterMiss).toBe(0)
+    expect(counters(s, 100, 'veil-second').draws).toHaveLength(0)
+  })
+
+  it('RNG sequence is unchanged for teams without a team-scope counterMiss (same draws and outcomes as the old rule)', () => {
+    // Old rule: miss chance = the target's own counterMiss only; chance(rng, 0) draws nothing.
+    const legacyMiss = (state: PlayerState): number => {
+      const target = state.team.map((u) => state.pokemon[u]!).find((p) => p.energy.current > 0)!
+      return Math.max(0, ...passiveEffects(target, ctx).flatMap((e) => (e.effect.kind === 'counterMiss' ? [e.effect.chance] : [])))
+    }
+    const mk = (...mons: ReturnType<typeof makeMon>[]) => withEncounter(makePlayer(mons), [wildSq])
+    const teams: Record<string, PlayerState> = {
+      plain: mk(makeMon('charmander', 20, { uid: 'L', ability: null }), makeMon('pidgey', 20, { uid: 'O', ability: null })),
+      selfVeil: mk(makeMon('swinub', 20, { uid: 'L', ability: 'snow-cloak' }), makeMon('pidgey', 20, { uid: 'O', ability: null })),
+      veilSecond: mk(makeMon('charmander', 20, { uid: 'L', ability: null }), makeMon('swinub', 20, { uid: 'S', ability: 'snow-cloak' })),
+      otherTeamEffects: mk(makeMon('houndour', 20, { uid: 'L', ability: 'unnerve' }), makeMon('clefairy', 20, { uid: 'F', ability: 'friend-guard' })),
+      swinubOtherAbility: mk(makeMon('swinub', 20, { uid: 'L', ability: 'thick-fat' }), makeMon('piloswine', 25, { uid: 'S', ability: 'snow-cloak' })),
+    }
+    for (const [name, s] of Object.entries(teams)) {
+      const legacy = legacyMiss(s)
+      expect(encounterModifiers(s, ctx).teamCounterMiss, name).toBe(0)
+      for (let seed = 1; seed <= 60; seed++) {
+        const { rng, draws } = recorder(seed)
+        const r = resolveCounter(s, wildSq, rng, ctx)!
+        expect(draws.length, `${name} seed ${seed}`).toBe(legacy > 0 ? 1 : 0)
+        expect(r.counter.missed, `${name} seed ${seed}`).toBe(legacy > 0 && draws[0]! < legacy)
+        // Whatever was drawn, the stream continues exactly where the old code would have left it.
+        const ref = createRng(seed)
+        if (legacy > 0) ref.next()
+        expect(rng.next()).toBe(ref.next())
+      }
+    }
+  })
+
+  it('throwBall passes the team miss through the real throw flow', () => {
+    const noLuck = createEngineContext({ config: { capture: { balls: { 'poke-ball': { mult: 0, shinyGuarantee: { maxStage: 1, maxLevel: 25 } } } } } })
+    let missed = 0
+    let total = 0
+    for (let seed = 0; seed < 300; seed++) {
+      let s = team({ c: noLuck })
+      const rng = createRng(`flow${seed}`)
+      for (let i = 0; i < noLuck.config.capture.maxFailedThrows; i++) {
+        const r = throwBall(s, { waveIndex: 0, wildIndex: 0 }, 'poke-ball', rng, T0, noLuck)
+        if (!r.ok || r.value.outcome.kind === 'caught') throw new Error('unexpected')
+        const c = r.value.outcome.counter!
+        expect(c.targetUid).toBe('L')
+        total++
+        if (c.missed) missed++
+        s = r.value.state
+      }
+    }
+    expect(Math.abs(missed / total - 0.15)).toBeLessThan(0.04)
   })
 })
 

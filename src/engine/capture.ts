@@ -177,8 +177,11 @@ export function resolveCounter(
     survivedWith1: false,
     energyAfter: target.energy.current,
   }
-  let missChance = 0
-  for (const { effect: e } of ofKind(active, 'counterMiss')) missChance = Math.max(missChance, e.chance)
+  // Miss chance: the target's own counterMiss or the best team-scope one on the team (strongest, never summed).
+  // `chance(rng, 0)` draws nothing, so a team without any counterMiss consumes the same random numbers as before.
+  const mods = encounterModifiers(state, ctx)
+  let missChance = mods.teamCounterMiss
+  for (const { effect: e } of ofKind(active, 'counterMiss')) if (e.scope !== 'team') missChance = Math.max(missChance, e.chance)
   let nextWild = wild
   let current = target.energy.current
   if (chance(rng, missChance)) {
@@ -189,7 +192,7 @@ export function resolveCounter(
       counter.healed = Math.max(0, healed)
       current += counter.healed
     } else {
-      const teamMult = encounterModifiers(state, ctx).teamCounterDamageMult
+      const teamMult = mods.teamCounterDamageMult
       const selfMult = selfStatMult(active, 'counterDamageTaken', wc, cfg)
       let dmg = counterDamage(stats.hp, target.level, stats.defense, wild.level, eff, wild.isLegendary, cfg) * selfMult * teamMult
       dmg = Math.min(dmg, current)

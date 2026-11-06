@@ -65,7 +65,7 @@ export type Effect =
   | (Base & { kind: 'revealWildIvs' })
   | (Base & { kind: 'counterImmuneType'; type: TypeSlug })
   | (Base & { kind: 'counterMinHp1' })
-  | (Base & { kind: 'counterMiss'; chance: number })
+  | (Base & { kind: 'counterMiss'; chance: number; scope?: 'self' | 'team' })
   | (Base & { kind: 'counterReflect'; wildHpPct: number })
   | (Base & { kind: 'counterStatus'; status: WildStatus; chance: number })
   | (Base & { kind: 'counterNoFirst' })

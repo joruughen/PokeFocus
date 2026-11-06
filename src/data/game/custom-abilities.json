@@ -192,8 +192,8 @@
     "description": { "es": "Los salvajes no contraatacan tras el primer lanzamiento fallido.", "en": "Wild Pokémon don't counterattack after the first failed throw." }
   },
   "oblivious": {
-    "effects": [{ "kind": "focusLabelFloor", "labels": ["chat", "social"], "value": 0.8 }],
-    "description": { "es": "Ignora las distracciones: el chat y las redes cuentan como 80% de Foco para él.", "en": "Ignores distractions: chat and social count as 80% Focus for it." }
+    "effects": [{ "kind": "counterMiss", "chance": 0.15, "scope": "team" }],
+    "description": { "es": "Los salvajes se despistan al contraatacar: el 15% de sus contraataques falla contra cualquier miembro del equipo (no se acumula).", "en": "Wild Pokémon get distracted when they counterattack: 15% of their counterattacks miss any team member (doesn't stack)." }
   },
   "thick-fat": {
     "effects": [{ "kind": "statMod", "stat": "energyCost", "mult": 0.85, "scope": "self" }],

@@ -182,11 +182,23 @@ describe('rewards (GDD §3.2, §3.3, §4, §5.2)', () => {
   })
 
   it('focus floors: no permission = 0.85, label floors per Pokémon', () => {
-    const sw = makeMon('swinub', 20, { uid: 's', ability: 'oblivious' })
-    const { result } = runSession(makePlayer([sw]), 25, 1, { focusInputs: { screenshotLabels: ['social'], missedCaptures: 0 } })
+    // No shipped ability uses focusLabelFloor any more (screenshot Focus was discarded; Despiste is now a counterMiss),
+    // so the primitive is exercised with a test-only ability.
+    const labelCtx = createEngineContext({
+      abilities: {
+        ...ctx.abilities,
+        'test-label-floor': { effects: [{ kind: 'focusLabelFloor', labels: ['chat', 'social'], value: 0.8 }], description: { es: '', en: '' } },
+      },
+    })
+    const sw = makeMon('swinub', 20, { uid: 's', ability: 'test-label-floor' }, labelCtx)
+    const social = { focusInputs: { screenshotLabels: ['social' as const], missedCaptures: 0 } }
+    const { result } = runSession(makePlayer([sw], {}, labelCtx), 25, 1, social, labelCtx)
     expect(result.captureValue).toBe(cfg.focus.labelValues.social)
     expect(result.members[0]!.focusEffective).toBeGreaterThanOrEqual(0.8)
-    const np = runSession(makePlayer([sw]), 25, 1, { focusInputs: { screenshotLabels: null, missedCaptures: 0 } })
+    // Without the ability the same screenshot leaves it below the floor.
+    const plain = makeMon('swinub', 20, { uid: 's', ability: 'thick-fat' }, labelCtx)
+    expect(runSession(makePlayer([plain], {}, labelCtx), 25, 1, social, labelCtx).result.members[0]!.focusEffective).toBeLessThan(0.8)
+    const np = runSession(makePlayer([sw], {}, labelCtx), 25, 1, { focusInputs: { screenshotLabels: null, missedCaptures: 0 } }, labelCtx)
     expect(np.result.captureValue).toBe(cfg.focus.noPermissionValue)
   })
 })

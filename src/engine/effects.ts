@@ -36,9 +36,9 @@ export function ofKind<K extends EffectKind>(list: readonly SourcedEffect[], kin
   return list.filter((e) => e.effect.kind === kind) as SourcedEffect<EffectOf<K>>[]
 }
 
-/** Is a statMod team-scoped? */
+/** Is a statMod or counterMiss team-scoped? */
 export function isTeamScope(e: Effect): boolean {
-  return e.kind === 'statMod' && e.scope === 'team'
+  return (e.kind === 'statMod' || e.kind === 'counterMiss') && e.scope === 'team'
 }
 
 /** Product of self-scope statMods for `stat` whose `when` holds. */
@@ -84,6 +84,8 @@ export interface TeamCaptureMods {
   revealWildIvs: boolean
   /** Counter damage multiplier from team-scope statMods (strongest). */
   teamCounterDamageMult: number
+  /** Chance that a counterattack misses whoever it hits, from team-scope counterMiss (strongest; 0 = none). */
+  teamCounterMiss: number
 }
 
 export function teamCaptureMods(team: readonly OwnedPokemon[], wcFor: (p: OwnedPokemon) => WhenContext, ctx: EngineContext = defaultContext()): TeamCaptureMods {
@@ -92,6 +94,7 @@ export function teamCaptureMods(team: readonly OwnedPokemon[], wcFor: (p: OwnedP
   let extra = 0
   let noFirst = false
   let reveal = false
+  let counterMiss = 0
   const counterMults: number[] = []
   for (const p of team) {
     const wc = wcFor(p)
@@ -102,6 +105,7 @@ export function teamCaptureMods(team: readonly OwnedPokemon[], wcFor: (p: OwnedP
       else if (e.kind === 'counterNoFirst') noFirst = true
       else if (e.kind === 'revealWildIvs') reveal = true
       else if (e.kind === 'statMod' && e.scope === 'team' && e.stat === 'counterDamageTaken') counterMults.push(e.mult)
+      else if (e.kind === 'counterMiss' && e.scope === 'team') counterMiss = Math.max(counterMiss, e.chance)
     }
   }
   return {
@@ -110,5 +114,6 @@ export function teamCaptureMods(team: readonly OwnedPokemon[], wcFor: (p: OwnedP
     counterNoFirst: noFirst,
     revealWildIvs: reveal,
     teamCounterDamageMult: strongest('counterDamageTaken', counterMults),
+    teamCounterMiss: counterMiss,
   }
 }

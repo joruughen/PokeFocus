@@ -92,7 +92,7 @@ Helpers: `captureValue(focusInputs, cfg, labelFloors?)`, `dailyRewardFactor(minu
 - A Pokémon at 0 energy skips actions (it can act again if healed by a teammate) but still gets EXP/Bond. Members asleep from Rest do not act and do not provide team effects.
 - `focusEffective` per member = screenshot value (with its `focusLabelFloor`) × late multiplier (unless `lateClaimImmune`), then Defense share, then `focusFloor`.
 - EXP = `expPerMinute · minutes · focusEff · exp mods · rewardFactor`; dust = `dustPerMinute · minutes · focus · rewardFactor`; points ×`rewardFactor`; balls = round(`pokeBallsPerSession` · rewardFactor).
-- Team-scope statMods and team primitives (`ballMult`, `maxFailedThrows`, `encounterWeight`) don't stack: the strongest member effect wins (lowest for `energyCost`, `counterDamageTaken`).
+- Team-scope statMods and team primitives (`ballMult`, `maxFailedThrows`, `encounterWeight`, team-scope `counterMiss`) don't stack: the strongest member effect wins (lowest for `energyCost`, `counterDamageTaken`; highest chance for `counterMiss`).
 
 ### Wild damage (GDD §11.3)
 Each action of a 25-min block hits **one wild of that block's wave** (classic Pokémon damage formula). Targets are drawn once the wave is rolled, with probability ∝ the wild's max HP (`capture.hitTargeting: 'maxHp'`, the team focuses the biggest threat; `'uniform'` = equal). Per hit:
@@ -132,7 +132,7 @@ Other calls:
 - `applyStatusCharge(state, chargeId, ref)` → sets `sleep`/`paralysis` on a pending wild of the current or a later wave.
 - `rerollWild(state, chargeId, ref, rng)` → replaces the wild (it takes the hits aimed at that slot). If no eligible wild remains, the Study Ball converts to a Poké Ball.
 - `advanceWave(state)` → next wave (unused Study Ball is lost; pending legendaries become roaming); after the last wave `encounter = null`. `finishEncounter(state)` skips the rest.
-- `encounterModifiers(state)` → `{ ballMult, extraFailedThrows, maxFailedThrows, counterNoFirst, revealWildIvs, teamCounterDamageMult }` for the current team (UI: show IVs when `revealWildIvs`).
+- `encounterModifiers(state)` → `{ ballMult, extraFailedThrows, maxFailedThrows, counterNoFirst, revealWildIvs, teamCounterDamageMult, teamCounterMiss }` for the current team (`teamCounterMiss` = best team-scope `counterMiss` chance, 0 if none; `resolveCounter` uses the max of it and the target's own `counterMiss`) (UI: show IVs when `revealWildIvs`).
 - `wildCatchChance(state, wild, ball)` → probability to show before throwing.
 - Pure building blocks: `captureChance`, `counterDamage`, `resolveCounter`, `typeEffectiveness(attack, defTypes, chart, floors?)`, `computeDamage` (legacy), `hpFractionAfter`, `waveCount`, `rollWaveSize`, `rollWild`, `speciesWeight`, `minWildLevel`, `wildLevelRange`, `isStudyBallEligible(sp, level, cfg, trainerLevel = 1)`, `studyBallMaxLevelFor(trainerLevel, cfg)`, `shinyGuaranteeBall`, `ballCovers`.
 - **Wave size** (`rollWaveSize`): `baseWaveSize + leagueWaveBonus[league] ± waveSizeJitter + extraWild − (focus < lowFocusThreshold)`, min `minWaveSize`, max `leagueMaxWaveSize[league]`. With `leagueWaveBonus { base: 0, super: 1, ultra: 2, master: 3 }` the means are ≈ 4/5/6/7: waves grow as the week's league rises (leagues reset to Base every Monday).

@@ -8,6 +8,7 @@
 import { defaultContext, type EngineContext } from './context'
 import type { LocalizedText, TypeSlug } from './data-types'
 import { isLegendarySpecies } from './individual'
+import type { MissionKind } from './mission-kinds'
 import { createRng, weightedPick, type Rng } from './rng'
 import { err, ok, type PlayerState, type Result } from './state'
 import { addDays, dayKeyOf, startOfLocalDay, weekKeyOf } from './time'
@@ -17,30 +18,10 @@ import { addDays, dayKeyOf, startOfLocalDay, weekKeyOf } from './time'
 // ---------------------------------------------------------------------------
 
 export type MissionPeriod = 'daily' | 'weekly'
-export type MissionKind =
-  | 'sessions'
-  | 'studyMinutes'
-  | 'longSession'
-  | 'studyDays'
-  | 'techniques'
-  | 'catch'
-  | 'catchType'
-  | 'catchFirstThrow'
-  | 'studyBall'
-  | 'evolve'
-
-export const MISSION_KINDS: readonly MissionKind[] = [
-  'sessions',
-  'studyMinutes',
-  'longSession',
-  'studyDays',
-  'techniques',
-  'catch',
-  'catchType',
-  'catchFirstThrow',
-  'studyBall',
-  'evolve',
-]
+// `MissionKind` / `MISSION_KINDS` live in './mission-kinds' (a leaf module) so
+// context.ts can import them without a runtime cycle; re-exported here to keep
+// the public API unchanged.
+export { MISSION_KINDS, type MissionKind } from './mission-kinds'
 
 /** One reward tier: used when the trainer level (at generation) is ≥ `minTrainerLevel`. */
 export interface MissionRewardDef {
