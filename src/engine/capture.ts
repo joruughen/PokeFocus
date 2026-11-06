@@ -5,6 +5,7 @@
 import type { BallSlug, GameConfig, WildStatus } from './config'
 import { defaultContext, getSpecies, type EngineContext } from './context'
 import { evaluateWhen, type WhenContext } from './conditions'
+import { effectiveHits, lockWaveDamage } from './damage'
 import type { TypeSlug } from './data-types'
 import { ofKind, passiveEffects, selfStatMult, teamCaptureMods, type TeamCaptureMods } from './effects'
 import { toOwnedPokemon } from './individual'
@@ -240,12 +241,14 @@ export function throwBall(
   if (!enc) return err('no_encounter')
   if (state.activeSession) return err('session_active')
   if (ref.waveIndex !== enc.currentWave) return err('wave_not_current')
-  const wave = enc.waves[ref.waveIndex]
-  const wild = wave?.wilds[ref.wildIndex]
-  if (!wave || !wild) return err('unknown_wild')
-  if (wild.outcome !== 'pending') return err('wild_resolved')
-  let s: PlayerState = state
-  let encounter = enc
+  const rawWave = enc.waves[ref.waveIndex]
+  if (!rawWave?.wilds[ref.wildIndex]) return err('unknown_wild')
+  if (rawWave.wilds[ref.wildIndex]?.outcome !== 'pending') return err('wild_resolved')
+  // Manual damage split: the first ball locks the wave (unassigned tokens take the automatic split).
+  const wave = lockWaveDamage(rawWave, ctx)
+  const wild = wave.wilds[ref.wildIndex] as WildPokemon
+  let encounter: EncounterState = wave === rawWave ? enc : { ...enc, waves: enc.waves.map((w) => (w.index === wave.index ? wave : w)) }
+  let s: PlayerState = encounter === enc ? state : { ...state, encounter }
   let guaranteed: 'study' | 'shiny' | null = null
   let p: number
   if (ball === 'study-ball') {
@@ -354,7 +357,9 @@ export function rerollWild(state: PlayerState, chargeId: string, ref: WildRef, r
   const { enc } = r.value
   const wave = enc.waves[ref.waveIndex]
   if (!wave) return err('unknown_wild')
-  const fresh = rollWild(rng, { waveIndex: ref.waveIndex, gen: enc.gen, activeConditionTypes: wave.activeConditionTypes, contributions: wave.contributions, hits: wave.hits, slot: ref.wildIndex }, ctx)
+  // The new wild takes the damage aimed at its slot (in manual mode: the tokens assigned to it).
+  const hits = wave.hits ? effectiveHits(wave) : undefined
+  const fresh = rollWild(rng, { waveIndex: ref.waveIndex, gen: enc.gen, activeConditionTypes: wave.activeConditionTypes, contributions: wave.contributions, hits, slot: ref.wildIndex }, ctx)
   let next = replaceWild(enc, ref, fresh)
   let inventory = state.inventory
   const nw = next.waves[ref.waveIndex]

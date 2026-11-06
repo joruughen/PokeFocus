@@ -755,7 +755,7 @@
     "waves": {
       "hp": {
         "title": "La vida tras el daño",
-        "body": "Tu equipo ya debilitó a estos salvajes con la Energía que generó mientras estudiabas. Menos vida significa una captura más fácil. Nunca baja del 5%."
+        "body": "Tu equipo debilita a estos salvajes con el daño que hizo mientras estudiabas. Menos vida significa una captura más fácil. Nunca baja del 5%."
       },
       "studyBall": {
         "title": "Ball de Estudio",
@@ -796,6 +796,10 @@
       "iv": {
         "title": "Ves la calidad",
         "body": "Una técnica de tu equipo revela la calidad (IVs) de los salvajes. Prioriza a los de más estrellas."
+      },
+      "damage": {
+        "title": "Reparte el daño",
+        "body": "Cada ficha es el daño que hizo un Pokémon de tu equipo en este bloque. Toca una y luego un salvaje para mandárselo todo. Puedes cambiarlo hasta lanzar la primera Ball. Si tienes prisa, pulsa Auto."
       }
     },
     "box": {
@@ -1654,6 +1658,50 @@
       "session_active": "Ya tienes una sesión en marcha.",
       "no_player": "Elige tu Pokémon inicial primero.",
       "not_found": "Ese grupo ya no existe."
+    }
+  },
+  "damage": {
+    "title": "Daño de tu equipo",
+    "howTo": "Toca una ficha y luego un salvaje: todo el daño de ese Pokémon irá a él.",
+    "lockNote": "Al lanzar la primera Ball se fija el daño; las fichas sin asignar se reparten solas.",
+    "locked": "Daño fijado: ya lanzaste una Ball en esta oleada.",
+    "pickWild": "Ahora toca un salvaje para mandarle el daño de {{name}}.",
+    "auto": "Auto",
+    "autoTip": "Reparte las fichas sin asignar como el modo automático: al azar, más hacia los salvajes con más vida.",
+    "unassigned_one": "{{count}} sin asignar",
+    "unassigned_other": "{{count}} sin asignar",
+    "allAssigned": "Todo asignado",
+    "tokenLabel": "{{name}}, {{count}} golpes",
+    "to": "a {{name}}",
+    "toAuto": "reparto automático",
+    "notAssigned": "sin asignar",
+    "noMove": "Golpe normal",
+    "vs": "Contra {{name}}: {{pct}} de su vida",
+    "pickForEstimate": "Elige un salvaje para ver el daño estimado.",
+    "eff": {
+      "super": "muy eficaz ×{{mult}}",
+      "weak": "poco eficaz ×{{mult}}",
+      "immune": "no le afecta",
+      "normal": "×1"
+    },
+    "overkill": "Sobra daño",
+    "overkillTip": "La vida no baja del {{pct}}: el daño de más se pierde. Manda alguna ficha a otro salvaje.",
+    "preview": "Con esta ficha: {{pct}}",
+    "assignHere": "Mandar aquí",
+    "unassignHere": "Quitar de aquí",
+    "throwLocks": "Al lanzar se fija el daño.",
+    "errors": {
+      "damage_locked": "El daño de esta oleada ya está fijado.",
+      "damage_auto": "Esta oleada reparte el daño sola.",
+      "unknown_token": "Ese Pokémon no hizo daño en esta oleada.",
+      "unknown_wave": "Esa oleada no existe."
+    },
+    "toggle": {
+      "label": "Reparto automático del daño",
+      "on": "Tu equipo reparte el daño solo entre los salvajes.",
+      "off": "Tú eliges a qué salvaje va el daño de cada Pokémon.",
+      "tip": "Sin Auto, en cada oleada decides a qué salvaje manda su daño cada Pokémon. Con Auto, se reparte al azar, más hacia los salvajes con más vida. Se aplica al reclamar la sesión.",
+      "fixed": "Se aplica al reclamar."
     }
   }
 }

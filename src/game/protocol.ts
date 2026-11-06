@@ -10,6 +10,7 @@ import type {
   BoxError,
   CandyKind,
   ChargeError,
+  DamageError,
   MissionReward,
   OwnedPokemon,
   PlayerState,
@@ -92,6 +93,12 @@ export type GameAction =
   | { type: 'throwBall'; ref: WildRef; ball: ThrowBall }
   | { type: 'applyStatus'; chargeId: string; ref: WildRef }
   | { type: 'reroll'; chargeId: string; ref: WildRef }
+  /** Manual damage split: send a member's damage token of a wave to a wild (`null` = take it back). */
+  | { type: 'assignDamage'; waveIndex: number; uid: string; wildIndex: number | null }
+  /** Unassigned tokens of the wave take the automatic split. */
+  | { type: 'autoAssignDamage'; waveIndex: number }
+  /** Preference copied into the next claimed encounter (`EncounterState.damageMode`). */
+  | { type: 'setAutoDamage'; value: boolean }
   | { type: 'nextWave' }
   | { type: 'finishWaves' }
   // Box
@@ -134,6 +141,9 @@ export interface ActionResults {
   throwBall: { outcome: ThrowOutcome }
   applyStatus: null
   reroll: null
+  assignDamage: null
+  autoAssignDamage: null
+  setAutoDamage: null
   nextWave: null
   finishWaves: null
   release: null
@@ -161,6 +171,7 @@ export type GameActionError =
   | StartSessionError
   | ThrowError
   | ChargeError
+  | DamageError
   | BoxError
   | 'no_player'
   | 'player_exists'

@@ -1,6 +1,7 @@
 /** Experiments: build contexts, run the profile matrix, the reference leveling run and species values. */
 import { createEngineContext, type EngineContext, type GameConfigOverrides, type GameData, type Species } from '../../src/engine/index.ts'
 import { gameData } from '../../src/data/index.ts'
+import type { DamagePolicy } from './capture-policy.ts'
 import { aggregateProfile, type ProfileAgg } from './aggregate.ts'
 import { PROFILE_IDS, type ProfileId } from './profiles.ts'
 import { runPlayer } from './run.ts'
@@ -31,6 +32,8 @@ export interface MatrixOptions {
   seedsByProfile?: Partial<Record<ProfileId, number>>
   weeks: number
   missions: boolean
+  /** Damage split policy of the simulated players (default `auto`). */
+  damagePolicy?: DamagePolicy
   onProgress?: (label: string, done: number, total: number) => void
 }
 
@@ -42,7 +45,7 @@ export function runMatrix(o: MatrixOptions): Record<ProfileId, ProfileAgg> {
   for (const profile of o.profiles) {
     const runs: PlayerMetrics[] = []
     for (let s = 1; s <= nOf(profile); s++) {
-      runs.push(runPlayer({ profile, seed: s, weeks: o.weeks, ctx: o.ctx, missions: o.missions, captures: true, candies: true, soloStarter: false, detail: true }))
+      runs.push(runPlayer({ profile, seed: s, weeks: o.weeks, ctx: o.ctx, missions: o.missions, captures: true, candies: true, soloStarter: false, detail: true, damagePolicy: o.damagePolicy }))
       o.onProgress?.(profile, ++done, total)
     }
     out[profile] = aggregateProfile(profile, runs)

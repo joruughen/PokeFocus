@@ -18,6 +18,10 @@
  *   --propose-seeds N       players per profile in the proposal stages (default 10)
  *   --level-weeks N         length of the reference leveling run (default max(weeks, 16))
  *   --no-write              print the report to stdout instead of writing files
+ *   --damage-policy P       how the player splits the wave damage tokens: auto (default; the "Auto"
+ *                           preference, engine split), concentrate-valuable (all on the legendary /
+ *                           shiny / new species / highest level), type-smart (each token on the wild it
+ *                           damages most). Compare them with --no-propose --no-species --out <file>.
  *
  * ---------------------------------------------------------------------------------------------
  * HOW THE SIMULATED PLAYER BEHAVES (policies; "simple but not dumb")
@@ -61,6 +65,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { deepMerge, type GameConfigOverrides } from './../src/engine/index.ts'
 import { runPipeline } from './sim/pipeline.ts'
+import { DAMAGE_POLICIES, type DamagePolicy } from './sim/capture-policy.ts'
 import { PROFILE_IDS, type ProfileId } from './sim/profiles.ts'
 import { renderReport, setSpeciesNotes } from './sim/report.ts'
 import type { SpeciesPatch } from './sim/experiments.ts'
@@ -82,6 +87,7 @@ interface Cli {
   levelWeeks?: number
   speciesWeeks: number
   write: boolean
+  damagePolicy: DamagePolicy
 }
 
 function parseArgs(argv: string[]): Cli {
@@ -98,6 +104,7 @@ function parseArgs(argv: string[]): Cli {
     proposeSeeds: 10,
     speciesWeeks: 5,
     write: true,
+    damagePolicy: 'auto',
   }
   const need = (i: number, flag: string): string => {
     const v = argv[i + 1]
@@ -126,6 +133,12 @@ function parseArgs(argv: string[]): Cli {
       case '--no-species': cli.speciesTable = false; break
       case '--no-propose': cli.propose = false; break
       case '--no-write': cli.write = false; break
+      case '--damage-policy': {
+        const v = need(i++, a) as DamagePolicy
+        if (!DAMAGE_POLICIES.includes(v)) throw new Error(`Unknown damage policy ${v} (use ${DAMAGE_POLICIES.join(', ')})`)
+        cli.damagePolicy = v
+        break
+      }
       case '--quick':
         cli.seeds = 3
         cli.weeks = 6
@@ -179,6 +192,7 @@ function main(): void {
     propose: cli.propose,
     proposeSeeds: cli.proposeSeeds,
     species: cli.speciesTable,
+    damagePolicy: cli.damagePolicy,
     log: (m) => process.stderr.write(`\n${m}\n`),
     progress: (label, done, total) => progress(label, done, total, state),
   })

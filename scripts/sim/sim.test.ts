@@ -34,6 +34,17 @@ describe('balance simulator (smoke, 1 week, 1 seed)', () => {
     expect(m.tally.condMismatch).toBe(0)
   })
 
+  it('damage split policies all play; manual policies change the outcome', () => {
+    const base = week1()
+    const run = (damagePolicy: 'concentrate-valuable' | 'type-smart') =>
+      runPlayer({ profile: 'constant', seed: 1, weeks: 1, ctx, missions: true, captures: true, candies: true, soloStarter: false, detail: false, damagePolicy })
+    for (const p of ['concentrate-valuable', 'type-smart'] as const) {
+      const m = run(p)
+      expect(m.tally.catchesTotal).toBeGreaterThan(5)
+      expect(m.tally).not.toEqual(base.tally)
+    }
+  })
+
   it('a different seed gives a different week', () => {
     expect(week1(2).weeklyPoints).not.toEqual(week1(1).weeklyPoints)
   })

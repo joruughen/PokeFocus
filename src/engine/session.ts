@@ -38,6 +38,7 @@ import {
   type Wave,
   type WaveGenParams,
   type WaveHit,
+  type DamageMode,
   type WeatherInput,
 } from './state'
 import {
@@ -53,6 +54,7 @@ import {
   techniqueMultiplier,
 } from './stats'
 import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from './time'
+import { toManualWave } from './damage'
 import { blockIndexAt, damageFromHits, hpFractionAfter, rollWaveSize, rollWild, waveCount } from './waves'
 
 // ---------------------------------------------------------------------------
@@ -1124,6 +1126,7 @@ export function applySessionResult(
   if (state.history.some((h) => h.id === result.sessionId)) return err('already_applied')
   if (!state.activeSession || state.activeSession.id !== result.sessionId) return err('session_mismatch')
   let s: PlayerState = state.encounter ? finishEncounter(state, ctx) : state
+  const damageMode: DamageMode = state.autoDamage ? 'auto' : 'manual'
   const events: ProgressEvent[] = []
   const cap = levelCap(s, ctx)
   const pokemon = { ...s.pokemon }
@@ -1246,7 +1249,16 @@ export function applySessionResult(
     counters: { ...s.counters, charge: maxCharge },
     encounter:
       result.waves.length > 0
-        ? { sessionId: result.sessionId, waves: result.waves, currentWave: 0, charges: result.charges, gen: result.gen, env: result.env }
+        ? {
+            sessionId: result.sessionId,
+            // Manual split (default): the wilds start at full HP until the player assigns the damage tokens.
+            waves: damageMode === 'manual' ? result.waves.map((w) => toManualWave(w, ctx)) : result.waves,
+            currentWave: 0,
+            charges: result.charges,
+            gen: result.gen,
+            env: result.env,
+            damageMode,
+          }
         : null,
   }
   if (result.valid && result.rewardFactor > 0) {
