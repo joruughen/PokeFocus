@@ -87,5 +87,72 @@ export const friendships = pgTable(
   ],
 )
 
+/**
+ * Study groups (docs/session-depth-plan.md §C). A lobby collects invites; when
+ * the host starts it every accepted invitee starts a session at the same time.
+ */
+export const studyGroups = pgTable(
+  'study_groups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    hostId: uuid('host_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    minutes: integer('minutes').notNull(),
+    status: text('status', { enum: ['lobby', 'started', 'ended'] }).notNull(),
+    createdAt: ts('created_at').notNull(),
+    startedAt: ts('started_at'),
+    /** Lobby: lapses if not started by then. Started: last moment to join late. */
+    expiresAt: ts('expires_at').notNull(),
+  },
+  (t) => [
+    index('study_groups_host_idx').on(t.hostId),
+    check('study_groups_status_check', sql`${t.status} in ('lobby', 'started', 'ended')`),
+  ],
+)
+
+/** One row per user who started a session in the group: their in-group interval. */
+export const studyGroupMembers = pgTable(
+  'study_group_members',
+  {
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => studyGroups.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** activeSession.id of the member's game doc. */
+    sessionId: text('session_id').notNull(),
+    joinedAt: ts('joined_at').notNull(),
+    endsAt: ts('ends_at').notNull(),
+    leftAt: ts('left_at'),
+    leftReason: text('left_reason', { enum: ['pause', 'cancel', 'leave', 'finished'] }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.groupId, t.userId] }),
+    index('study_group_members_user_idx').on(t.userId, t.sessionId),
+  ],
+)
+
+export const studyGroupInvites = pgTable(
+  'study_group_invites',
+  {
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => studyGroups.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: text('status', { enum: ['pending', 'accepted', 'declined', 'joined', 'failed'] }).notNull(),
+    createdAt: ts('created_at').notNull(),
+    respondedAt: ts('responded_at'),
+  },
+  (t) => [
+    primaryKey({ columns: [t.groupId, t.inviteeId] }),
+    index('study_group_invites_invitee_idx').on(t.inviteeId, t.status),
+    check('study_group_invites_status_check', sql`${t.status} in ('pending', 'accepted', 'declined', 'joined', 'failed')`),
+  ],
+)
+
 export type UserRow = typeof users.$inferSelect
 export type AuthSessionRow = typeof authSessions.$inferSelect

@@ -126,3 +126,17 @@ export const gameActionBody = z.discriminatedUnion('type', [
 
 // Compile-time guard: every parsed body is a valid GameAction.
 export const asGameAction = (a: z.infer<typeof gameActionBody>): GameAction => a
+
+// ---------------------------------------------------------------------------
+// Study groups (/api/groups)
+// ---------------------------------------------------------------------------
+
+/** Up to 7 friends (8 people with the host); see MAX_GROUP_SIZE in server/groups.ts. */
+const friendIdList = z.array(z.uuid()).min(1).max(7)
+
+export const groupCreateBody = z.object({
+  minutes: z.number().int().min(session.minMinutes).max(session.maxMinutes),
+  friendIds: friendIdList,
+})
+
+export const groupInviteBody = z.object({ friendIds: friendIdList })

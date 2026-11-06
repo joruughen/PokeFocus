@@ -54,6 +54,12 @@ export interface ActionEnv {
   dev: boolean
   /** Trainer name stored on the account; used by `createPlayer` (the client does not send it). */
   trainerName?: string
+  /**
+   * `claim` only: accompanied share (0–1) of the session in a study group,
+   * computed by the server from the stored group intervals (never sent by the
+   * client). null/absent = solo session (Fairy condition off).
+   */
+  friendOverlap?: number | null
   ctx?: EngineContext
 }
 
@@ -186,6 +192,7 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
           claimedAt: t,
           pausedSeconds: timer.pausedMs / 1000,
           focusInputs: { screenshotLabels: label ? [label] : null, missedCaptures: 0 },
+          friendOverlap: env.friendOverlap ?? null,
         },
         rng,
         ctx,

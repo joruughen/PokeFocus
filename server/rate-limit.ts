@@ -13,6 +13,10 @@ export const RULES = {
   registerIp: { limit: 5, windowMs: 60 * 60_000 },
   /** Wrong-current-password guesses from a (possibly stolen) session. */
   passwordUser: { limit: 5, windowMs: 15 * 60_000 },
+  /** Study-group invitations (create + invite more) per user: no invite spam. */
+  groupInviteUser: { limit: 20, windowMs: 15 * 60_000 },
+  /** Any other study-group write (accept, decline, start, leave) per user. */
+  groupWriteUser: { limit: 120, windowMs: 15 * 60_000 },
 } satisfies Record<string, RateRule>
 
 export class RateLimiter {

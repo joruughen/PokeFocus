@@ -58,7 +58,24 @@ describe('type conditions (GDD §9.2)', () => {
     expect(m('dark', { missedDaysBeforeToday: 2 })).toBe(c.dark)
     expect(m('steel', { yesterdayFirstStartMinute: 18 * 60 + 10 })).toBe(c.steel)
     expect(m('steel', { yesterdayFirstStartMinute: 17 * 60 })).toBe(1)
-    expect(m('fairy', { friendOverlap: 0.85 })).toBe(c.fairy)
+    expect(m('fairy', { friendOverlap: 1 })).toBe(c.fairy)
+  })
+
+  it('Fairy is proportional to the accompanied share (no threshold)', () => {
+    const m = (o: number | null) => typeConditionMult('fairy', env({ friendOverlap: o }), cfg)
+    expect(m(null)).toBe(1)
+    expect(m(0)).toBe(1)
+    expect(m(0.5)).toBeCloseTo(1 + (c.fairy - 1) * 0.5)
+    expect(m(0.1)).toBeCloseTo(1 + (c.fairy - 1) * 0.1)
+    expect(m(0.85)).toBeCloseTo(1 + (c.fairy - 1) * 0.85)
+    expect(m(1.7)).toBe(c.fairy) // clamped
+    expect(m(-1)).toBe(1)
+    // only Fairy-type Pokémon benefit
+    expect(typeConditionMult('normal', env({ friendOverlap: 1 }), cfg)).toBe(c.normal)
+    expect(pokemonConditionMult(['fire'], env({ friendOverlap: 1 }), cfg).mult).toBe(1)
+    expect(pokemonConditionMult(['fairy'], env({ friendOverlap: 0.5 }), cfg)).toEqual({ mult: 1 + (c.fairy - 1) * 0.5, type: 'fairy' })
+    // forced (activateCondition) keeps the full multiplier
+    expect(typeConditionMult('fairy', env(), cfg, new Set(['fairy']))).toBe(c.fairy)
   })
 
   it('dual types take the best condition (no sum); conditionBonusMult scales the bonus; forced types count', () => {

@@ -440,7 +440,7 @@ Los tipos importan **dos veces**:
 | Dragón | Racha ≥ 7 días | ×1.40 |
 | Siniestro | Vuelves tras ≥ 2 días sin estudiar (durante ese día) | ×1.50 |
 | Acero | Sesión iniciada ±1 h de la hora de inicio de la primera sesión de ayer | ×1.35 |
-| Hada | Sesión simultánea con un amigo (≥ 80% de solapamiento) | ×1.40 |
+| Hada | Sesión en grupo con amigos: proporcional al tiempo acompañado, `1 + 0.40 × fracción` (sin umbral) | hasta ×1.40 |
 
 **Cobertura por estilo:**
 
