@@ -11,6 +11,7 @@ import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { SessionReportButton } from './SessionReport'
 
 const cfg = defaultContext().config
 
@@ -135,7 +136,7 @@ export function Results() {
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]">
         <div className="flex flex-col gap-8">
 
-          <Panel title={t('results.team')} {...hintAnchor('results.team')}>
+          <Panel title={t('results.team')} actions={<SessionReportButton sessionId={result.sessionId} />} {...hintAnchor('results.team')}>
             <ul className="flex flex-col gap-4">
               {result.members.map((m) => (
                 <MemberRow key={m.uid} m={m} events={events.filter((e) => 'uid' in e && e.uid === m.uid)} before={outcome.before} now={now} />

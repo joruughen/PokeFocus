@@ -26,6 +26,8 @@ import { sfx, sfxLater } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { ChargeChip } from './ChargeChip'
+import { SessionReportButton } from './SessionReport'
 
 const ctx = defaultContext()
 
@@ -215,7 +217,8 @@ export function Waves() {
           <h1 className="text-3xl">{t('waves.title', { n: enc.currentWave + 1, total: enc.waves.length })}</h1>
           <p className="mt-1 text-mist-300">{t('waves.subtitle', { count: wave.wilds.length })}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <SessionReportButton sessionId={enc.sessionId} />
           <StudyBallStatus status={wave.studyBall} />
           <ol className={cx('flex gap-1.5', enc.waves.length < 2 && 'hidden')} aria-label={t('waves.progress')}>
             {enc.waves.map((w) => (
@@ -263,16 +266,7 @@ export function Waves() {
           <ul className="flex flex-wrap gap-3">
             {enc.charges.map((c) => (
               <li key={c.id}>
-                <Button
-                  variant={targeting?.id === c.id ? 'primary' : 'secondary'}
-                  icon={c.kind === 'reroll' ? 'reroll' : c.status === 'sleep' ? 'sleep' : 'bolt'}
-                  disabled={busy}
-                  onClick={() => setTargeting(targeting?.id === c.id ? null : c)}
-                  aria-pressed={targeting?.id === c.id}
-                >
-                  {c.kind === 'reroll' ? t('waves.charges.reroll') : t(`waves.charges.${c.status ?? 'sleep'}`)}
-                  <span className="text-sm opacity-75">{names.move(c.source)}</span>
-                </Button>
+                <ChargeChip charge={c} player={player} selected={targeting?.id === c.id} disabled={busy} onToggle={() => setTargeting(targeting?.id === c.id ? null : c)} />
               </li>
             ))}
           </ul>

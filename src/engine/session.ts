@@ -271,6 +271,45 @@ export interface TechniqueUse {
   count: number
 }
 
+/** Uses of a damage move during the session (`move` null = the no-move Normal hit). */
+export interface MoveUse {
+  move: string | null
+  count: number
+}
+
+/** Activable technique log (session report): rolls, successes and the per-action chance used. */
+export interface ActivableLog {
+  move: string
+  /** Actions on which the activation chance was rolled (limits not reached). */
+  attempts: number
+  activations: number
+  /** Per-action activation chance (it can vary with `techChance` mods whose `when` changes). */
+  chanceMin: number
+  chanceMax: number
+  chanceAvg: number
+  limitPerSession: number | null
+  /** The session or weekly limit stopped further rolls. */
+  limitReached: boolean
+}
+
+/** A passive effect (ability or passive technique) that did something this session. */
+export interface PassiveLog {
+  source: string
+  sourceKind: 'ability' | 'technique'
+  effect: Effect
+  /** Actions on which it applied (per-action effects), successful triggers (statusOnAction), or 1 (once per session). */
+  count: number
+}
+
+/** Condition multiplier applied to a member's actions, grouped by type and value. */
+export interface ConditionLog {
+  type: TypeSlug | null
+  mult: number
+  actions: number
+  /** The type's condition was forced by a technique (`activateCondition`), not met naturally. */
+  forced: boolean
+}
+
 export interface MemberResult {
   uid: string
   speciesSlug: string
@@ -298,6 +337,29 @@ export interface MemberResult {
   masteryMinutes: Record<string, number>
   /** Rest was used: asleep next session. */
   rested: boolean
+  // --- Session report (absent in results saved before it) ---
+  damageMoves?: MoveUse[]
+  activables?: ActivableLog[]
+  passives?: PassiveLog[]
+  conditionLog?: ConditionLog[]
+  /** conditionBonusMult in effect (1 = none). */
+  conditionBonusMult?: number
+}
+
+/** Why the wilds of this session were what they were (session report). */
+export interface WildFactors {
+  localHour: number
+  weekday: number
+  league: LeagueId
+  /** Rolled size of each wave. */
+  waveSizes: number[]
+  extraWild: number
+  /** Species weight boosts by type and the member/ability that caused each (encounterWeight). */
+  typeWeights: { type: TypeSlug; mult: number; uid: string; source: string }[]
+  /** Synchronize-like nature sharing and who caused it. */
+  sync: { uid: string; source: string; nature: string; chance: number } | null
+  /** Roaming legendaries that appeared. */
+  roaming: string[]
 }
 
 export interface ForcedCondition {
@@ -352,6 +414,17 @@ export interface SessionResult {
   weeklyUses: Record<string, number>
   note: string | null
   subjectTag: string | null
+  /** Session report: wild generation factors (absent in results saved before it). */
+  wildFactors?: WildFactors
+}
+
+interface ActLog {
+  attempts: number
+  activations: number
+  sum: number
+  min: number
+  max: number
+  limitReached: boolean
 }
 
 interface Sim {
@@ -387,6 +460,12 @@ interface Sim {
   hot: number
   rested: boolean
   endHealPct: number
+  // Session report logging (never read by the rules).
+  logMoves: Map<string | null, number>
+  logAct: Map<string, ActLog>
+  /** Index in `passives` → times it applied. */
+  logPassive: Map<number, number>
+  logCond: Map<string, ConditionLog>
 }
 
 export type CompleteSessionError = 'no_active_session' | 'invalid_times'
@@ -512,14 +591,25 @@ export function completeSession(
     const passives = passiveEffects(p, ctx)
     const wc: WhenContext = { ...baseWc, isLeader: slot === 0, energyFraction: stats.hp > 0 ? energyStart / stats.hp : 0 }
     const flags = (k: Effect['kind']) => passives.filter((e) => e.effect.kind === k && evaluateWhen(e.effect.when, wc, cfg))
+    // Report: passive flags that changed something (once per session).
+    const logPassive = new Map<number, number>()
+    const mark = (se: SourcedEffect) => logPassive.set(passives.indexOf(se), 1)
     const immune = flags('lateClaimImmune').length > 0
+    if (lateClaim) flags('lateClaimImmune').forEach(mark)
     const labelFloors: Record<string, number> = {}
     for (const { effect: e } of ofKind(flags('focusLabelFloor'), 'focusLabelFloor')) {
       for (const l of e.labels) labelFloors[l] = Math.max(labelFloors[l] ?? 0, e.value)
     }
-    let f = captureValue(input.focusInputs, cfg, labelFloors) * (lateClaim && !immune ? cfg.session.lateClaimMultiplier : 1)
+    const floored = captureValue(input.focusInputs, cfg, labelFloors)
+    if (floored > baseCapture) flags('focusLabelFloor').forEach(mark)
+    let f = floored * (lateClaim && !immune ? cfg.session.lateClaimMultiplier : 1)
     f = effectiveFocus(f, stats.defense, cfg)
-    for (const { effect: e } of ofKind(flags('focusFloor'), 'focusFloor')) f = Math.max(f, e.min)
+    for (const se of ofKind(flags('focusFloor'), 'focusFloor')) {
+      if (se.effect.min > f) mark(se)
+      f = Math.max(f, se.effect.min)
+    }
+    flags('conditionBonusMult').forEach(mark)
+    flags('effectivenessFloor').forEach(mark)
     const techs = p.equippedMoves.map((m) => getTechnique(m, ctx)).filter((t): t is TechniqueInfo => t !== null)
     let bonusMult = 1
     for (const { effect: e } of ofKind(flags('conditionBonusMult'), 'conditionBonusMult')) bonusMult = Math.max(bonusMult, e.mult)
@@ -557,6 +647,14 @@ export function completeSession(
       hot: 0,
       rested: false,
       endHealPct: 0,
+      logMoves: new Map(),
+      logAct: new Map(
+        techs
+          .filter((t) => t.kind === 'activable' && t.def)
+          .map((t) => [t.slug, { attempts: 0, activations: 0, sum: 0, min: Infinity, max: 0, limitReached: false }]),
+      ),
+      logPassive,
+      logCond: new Map(),
     }
   })
   const active = sims.filter((s) => !s.asleep)
@@ -586,6 +684,13 @@ export function completeSession(
     chargeN++
     charges.push({ id: `c${chargeN}`, kind, sourceUid, source, ...(status ? { status } : {}) })
   }
+  const logPassiveHit = (s: Sim, se: SourcedEffect) => {
+    const i = s.passives.indexOf(se)
+    if (i >= 0) s.logPassive.set(i, (s.logPassive.get(i) ?? 0) + 1)
+  }
+  /** Per-action passive statMods whose `when` holds on this action (report only). */
+  const PER_ACTION_STATS: ReadonlySet<ModStat> = new Set<ModStat>(['points', 'pace', 'captureEnergy', 'techChance', 'energyCost'])
+  const naturalConditions = new Set(activeConditionTypes(env, cfg))
   const healSim = (s: Sim, amount: number) => {
     const real = Math.max(0, Math.min(s.max - s.energy, amount))
     s.energy += real
@@ -621,8 +726,9 @@ export function completeSession(
         break
       case 'restFullHeal': {
         healSim(s, s.max)
-        const noSleep = ofKind(s.passives, 'noSleepFromRest').some((n) => evaluateWhen(n.effect.when, wc, cfg))
-        if (!noSleep) s.rested = true
+        const noSleep = ofKind(s.passives, 'noSleepFromRest').filter((n) => evaluateWhen(n.effect.when, wc, cfg))
+        for (const n of noSleep) logPassiveHit(s, n)
+        if (noSleep.length === 0) s.rested = true
         break
       }
       case 'wildStatus':
@@ -668,7 +774,20 @@ export function completeSession(
       const forcedNow = new Set([...forced].filter(([, at]) => at < t).map(([ty]) => ty))
       const wc = wcOf(s)
       // Points
-      const cond = pokemonConditionMult(s.types, env, cfg, forcedNow, s.bonusMult).mult
+      const condRes = pokemonConditionMult(s.types, env, cfg, forcedNow, s.bonusMult)
+      const cond = condRes.mult
+      {
+        const ck = `${condRes.type ?? ''}|${cond}`
+        const cl = s.logCond.get(ck) ?? { type: condRes.type, mult: cond, actions: 0, forced: condRes.type !== null && !naturalConditions.has(condRes.type) }
+        cl.actions++
+        s.logCond.set(ck, cl)
+      }
+      s.passives.forEach((se, i) => {
+        const e = se.effect
+        if (e.kind !== 'statMod' || !PER_ACTION_STATS.has(e.stat)) return
+        if (!evaluateWhen(e.when, e.when?.targetLegendary ? { ...wc, targetLegendary: true } : wc, cfg)) return
+        ;(s as Sim).logPassive.set(i, ((s as Sim).logPassive.get(i) ?? 0) + 1)
+      })
       let burst = 1
       for (const b of s.bursts) {
         if (b.remaining > 0) {
@@ -690,6 +809,7 @@ export function completeSession(
       } else {
         amount = noDamageMoveEnergy(s.stats.attack, cfg)
       }
+      s.logMoves.set(move?.slug ?? null, (s.logMoves.get(move?.slug ?? null) ?? 0) + 1)
       const bi = blockIndexAt(t, nWaves, cfg)
       const block = contrib[bi] as Map<string, EnergyContribution>
       const key = `${s.uid}:${type}`
@@ -715,15 +835,29 @@ export function completeSession(
       for (const tech of s.activables) {
         const def = tech.def
         if (!def) continue
+        const al = s.logAct.get(tech.slug)
         const used = s.techCounts.get(tech.slug) ?? 0
-        if (def.limitPerSession !== undefined && used >= def.limitPerSession) continue
+        if (def.limitPerSession !== undefined && used >= def.limitPerSession) {
+          if (al) al.limitReached = true
+          continue
+        }
         const wkKey = `${s.uid}:${tech.slug}`
         if (def.limitPerWeek !== undefined) {
           const prev = state.techniqueWeekUses.weekKey === weekKey ? (state.techniqueWeekUses.uses[wkKey] ?? 0) : 0
-          if (prev + (weeklyUses[wkKey] ?? 0) >= def.limitPerWeek) continue
+          if (prev + (weeklyUses[wkKey] ?? 0) >= def.limitPerWeek) {
+            if (al) al.limitReached = true
+            continue
+          }
         }
         const p = activationChance(def.baseChance ?? 0, s.stats.specialDefense, s.p.moveMasteryMinutes[tech.slug] ?? 0, mult(s, 'techChance', wcOf(s)), cfg)
+        if (al) {
+          al.attempts++
+          al.sum += p
+          al.min = Math.min(al.min, p)
+          al.max = Math.max(al.max, p)
+        }
         if (!chance(rng, p)) continue
+        if (al) al.activations++
         s.techCounts.set(tech.slug, used + 1)
         if (def.limitPerWeek !== undefined) weeklyUses[wkKey] = (weeklyUses[wkKey] ?? 0) + 1
         for (const e of def.effects) applyEffect(s, e, tech.slug, t)
@@ -735,6 +869,7 @@ export function completeSession(
         const n = (s as Sim).statusCounts.get(i) ?? 0
         if (n >= e.limit || !chance(rng, e.chance)) return
         ;(s as Sim).statusCounts.set(i, n + 1)
+        ;(s as Sim).logPassive.set(i, n + 1)
         addCharge('status', (s as Sim).uid, se.source, e.status)
       })
       // Heal over time
@@ -747,10 +882,13 @@ export function completeSession(
   // --- Session end -----------------------------------------------------------
   for (const s of active) {
     if (s.actions > 0 && s.lastMult > 1) s.pointsRaw += s.lastPoints * (s.lastMult - 1)
+    if (s.actions > 0) for (const se of ofKind(s.passives, 'lastActionMult')) if (evaluateWhen(se.effect.when, wcOf(s), cfg)) logPassiveHit(s, se)
     // Passive heals: sessionEnd (and 'now', applied at the end too); nextSessionStart → wish.
     if (valid && rewardFactor > 0) {
-      for (const { effect: e, source } of ofKind(s.passives, 'heal')) {
+      for (const se of ofKind(s.passives, 'heal')) {
+        const { effect: e, source } = se
         if (!evaluateWhen(e.when, wcOf(s), cfg)) continue
+        logPassiveHit(s, se)
         if (e.timing === 'nextSessionStart') wishes.push({ sourceUid: s.uid, pct: e.pct, target: e.target })
         else if (e.target === 'self') s.endHealPct += e.pct
         else applyEffect(s, { ...e, timing: 'now' }, source, totalSeconds)
@@ -760,11 +898,30 @@ export function completeSession(
   }
 
   const rewarded = valid && rewardFactor > 0
+  const passiveLogs = (s: Sim): PassiveLog[] =>
+    [...s.logPassive]
+      .filter(([i, n]) => n > 0 && s.passives[i])
+      .sort(([a], [b]) => a - b)
+      .map(([i, count]) => {
+        const se = s.passives[i] as SourcedEffect
+        return { source: se.source, sourceKind: se.sourceKind, effect: se.effect, count }
+      })
+  if (streak.usedProtect) {
+    const giver = active.find((s) => s.passives.some((e) => e.effect.kind === 'streakProtect'))
+    const se = giver?.passives.find((e) => e.effect.kind === 'streakProtect')
+    if (giver && se) logPassiveHit(giver, se)
+  }
   const memberResults: MemberResult[] = sims.map((s) => {
     const staticWc = { ...baseWc, isLeader: s.slot === 0, energyFraction: s.energyStart / s.max }
     const expMult = selfStatMult(s.passives, 'exp', staticWc, cfg) * (teamMods.exp ?? 1)
     const bondMult = selfStatMult(s.passives, 'bondGain', staticWc, cfg) * (teamMods.bondGain ?? 1)
     const cm = pokemonConditionMult(s.types, env, cfg, new Set(), s.bonusMult)
+    if (rewarded) {
+      s.passives.forEach((se, i) => {
+        const e = se.effect
+        if (e.kind === 'statMod' && (e.stat === 'exp' || e.stat === 'bondGain') && evaluateWhen(e.when, staticWc, cfg)) s.logPassive.set(i, 1)
+      })
+    }
     return {
       uid: s.uid,
       speciesSlug: s.p.speciesSlug,
@@ -787,6 +944,20 @@ export function completeSession(
       bondMinutes: rewarded ? minutes * bondMult : 0,
       masteryMinutes: rewarded && !s.asleep ? Object.fromEntries(s.p.equippedMoves.map((m) => [m, minutes])) : {},
       rested: s.rested,
+      damageMoves: [...s.logMoves].map(([move, count]) => ({ move, count })),
+      activables: [...s.logAct].map(([move, a]) => ({
+        move,
+        attempts: a.attempts,
+        activations: a.activations,
+        chanceMin: a.attempts > 0 ? a.min : 0,
+        chanceMax: a.max,
+        chanceAvg: a.attempts > 0 ? a.sum / a.attempts : 0,
+        limitPerSession: getTechnique(move, ctx)?.def?.limitPerSession ?? null,
+        limitReached: a.limitReached,
+      })),
+      passives: passiveLogs(s),
+      conditionLog: [...s.logCond.values()],
+      conditionBonusMult: s.bonusMult,
     }
   })
   const totalPoints = memberResults.reduce((a, m) => a + m.points, 0)
@@ -795,12 +966,26 @@ export function completeSession(
   const league = leagueForPoints(state.league.weeklyPoints[weekKey] ?? 0, 'week', ctx)
   const typeWeightMults: Partial<Record<TypeSlug, number>> = {}
   let sync: WaveGenParams['syncNature'] = null
+  const typeWeightSources: Partial<Record<TypeSlug, { uid: string; source: string }>> = {}
+  let syncSource: { uid: string; source: string } | null = null
   for (const s of active) {
-    for (const { effect: e } of ofKind(s.passives, 'encounterWeight')) {
+    for (const se of ofKind(s.passives, 'encounterWeight')) {
+      const e = se.effect
       if (!evaluateWhen(e.when, wcOf(s), cfg)) continue
-      if ('type' in e.match) typeWeightMults[e.match.type] = Math.max(typeWeightMults[e.match.type] ?? 1, e.mult)
-      else if (!sync || e.mult > sync.chance) sync = { nature: s.p.nature, chance: e.mult }
+      if (rewarded) logPassiveHit(s, se)
+      if ('type' in e.match) {
+        if (e.mult > (typeWeightMults[e.match.type] ?? 1)) typeWeightSources[e.match.type] = { uid: s.uid, source: se.source }
+        typeWeightMults[e.match.type] = Math.max(typeWeightMults[e.match.type] ?? 1, e.mult)
+      } else if (!sync || e.mult > sync.chance) {
+        sync = { nature: s.p.nature, chance: e.mult }
+        syncSource = { uid: s.uid, source: se.source }
+      }
     }
+  }
+  // encounterWeight hits were logged after the member results were built.
+  for (const m of memberResults) {
+    const sim = byUid.get(m.uid)
+    if (sim) m.passives = passiveLogs(sim)
   }
   const gen: WaveGenParams = {
     focus,
@@ -811,15 +996,17 @@ export function completeSession(
     syncNature: sync,
   }
   const waves: Wave[] = []
+  const waveSizes: number[] = []
   let roamingAfter = state.roaming
+  const appeared = new Set<string>()
   if (rewarded) {
-    const appeared = new Set<string>()
     for (let i = 0; i < nWaves; i++) {
       const blockEnd = (i + 1) * cfg.session.waveMinutes * 60
       const forcedTypes = new Set([...forced].filter(([, at]) => at < blockEnd).map(([ty]) => ty))
       const activeTypes = activeConditionTypes(env, cfg, forcedTypes)
       const contributions = [...(contrib[i] as Map<string, EnergyContribution>).values()]
       const size = rollWaveSize(rng, focus, league, i === 0 ? extraWild : 0, cfg)
+      waveSizes.push(size)
       let wilds: Wave['wilds'] = []
       if (i === 0) {
         for (const r of state.roaming) {
@@ -897,6 +1084,19 @@ export function completeSession(
     weeklyUses,
     note: session.note,
     subjectTag: session.subjectTag,
+    wildFactors: {
+      localHour: local.hour,
+      weekday: local.weekday,
+      league,
+      waveSizes,
+      extraWild,
+      typeWeights: Object.entries(typeWeightMults).flatMap(([type, m]) => {
+        const src = typeWeightSources[type as TypeSlug]
+        return src && m !== undefined ? [{ type: type as TypeSlug, mult: m, uid: src.uid, source: src.source }] : []
+      }),
+      sync: sync && syncSource ? { ...syncSource, nature: sync.nature, chance: sync.chance } : null,
+      roaming: [...appeared],
+    },
   })
 }
 

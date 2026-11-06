@@ -1425,5 +1425,129 @@
       "body": "Comparte tu código o escribe el de un compañero. Cuando acepten, verás su nivel, su liga y su equipo."
     },
     "connected": "¡Ya son amigos! Esa persona ya te había enviado una solicitud."
+  },
+  "report": {
+    "open": "Informe de la sesión",
+    "title": "Informe de la sesión",
+    "subtitle": "{{minutes}} min · Foco {{focus}}. Toca un Pokémon para ver qué hizo y qué se activó.",
+    "legacy": "Esta sesión se guardó antes del informe: solo hay un resumen.",
+    "teamTitle": "Tu equipo",
+    "wildsTitle": "Por qué salieron estos salvajes",
+    "noWilds": "Esta sesión no tuvo oleada.",
+    "summaryTechs_one": "{{count}} técnica activada",
+    "summaryTechs_other": "{{count}} técnicas activadas",
+    "summaryCharges_one": "{{count}} carga",
+    "summaryCharges_other": "{{count}} cargas",
+    "moves": "Ataques usados",
+    "noMove": "Golpe Normal",
+    "noMoveTip": "Sin ataque de daño equipado, golpea con un ataque Normal más débil.",
+    "activables": "Técnicas activables",
+    "activated": "se activó {{count}} de {{attempts}} veces ({{chance}} por acción).",
+    "limitReached": "Llegó al límite de {{limit}} por sesión.",
+    "weeklyLimit": "Ya había llegado a su límite semanal.",
+    "neverRolled": "no tuvo ocasión de activarse (no actuó).",
+    "noActivables": "No tiene técnicas activables equipadas.",
+    "passives": "Habilidad y pasivas",
+    "abilityIdle": "{{ability}} no se activó esta sesión.",
+    "noPassives": "Sin habilidad ni técnicas pasivas.",
+    "teamScope": "para todo el equipo",
+    "inActions": "en {{count}} de {{total}} acciones",
+    "condition": "Condición de tipo",
+    "conditionLine": "{{mult}} en {{actions}} de {{total}} acciones.",
+    "conditionForced": "Activada por {{move}} de {{who}} en el minuto {{minute}}.",
+    "conditionBonus": "Su bonus de condición se multiplica ({{mult}}).",
+    "noCondition": "Ninguna condición de sus tipos estuvo activa.",
+    "charges": "Cargas producidas",
+    "energy": "Energía",
+    "healed": "recuperó {{amount}}",
+    "exhaustedTip": "Agotado deja de actuar: más Energía (PS) o técnicas de curación lo mantienen activo.",
+    "charge": {
+      "sleep": "Sueño",
+      "paralysis": "Parálisis",
+      "reroll": "Cambio de salvaje",
+      "tip": "{{what}} · {{who}} ({{source}})"
+    },
+    "stat": {
+      "points": "Puntos",
+      "pace": "Ritmo",
+      "captureEnergy": "Energía de captura",
+      "techChance": "Prob. de técnicas",
+      "energyCost": "Gasto de Energía",
+      "exp": "EXP",
+      "bondGain": "Vínculo",
+      "counterDamageTaken": "Daño de contraataques"
+    },
+    "target": {
+      "self": "propia",
+      "team": "del equipo",
+      "lowestAlly": "del aliado con menos Energía"
+    },
+    "effect": {
+      "statMod": "{{stat}} {{mult}}",
+      "statusOnAction_one": "produjo {{count}} carga de {{status}} ({{chance}} por acción).",
+      "statusOnAction_other": "produjo {{count}} cargas de {{status}} ({{chance}} por acción).",
+      "heal": "recuperó un {{pct}} % de Energía {{target}} al final",
+      "healNext": "curará un {{pct}} % de Energía {{target}} al empezar la próxima sesión",
+      "encounterType": "más salvajes de tipo {{type}} ({{mult}}).",
+      "sync": "un {{pct}} de los salvajes puede tener su naturaleza.",
+      "focusFloor": "su Foco no bajó de {{pct}}.",
+      "focusLabelFloor": "algunas capturas de pantalla le valieron al menos {{pct}}.",
+      "lateClaimImmune": "no le afectó reclamar tarde.",
+      "conditionBonusMult": "multiplica su bonus de condición ({{mult}}).",
+      "lastActionMult": "su última acción valió {{mult}}.",
+      "effectivenessFloor": "los tipos que le resisten (×{{from}}) cuentan como ×{{to}}.",
+      "streakProtect": "protegió tu racha de días.",
+      "noSleepFromRest": "Descanso no lo durmió.",
+      "generic": "se activó {{count}} veces."
+    },
+    "when": {
+      "energyBelow": "con Energía por debajo del {{pct}} %",
+      "energyFull": "con la Energía llena",
+      "time": {
+        "daylight": "de día",
+        "notDaylight": "fuera del día",
+        "night": "de noche",
+        "notNight": "fuera de la noche",
+        "earlyMorning": "de madrugada"
+      },
+      "weather": {
+        "rain": "con lluvia",
+        "sun": "con sol o calor",
+        "cold": "con frío"
+      },
+      "weekend": "en fin de semana",
+      "noPauses": "sin pausas",
+      "isLeader": "como líder",
+      "targetLegendary": "contra legendarios",
+      "sessionMin": "en sesiones de {{min}} min o más"
+    },
+    "period": {
+      "night": "de noche",
+      "day": "de día",
+      "evening": "al atardecer"
+    },
+    "sound": {
+      "silence": "el silencio",
+      "music": "la música",
+      "voice": "las voces",
+      "noise": "el ruido"
+    },
+    "wild": {
+      "time": "Empezaste a las {{hour}}:00, {{period}}. La hora decide qué condiciones de tipo se activan.",
+      "conditions": "Los tipos con condición activa salen más ({{mult}}):",
+      "forced": "{{type}} lo activó {{move}} de {{who}}.",
+      "team": "Los tipos de tu equipo salen un poco más ({{mult}}):",
+      "sound": "Dominó {{sound}}: estos tipos salen más ({{mult}}):",
+      "noMic": "Sin micrófono: el sonido no influyó.",
+      "typeWeight": "Más salvajes de tipo {{type}} ({{mult}}).",
+      "sync": "Un {{pct}} de los salvajes puede tener la naturaleza {{nature}}.",
+      "by": "Por {{source}} de {{who}}.",
+      "league": "{{league}}: oleadas de hasta {{max}} salvajes. Esta vez: {{sizes}}.",
+      "extraWild_one": "+{{count}} salvaje extra en la primera oleada.",
+      "extraWild_other": "+{{count}} salvajes extra en la primera oleada.",
+      "lowFocus": "Con Foco {{pct}} cada oleada trae un salvaje menos.",
+      "roaming": "Apareció un legendario errante: {{names}}.",
+      "longSession": "En sesiones largas ({{count}} oleadas) las últimas oleadas traen especies más raras."
+    }
   }
 }

@@ -1425,5 +1425,129 @@
       "body": "Share your code or type a classmate's. Once they accept, you'll see their level, league and team."
     },
     "connected": "You're friends now! They had already sent you a request."
+  },
+  "report": {
+    "open": "Session report",
+    "title": "Session report",
+    "subtitle": "{{minutes}} min · Focus {{focus}}. Tap a Pokémon to see what it did and what fired.",
+    "legacy": "This session was saved before the report existed: only a summary is available.",
+    "teamTitle": "Your team",
+    "wildsTitle": "Why these wilds showed up",
+    "noWilds": "This session had no wave.",
+    "summaryTechs_one": "{{count}} technique fired",
+    "summaryTechs_other": "{{count}} techniques fired",
+    "summaryCharges_one": "{{count}} charge",
+    "summaryCharges_other": "{{count}} charges",
+    "moves": "Moves used",
+    "noMove": "Normal hit",
+    "noMoveTip": "With no damage move equipped it hits with a weaker Normal attack.",
+    "activables": "Activable techniques",
+    "activated": "fired {{count}} of {{attempts}} times ({{chance}} per action).",
+    "limitReached": "Hit its limit of {{limit}} per session.",
+    "weeklyLimit": "It had already hit its weekly limit.",
+    "neverRolled": "had no chance to fire (it did not act).",
+    "noActivables": "No activable techniques equipped.",
+    "passives": "Ability and passives",
+    "abilityIdle": "{{ability}} did not trigger this session.",
+    "noPassives": "No ability or passive techniques.",
+    "teamScope": "for the whole team",
+    "inActions": "on {{count}} of {{total}} actions",
+    "condition": "Type condition",
+    "conditionLine": "{{mult}} on {{actions}} of {{total}} actions.",
+    "conditionForced": "Turned on by {{who}}'s {{move}} at minute {{minute}}.",
+    "conditionBonus": "Its condition bonus is multiplied ({{mult}}).",
+    "noCondition": "No condition for its types was active.",
+    "charges": "Charges produced",
+    "energy": "Energy",
+    "healed": "recovered {{amount}}",
+    "exhaustedTip": "Once exhausted it stops acting: more Energy (HP) or healing techniques keep it going.",
+    "charge": {
+      "sleep": "Sleep",
+      "paralysis": "Paralysis",
+      "reroll": "Wild swap",
+      "tip": "{{what}} · {{who}} ({{source}})"
+    },
+    "stat": {
+      "points": "Points",
+      "pace": "Pace",
+      "captureEnergy": "Catch energy",
+      "techChance": "Technique chance",
+      "energyCost": "Energy cost",
+      "exp": "EXP",
+      "bondGain": "Bond",
+      "counterDamageTaken": "Counterattack damage"
+    },
+    "target": {
+      "self": "of its own",
+      "team": "for the team",
+      "lowestAlly": "for the ally with least Energy"
+    },
+    "effect": {
+      "statMod": "{{stat}} {{mult}}",
+      "statusOnAction_one": "produced {{count}} {{status}} charge ({{chance}} per action).",
+      "statusOnAction_other": "produced {{count}} {{status}} charges ({{chance}} per action).",
+      "heal": "recovered {{pct}}% Energy {{target}} at the end",
+      "healNext": "will heal {{pct}}% Energy {{target}} when the next session starts",
+      "encounterType": "more {{type}}-type wilds ({{mult}}).",
+      "sync": "{{pct}} of wilds may share its nature.",
+      "focusFloor": "its Focus did not drop below {{pct}}.",
+      "focusLabelFloor": "some screenshots counted at least {{pct}} for it.",
+      "lateClaimImmune": "claiming late did not affect it.",
+      "conditionBonusMult": "multiplies its condition bonus ({{mult}}).",
+      "lastActionMult": "its last action was worth {{mult}}.",
+      "effectivenessFloor": "types that resist it (×{{from}}) count as ×{{to}}.",
+      "streakProtect": "protected your day streak.",
+      "noSleepFromRest": "Rest did not put it to sleep.",
+      "generic": "triggered {{count}} times."
+    },
+    "when": {
+      "energyBelow": "with Energy below {{pct}}%",
+      "energyFull": "with full Energy",
+      "time": {
+        "daylight": "in daylight",
+        "notDaylight": "outside daylight",
+        "night": "at night",
+        "notNight": "outside the night",
+        "earlyMorning": "early in the morning"
+      },
+      "weather": {
+        "rain": "in rain",
+        "sun": "in sun or heat",
+        "cold": "in the cold"
+      },
+      "weekend": "on weekends",
+      "noPauses": "without pauses",
+      "isLeader": "as leader",
+      "targetLegendary": "against legendaries",
+      "sessionMin": "in sessions of {{min}} min or more"
+    },
+    "period": {
+      "night": "at night",
+      "day": "during the day",
+      "evening": "in the evening"
+    },
+    "sound": {
+      "silence": "silence",
+      "music": "music",
+      "voice": "voices",
+      "noise": "noise"
+    },
+    "wild": {
+      "time": "You started at {{hour}}:00, {{period}}. The time decides which type conditions turn on.",
+      "conditions": "Types with an active condition show up more ({{mult}}):",
+      "forced": "{{type}} was turned on by {{who}}'s {{move}}.",
+      "team": "Your team's types show up a bit more ({{mult}}):",
+      "sound": "Mostly {{sound}}: these types show up more ({{mult}}):",
+      "noMic": "No microphone: sound had no effect.",
+      "typeWeight": "More {{type}}-type wilds ({{mult}}).",
+      "sync": "{{pct}} of wilds may have the {{nature}} nature.",
+      "by": "From {{who}}'s {{source}}.",
+      "league": "{{league}}: waves of up to {{max}} wilds. This time: {{sizes}}.",
+      "extraWild_one": "+{{count}} extra wild in the first wave.",
+      "extraWild_other": "+{{count}} extra wilds in the first wave.",
+      "lowFocus": "At {{pct}} Focus each wave brings one wild fewer.",
+      "roaming": "A roaming legendary appeared: {{names}}.",
+      "longSession": "In long sessions ({{count}} waves) later waves bring rarer species."
+    }
   }
 }
