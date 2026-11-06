@@ -1,15 +1,16 @@
-import { useMemo } from 'react'
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ALL_TYPES, defaultContext, isAsleepAt, pokemonView, typeEffectiveness, type PokemonView } from '../../../engine'
-import { Button, HelpDot, IconButton, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, RoleBadge, Sprite, Stage, toast, TypeBadge } from '../../components'
+import { ALL_TYPES, defaultContext, isAsleepAt, typeEffectiveness, type PokemonView } from '../../../engine'
+import { HelpDot, IconButton, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, RoleBadge, Sprite, Stage, toast, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { useNames } from '../../lib/names'
-import { navigate } from '../../router'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
+import { BoxPicker } from './BoxPicker'
+import { boxSize } from './pickFromBox'
 
 const ctx = defaultContext()
 const SESSION_MIN = ctx.config.session.presets[0] ?? 25
@@ -28,24 +29,20 @@ export default function Team() {
   const locked = Boolean(player.activeSession)
   const busy = useBusy()
   const minute = Math.floor(now / 60_000)
-  const boxViews = useMemo(
-    () =>
-      Object.values(player.pokemon)
-        .filter((p) => !player.team.includes(p.uid))
-        .sort((a, b) => b.level - a.level || b.caughtAt - a.caughtAt)
-        .map((p) => pokemonView(player, p.uid, minute * 60_000))
-        .filter((v): v is PokemonView => v !== null),
-    [player, minute],
-  )
+  const boxCount = boxSize(player)
   const asleep = (v: PokemonView) => isAsleepAt(player, v.pokemon, now)
   const exhausted = views.filter((v) => v.energy <= 0 || asleep(v))
   useHintEvent('teamTired', exhausted.length > 0)
 
-  const apply = async (uids: string[], msg?: string) => {
-    const err = await setTeam(uids)
-    if (err) toast.add({ title: errorText(err, 'box'), type: 'danger' })
-    else if (msg) toast.add({ title: msg, type: 'success' })
-  }
+  // Stable, so the Box list rows (memoized) are not re-rendered by every clock tick.
+  const apply = useCallback(
+    async (uids: string[], msg?: string) => {
+      const err = await setTeam(uids)
+      if (err) toast.add({ title: errorText(err, 'box'), type: 'danger' })
+      else if (msg) toast.add({ title: msg, type: 'success' })
+    },
+    [setTeam],
+  )
   const move = (i: number, d: -1 | 1) => {
     const next = [...player.team]
     const j = i + d
@@ -114,7 +111,7 @@ export default function Team() {
             {views.length < 6 && (
               <li className="flex items-center gap-3 bg-ink/20 p-4 text-sm text-mist-300 outline-2 -outline-offset-2 outline-dusk-600 outline-dashed">
                 <PixelIcon name="plus" size={20} className="shrink-0 text-volt-400" />
-                {boxViews.length > 0 ? t('team.addHint', { count: 6 - views.length }) : t('team.emptySlotHow')}
+                {boxCount > 0 ? t('team.addHint', { count: 6 - views.length }) : t('team.emptySlotHow')}
               </li>
             )}
           </ol>
@@ -122,50 +119,7 @@ export default function Team() {
 
         <div className="flex min-w-0 flex-col gap-8">
           {leader && <LeaderPanel view={leader} />}
-          <Panel title={t('team.fromBox')} {...hintAnchor('team.box')}>
-            {boxViews.length === 0 ? (
-              <div className="flex flex-col items-start gap-3">
-                <p className="text-sm text-mist-300">{t('team.boxEmpty')}</p>
-                <Button size="sm" icon="play" onClick={() => navigate('home')}>
-                  {t('placeholder.cta')}
-                </Button>
-              </div>
-            ) : (
-              <ul className="flex max-h-[30rem] flex-col gap-2 overflow-y-auto pr-1">
-                {boxViews.map((v) => (
-                  <li key={v.pokemon.uid} className="flex items-center gap-3 bg-dusk-900 p-2 inset-shadow-well">
-                    <span className="grid h-16 w-20 shrink-0 place-items-center">
-                      <Sprite kind="icon" slug={v.pokemon.speciesSlug} scale={2} alt="" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline gap-2">
-                        <span className="truncate font-display text-base">{names.species(v.pokemon.speciesSlug)}</span>
-                        {v.pokemon.isShiny && <span className="text-volt-300" aria-label={t('pokemon.shiny')}>★</span>}
-                        <span className="font-num text-lg leading-none text-mist-300">
-                          {t('pokemon.levelShort')}
-                          {v.pokemon.level}
-                        </span>
-                      </span>
-                      <span className="mt-1 flex items-center gap-2">
-                        <RoleBadge role={v.species.role} />
-                        <ProgressBar className="w-20" size="sm" variant="energy" value={v.energy} max={v.maxEnergy} label={t('pokemon.energyOf', { name: names.species(v.pokemon.speciesSlug) })} />
-                      </span>
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      icon="plus"
-                      disabled={locked || busy || player.team.length >= 6}
-                      onClick={() => apply([...player.team, v.pokemon.uid], t('detail.added', { name: names.species(v.pokemon.speciesSlug) }))}
-                    >
-                      {t('team.add')}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {player.team.length >= 6 && boxViews.length > 0 && <p className="mt-3 text-sm text-mist-400">{t('team.full')}</p>}
-          </Panel>
+          <BoxPicker at={minute * 60_000} disabled={locked || busy} onApply={apply} />
         </div>
       </div>
     </div>

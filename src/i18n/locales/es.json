@@ -183,7 +183,7 @@
     "fromBox": "Sumar desde la Caja",
     "boxEmpty": "Tu Caja está vacía. Captura Pokémon en las oleadas para sumarlos al equipo.",
     "add": "Sumar",
-    "full": "El equipo está completo. Pasa a alguien a la Caja para hacer sitio.",
+    "full": "El equipo está completo. Usa Cambiar para sustituir a alguien.",
     "makeLeader": "Hacer líder",
     "makeLeaderOf": "Hacer líder a {{name}}",
     "newLeader": "{{name}} ahora es el líder",
@@ -201,7 +201,36 @@
     "weakTo": "Recibe más daño de:",
     "resists": "Resiste:",
     "none": "Ninguno",
-    "emptySlotShort": "Súmale uno desde Equipo."
+    "emptySlotShort": "Súmale uno desde Equipo.",
+    "pick": {
+      "search": "Buscar por nombre",
+      "type": "Tipo",
+      "anyType": "Todos los tipos",
+      "sort": {
+        "label": "Ordenar por",
+        "now": "Mejor ahora",
+        "level": "Nivel",
+        "energy": "Energía",
+        "recent": "Recientes"
+      },
+      "count_one": "{{count}} Pokémon",
+      "count_other": "{{count}} Pokémon",
+      "countFiltered": "{{shown}} de {{total}} Pokémon",
+      "clear": "Quitar filtros",
+      "noMatch": "Ningún Pokémon de la Caja coincide con esa búsqueda.",
+      "asleep": "Dormido",
+      "exhausted": "Agotado",
+      "swap": "Cambiar",
+      "addOf": "Sumar a {{name}} al equipo",
+      "swapOf": "Cambiar a {{name}} por alguien del equipo"
+    },
+    "swap": {
+      "title": "Cambiar por {{name}}",
+      "body": "Elige a quién pasa a la Caja. {{name}} ocupa su lugar en el orden.",
+      "pickOf": "Pasar a {{out}} a la Caja y poner a {{in}} en su lugar",
+      "done": "{{in}} ocupa el lugar de {{out}}",
+      "doneLeader": "{{in}} ocupa el lugar de {{out}} y es el nuevo líder"
+    }
   },
   "items": {
     "dust": "Polvo de Estudio",
