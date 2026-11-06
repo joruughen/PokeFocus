@@ -486,3 +486,264 @@ Ahora la vida del legendario sí cuenta (sale a nv. ≥ 50, sin *level sync* a s
 Las misiones dan ≈ 25 % más Poké Balls, ≈ 1.5 Super Balls al día y ≈ 1 Ultra Ball por semana al constante, y ≈ 15 % más Polvo. La tasa de captura baja porque los salvajes ya no están siempre al 5 %; las Balls extra de las misiones compensan y el número de capturas queda igual (sin misiones el constante captura 707). Las Super Balls se gastan todas: siguen siendo el recurso escaso.
 
 **Descanso:** 0.0 Pokémon dormidos en la caja al final (antes hasta 1.6).
+
+## 10. Reparto manual del daño (fichas), 2026-11-05
+
+> Estudio del paquete A de `docs/session-depth-plan.md`, con la config del repositorio tras integrar A, B, C, D y F (estilo de estudio ×1.2, Hada proporcional). Órdenes: `npm run simulate:damage -- matrix --policy <P> --seeds 100` para cada política, `npm run simulate:damage -- replay --seeds 40 --reps 40` y `npm run simulate:damage -- report <json…>` (`scripts/simulate-damage.ts`). Unos 9 min con las 7 tareas en paralelo.
+
+**Método.**
+
+- **Partida completa:** cada política juega 6 perfiles × 100 semillas × 12 semanas, es decir, 600 jugadores por política y 3,600 en total. Los calendarios son los mismos para todas las políticas. A partir del primer reparto, el azar del motor diverge, así que la comparación es entre muestras grandes y no pareada.
+- **Experimento de legendarios:** con la política `auto`, 40 semillas por perfil, se guarda el estado justo antes de las capturas de cada encuentro con legendario. Salen 1,648 encuentros con 1,671 legendarios nuevos. Cada encuentro se rejuega completo 40 veces con cada política, con las mismas semillas aleatorias en todas, así que la comparación sí es pareada. Para las políticas manuales, el encuentro se convierte al modo manual (`toManualWave`), con los mismos golpes tirados.
+- **IC 95 %:**
+  - en las tasas, intervalo de Wilson sobre los conteos agregados;
+  - en las capturas, media ± 1.96·SE entre jugadores;
+  - en el experimento, ± 1.96·SE entre encuentros.
+
+**Políticas** (`scripts/sim/capture-policy.ts`):
+
+| Política | Qué hace |
+|---|---|
+| `auto` | Preferencia "Auto": el reparto de hoy, ponderado por PS máx. Es la línea base calibrada. |
+| `concentrate-valuable` | Todas las fichas al legendario, si no al shiny, si no a la especie nueva, si no al de nivel más alto. Es la versión ingenua. |
+| `type-smart` | Cada ficha al salvaje al que más daño hace. |
+| `concentrate-status` | Concentra en el más valioso que no se vaya a llevar ya la Ball de Estudio. Pone la mejor carga (Sueño primero) en ese mismo salvaje y guarda una carga por cada legendario o shiny de una oleada posterior. |
+| `smart` | Jugador bueno y realista: `concentrate-status` solo si en la oleada hay un legendario, un shiny o una especie nueva; si no, "Auto". Las cargas se guardan igual que en `concentrate-status`. |
+| `best-ev` | Techo de habilidad. Va ficha a ficha, de la mayor a la menor, y manda cada una al salvaje donde más sube el valor esperado capturado (valor × P(captura antes de que huya)). Las cargas, como `concentrate-status`. |
+
+**Métricas nuevas del simulador** (`Tally`):
+
+- salvajes de **nivel alto**: el cuarto superior del rango de nivel para el nivel de entrenador, sin contar legendarios; vistos y capturados;
+- **evoluciones finales**: etapa ≥ 2 sin evolución pendiente; vistas y capturadas;
+- **daño desperdiciado**: Σ daño ÷ PS por debajo del mínimo de vida, entre Σ daño ÷ PS;
+- **lanzamientos a legendarios sin Ultra Ball**.
+
+### 10.1 Resultados clave
+
+| Perfil | Política | Leg. 1.er enc. (partida) | Leg. 1.er enc. (pareado) | Vida leg. al lanzar | Nv. alto capt. | Evo. final capt. | Capturas 12 sem. | Daño perdido |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| constante | auto | 44% | 46% | 42% | 65% | 63% | 980 | 15% |
+| constante | concentrate-valuable | 50% | 54% | 17% | 55% | 48% | 792 (−19%) | 74% |
+| constante | type-smart | 36% | 41% | 55% | 58% | 47% | 871 (−11%) | 65% |
+| constante | concentrate-status | 45% | 54% | 17% | 54% | 48% | 766 (−22%) | 75% |
+| constante | smart | 49% | 54% | 17% | 65% | 63% | 971 (−1%) | 17% |
+| constante | best-ev | 49% | 52% | 22% | 70% | 69% | 1,038 (+6%) | 23% |
+| maratonista | auto | 21% | 22% | 58% | 17% | 16% | 898 | 14% |
+| maratonista | smart | 33% | 30% | 21% | 17% | 16% | 901 | 16% |
+| maratonista | best-ev | 28% | 27% | 37% | 22% | 19% | 967 (+8%) | 21% |
+| noctámbulo | auto | 36% | 39% | 50% | 33% | 34% | 904 | 16% |
+| noctámbulo | smart | 50% | 48% | 22% | 33% | 33% | 911 | 17% |
+| noctámbulo | best-ev | 50% | 46% | 31% | 41% | 40% | 1,024 (+13%) | 23% |
+| grinder | auto | 11% | 11% | 65% | 13% | 16% | 2,553 | 17% |
+| grinder | smart | 17% | 17% | 16% | 12% | 16% | 2,557 | 19% |
+| grinder | best-ev | 15% | 14% | 48% | 15% | 19% | 2,734 (+7%) | 25% |
+| todos (pareado) | auto → smart | | 19% → 26% | 61% → 19% | | | | |
+
+Las tablas completas, con los seis perfiles, las seis políticas y los IC, están en 10.4.
+
+### 10.2 Conclusiones frente a los criterios
+
+1. **El jugador hábil gana ventaja, y es una ventaja acotada.**
+   - **`smart`, el jugador bueno realista:**
+     - +5 pp de legendario en el primer encuentro en el constante, +12 en el maratonista y +14 en el noctámbulo;
+     - en el experimento pareado, de +2 a +9 pp según el perfil (+7 en total, de 19 % a 26 %);
+     - casi el mismo número de capturas que en Auto.
+   - **`best-ev`, el techo de habilidad:**
+     - de +6 % a +13 % de capturas;
+     - de +2 a +8 pp en la captura de salvajes de nivel alto y de +3 a +11 pp en la de evoluciones finales;
+     - de +4 a +14 pp de legendario en los perfiles con muestra suficiente (constante, maratonista, noctámbulo y grinder).
+   - **La Pokédex y el nivel de entrenador apenas cambian** (±0.5 especies a la semana 12, y el mismo nivel de entrenador). La habilidad da Pokémon mejores y más legendarios, no un ritmo de progresión distinto.
+2. **El legendario sigue siendo difícil.**
+   - Con las mejores políticas, la captura en el primer encuentro queda en **49–54 % en el constante** y en **≤ 50 % en todos los perfiles**.
+   - El techo es estructural. Con R = 13 (los 5 legendarios tienen `capture_rate` 3), al 5 % de vida, con Ultra Ball (×2) y Sueño (×2.5), la probabilidad por lanzamiento es 0.967 · 13/255 · 2 · 2.5 = **24.6 %**, y con 3 lanzamientos queda en **57 %**. Con las dos habilidades de captura que existen (`ballMult` 1.1 y `nextThrowBonus` 1.15 del líder) el techo sube a **≈ 67 %**.
+   - Además, ni concentrando todo el equipo el legendario baja del 5 %: queda en el **16–22 % de vida**, porque sale a nv. ≥ 50, tiene más Defensa y no hay *level sync* a su favor.
+   - Ni con Sueño se acerca a "casi seguro".
+3. **Los Pokémon de nivel alto y las evoluciones finales siguen siendo un reto.**
+   - Concentrar todo **empeora** su captura en todos los perfiles (constante: de 65 % a 54–55 %), porque el resto de la oleada se queda con toda la vida.
+   - Incluso `best-ev` solo sube de +2 a +8 pp. En el maratonista y el grinder siguen por debajo del 25 %.
+4. **El coste de concentrar se nota.**
+   - Concentrarlo todo siempre (`concentrate-valuable`/`-status`) cuesta **del −6 % al −22 % de capturas**, según el perfil (constante −19/−22 %, casual −19/−22 %, grinder −10 %).
+   - El **74–81 % del daño se pierde** por debajo del mínimo de vida, frente al 15 % de Auto.
+   - `type-smart` también pierde: −11 % de capturas y un 65 % de daño perdido. Mandar cada ficha a su mejor objetivo de tipo apila el daño en los mismos salvajes.
+   - Solo compensa concentrar cuando hay algo que lo merece, que es lo que hace `smart`.
+
+**Umbrales propuestos** (para vigilar en futuros cambios de config o de motor):
+
+| Indicador | Umbral | Hoy |
+|---|---|---|
+| Legendario en el 1.er encuentro con la mejor política, perfil constante | 45–60 %. Por encima del 65 % deja de ser un reto. La línea base Auto es 44–46 %, y el GDD apunta a ≈ 40–55 % para Auto. | 49–54 % |
+| Ventaja pareada de concentrar en el legendario (`smart` − `auto`) | ≤ +12 pp | de +2 a +9 pp |
+| Techo teórico por encuentro (mejor Ball × mejor estado × mejores habilidades, al mínimo de vida) | < 80 % | ≈ 67 % |
+| Captura de salvajes de nivel alto con `best-ev` | ≤ Auto + 10 pp | de +2 a +8 pp |
+| Capturas totales con `best-ev` | ≤ Auto + 15 % | de +6 % a +13 % |
+| Capturas al concentrarlo todo siempre | ≤ Auto − 10 % (el coste debe notarse) | del −6 % al −22 % |
+
+**Veredicto:** los criterios se cumplen con la config actual. **No se cambia la config ni el motor.** La palanca de reserva prevista, una vida mínima mayor para legendarios (p. ej. `capture.legendaryMinHpFraction` 0.25), solo restaría ~3 pp en el constante, porque el legendario concentrado ya queda al 17–22 %. Hoy no hace falta.
+
+### 10.3 Qué vigilar
+
+- **Ultra Balls (problema conocido; no depende del reparto).**
+  - El maratonista lanza **≈ 22 Ultra Balls y ≈ 23–30 lanzamientos a legendarios con otra Ball** en 12 semanas. El grinder, 25 frente a 80–130.
+  - Por eso el maratonista se queda en el 21–33 % en el primer encuentro, frente al 44–54 % del constante.
+  - Concentrar lo mejora un poco, porque gasta menos Balls por legendario, pero no lo resuelve.
+  - Se arregla en la economía de misiones: más Ultra Balls para quien estudia muchas horas, o una Ultra Ball garantizada al aparecer un legendario. No en el daño.
+- **El reparto Auto ya pone Sueño o Parálisis** en el 80–90 % de los lanzamientos a legendarios del constante, el noctámbulo y el grinder: el simulador ya apunta las cargas de estado a lo más valioso. Guardar cargas para un legendario de una oleada posterior solo sube los lanzamientos preparados de 79–91 % a 86–92 %, y en el casual y el irregular, con pocas cargas, no cambia nada.
+- **Si se añaden fuentes de multiplicador de captura**, el techo de 10.2 sube. Cada una se multiplica con las demás: más `ballMult`, una Ball mejor que la Ultra, `extraFailedThrows` o un estado más fuerte que el Sueño. Con 4 lanzamientos y las habilidades actuales, el techo ya sería ≈ 77 %. En ese caso conviene revisar `legendaryMinCaptureRate` o añadir una vida mínima para legendarios.
+- **La propuesta genérica del simulador** (`npm run simulate`, regenerada en `docs/balance-proposed-config.json` con la config actual) sugiere `legendaryChance` 0.00093 y bajar un poco los umbrales de liga: con la config integrada, el constante se cruza con 2.9–3.5 legendarios nuevos en 12 semanas (objetivo 1–3). Es independiente del reparto del daño y **no se aplica aquí**: queda para quien decida la frecuencia de legendarios.
+- **Fuera del modelo:** los jugadores reales no hacen el cálculo de `best-ev`. Pero la interfaz (`estimateTokenDamage`, el aviso de "sobra daño") les da la información para acercarse a él, así que conviene tratar `best-ev` como un techo alcanzable.
+
+### 10.4 Tablas completas
+
+Las columnas de las tablas por perfil son estas:
+
+- **1.er enc.:** legendarios nuevos capturados en su primera aparición, con IC de Wilson.
+- **Al final:** contando las reapariciones.
+- **Vida leg.:** vida media del legendario tras el reparto.
+- **% prep.:** lanzamientos a legendarios dormidos o paralizados.
+- **Nv. alto** y **Evo. final:** capturados ÷ vistos.
+- **Pokédex:** especies capturadas al final de las semanas 4, 8 y 12.
+- **Daño perdido:** fracción del daño por debajo del mínimo de vida.
+- **Ultra lanz. / sin Ultra:** Ultra Balls lanzadas y lanzamientos a legendarios con otra Ball, por jugador.
+
+**casual** (100 jugadores por política, 12 semanas; media ± IC 95 %)
+
+| Política | Leg. nuevos | 1.er enc. | Al final | Vida leg. | % prep. | Nv. alto | Evo. final | Capturas | Pokédex s4/s8/s12 | Nv. entr. | Daño perdido | Ultra lanz. / sin Ultra |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| auto | 0.5 | 16% (9%–29%) | 22% | 76% | 33% | 68% (67%–69%) | 53% (45%–61%) | 194.8 ± 4.4 | 20.9 / 23.3 / 25.3 | 9.9 | 8% | 0.1 / 3.3 |
+| concentrate-valuable | 0.5 | 8% (3%–19%) | 35% | 67% | 37% | 59% (58%–60%) | 51% (44%–57%) | 157.9 ± 3.4 | 20.8 / 23.4 / 25.6 | 9.9 | 59% | 0.1 / 3.9 |
+| type-smart | 0.4 | 20% (10%–34%) | 34% | 84% | 39% | 68% (67%–69%) | 50% (42%–58%) | 188.8 ± 4.2 | 20.7 / 23.4 / 25.2 | 9.9 | 48% | 0.0 / 2.8 |
+| concentrate-status | 0.5 | 10% (4%–21%) | 37% | 67% | 48% | 61% (60%–61%) | 46% (38%–53%) | 152.1 ± 3.3 | 20.8 / 23.4 / 25.3 | 9.9 | 61% | 0.1 / 5.1 |
+| smart | 0.5 | 17% (9%–30%) | 32% | 67% | 48% | 69% (68%–70%) | 61% (53%–68%) | 195.1 ± 4.1 | 20.7 / 23.4 / 25.9 | 9.9 | 10% | 0.1 / 3.2 |
+| best-ev | 0.5 | 13% (6%–26%) | 20% | 83% | 38% | 74% (73%–75%) | 56% (49%–63%) | 211.7 ± 4.3 | 20.8 / 23.4 / 25.7 | 9.9 | 15% | 0.1 / 3.2 |
+
+**constant** (100 jugadores por política, 12 semanas; media ± IC 95 %)
+
+| Política | Leg. nuevos | 1.er enc. | Al final | Vida leg. | % prep. | Nv. alto | Evo. final | Capturas | Pokédex s4/s8/s12 | Nv. entr. | Daño perdido | Ultra lanz. / sin Ultra |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| auto | 2.9 | 44% (38%–50%) | 65% | 47% | 83% | 65% (65%–65%) | 63% (62%–64%) | 980.4 ± 12.8 | 32.2 / 36.6 / 41.5 | 22.0 | 15% | 7.5 / 7.9 |
+| concentrate-valuable | 2.6 | 50% (44%–56%) | 72% | 25% | 84% | 55% (54%–55%) | 48% (47%–49%) | 792.0 ± 12.4 | 32.2 / 36.4 / 41.3 | 22.1 | 74% | 7.3 / 6.1 |
+| type-smart | 2.8 | 36% (30%–41%) | 56% | 60% | 83% | 58% (57%–58%) | 47% (45%–48%) | 870.9 ± 14.9 | 31.5 / 35.6 / 40.6 | 22.0 | 65% | 7.9 / 10.9 |
+| concentrate-status | 2.8 | 45% (39%–51%) | 66% | 28% | 82% | 54% (54%–55%) | 48% (47%–49%) | 766.0 ± 13.0 | 32.2 / 36.4 / 41.2 | 22.1 | 75% | 7.6 / 7.3 |
+| smart | 2.7 | 49% (43%–55%) | 67% | 28% | 80% | 65% (64%–65%) | 63% (62%–64%) | 971.4 ± 12.3 | 32.4 / 36.5 / 41.6 | 22.1 | 17% | 7.1 / 6.5 |
+| best-ev | 2.7 | 49% (43%–55%) | 70% | 36% | 84% | 70% (70%–70%) | 69% (68%–70%) | 1038.1 ± 12.6 | 32.4 / 36.7 / 41.7 | 22.1 | 23% | 7.1 / 6.7 |
+
+**marathoner** (100 jugadores por política, 12 semanas; media ± IC 95 %)
+
+| Política | Leg. nuevos | 1.er enc. | Al final | Vida leg. | % prep. | Nv. alto | Evo. final | Capturas | Pokédex s4/s8/s12 | Nv. entr. | Daño perdido | Ultra lanz. / sin Ultra |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| auto | 9.1 | 21% (18%–24%) | 49% | 55% | 86% | 17% (17%–17%) | 16% (15%–16%) | 897.5 ± 4.5 | 35.3 / 42.4 / 47.3 | 33.1 | 14% | 21.6 / 29.7 |
+| concentrate-valuable | 9.1 | 29% (26%–32%) | 58% | 21% | 85% | 16% (15%–16%) | 13% (12%–13%) | 839.5 ± 3.4 | 35.7 / 43.0 / 47.9 | 33.1 | 75% | 21.8 / 22.9 |
+| type-smart | 8.6 | 16% (14%–18%) | 44% | 78% | 85% | 15% (15%–15%) | 12% (12%–12%) | 857.2 ± 4.5 | 34.7 / 41.4 / 46.3 | 33.1 | 66% | 21.8 / 32.9 |
+| concentrate-status | 9.6 | 29% (26%–32%) | 60% | 22% | 93% | 18% (17%–18%) | 13% (12%–13%) | 847.5 ± 4.0 | 35.8 / 43.1 / 48.0 | 33.2 | 75% | 21.8 / 23.7 |
+| smart | 9.2 | 33% (30%–36%) | 63% | 23% | 90% | 17% (17%–17%) | 16% (16%–16%) | 900.5 ± 4.5 | 36.0 / 43.1 / 48.3 | 33.1 | 16% | 21.5 / 22.7 |
+| best-ev | 8.8 | 28% (25%–31%) | 56% | 42% | 90% | 22% (22%–22%) | 19% (19%–20%) | 967.3 ± 6.2 | 35.9 / 43.0 / 48.2 | 33.1 | 21% | 21.2 / 24.2 |
+
+**night-owl** (100 jugadores por política, 12 semanas; media ± IC 95 %)
+
+| Política | Leg. nuevos | 1.er enc. | Al final | Vida leg. | % prep. | Nv. alto | Evo. final | Capturas | Pokédex s4/s8/s12 | Nv. entr. | Daño perdido | Ultra lanz. / sin Ultra |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| auto | 5.4 | 36% (32%–40%) | 62% | 52% | 89% | 33% (33%–33%) | 34% (33%–35%) | 904.4 ± 6.6 | 33.6 / 40.2 / 42.8 | 28.0 | 16% | 18.1 / 13.1 |
+| concentrate-valuable | 5.2 | 48% (44%–53%) | 75% | 25% | 84% | 29% (28%–29%) | 26% (25%–27%) | 790.7 ± 4.4 | 34.0 / 40.4 / 43.1 | 28.0 | 76% | 17.4 / 9.0 |
+| type-smart | 5.0 | 33% (29%–37%) | 59% | 71% | 89% | 29% (29%–29%) | 24% (23%–24%) | 842.0 ± 6.7 | 32.7 / 38.9 / 41.8 | 28.0 | 67% | 17.9 / 15.3 |
+| concentrate-status | 5.3 | 48% (44%–52%) | 74% | 22% | 89% | 31% (31%–32%) | 26% (26%–27%) | 800.3 ± 5.4 | 34.1 / 40.3 / 43.3 | 28.0 | 76% | 17.3 / 9.6 |
+| smart | 5.2 | 50% (46%–54%) | 75% | 20% | 88% | 33% (33%–33%) | 33% (32%–34%) | 910.5 ± 6.2 | 33.7 / 40.4 / 43.5 | 28.0 | 17% | 17.2 / 7.7 |
+| best-ev | 5.0 | 50% (45%–54%) | 74% | 33% | 91% | 41% (41%–41%) | 40% (40%–41%) | 1023.6 ± 8.0 | 34.0 / 40.6 / 43.4 | 28.0 | 23% | 16.8 / 8.5 |
+
+**irregular** (100 jugadores por política, 12 semanas; media ± IC 95 %)
+
+| Política | Leg. nuevos | 1.er enc. | Al final | Vida leg. | % prep. | Nv. alto | Evo. final | Capturas | Pokédex s4/s8/s12 | Nv. entr. | Daño perdido | Ultra lanz. / sin Ultra |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| auto | 0.7 | 23% (15%–34%) | 42% | 73% | 63% | 74% (73%–74%) | 65% (62%–69%) | 311.5 ± 9.3 | 21.5 / 25.3 / 29.9 | 12.0 | 8% | 0.8 / 4.3 |
+| concentrate-valuable | 0.8 | 28% (19%–39%) | 44% | 63% | 59% | 65% (64%–66%) | 59% (56%–63%) | 257.5 ± 7.9 | 21.8 / 25.8 / 30.0 | 12.0 | 62% | 0.9 / 3.8 |
+| type-smart | 0.7 | 23% (15%–35%) | 40% | 85% | 52% | 71% (70%–71%) | 54% (51%–58%) | 293.8 ± 8.8 | 21.7 / 25.5 / 29.3 | 11.9 | 51% | 0.7 / 3.3 |
+| concentrate-status | 0.6 | 27% (17%–40%) | 44% | 56% | 67% | 64% (63%–65%) | 59% (56%–62%) | 244.4 ± 7.1 | 21.7 / 25.6 / 29.9 | 12.0 | 62% | 0.7 / 3.1 |
+| smart | 0.7 | 21% (13%–32%) | 49% | 59% | 60% | 73% (72%–74%) | 69% (65%–72%) | 306.7 ± 9.3 | 21.7 / 25.5 / 30.0 | 12.0 | 10% | 0.7 / 3.9 |
+| best-ev | 0.6 | 33% (22%–46%) | 55% | 73% | 76% | 79% (79%–80%) | 76% (73%–78%) | 333.7 ± 8.9 | 21.6 / 25.7 / 30.2 | 11.9 | 14% | 0.9 / 2.8 |
+
+**grinder** (100 jugadores por política, 12 semanas; media ± IC 95 %)
+
+| Política | Leg. nuevos | 1.er enc. | Al final | Vida leg. | % prep. | Nv. alto | Evo. final | Capturas | Pokédex s4/s8/s12 | Nv. entr. | Daño perdido | Ultra lanz. / sin Ultra |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| auto | 24.6 | 11% (10%–13%) | 34% | 62% | 88% | 13% (12%–13%) | 16% (16%–16%) | 2553.3 ± 11.1 | 48.4 / 54.2 / 55.1 | 50.0 | 17% | 24.9 / 103.3 |
+| concentrate-valuable | 24.9 | 15% (14%–17%) | 45% | 15% | 85% | 10% (10%–10%) | 11% (11%–11%) | 2286.2 ± 8.3 | 48.9 / 54.7 / 55.5 | 50.0 | 81% | 25.0 / 84.6 |
+| type-smart | 25.9 | 7% (6%–8%) | 25% | 96% | 86% | 9% (9%–9%) | 10% (10%–11%) | 2282.6 ± 9.2 | 46.9 / 53.5 / 54.6 | 50.0 | 75% | 25.0 / 128.8 |
+| concentrate-status | 23.7 | 19% (17%–20%) | 47% | 15% | 87% | 11% (11%–11%) | 11% (11%–11%) | 2294.2 ± 11.2 | 48.8 / 54.7 / 55.5 | 50.0 | 81% | 24.9 / 78.5 |
+| smart | 25.4 | 17% (15%–18%) | 47% | 15% | 87% | 12% (12%–13%) | 16% (16%–16%) | 2556.5 ± 11.4 | 49.1 / 54.9 / 55.6 | 50.0 | 19% | 25.0 / 85.7 |
+| best-ev | 25.2 | 15% (13%–16%) | 39% | 49% | 87% | 15% (15%–15%) | 19% (18%–19%) | 2734.4 ± 11.9 | 48.6 / 54.5 / 55.3 | 50.0 | 25% | 25.0 / 95.2 |
+
+**Experimento de legendarios** (1648 encuentros con legendario nuevo, 1671 legendarios, 40 repeticiones por encuentro y política, mismas semillas aleatorias en todas: comparación pareada)
+
+| Política | Captura 1.er enc. | Vida leg. al lanzar | % lanz. preparados | Otros capturados / encuentro |
+|---|---|---:|---:|---:|
+| auto | 19% ± 1 pp | 61% | 82% | 2.9 |
+| concentrate-valuable | 25% ± 1 pp | 19% | 80% | 2.7 |
+| type-smart | 15% ± 1 pp | 88% | 82% | 2.7 |
+| concentrate-status | 26% ± 1 pp | 19% | 87% | 2.6 |
+| smart | 26% ± 1 pp | 19% | 87% | 2.8 |
+| best-ev | 23% ± 1 pp | 42% | 87% | 3.0 |
+
+casual: 15 encuentros
+
+| Política | Captura 1.er enc. | Vida leg. al lanzar | % lanz. preparados | Otros capturados / encuentro |
+|---|---|---:|---:|---:|
+| auto | 14% ± 6 pp | 80% | 40% | 1.8 |
+| concentrate-valuable | 16% ± 7 pp | 70% | 40% | 1.6 |
+| type-smart | 11% ± 5 pp | 92% | 40% | 2.0 |
+| concentrate-status | 16% ± 7 pp | 70% | 40% | 1.6 |
+| smart | 16% ± 7 pp | 70% | 40% | 1.6 |
+| best-ev | 12% ± 6 pp | 85% | 40% | 2.0 |
+
+constant: 120 encuentros
+
+| Política | Captura 1.er enc. | Vida leg. al lanzar | % lanz. preparados | Otros capturados / encuentro |
+|---|---|---:|---:|---:|
+| auto | 46% ± 3 pp | 42% | 91% | 1.9 |
+| concentrate-valuable | 54% ± 3 pp | 17% | 91% | 1.6 |
+| type-smart | 41% ± 3 pp | 55% | 92% | 1.8 |
+| concentrate-status | 54% ± 3 pp | 17% | 91% | 1.6 |
+| smart | 54% ± 3 pp | 17% | 91% | 1.6 |
+| best-ev | 52% ± 3 pp | 22% | 91% | 1.9 |
+
+marathoner: 350 encuentros
+
+| Política | Captura 1.er enc. | Vida leg. al lanzar | % lanz. preparados | Otros capturados / encuentro |
+|---|---|---:|---:|---:|
+| auto | 22% ± 2 pp | 58% | 79% | 5.1 |
+| concentrate-valuable | 27% ± 2 pp | 21% | 75% | 4.8 |
+| type-smart | 18% ± 2 pp | 75% | 79% | 4.9 |
+| concentrate-status | 29% ± 2 pp | 21% | 91% | 4.7 |
+| smart | 30% ± 2 pp | 21% | 91% | 5.0 |
+| best-ev | 27% ± 2 pp | 37% | 91% | 5.4 |
+
+night-owl: 199 encuentros
+
+| Política | Captura 1.er enc. | Vida leg. al lanzar | % lanz. preparados | Otros capturados / encuentro |
+|---|---|---:|---:|---:|
+| auto | 39% ± 3 pp | 50% | 89% | 3.2 |
+| concentrate-valuable | 46% ± 3 pp | 22% | 87% | 2.8 |
+| type-smart | 32% ± 3 pp | 71% | 89% | 3.1 |
+| concentrate-status | 47% ± 3 pp | 22% | 92% | 2.8 |
+| smart | 48% ± 3 pp | 22% | 92% | 3.1 |
+| best-ev | 46% ± 3 pp | 31% | 92% | 3.5 |
+
+irregular: 28 encuentros
+
+| Política | Captura 1.er enc. | Vida leg. al lanzar | % lanz. preparados | Otros capturados / encuentro |
+|---|---|---:|---:|---:|
+| auto | 22% ± 4 pp | 75% | 60% | 1.9 |
+| concentrate-valuable | 26% ± 5 pp | 58% | 59% | 1.7 |
+| type-smart | 18% ± 3 pp | 86% | 60% | 2.0 |
+| concentrate-status | 26% ± 5 pp | 58% | 59% | 1.7 |
+| smart | 26% ± 5 pp | 58% | 59% | 1.7 |
+| best-ev | 21% ± 4 pp | 77% | 60% | 2.0 |
+
+grinder: 936 encuentros
+
+| Política | Captura 1.er enc. | Vida leg. al lanzar | % lanz. preparados | Otros capturados / encuentro |
+|---|---|---:|---:|---:|
+| auto | 11% ± 1 pp | 65% | 80% | 2.2 |
+| concentrate-valuable | 16% ± 1 pp | 16% | 79% | 2.0 |
+| type-smart | 7% ± 1 pp | 100% | 80% | 2.0 |
+| concentrate-status | 16% ± 1 pp | 16% | 86% | 2.0 |
+| smart | 17% ± 1 pp | 16% | 86% | 2.1 |
+| best-ev | 14% ± 1 pp | 48% | 86% | 2.3 |

@@ -1,5 +1,5 @@
 import type { DamagePolicy } from './capture-policy.ts'
-import type { EngineContext, LeagueId, TypeSlug } from '../../src/engine/index.ts'
+import type { EngineContext, LeagueId, PlayerState, TypeSlug } from '../../src/engine/index.ts'
 import type { ProfileId } from './profiles.ts'
 
 export interface RunOptions {
@@ -22,6 +22,8 @@ export interface RunOptions {
   soloStarter: boolean
   /** Record per-session records (needed for coverage and wave stats). */
   detail: boolean
+  /** Called with the state right before the captures of every encounter that holds a legendary (replay experiments). */
+  onLegendaryEncounter?: (state: PlayerState, now: number) => void
   /** Damage split policy (default `auto`: the player keeps the "Auto" preference on). */
   damagePolicy?: DamagePolicy
 }
@@ -145,6 +147,18 @@ export interface Tally {
   catchesByClass: Record<'common' | 'mid' | 'rare' | 'legendary', number>
   // sanity
   condMismatch: number
+  // damage split (docs/session-depth-plan.md §A)
+  /** Non-legendary wilds in the top quarter of the wild level range of the trainer level, seen / caught. */
+  highSeen: number
+  highCaught: number
+  /** Final evolutions (stage ≥ 2, no evolution left), non-legendary, seen / caught. */
+  finalSeen: number
+  finalCaught: number
+  /** Σ damage ÷ maxHp of the wilds seen, and the part of it below the HP floor (wasted). */
+  dmgFrac: number
+  dmgFracWasted: number
+  /** Throws at legendaries with a ball other than the Ultra Ball (Ultra Balls ran out). */
+  legendaryThrowsNoUltra: number
 }
 
 /** One legendary wild thrown at: what is needed to replay its catch odds with another minimum capture rate. */
@@ -244,6 +258,13 @@ export function emptyTally(): Tally {
     throwsByClass: { common: 0, mid: 0, rare: 0, legendary: 0 },
     catchesByClass: { common: 0, mid: 0, rare: 0, legendary: 0 },
     condMismatch: 0,
+    highSeen: 0,
+    highCaught: 0,
+    finalSeen: 0,
+    finalCaught: 0,
+    dmgFrac: 0,
+    dmgFracWasted: 0,
+    legendaryThrowsNoUltra: 0,
   }
 }
 

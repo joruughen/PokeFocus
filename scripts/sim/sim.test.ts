@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { DAMAGE_POLICIES, type DamagePolicy } from './capture-policy.ts'
 import { makeContext } from './experiments.ts'
 import { runPipeline } from './pipeline.ts'
 import { planProfile, PROFILE_IDS } from './profiles.ts'
@@ -36,9 +37,9 @@ describe('balance simulator (smoke, 1 week, 1 seed)', () => {
 
   it('damage split policies all play; manual policies change the outcome', () => {
     const base = week1()
-    const run = (damagePolicy: 'concentrate-valuable' | 'type-smart') =>
+    const run = (damagePolicy: Exclude<DamagePolicy, 'auto'>) =>
       runPlayer({ profile: 'constant', seed: 1, weeks: 1, ctx, missions: true, captures: true, candies: true, soloStarter: false, detail: false, damagePolicy })
-    for (const p of ['concentrate-valuable', 'type-smart'] as const) {
+    for (const p of DAMAGE_POLICIES.filter((x): x is Exclude<DamagePolicy, 'auto'> => x !== 'auto')) {
       const m = run(p)
       expect(m.tally.catchesTotal).toBeGreaterThan(5)
       expect(m.tally).not.toEqual(base.tally)

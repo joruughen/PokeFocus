@@ -20,7 +20,9 @@
  *   --no-write              print the report to stdout instead of writing files
  *   --damage-policy P       how the player splits the wave damage tokens: auto (default; the "Auto"
  *                           preference, engine split), concentrate-valuable (all on the legendary /
- *                           shiny / new species / highest level), type-smart (each token on the wild it
+ *                           shiny / new species / highest level), concentrate-status, smart, best-ev
+ *                           (see scripts/sim/capture-policy.ts; per-policy study: npm run simulate:damage),
+ *                           type-smart (each token on the wild it
  *                           damages most). Compare them with --no-propose --no-species --out <file>.
  *
  * ---------------------------------------------------------------------------------------------
