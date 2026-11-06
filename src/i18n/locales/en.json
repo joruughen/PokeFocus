@@ -1245,6 +1245,82 @@
       "how": "When it reaches its level, press Evolve on its page."
     }
   },
+  "typesGuide": {
+    "open": "All types",
+    "title": "All types",
+    "description": "What switches on each type's condition, how much it adds and when it is available again.",
+    "planner": {
+      "title": "What if I start at…?",
+      "day": "Day",
+      "time": "Time",
+      "duration": "Length in minutes",
+      "reset": "Back to now",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "past": "That time has already passed today, so the current time is used.",
+      "note": "Worked out from your sessions and streak so far. The weather on another day can't be predicted."
+    },
+    "summary": {
+      "now_one": "If you start now, {{count}} type is active.",
+      "now_other": "If you start now, {{count}} types are active.",
+      "plan_one": "If you start {{when}}, {{count}} type is active.",
+      "plan_other": "If you start {{when}}, {{count}} types are active."
+    },
+    "list": "The 18 types",
+    "team": "Your team",
+    "active": "Active",
+    "inactive": "Inactive",
+    "upTo": "up to ×{{mult}}",
+    "upToWord": "up to",
+    "when": {
+      "today": "today at {{time}}",
+      "tomorrow": "tomorrow at {{time}}",
+      "dayAfter": "the day after tomorrow at {{time}}",
+      "weekday": "on {{day}} at {{time}}",
+      "date": "on {{date}} at {{time}}",
+      "todayDay": "today",
+      "tomorrowDay": "tomorrow",
+      "dayAfterDay": "the day after tomorrow",
+      "weekdayDay": "on {{day}}",
+      "dateDay": "on {{date}}"
+    },
+    "next": {
+      "windowOn": "Active until {{time}}.",
+      "windowOff": "Activates {{when}}.",
+      "fireOff": "Activates {{when}}, or sooner if it's sunny.",
+      "fireWeatherOn": "Active because of the weather you set.",
+      "weekendOn": "Active all weekend.",
+      "weekendOff": "Activates {{when}}.",
+      "firstOfDayOn": "Active: it's the first session of the day.",
+      "firstOfDayOff": "Activates {{when}}, in the first session of the day. Also with silence, if you use the microphone.",
+      "sameHourOn": "Active if you start by {{time}}.",
+      "sameHourOff": "Activates {{when}}, if you start between {{from}} and {{to}}.",
+      "sameHourNone": "Activates if you start at the same time as the day before (± {{window}} min). You need to have studied that day.",
+      "weatherOn": "Active with the weather you set.",
+      "rainOff": "Activates if it rains in your city.",
+      "coldOff": "Activates at {{cold}} °C or less, or with snow.",
+      "durationOn": "Active: your session is {{minutes}} min.",
+      "durationOff": "Activates with sessions of {{min}} min or more (this one is {{minutes}}).",
+      "chainOn": "Active if you start before {{time}}.",
+      "chainWait": "Pick {{max}} min or less and start before {{time}}.",
+      "chainOff": "Activates if you start a session of {{max}} min or less, within {{gap}} min of finishing another.",
+      "sessionsOn": "Adds +{{per}}% for each session today: you have {{count}}.",
+      "sessionsOff": "Starts adding after your first session of the day: +{{per}}% per session, up to +{{max}}%.",
+      "soundOff": "Activates with the microphone, if there is music or noise at least {{pct}}% of the time.",
+      "teamOn": "Adds +{{per}}% for each Bug-type Pokémon on your team: you have {{count}}.",
+      "teamOff": "Activates with a Bug-type Pokémon on your team: +{{per}}% for each one.",
+      "streakOn": "Active with your {{needed}}-day streak.",
+      "streakOff": "Activates with a {{needed}}-day streak (you have {{have}}). If you study every day, that will be {{when}}.",
+      "streakNoDate": "Activates with a {{needed}}-day streak (you have {{have}}).",
+      "comebackOn": "Active: you're back after {{count}} days without studying.",
+      "comebackOff": "Activates the day you come back after {{needed}} or more days without studying. If you come back {{when}}, it counts.",
+      "comebackNoDate": "Activates the day you come back after {{needed}} or more days without studying.",
+      "friendOff": "Activates when you study in a group with friends (at least {{pct}}% of the time together)."
+    }
+  },
+  "focus": {
+    "muteMusic": "Mute the music"
+  },
   "missions": {
     "title": "Missions",
     "subtitle": "Small study and catch goals. Each one gives Balls, Dust, potions or other items when you claim it.",

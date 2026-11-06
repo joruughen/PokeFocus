@@ -13,6 +13,7 @@ import { AutoDamageToggle } from './AutoDamageToggle'
 import { timerOf, useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
 import { GroupSessionStatus } from './GroupStudy'
+import { MuteMusicButton } from './MuteMusicButton'
 
 const cfg = defaultContext().config
 
@@ -134,6 +135,7 @@ export function FocusSession() {
           <Button size="lg" variant="ghost" icon="close" disabled={busy} onClick={() => setConfirm(true)}>
             {t('session.cancel')}
           </Button>
+          <MuteMusicButton />
         </div>
         <p className="mt-4 max-w-[52ch] text-sm text-mist-400">{t('session.rockNote')}</p>
         <AutoDamageToggle compact className="mt-6" />

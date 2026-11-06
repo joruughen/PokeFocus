@@ -29,6 +29,7 @@ import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { conditionRuleValues } from './conditionCopy'
+import { TypesGuide } from './TypesGuide'
 
 const cfg = defaultContext().config
 const PRESETS = cfg.session.presets.map(String)
@@ -276,6 +277,9 @@ function ConditionsPanel({ rows, minutes }: { rows: ReturnType<typeof conditions
           </div>
         </div>
       )}
+      <div className="mt-5 flex justify-end">
+        <TypesGuide minutes={minutes} />
+      </div>
     </Panel>
   )
 }

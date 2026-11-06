@@ -1245,6 +1245,82 @@
       "how": "Cuando llegue a su nivel, pulsa Evolucionar en su ficha."
     }
   },
+  "typesGuide": {
+    "open": "Todos los tipos",
+    "title": "Todos los tipos",
+    "description": "Qué activa la condición de cada tipo, cuánto suma y cuándo vuelve a estar disponible.",
+    "planner": {
+      "title": "¿Y si empiezo a las…?",
+      "day": "Día",
+      "time": "Hora",
+      "duration": "Duración en minutos",
+      "reset": "Volver a ahora",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "past": "Esa hora ya pasó hoy, así que se usa la hora actual.",
+      "note": "Se calcula con tus sesiones y tu racha hasta ahora. El clima de otro día no se puede prever."
+    },
+    "summary": {
+      "now_one": "Si empiezas ahora, {{count}} tipo está activo.",
+      "now_other": "Si empiezas ahora, {{count}} tipos están activos.",
+      "plan_one": "Si empiezas {{when}}, {{count}} tipo está activo.",
+      "plan_other": "Si empiezas {{when}}, {{count}} tipos están activos."
+    },
+    "list": "Los 18 tipos",
+    "team": "Tu equipo",
+    "active": "Activa",
+    "inactive": "Inactiva",
+    "upTo": "hasta ×{{mult}}",
+    "upToWord": "hasta",
+    "when": {
+      "today": "hoy a las {{time}}",
+      "tomorrow": "mañana a las {{time}}",
+      "dayAfter": "pasado mañana a las {{time}}",
+      "weekday": "el {{day}} a las {{time}}",
+      "date": "el {{date}} a las {{time}}",
+      "todayDay": "hoy",
+      "tomorrowDay": "mañana",
+      "dayAfterDay": "pasado mañana",
+      "weekdayDay": "el {{day}}",
+      "dateDay": "el {{date}}"
+    },
+    "next": {
+      "windowOn": "Activa hasta las {{time}}.",
+      "windowOff": "Se activa {{when}}.",
+      "fireOff": "Se activa {{when}}, o antes si hace sol.",
+      "fireWeatherOn": "Activa por el clima que marcaste.",
+      "weekendOn": "Activa todo el fin de semana.",
+      "weekendOff": "Se activa {{when}}.",
+      "firstOfDayOn": "Activa: es la primera sesión del día.",
+      "firstOfDayOff": "Se activa {{when}}, en la primera sesión del día. También con silencio, si usas el micrófono.",
+      "sameHourOn": "Activa si empiezas hasta las {{time}}.",
+      "sameHourOff": "Se activa {{when}}, si empiezas entre las {{from}} y las {{to}}.",
+      "sameHourNone": "Se activa si empiezas a la misma hora que el día anterior (± {{window}} min). Hace falta haber estudiado ese día.",
+      "weatherOn": "Activa con el clima que marcaste.",
+      "rainOff": "Se activa si llueve en tu ciudad.",
+      "coldOff": "Se activa con {{cold}} °C o menos, o con nieve.",
+      "durationOn": "Activa: tu sesión dura {{minutes}} min.",
+      "durationOff": "Se activa con sesiones de {{min}} min o más (esta es de {{minutes}}).",
+      "chainOn": "Activa si empiezas antes de las {{time}}.",
+      "chainWait": "Elige {{max}} min o menos y empieza antes de las {{time}}.",
+      "chainOff": "Se activa si empiezas una sesión de {{max}} min o menos, a {{gap}} min o menos de terminar otra.",
+      "sessionsOn": "Suma +{{per}}% por cada sesión de hoy: llevas {{count}}.",
+      "sessionsOff": "Empieza a sumar tras tu primera sesión del día: +{{per}}% por sesión, hasta +{{max}}%.",
+      "soundOff": "Se activa con el micrófono, si hay música o ruido al menos el {{pct}}% del tiempo.",
+      "teamOn": "Suma +{{per}}% por cada Pokémon de tipo Bicho de tu equipo: tienes {{count}}.",
+      "teamOff": "Se activa con un Pokémon de tipo Bicho en tu equipo: +{{per}}% por cada uno.",
+      "streakOn": "Activa con tu racha de {{needed}} días.",
+      "streakOff": "Se activa con una racha de {{needed}} días (llevas {{have}}). Si estudias cada día, será {{when}}.",
+      "streakNoDate": "Se activa con una racha de {{needed}} días (llevas {{have}}).",
+      "comebackOn": "Activa: vuelves tras {{count}} días sin estudiar.",
+      "comebackOff": "Se activa el día que vuelves tras {{needed}} días o más sin estudiar. Si vuelves {{when}}, ya cuenta.",
+      "comebackNoDate": "Se activa el día que vuelves tras {{needed}} días o más sin estudiar.",
+      "friendOff": "Se activa estudiando en grupo con amigos (al menos el {{pct}}% del tiempo a la vez)."
+    }
+  },
+  "focus": {
+    "muteMusic": "Silenciar la música"
+  },
   "missions": {
     "title": "Misiones",
     "subtitle": "Pequeños objetivos de estudio y captura. Cada uno da Balls, Polvo, pociones u otros objetos al reclamarlo.",

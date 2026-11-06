@@ -391,3 +391,12 @@ Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspe
 - Missions only grant placeholder items (Tera Shard, TM) that show a pixel icon; nothing uses them yet.
 - Rankings (friends/zone/global), saved teams, mints/caps and trading are later phases.
 - The detail sheet hides the name of evolutions you haven't seen ("???") on purpose.
+
+---
+
+## Types guide, planner and session mute (package D)
+
+- **Types guide** (`screens/home/TypesGuide.tsx`): the "Todos los tipos" button at the bottom of the conditions panel opens a `Dialog` with the 18 types. Each card has the badge, the multiplier (the top one, with "hasta" for Poison and Bug, while it is off), Active or Inactive, the rule (`conditions.rule.*`) and one sentence on how it switches on ("Se activa mañana a las 05:00", "el sábado", "con una racha de 7 días (llevas 3)"). The team's types come first, with a volt frame and a "Tu equipo" tag.
+- **Planner** at the top of the dialog ("¿Y si empiezo a las…?": day, time, length) recomputes the table for that start. Fields the player does not touch follow the clock and the panel's duration. A time that has already passed today means now. The weather of another day is unknown, so those days use no weather.
+- **No rules in the UI.** `conditionOutlook` / `nextActivation` (`src/engine/activation.ts`, `docs/engine-api.md`) return data; `screens/home/typesGuideText.ts` only picks the words (`typesGuide.next.*`, `typesGuide.when.*`). `typesGuideText.test.ts` renders every branch in ES and EN. The sentences for Flying, Psychic and Fairy already speak of the microphone and of group study.
+- **Mute** (`screens/home/MuteMusicButton.tsx`): an icon toggle (`aria-pressed`, fixed label `focus.muteMusic`) next to Pause and Abandon in `FocusSession`. It only switches "music during focus", the same option as in Settings, so volumes and the end-of-session chime are untouched (`focusMusicPatch`, `docs/audio.md`). New pixel icons: `volume`, `volumeOff`.
