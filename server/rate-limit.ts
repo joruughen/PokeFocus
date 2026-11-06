@@ -17,6 +17,8 @@ export const RULES = {
   groupInviteUser: { limit: 20, windowMs: 15 * 60_000 },
   /** Any other study-group write (accept, decline, start, leave) per user. */
   groupWriteUser: { limit: 120, windowMs: 15 * 60_000 },
+  /** Admin API requests per client IP (a successful token check clears the counter). */
+  adminIp: { limit: 10, windowMs: 15 * 60_000 },
 } satisfies Record<string, RateRule>
 
 export class RateLimiter {

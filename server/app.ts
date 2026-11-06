@@ -13,6 +13,8 @@ import type { Db } from './db/client'
 import { EventBus } from './events'
 import { ApiError, type AppEnv, type Deps } from './http'
 import { RateLimiter } from './rate-limit'
+import { adminRoutes } from './routes/admin'
+import { announcementRoutes } from './routes/announcements'
 import { authRoutes } from './routes/auth'
 import { eventRoutes } from './routes/events'
 import { gameRoutes } from './routes/game'
@@ -71,6 +73,8 @@ export function createApp(opts: AppOptions) {
   api.route('/groups', groupRoutes(deps))
   api.route('/events', eventRoutes(deps))
   api.route('/weather', weatherRoutes(deps))
+  api.route('/announcements', announcementRoutes(deps))
+  api.route('/admin', adminRoutes(deps))
   api.get('/health', (c) => c.json({ ok: true }))
   api.all('*', () => {
     throw new ApiError(404, 'not_found')

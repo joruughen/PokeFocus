@@ -205,6 +205,23 @@ export type ActionResponse<T extends GameActionType = GameActionType> = GameSnap
 // Auth & social payloads
 // ---------------------------------------------------------------------------
 
+/**
+ * Account changes (PATCH /api/auth/me): the trainer name and the country can
+ * each be changed, then are locked for this many days (like the time zone,
+ * `TIMEZONE_LOCK_DAYS`): the country decides which leaderboard you are on and
+ * the name is your public identity.
+ *
+ * - A "change" is a value that differs from the current one. Sending the same
+ *   value is a no-op and starts no lock. The first change after sign-up is free.
+ * - Each field has its own lock. If a request asks for any locked change the
+ *   whole request fails (nothing is applied): 409 `name_locked` or
+ *   `country_locked`, with `{ unlockAt }` (epoch ms) in the body.
+ * - A server running with DEV_TOOLS=1 ignores the locks (same as the time zone).
+ * - `anonymousRankings` has no lock.
+ */
+export const NAME_LOCK_DAYS = 30
+export const COUNTRY_LOCK_DAYS = 30
+
 export interface PublicUser {
   id: string
   email: string
@@ -214,6 +231,15 @@ export interface PublicUser {
   /** 8-char code others type to send a friend request. */
   friendCode: string
   createdAt: number
+  /** Last change of the trainer name (epoch ms); null = never changed since sign-up. */
+  nameChangedAt: number | null
+  /** Last change of the country (epoch ms); null = never changed since sign-up. */
+  countryChangedAt: number | null
+  /**
+   * Privacy: do not show my name in the global and country leaderboards (others
+   * see "Anonymous trainer"). Friends' leaderboard and my own row always show it.
+   */
+  anonymousRankings: boolean
 }
 
 export interface AuthSessionInfo {
@@ -246,7 +272,14 @@ export type LeaderboardPeriod = 'week' | 'month'
 export interface LeaderboardRow {
   rank: number
   userId: string
-  trainerName: string
+  /**
+   * null = the trainer chose `anonymousRankings` and this is the global or country
+   * scope (the client shows "Anonymous trainer"). Never null for my own row or in
+   * the friends scope.
+   */
+  trainerName: string | null
+  /** True when this trainer has `anonymousRankings` on (lets my own row say "hidden"). */
+  anonymous: boolean
   country: string
   points: number
   league: string
@@ -332,3 +365,59 @@ export type ServerEvent =
 /** Header names used only when the server runs with DEV_TOOLS=1. */
 export const DEV_NOW_HEADER = 'x-dev-now'
 export const DEV_SEED_HEADER = 'x-dev-seed'
+
+// ---------------------------------------------------------------------------
+// Announcements: scheduled maintenance windows (informational banner).
+// ---------------------------------------------------------------------------
+
+/** A scheduled maintenance window. Times are absolute instants (epoch ms, UTC). */
+export interface MaintenanceNotice {
+  id: string
+  startsAt: number
+  endsAt: number
+  /** Free text written by the admin, shown as is (max `MAINTENANCE_NOTE_MAX` chars). */
+  note: string | null
+}
+
+export const MAINTENANCE_NOTE_MAX = 280
+/** Longest window the admin can schedule. */
+export const MAINTENANCE_MAX_MS = 14 * 24 * 60 * 60 * 1000
+
+/**
+ * GET /api/announcements — public (no session), `Cache-Control: no-store`.
+ * Windows that have not ended yet (upcoming or running), oldest start first.
+ * `serverNow` lets the client correct its clock skew.
+ */
+export interface AnnouncementsResponse {
+  maintenance: MaintenanceNotice[]
+  serverNow: number
+}
+
+/**
+ * Admin API, guarded by `Authorization: Bearer <ADMIN_TOKEN>` (the server env
+ * var; unset = admin API off → 404 `admin_disabled`; wrong token → 401
+ * `unauthorized`; too many wrong tokens from an IP → 429 `rate_limited`).
+ *
+ *   GET    /api/admin/maintenance      → AdminMaintenanceResponse
+ *   POST   /api/admin/maintenance      body MaintenanceCreateRequest → 201 { item: AdminMaintenanceItem }
+ *   DELETE /api/admin/maintenance/:id  → 204 (404 `not_found` if unknown)
+ *
+ * POST validation (400 `invalid_body` with `fields`): startsAt/endsAt are
+ * integers, endsAt > startsAt, endsAt > now, endsAt - startsAt <= MAINTENANCE_MAX_MS,
+ * note trimmed, empty → null, <= MAINTENANCE_NOTE_MAX. At most 20 windows that
+ * have not ended (409 `too_many`).
+ */
+export interface MaintenanceCreateRequest {
+  startsAt: number
+  endsAt: number
+  note?: string | null
+}
+
+export interface AdminMaintenanceItem extends MaintenanceNotice {
+  createdAt: number
+}
+
+export interface AdminMaintenanceResponse {
+  items: AdminMaintenanceItem[]
+  serverNow: number
+}

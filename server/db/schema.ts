@@ -1,6 +1,6 @@
 /** Drizzle schema (PostgreSQL / PGlite). See docs/F2-plan.md § Esquema. */
 import { sql } from 'drizzle-orm'
-import { char, check, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { boolean, char, check, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import type { GameDoc } from '../../src/game/protocol'
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' })
@@ -13,6 +13,11 @@ export const users = pgTable('users', {
   country: char('country', { length: 2 }).notNull(),
   friendCode: text('friend_code').notNull().unique(),
   createdAt: ts('created_at').notNull().defaultNow(),
+  /** Last change of the trainer name / country (null = never changed): each starts a 30-day lock. */
+  trainerNameChangedAt: ts('trainer_name_changed_at'),
+  countryChangedAt: ts('country_changed_at'),
+  /** Privacy: hide the name in the global and country leaderboards. */
+  anonymousRankings: boolean('anonymous_rankings').notNull().default(false),
 })
 
 export const authSessions = pgTable(
@@ -151,6 +156,25 @@ export const studyGroupInvites = pgTable(
     primaryKey({ columns: [t.groupId, t.inviteeId] }),
     index('study_group_invites_invitee_idx').on(t.inviteeId, t.status),
     check('study_group_invites_status_check', sql`${t.status} in ('pending', 'accepted', 'declined', 'joined', 'failed')`),
+  ],
+)
+
+/**
+ * Scheduled maintenance windows (informational banner; the server does not block
+ * requests during a window). Written through the admin API only.
+ */
+export const maintenanceWindows = pgTable(
+  'maintenance_windows',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    startsAt: ts('starts_at').notNull(),
+    endsAt: ts('ends_at').notNull(),
+    note: text('note'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('maintenance_windows_ends_idx').on(t.endsAt),
+    check('maintenance_windows_range_check', sql`${t.endsAt} > ${t.startsAt}`),
   ],
 )
 

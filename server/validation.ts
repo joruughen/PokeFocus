@@ -1,7 +1,7 @@
 /** zod schemas for every request body (auth, friends, game actions). */
 import { z } from 'zod'
 import { ALL_TYPES, defaultContext, type TypeSlug } from '../src/engine'
-import type { GameAction } from '../src/game/protocol'
+import { MAINTENANCE_MAX_MS, MAINTENANCE_NOTE_MAX, type GameAction } from '../src/game/protocol'
 import { PASSWORD_MAX, PASSWORD_MIN } from './auth/password'
 
 // ---------------------------------------------------------------------------
@@ -36,8 +36,8 @@ export const loginBody = z.object({
 })
 
 export const patchMeBody = z
-  .object({ trainerName: trainerNameSchema.optional(), country: countrySchema.optional() })
-  .refine((v) => v.trainerName !== undefined || v.country !== undefined, { message: 'empty patch' })
+  .object({ trainerName: trainerNameSchema.optional(), country: countrySchema.optional(), anonymousRankings: z.boolean().optional() })
+  .refine((v) => v.trainerName !== undefined || v.country !== undefined || v.anonymousRankings !== undefined, { message: 'empty patch' })
 
 export const passwordBody = z.object({ current: z.string().min(1).max(PASSWORD_MAX), next: passwordSchema })
 
@@ -156,3 +156,33 @@ export const groupCreateBody = z.object({
 })
 
 export const groupInviteBody = z.object({ friendIds: friendIdList })
+
+// ---------------------------------------------------------------------------
+// Admin: scheduled maintenance windows (/api/admin/maintenance)
+// ---------------------------------------------------------------------------
+
+/** Last instant a Date can safely round-trip through the database (year 9999). */
+const MAX_EPOCH_MS = 253_402_300_799_999
+
+const instant = z.number().int().max(MAX_EPOCH_MS)
+
+/**
+ * POST body. `now` is the server clock (ms): a window must end in the future.
+ * Cross-field errors are reported on the field to fix (`endsAt`).
+ */
+export const maintenanceCreateBody = (now: number) =>
+  z
+    .object({
+      startsAt: instant,
+      endsAt: instant,
+      // Trimmed first, then measured; blank = no note.
+      note: z
+        .string()
+        .trim()
+        .max(MAINTENANCE_NOTE_MAX)
+        .nullish()
+        .transform((v) => v || null),
+    })
+    .refine((v) => v.endsAt > v.startsAt, { path: ['endsAt'], message: 'must be after startsAt' })
+    .refine((v) => v.endsAt > now, { path: ['endsAt'], message: 'must be in the future' })
+    .refine((v) => v.endsAt - v.startsAt <= MAINTENANCE_MAX_MS, { path: ['endsAt'], message: 'window too long' })

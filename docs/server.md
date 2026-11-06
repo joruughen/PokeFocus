@@ -22,6 +22,8 @@ server/
   routes/groups.ts    /api/groups (study groups)
   groups.ts           study-group helpers (membership hooks, overlap at claim, views, events)
   routes/weather.ts   /api/weather
+  routes/announcements.ts  /api/announcements (public: scheduled maintenance windows)
+  routes/admin.ts     /api/admin/maintenance (Bearer ADMIN_TOKEN)
   weather.ts          Open-Meteo client: by rounded location cell (no geocoding) or by city (geocoding); 30-min cache per cell/city, 2 s deadline
   db/schema.ts        Drizzle schema
   db/client.ts        PGlite or postgres-js + migrator
@@ -59,6 +61,7 @@ Loaded from the process environment; `server/index.ts` also reads `.env` if pres
 | `DEV_TOOLS` | `0` | `1` = accept `x-dev-now` / `x-dev-seed` and `dev*` actions. Always `0` in production. |
 | `TRUST_PROXY` | `0` | `1` behind a reverse proxy: client IP = last `X-Forwarded-For` hop (rate limits). |
 | `STATIC_DIR` | `dist` | Built client served in production (SPA fallback to `index.html`). |
+| `ADMIN_TOKEN` | — | Bearer token of the admin API (`/api/admin/*`). Unset or empty = admin API off (404 `admin_disabled`). When set it must be at least 24 characters (`openssl rand -hex 24`), otherwise the server refuses to start. Never logged. |
 
 ## API notes for the client
 
@@ -69,15 +72,23 @@ All endpoints are under `/api`, JSON in and out, cookie `pf_session`. Errors are
 | Status | Codes |
 |---|---|
 | 400 | `invalid_json`, `invalid_body` (+ `fields: string[]`), `invalid_scope`, `invalid_period` |
-| 401 | `unauthorized` (no/expired/revoked session), `invalid_credentials` (login: wrong password **or** unknown email) |
+| 401 | `unauthorized` (no/expired/revoked session, or a wrong admin token), `invalid_credentials` (login: wrong password **or** unknown email) |
 | 403 | `bad_origin`, `dev_disabled` (dev action without DEV_TOOLS), `wrong_password` (POST /auth/password) |
-| 404 | `not_found`, `unknown_friend_code` |
-| 409 | game rule errors (see below), `email_taken`, `cannot_add_self`, `already_friends`, `already_requested`, `too_many_friends` |
+| 404 | `not_found`, `unknown_friend_code`, `admin_disabled` (no `ADMIN_TOKEN` on the server) |
+| 409 | game rule errors (see below), `email_taken`, `cannot_add_self`, `already_friends`, `already_requested`, `too_many_friends`, `too_many` (maintenance windows), `name_locked` / `country_locked` (PATCH /auth/me, with `unlockAt`) |
 | 413 | `body_too_large` (> 64 KB) |
 | 415 | `json_required` |
 | 429 | `rate_limited` (+ `retryAfter` seconds; also the `Retry-After` header) |
 
-Auth: `POST /auth/register` → 201 `{ user }`; `POST /auth/login` → `{ user }`; `POST /auth/logout` (no session needed) → 204; `POST /auth/logout-all` → 204; `GET/PATCH /auth/me`; `POST /auth/password { current, next }` → 204 (other sessions revoked, current kept); `GET /auth/sessions`; `DELETE /auth/sessions/:id` → 204. `PATCH /auth/me { trainerName }` also renames the trainer inside the game doc (bumps the version, emits `game`).
+Auth: `POST /auth/register` → 201 `{ user }`; `POST /auth/login` → `{ user }`; `POST /auth/logout` (no session needed) → 204; `POST /auth/logout-all` → 204; `GET/PATCH /auth/me`; `POST /auth/password { current, next }` → 204 (other sessions revoked, current kept); `GET /auth/sessions`; `DELETE /auth/sessions/:id` → 204. `PATCH /auth/me { trainerName?, country?, anonymousRankings? }` (at least one field, else 400 `invalid_body`) → `{ user }`; a new `trainerName` also renames the trainer inside the game doc (bumps the version, emits `game`).
+
+- **Name and country lock (30 days).** `PublicUser` carries `nameChangedAt` and `countryChangedAt` (epoch ms of the last change, `null` = never changed since sign-up), stored in `users.trainer_name_changed_at` / `users.country_changed_at` (nullable `timestamptz`; migration `0003_account_locks_privacy`, so existing accounts start with `null` and their first change is free). Constants `NAME_LOCK_DAYS` and `COUNTRY_LOCK_DAYS` (30) in `src/game/protocol.ts`.
+  - A *change* is a value different from the current one (country compared after upper-casing, name after trimming). Sending the current value is a no-op: it never fails, never starts a lock and never moves a timestamp.
+  - A change is allowed while `now >= lastChange + 30 days`; otherwise **409** `name_locked` or `country_locked` with `{ error, unlockAt }` (`unlockAt` = last change + 30 days, epoch ms). Each field has its own lock.
+  - The request is all-or-nothing: if any change in it is locked, nothing is applied (not even `anonymousRankings`). With both locked, `name_locked` is reported.
+  - The check runs inside one transaction after `select … for update` on the user row, so two concurrent changes cannot both pass. `deps.clock()` is the time source.
+  - `DEV_TOOLS=1` ignores the locks (same as the time-zone lock in `src/game/actions.ts`); a real change still stamps the timestamp.
+- **`anonymousRankings`** (boolean, `users.anonymous_rankings`, default `false`, no lock) is returned in `PublicUser` by register, login, `GET /auth/me` and the PATCH response. See Leaderboard for what it hides.
 
 Game: `GET /game` → `GameSnapshot`; `POST /game/action` with a `GameAction` → `ActionResponse` (`{ doc, version, serverNow, result }`). `serverNow` is the game time used (the dev clock when `x-dev-now` is honored).
 
@@ -98,6 +109,10 @@ Weather: `GET /weather` → `WeatherResponse` `{ city, location, detected: { wea
 
 Leaderboard: `GET /leaderboard?scope=global|country|friends&period=week|month` → `LeaderboardResponse`. Only rows with points > 0. Ties share a rank (competition ranking: 1, 2, 2, 4), listed by who reached the score first. `mine` is null when the caller has no points in that period.
 
+Privacy (`anonymousRankings`): in the `global` and `country` scopes a row of a user who turned it on has `trainerName: null` (the client shows "Anonymous trainer"), unless it is the caller's own row (`me: true`), which always carries the real name. `mine` follows the same rule, and the `friends` scope never hides names. Every row has `anonymous: boolean` (the user's setting even when the name is shown, so the caller's own row can say it is hidden). Only the name is masked: `userId`, `country`, points, league and the leader species stay in the row.
+
+Where else a trainer name reaches another user: `GET /friends` (the name of an accepted friend, of someone who sent you a request, and of the owner of a friend code you just requested) and study groups (host and members/invitees in `StudyGroupView` and the `group` SSE event, invitations are friends-only). These are not public contexts, so they ignore `anonymousRankings`.
+
 ### Study groups ("Estudiar con amigos")
 
 Tables `study_groups` (lobby → started / ended), `study_group_members` (one row per user who started a session in the group: `session_id`, `joined_at`, `ends_at`, `left_at`, `left_reason`) and `study_group_invites` (`pending | accepted | declined | joined | failed`). Migration `0001_study_groups`.
@@ -113,6 +128,27 @@ Tables `study_groups` (lobby → started / ended), `study_group_members` (one ro
 - Hooks in the game action pipeline (`runGameAction`): `pause` and `cancel` (and any end of the session) close the member interval (`left_reason` `pause` / `cancel` / `finished` on claim); a solo `start` drops the user's open lobbies. **No re-joining.**
 - **Claim**: `friendOverlap` = time of my in-group interval during which at least one other member was in theirs ÷ my session minutes (`src/game/group.ts`), passed to the reducer as `ActionEnv.friendOverlap` (never from the client) and stored in `SessionResult.friendOverlap`. Fairy multiplier = `1 + (fairy − 1) × friendOverlap`.
 - Rate limits per user: create + invite 20 / 15 min; other group writes 120 / 15 min.
+
+### Maintenance notices
+
+Informational banner for planned downtime. Table `maintenance_windows` (`starts_at`, `ends_at`, optional `note`; migration `0002_maintenance_windows`). **Informational only**: the server never blocks or slows requests during a window, and nothing starts or stops by itself. Actually stopping the server (deploy, `docker compose stop`, database work) is still manual; the notice just tells players when to expect it.
+
+- `GET /announcements` (public: no session, `Cache-Control: no-store`) → `AnnouncementsResponse { maintenance, serverNow }`: windows with `ends_at` in the future (upcoming or running), oldest start first, each `{ id, startsAt, endsAt, note }` (epoch ms, UTC). `serverNow` lets the client correct its clock skew.
+- Admin API, `Authorization: Bearer <ADMIN_TOKEN>` (the token is a server env var; there are no admin accounts):
+  - `GET /admin/maintenance` → `{ items, serverNow }`: the same windows as the public list plus `createdAt`.
+  - `POST /admin/maintenance { startsAt, endsAt, note? }` → 201 `{ item }`. `startsAt`/`endsAt` are integer epoch ms with `endsAt > startsAt`, `endsAt` in the future and a window of at most 14 days; `note` is trimmed (empty = none) and at most 280 characters. Otherwise 400 `invalid_body` (+ `fields`). At most 20 windows that have not ended: 409 `too_many`.
+  - `DELETE /admin/maintenance/:id` → 204 (404 `not_found` for an unknown or malformed id).
+- Checks run in this order: `ADMIN_TOKEN` unset → 404 `admin_disabled`; rate limit → 429 `rate_limited`; token → 401 `unauthorized`. The token is compared in constant time (sha256 of both sides + `timingSafeEqual`). Limit: 10 admin requests / 15 min per client IP (set `TRUST_PROXY=1` behind a proxy), counted on every request and cleared by a valid token, so a legitimate admin is never locked out.
+- The CSRF guard still applies to `POST`/`DELETE`: send `Origin` (from `APP_ORIGIN`) and `Content-Type: application/json`.
+
+```bash
+H=(-H "Authorization: Bearer $ADMIN_TOKEN" -H "Origin: https://pokefocus.example" -H "Content-Type: application/json")
+# Schedule: Friday 2026-11-13 02:00-03:00 UTC
+curl "${H[@]}" -X POST https://pokefocus.example/api/admin/maintenance \
+  -d "{\"startsAt\": $(date -u -d '2026-11-13 02:00' +%s)000, \"endsAt\": $(date -u -d '2026-11-13 03:00' +%s)000, \"note\": \"Database upgrade\"}"
+curl "${H[@]}" https://pokefocus.example/api/admin/maintenance            # list (ids)
+curl "${H[@]}" -X DELETE https://pokefocus.example/api/admin/maintenance/<id>   # cancel
+```
 
 ### Server-Sent Events
 
@@ -131,7 +167,8 @@ The stream starts with `retry: 5000` and sends a `: ping` comment every 25 s. 40
 - **No account enumeration on login**: unknown emails are verified against a random dummy hash, same error `invalid_credentials`. (Registration does say `email_taken`; it is rate-limited.)
 - **Sessions**: 32 random bytes (base64url) in the cookie, only `sha256(token)` in `auth_sessions`. New token on every login/registration. Cookie `pf_session`: `HttpOnly; SameSite=Lax; Path=/; Max-Age=30d`, `Secure` in production. Sliding expiry: a request more than 24 h after `last_seen_at` pushes `expires_at` to now + 30 d and re-sends the cookie. Expired rows are deleted hourly.
 - **CSRF**: `Origin` must be in `APP_ORIGIN` for every non-GET/HEAD request, JSON content type required, plus `SameSite=Lax`.
-- **Brute force**: in-memory fixed windows — login 10 / 15 min per IP and 5 / 15 min per email (attempts; a successful login clears the email counter), register 5 / h per IP. Single process only; behind a proxy set `TRUST_PROXY=1`.
+- **Brute force**: in-memory fixed windows — login 10 / 15 min per IP and 5 / 15 min per email (attempts; a successful login clears the email counter), register 5 / h per IP, admin API 10 / 15 min per IP (a valid token clears it). Single process only; behind a proxy set `TRUST_PROXY=1`.
+- **Admin API**: off unless `ADMIN_TOKEN` (≥ 24 chars) is set; Bearer token compared with `timingSafeEqual` over sha256 digests; it can only schedule informational notices, never touch player data.
 - **Authority**: time, rolls, points and captures are decided by the server. `x-dev-now` / `x-dev-seed` and `dev*` actions only with `DEV_TOOLS=1`, never in production.
 - **Concurrency**: every action runs in one transaction: `SELECT … FOR UPDATE` on `player_docs` → `applyAction` → `active_study_sessions` / `league_scores` updates → `version + 1`. Two tabs never overwrite each other.
 - **Headers**: Hono `secureHeaders()` (HSTS, nosniff, frame options, COOP/CORP, no referrer…). Body limit 64 KB. All SQL through Drizzle (parameterized).

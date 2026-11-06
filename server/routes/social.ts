@@ -179,7 +179,14 @@ export function leaderboardRoutes(deps: Deps) {
 
     // team[0] → its species slug, read straight from the jsonb doc.
     const leader = sql<string | null>`${playerDocs.doc} -> 'player' -> 'pokemon' -> (${playerDocs.doc} -> 'player' -> 'team' ->> 0) ->> 'speciesSlug'`
-    const cols = { userId: leagueScores.userId, points: leagueScores.points, trainerName: users.trainerName, country: users.country, leader }
+    const cols = {
+      userId: leagueScores.userId,
+      points: leagueScores.points,
+      trainerName: users.trainerName,
+      anonymous: users.anonymousRankings,
+      country: users.country,
+      leader,
+    }
     const base = () =>
       db
         .select(cols)
@@ -194,10 +201,13 @@ export function leaderboardRoutes(deps: Deps) {
       .innerJoin(users, eq(users.id, leagueScores.userId))
       .where(where)) as [{ total: number }]
 
+    // Privacy: anonymous trainers lose their name in the global and country scopes, except on the
+    // caller's own row. Friends always see names. `anonymous` is reported either way.
     const toRow = (r: (typeof top)[number], rank: number): LeaderboardRow => ({
       rank,
       userId: r.userId,
-      trainerName: r.trainerName,
+      trainerName: scope !== 'friends' && r.anonymous && r.userId !== me.id ? null : r.trainerName,
+      anonymous: r.anonymous,
       country: r.country,
       points: r.points,
       league: leagueForPoints(r.points, period),

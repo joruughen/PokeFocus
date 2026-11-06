@@ -27,6 +27,15 @@ const schema = z.object({
    * (e.g. http://<tailscale-ip>:8787); browsers drop Secure cookies over http.
    */
   COOKIE_SECURE: z.enum(['auto', '0', '1']).default('auto'),
+  /**
+   * Bearer token of the admin API (/api/admin/*, scheduled maintenance notices).
+   * Unset or empty = admin API off. When set it must be at least 24 characters
+   * (e.g. `openssl rand -hex 24`). Never logged.
+   */
+  ADMIN_TOKEN: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(24, 'must be at least 24 characters (e.g. openssl rand -hex 24)').optional(),
+  ),
 })
 
 export interface Env {
@@ -40,6 +49,8 @@ export interface Env {
   trustProxy: boolean
   staticDir: string
   cookieSecure: boolean
+  /** Admin API token; undefined = admin API disabled (404 admin_disabled). */
+  adminToken: string | undefined
 }
 
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
@@ -62,5 +73,6 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     trustProxy: e.TRUST_PROXY,
     staticDir: e.STATIC_DIR,
     cookieSecure: e.COOKIE_SECURE === 'auto' ? production : e.COOKIE_SECURE === '1',
+    adminToken: e.ADMIN_TOKEN,
   }
 }

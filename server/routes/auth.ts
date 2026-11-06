@@ -1,7 +1,7 @@
 /** /api/auth/* — register, login, logout, me, password, sessions. */
 import { Hono } from 'hono'
 import { and, eq, lt, ne } from 'drizzle-orm'
-import { EMPTY_DOC } from '../../src/game/protocol'
+import { COUNTRY_LOCK_DAYS, EMPTY_DOC, NAME_LOCK_DAYS } from '../../src/game/protocol'
 import type { AuthSessionInfo } from '../../src/game/protocol'
 import { hashPassword, verifyDummy, verifyPassword } from '../auth/password'
 import { hashToken, newFriendCode, newToken, SESSION_TTL_MS } from '../auth/tokens'
@@ -23,6 +23,8 @@ import {
 } from '../http'
 import { RULES } from '../rate-limit'
 import { loginBody, passwordBody, patchMeBody, registerBody } from '../validation'
+
+const DAY_MS = 86_400_000
 
 export function authRoutes(deps: Deps) {
   const { db, env, bus, limiter } = deps
@@ -118,12 +120,29 @@ export function authRoutes(deps: Deps) {
   app.patch('/me', auth, async (c) => {
     const body = await readBody(c, patchMeBody)
     const me = c.get('user')
+    const now = deps.clock()
     const { updated, version } = await db.transaction(async (tx) => {
-      const [u] = await tx
-        .update(users)
-        .set({ ...(body.trainerName !== undefined && { trainerName: body.trainerName }), ...(body.country !== undefined && { country: body.country }) })
-        .where(eq(users.id, me.id))
-        .returning()
+      // Lock the row before deciding, so two concurrent changes cannot both pass the lock.
+      const [cur] = await tx.select().from(users).where(eq(users.id, me.id)).for('update')
+      if (!cur) throw new ApiError(401, 'unauthorized')
+      // A "change" is a value that differs from the current one; the same value is a no-op.
+      const newName = body.trainerName !== undefined && body.trainerName !== cur.trainerName ? body.trainerName : null
+      const newCountry = body.country !== undefined && body.country !== cur.country ? body.country : null
+      // Any locked change fails the whole request (name first). DEV_TOOLS ignores the locks.
+      if (!env.devTools) {
+        const unlockAt = (last: Date | null, days: number) => (last && now < last.getTime() + days * DAY_MS ? last.getTime() + days * DAY_MS : null)
+        const nameUnlock = newName !== null ? unlockAt(cur.trainerNameChangedAt, NAME_LOCK_DAYS) : null
+        if (nameUnlock !== null) throw new ApiError(409, 'name_locked', { unlockAt: nameUnlock })
+        const countryUnlock = newCountry !== null ? unlockAt(cur.countryChangedAt, COUNTRY_LOCK_DAYS) : null
+        if (countryUnlock !== null) throw new ApiError(409, 'country_locked', { unlockAt: countryUnlock })
+      }
+      const patch: Partial<typeof users.$inferInsert> = {
+        ...(newName !== null && { trainerName: newName, trainerNameChangedAt: new Date(now) }),
+        ...(newCountry !== null && { country: newCountry, countryChangedAt: new Date(now) }),
+        ...(body.anonymousRankings !== undefined && { anonymousRankings: body.anonymousRankings }),
+      }
+      const [changed] = Object.keys(patch).length > 0 ? await tx.update(users).set(patch).where(eq(users.id, me.id)).returning() : []
+      const u = changed ?? cur
       let version: number | null = null
       // Keep the name inside the game doc in sync (it is shown in game screens).
       if (body.trainerName !== undefined) {
@@ -132,10 +151,10 @@ export function authRoutes(deps: Deps) {
         if (row && player && player.profile.trainerName !== body.trainerName) {
           version = row.version + 1
           const doc = { ...row.doc, player: { ...player, profile: { ...player.profile, trainerName: body.trainerName } } }
-          await tx.update(playerDocs).set({ doc, version, updatedAt: new Date(deps.clock()) }).where(eq(playerDocs.userId, me.id))
+          await tx.update(playerDocs).set({ doc, version, updatedAt: new Date(now) }).where(eq(playerDocs.userId, me.id))
         }
       }
-      return { updated: u!, version }
+      return { updated: u, version }
     })
     if (version !== null) bus.publish(me.id, { type: 'game', version })
     return c.json({ user: toPublicUser(updated) })

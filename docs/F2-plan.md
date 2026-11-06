@@ -42,7 +42,7 @@ navegador (React)  ──fetch /api/* (cookie pf_session)──▶  server/ (Hon
 
 ## Esquema (Drizzle, `server/db/schema.ts`)
 
-- `users` — `id uuid pk`, `email text unique` (minúsculas), `password_hash text`, `trainer_name text` (3–20, letras/números/espacio/_), `country char(2)`, `friend_code text unique` (8 chars, alfabeto sin 0/O/1/I), `created_at timestamptz`.
+- `users` — `id uuid pk`, `email text unique` (minúsculas), `password_hash text`, `trainer_name text` (3–20, letras/números/espacio/_), `country char(2)`, `friend_code text unique` (8 chars, alfabeto sin 0/O/1/I), `created_at timestamptz`, `trainer_name_changed_at timestamptz null` y `country_changed_at timestamptz null` (último cambio; null = nunca), `anonymous_rankings boolean default false`.
 - `auth_sessions` — `id uuid pk`, `user_id fk on delete cascade`, `token_hash text unique`, `created_at`, `last_seen_at`, `expires_at`, `user_agent text null`. Índice por `user_id`.
 - `player_docs` — `user_id pk fk`, `doc jsonb` (`GameDoc`), `version int`, `updated_at`.
 - `active_study_sessions` — `user_id pk fk`, `session_id text`, `started_at`. **Unicidad = una sesión de estudio por usuario.** Se inserta en `start` y se borra en `claim`/`cancel`, en la misma transacción que el doc.
@@ -60,7 +60,7 @@ Todas bajo `/api`, JSON, cookie `pf_session`. Errores: `{ error: string }` con 4
 - `POST /auth/login` `{ email, password }` → `{ user }` + cookie.
 - `POST /auth/logout` → 204. `POST /auth/logout-all` → 204.
 - `GET /auth/me` → `{ user }` | 401.
-- `PATCH /auth/me` `{ trainerName?, country? }` → `{ user }`.
+- `PATCH /auth/me` `{ trainerName?, country?, anonymousRankings? }` → `{ user }`. Cambiar el nombre o el país bloquea ese campo 30 días (cada uno por separado): 409 `name_locked` / `country_locked` con `{ unlockAt }`; reenviar el valor actual no cambia nada. `DEV_TOOLS=1` ignora el bloqueo. Detalle en `docs/server.md`.
 - `POST /auth/password` `{ current, next }` → 204 (revoca las demás sesiones).
 - `GET /auth/sessions` → `{ sessions: AuthSessionInfo[] }`. `DELETE /auth/sessions/:id` → 204.
 
@@ -74,7 +74,7 @@ Todas bajo `/api`, JSON, cookie `pf_session`. Errores: `{ error: string }` con 4
 - `POST /friends/:userId/accept` → 204. `DELETE /friends/:userId` → 204 (rechazar, cancelar o eliminar).
 
 **Rankings**
-- `GET /leaderboard?scope=global|country|friends&period=week|month` → `LeaderboardResponse` (top 100 + fila propia). `periodKey` = clave actual del jugador que consulta.
+- `GET /leaderboard?scope=global|country|friends&period=week|month` → `LeaderboardResponse` (top 100 + fila propia). `periodKey` = clave actual del jugador que consulta. Con `anonymousRankings`, en `global` y `country` la fila de ese usuario lleva `trainerName: null` salvo la propia; `anonymous` va en todas las filas.
 
 **Eventos**
 - `GET /events` (SSE) → `ServerEvent`: `game` (otra pestaña cambió el doc), `friends` (solicitud nueva/aceptada), `logout` (sesión revocada). Ping cada 25 s.

@@ -89,6 +89,9 @@ export function toPublicUser(u: UserRow): PublicUser {
     country: u.country,
     friendCode: u.friendCode,
     createdAt: u.createdAt.getTime(),
+    nameChangedAt: u.trainerNameChangedAt?.getTime() ?? null,
+    countryChangedAt: u.countryChangedAt?.getTime() ?? null,
+    anonymousRankings: u.anonymousRankings,
   }
 }
 

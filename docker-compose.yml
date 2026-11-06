@@ -33,6 +33,8 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-0}
       # 0 only for plain HTTP inside an encrypted network (e.g. http://<tailscale-ip>:8787).
       COOKIE_SECURE: ${COOKIE_SECURE:-auto}
+      # Bearer token of the admin API (maintenance notices); empty = admin API off. Min. 24 chars.
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
     ports:
       # Host side: APP_BIND (default 127.0.0.1 = only this machine; put an HTTPS proxy
       # such as Caddy or `tailscale serve` in front) and APP_PORT (default 8787).

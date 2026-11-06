@@ -84,7 +84,7 @@ describe('auth', () => {
     })
     expect(r.status).toBe(201)
     const user = (r.json as { user: PublicUser }).user
-    expect(user).toMatchObject({ email: 'misty@test.dev', trainerName: 'Misty', country: 'PE' })
+    expect(user).toMatchObject({ email: 'misty@test.dev', trainerName: 'Misty', country: 'PE', nameChangedAt: null, countryChangedAt: null, anonymousRankings: false })
     expect(user.friendCode).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/)
     expect(r.cookie).toMatch(/^[A-Za-z0-9_-]{43}$/)
 
@@ -232,7 +232,7 @@ describe('auth', () => {
     await act(u.cookie, { type: 'createPlayer', locale: 'es', timezone: 0, starterSlug: 'squirtle' })
     const r = await call('PATCH', '/api/auth/me', { cookie: u.cookie, body: { trainerName: 'Gary Oak', country: 'cl' } })
     expect(r.status).toBe(200)
-    expect((r.json as { user: PublicUser }).user).toMatchObject({ trainerName: 'Gary Oak', country: 'CL' })
+    expect((r.json as { user: PublicUser }).user).toMatchObject({ trainerName: 'Gary Oak', country: 'CL', nameChangedAt: now, countryChangedAt: now, anonymousRankings: false })
     const g = (await call('GET', '/api/game', { cookie: u.cookie })).json as unknown as GameSnapshot
     expect(g.doc.player?.profile.trainerName).toBe('Gary Oak')
     expect((await call('PATCH', '/api/auth/me', { cookie: u.cookie, body: { trainerName: '<script>' } })).status).toBe(400)
@@ -447,7 +447,7 @@ describe('leaderboard', () => {
       ['Lb Pe Three', 3],
       ['Lb Me', 5],
     ])
-    expect(g.rows[0]).toMatchObject({ country: 'US', leader: 'charmander', me: false, league: 'base' })
+    expect(g.rows[0]).toMatchObject({ country: 'US', leader: 'charmander', me: false, league: 'base', anonymous: false })
     expect(g.mine).toMatchObject({ rank: 5, me: true, points: 100 })
 
     const c = (await call('GET', '/api/leaderboard?scope=country&period=week', { cookie: me.cookie })).json as unknown as LeaderboardResponse
