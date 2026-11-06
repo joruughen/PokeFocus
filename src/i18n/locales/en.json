@@ -183,7 +183,7 @@
     "fromBox": "Add from the Box",
     "boxEmpty": "Your Box is empty. Catch Pokémon in the waves to add them to the team.",
     "add": "Add",
-    "full": "The team is full. Move someone to the Box to make room.",
+    "full": "The team is full. Use Swap to replace someone.",
     "makeLeader": "Make leader",
     "makeLeaderOf": "Make {{name}} the leader",
     "newLeader": "{{name}} is now the leader",
@@ -201,7 +201,36 @@
     "weakTo": "Takes more damage from:",
     "resists": "Resists:",
     "none": "None",
-    "emptySlotShort": "Add one from Team."
+    "emptySlotShort": "Add one from Team.",
+    "pick": {
+      "search": "Search by name",
+      "type": "Type",
+      "anyType": "All types",
+      "sort": {
+        "label": "Sort by",
+        "now": "Best now",
+        "level": "Level",
+        "energy": "Energy",
+        "recent": "Recent"
+      },
+      "count_one": "{{count}} Pokémon",
+      "count_other": "{{count}} Pokémon",
+      "countFiltered": "{{shown}} of {{total}} Pokémon",
+      "clear": "Clear filters",
+      "noMatch": "No Pokémon in the Box matches that search.",
+      "asleep": "Asleep",
+      "exhausted": "Exhausted",
+      "swap": "Swap",
+      "addOf": "Add {{name}} to the team",
+      "swapOf": "Swap {{name}} with someone on the team"
+    },
+    "swap": {
+      "title": "Swap in {{name}}",
+      "body": "Choose who goes back to the Box. {{name}} takes their place in the order.",
+      "pickOf": "Move {{out}} to the Box and put {{in}} in its place",
+      "done": "{{in}} takes {{out}}'s place",
+      "doneLeader": "{{in}} takes {{out}}'s place and is the new leader"
+    }
   },
   "items": {
     "dust": "Study Dust",
