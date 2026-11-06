@@ -37,7 +37,9 @@ export async function runGameAction(
   const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
   const before = row?.doc ?? EMPTY_DOC
   const friendOverlap = action.type === 'claim' ? await claimOverlap(tx, user.id, before) : null
-  const r = applyAction(before, action, { now: opts.now, rng: opts.rng, dev: deps.env.devTools, trainerName: user.trainerName, friendOverlap })
+  // Real weather of the profile city, fixed on the session at start (≤ 2 s, cached; null → manual fallback).
+  const weather = action.type === 'start' ? ((await deps.weather.current(before.player?.profile.city ?? null))?.weather ?? null) : undefined
+  const r = applyAction(before, action, { now: opts.now, rng: opts.rng, dev: deps.env.devTools, trainerName: user.trainerName, friendOverlap, weather })
   if (!r.ok) return r
   await syncActiveSession(tx, user.id, before, r.doc)
   const groupEvents = await syncGroupMembership(tx, user.id, before, r.doc, action.type, opts.now, opts.viaGroup ?? false)
@@ -125,3 +127,4 @@ async function syncLeagueScores(tx: Tx, userId: string, before: GameDoc, after: 
       })
   }
 }
+

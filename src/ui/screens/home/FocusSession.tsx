@@ -14,6 +14,7 @@ import { timerOf, useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
 import { GroupSessionStatus } from './GroupStudy'
 import { MuteMusicButton } from './MuteMusicButton'
+import { MicIndicator } from './SoundStyle'
 
 const cfg = defaultContext().config
 
@@ -139,6 +140,7 @@ export function FocusSession() {
         </div>
         <p className="mt-4 max-w-[52ch] text-sm text-mist-400">{t('session.rockNote')}</p>
         <AutoDamageToggle compact className="mt-6" />
+        <div className="mt-4"><MicIndicator /></div>
       </section>
 
       <GroupSessionStatus />

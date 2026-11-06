@@ -13,6 +13,7 @@ import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
 import { SessionReportButton } from './SessionReport'
 import { GroupFairyNote } from './GroupStudy'
+import { StudyStyleLine } from './SoundStyle'
 
 const cfg = defaultContext().config
 
@@ -114,6 +115,7 @@ export function Results() {
               {why}
             </div>
             <GroupFairyNote result={result} />
+            <StudyStyleLine result={result} />
           </div>
           <div className="flex items-end gap-4 pb-1">
             {result.members.map((m, i) => (

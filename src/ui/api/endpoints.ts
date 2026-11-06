@@ -15,6 +15,7 @@ import {
   type LeaderboardScope,
   type PublicUser,
 } from '../../game/protocol'
+import type { WeatherResponse } from '../../game/weather'
 import { now, usePrefs } from '../store/prefs'
 import { api } from './client'
 
@@ -66,4 +67,9 @@ export const friendsApi = {
 export const leaderboardApi = {
   get: (scope: LeaderboardScope, period: LeaderboardPeriod) =>
     api.get<LeaderboardResponse>(`/leaderboard?scope=${scope}&period=${period}`),
+}
+
+export const weatherApi = {
+  /** Weather a session started now would use (real city weather or the manual fallback). */
+  get: () => api.get<WeatherResponse>('/weather'),
 }

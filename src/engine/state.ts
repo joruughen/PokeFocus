@@ -93,6 +93,12 @@ export interface ActiveSession {
   subjectTag: string | null
   /** Heals applied at start (Wish). */
   startHeals: { uid: string; amount: number; sourceUid: string }[]
+  /**
+   * Weather of the session, fixed when it starts (real weather of the
+   * profile city, or the manual fallback). Absent in older saves: claim then
+   * uses `profile.weather`.
+   */
+  weather?: WeatherInput | null
 }
 
 export interface SessionSummary {

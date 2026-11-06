@@ -222,11 +222,23 @@
     "rain": "Rain",
     "cold": "Cold",
     "effect": {
-      "clear": "No weather effects. For now you pick the weather yourself.",
+      "clear": "No weather effects.",
       "sun": "Turns on the Fire condition.",
       "rain": "Turns on the Water condition.",
       "cold": "Turns on the Ice condition."
-    }
+    },
+    "kindTemp": "{{kind}} · {{temp}} °C",
+    "checking": "Checking your city's weather…",
+    "unavailable": "The weather could not be checked right now; the manual weather is used.",
+    "noCity": "No city on your profile: the manual weather is used. Set your city in Settings to use the real weather.",
+    "detected": "Real weather in {{place}}: {{weather}}. It is fixed when the session starts.",
+    "devOverride": "Real weather in {{place}}: {{weather}}. Dev mode: the manual weather wins.",
+    "notFound": "Could not get the weather for “{{city}}”; the manual weather is used.",
+    "manual": "Manual weather",
+    "manualNote": "Fallback when your city's weather cannot be detected (in dev mode, it overrides it).",
+    "city": "City",
+    "cityPlaceholder": "E.g. Lima, Peru",
+    "citySave": "Save city"
   },
   "home": {
     "greeting": "Hi, {{name}}",
@@ -1779,5 +1791,28 @@
       "tip": "Without Auto, in every wave you decide which wild each Pokémon sends its damage to. With Auto, it is split at random, leaning toward the wilds with more HP. It applies when you claim the session.",
       "fixed": "Applies when you claim."
     }
+  },
+  "mic": {
+    "toggle": "Sound profile (microphone)",
+    "offNote": "Optional. Detects whether you study in silence, with music, voice or noise, which slightly changes which wild Pokémon appear.",
+    "onNote": "Analysed in your browser every 2 s. Audio never leaves your device: only the percentages are sent.",
+    "status": {
+      "insecure": "The microphone needs HTTPS (or localhost). The session continues without a sound profile.",
+      "unsupported": "No microphone is available in this browser or device. The session continues without a sound profile.",
+      "denied": "Microphone permission denied. The session continues without a sound profile.",
+      "error": "The microphone could not be used. The session continues without a sound profile."
+    },
+    "listening": "Listening…",
+    "style": "Style: {{style}}",
+    "now": "Now: {{kind}}. Audio never leaves your device.",
+    "private": "Audio is analysed in your browser and never leaves your device.",
+    "kind": {
+      "silence": "Silence",
+      "music": "Music",
+      "voice": "Voice",
+      "noise": "Ambient noise"
+    },
+    "resultStyle": "Study style: {{style}} ({{pct}}).",
+    "resultTypes": "Slightly more likely: {{types}}."
   }
 }

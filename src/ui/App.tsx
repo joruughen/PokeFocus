@@ -8,6 +8,7 @@ import { AuthScreen } from './screens/auth/AuthScreen'
 import { FirstRun } from './screens/FirstRun'
 import { Splash } from './screens/Splash'
 import { SessionWatcher } from './SessionWatcher'
+import { MicBridge } from './MicBridge'
 import { useAuth } from './store/auth'
 import { useGame } from './store/game'
 import { devEnabled, usePrefs } from './store/prefs'
@@ -48,6 +49,7 @@ export default function App() {
         </a>
         {status === 'loading' ? <Splash /> : status === 'anon' ? <AuthScreen /> : !loaded ? <Splash game /> : hasPlayer ? <AppShell /> : <FirstRun />}
         {ready && hasPlayer && <SessionWatcher />}
+        {ready && hasPlayer && <MicBridge />}
         {ready && <HintLayer />}
         {ready && devEnabled() && <DevPanel />}
       </ToastViewport>

@@ -78,6 +78,11 @@ const weather = z.object({
   tempC: z.number().min(-100).max(100).nullable(),
 })
 
+/** Microphone shares (0–1 each); rounding may push the sum a bit over 1. */
+export const soundProfileSchema = z
+  .object({ silence: z.number().min(0).max(1), music: z.number().min(0).max(1), voice: z.number().min(0).max(1), noise: z.number().min(0).max(1) })
+  .refine((p) => p.silence + p.music + p.voice + p.noise <= 1.05, 'shares sum over 1.05')
+
 const act = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) => z.object({ type: z.literal(type), ...shape })
 
 export const gameActionBody = z.discriminatedUnion('type', [
@@ -91,7 +96,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('resume', {}),
   act('cancel', {}),
   act('markNotified', {}),
-  act('claim', { devFocusLabel: z.string().max(32).nullable().optional() }),
+  act('claim', { devFocusLabel: z.string().max(32).nullable().optional(), soundProfile: soundProfileSchema.nullable().optional() }),
   act('dismissResults', {}),
   act('throwBall', { ref, ball }),
   act('applyStatus', { chargeId: id, ref }),
