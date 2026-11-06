@@ -1,10 +1,14 @@
 /**
  * Opens the microphone into a Web Audio analyser (never connected to the
- * speakers) and reads one `FrameFeatures` at a time. Shared by the session
- * monitor, the calibration wizard and the live meter. Audio never leaves the
- * device.
+ * speakers) and reads one raw frame at a time. Shared by the session monitor,
+ * the calibration wizard and the live meter. Audio never leaves the device.
+ *
+ * Chain: mic → high-pass (100 Hz, 2nd order) → analyser. The filter removes
+ * mains hum fundamentals (50/60 Hz) and desk thumps before anything is
+ * measured; the mic's remaining self-noise (hiss, hum harmonics) is removed
+ * per frame with the calibrated noise profile (`noise.ts`).
  */
-import { frameFeatures, rmsDbOf, type FrameFeatures } from './classify'
+import type { RawFrame } from './pipeline'
 
 export type MicStatus = 'off' | 'starting' | 'listening' | 'insecure' | 'unsupported' | 'denied' | 'error'
 
@@ -13,6 +17,8 @@ export const CONSTRAINTS: MediaStreamConstraints = {
   audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
   video: false,
 }
+
+export const HIGHPASS_HZ = 100
 
 /** Why the microphone cannot be used here, or null if it can be tried. */
 export function micUnavailable(): 'insecure' | 'unsupported' | null {
@@ -29,11 +35,15 @@ export function errorStatus(e: unknown): MicStatus {
   return 'error'
 }
 
+/** Device of a stream ('default' when the browser does not say): the calibration key. */
+export function deviceIdOf(stream: MediaStream): string {
+  return stream.getAudioTracks()[0]?.getSettings?.().deviceId || 'default'
+}
+
 export interface MicAnalyser {
-  /** Device the stream comes from ('default' when the browser does not say): the calibration key. */
   deviceId: string
-  /** One frame now, or null while the audio context is suspended (autoplay rules). */
-  frame(): FrameFeatures | null
+  /** One frame now (a copy), or null while the audio context is suspended (autoplay rules). */
+  frame(): RawFrame | null
   /** Called once if the track ends on its own (device unplugged, permission revoked). */
   onEnded(cb: () => void): void
   close(): void
@@ -52,12 +62,16 @@ export async function openMicAnalyser(): Promise<{ ok: true; mic: MicAnalyser } 
   try {
     const ctx = new AudioContext()
     const source = ctx.createMediaStreamSource(stream)
+    const hp = ctx.createBiquadFilter()
+    hp.type = 'highpass'
+    hp.frequency.value = HIGHPASS_HZ
+    hp.Q.value = Math.SQRT1_2
     const analyser = ctx.createAnalyser()
     analyser.fftSize = 2048
     analyser.smoothingTimeConstant = 0
-    source.connect(analyser) // never connected to the speakers
+    source.connect(hp)
+    hp.connect(analyser) // never connected to the speakers
     const time = new Float32Array(analyser.fftSize)
-    const freq = new Float32Array(analyser.frequencyBinCount)
     // Autoplay rules: after a reload the context may start suspended until the next tap/click.
     const resume = () => void ctx.resume().catch(() => {})
     if (ctx.state === 'suspended') {
@@ -66,15 +80,18 @@ export async function openMicAnalyser(): Promise<{ ok: true; mic: MicAnalyser } 
       window.addEventListener('keydown', resume, { once: true })
     }
     const track = stream.getAudioTracks()[0]
-    const deviceId = track?.getSettings?.().deviceId || 'default'
     let closed = false
     const mic: MicAnalyser = {
-      deviceId,
+      deviceId: deviceIdOf(stream),
       frame() {
         if (closed || ctx.state !== 'running') return null
         analyser.getFloatTimeDomainData(time)
-        analyser.getFloatFrequencyData(freq)
-        return frameFeatures(freq, ctx.sampleRate, rmsDbOf(time))
+        const spectrumDb = new Float32Array(analyser.frequencyBinCount)
+        analyser.getFloatFrequencyData(spectrumDb)
+        let sum = 0
+        for (let i = 0; i < time.length; i++) sum += time[i]! * time[i]!
+        const rms = Math.sqrt(sum / time.length)
+        return { spectrumDb, rmsDb: rms > 0 ? Math.max(-100, 20 * Math.log10(rms)) : -100, sampleRate: ctx.sampleRate }
       },
       onEnded(cb) {
         track?.addEventListener('ended', () => {

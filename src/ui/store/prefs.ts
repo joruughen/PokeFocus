@@ -48,10 +48,6 @@ export interface PrefsState {
   seenHints: Record<string, number>
   /** Opt-in: analyse the microphone during sessions (sound profile, GDD §4.3). */
   micEnabled: boolean
-  /** Self-declared "I listen to music on headphones": silent mic windows count as music. */
-  micHeadphones: boolean
-  /** The calibration wizard was offered once (first time the mic was switched on). */
-  micCalibrationOffered: boolean
   dev: DevSettings
   setLocale: (l: Locale) => void
   setTipsEnabled: (on: boolean) => void
@@ -60,8 +56,6 @@ export interface PrefsState {
   setChecklistDismissed: (v: boolean) => void
   setTzChangedAt: (t: number | null) => void
   setMicEnabled: (on: boolean) => void
-  setMicHeadphones: (on: boolean) => void
-  setMicCalibrationOffered: (v: boolean) => void
   markHintSeen: (id: string) => void
   resetHints: () => void
   setDev: (patch: Partial<DevSettings>) => void
@@ -115,8 +109,6 @@ export const usePrefs = create<PrefsState>()(
       tzChangedAt: null,
       seenHints: {},
       micEnabled: false,
-      micHeadphones: false,
-      micCalibrationOffered: false,
       dev: DEFAULT_DEV,
       setLocale: (locale) => {
         void i18n.changeLanguage(locale)
@@ -128,8 +120,6 @@ export const usePrefs = create<PrefsState>()(
       setChecklistDismissed: (checklistDismissed) => set({ checklistDismissed }),
       setTzChangedAt: (tzChangedAt) => set({ tzChangedAt }),
       setMicEnabled: (micEnabled) => set({ micEnabled }),
-      setMicHeadphones: (micHeadphones) => set({ micHeadphones }),
-      setMicCalibrationOffered: (micCalibrationOffered) => set({ micCalibrationOffered }),
       markHintSeen: (id) => set((s) => ({ seenHints: { ...s.seenHints, [id]: Date.now() } })),
       resetHints: () => set({ seenHints: {}, tipsEnabled: true }),
       setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
@@ -158,7 +148,7 @@ export const usePrefs = create<PrefsState>()(
       name: STORAGE_KEYS.prefs,
       storage: jsonStorage,
       version: 1,
-      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, tzChangedAt, seenHints, micEnabled, micHeadphones, micCalibrationOffered, dev }) => ({
+      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, tzChangedAt, seenHints, micEnabled, dev }) => ({
         locale,
         tipsEnabled,
         audio,
@@ -167,17 +157,18 @@ export const usePrefs = create<PrefsState>()(
         tzChangedAt,
         seenHints,
         micEnabled,
-        micHeadphones,
-        micCalibrationOffered,
         dev,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<PrefsState> & { sound?: boolean }
+        const p = (persisted ?? {}) as Partial<PrefsState> & { sound?: boolean; micHeadphones?: unknown; micCalibrationOffered?: unknown }
         // Part A saved `sound: boolean`; it becomes the audio mute.
         const audio = sanitizeAudioSettings(p.audio ?? (p.sound === false ? { muted: true } : {}))
-        const { sound: _legacy, ...rest } = p
+        // Dropped mic options (headphones declaration, "calibration offered") are ignored.
+        const { sound: _legacy, micHeadphones: _hp, micCalibrationOffered: _offered, ...rest } = p
         void _legacy
-        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, micEnabled: p.micEnabled === true, micHeadphones: p.micHeadphones === true, micCalibrationOffered: p.micCalibrationOffered === true, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
+        void _hp
+        void _offered
+        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, micEnabled: p.micEnabled === true, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
       },
     },
   ),

@@ -1,14 +1,18 @@
 /**
  * Microphone calibration (pure). The wizard records ~5 s of each step —
- * silence (room + mic noise floor), the player's voice, and optionally their
- * music — and `calibrate` turns those measurements into personal
+ * silence (required: the mic's own noise), the player's voice
+ * (recommended), and optionally music through the speakers — and
+ * `calibrateFrames` turns them into a noise profile plus personal
  * `Thresholds` for `classifyWindow`.
  *
- * Rules (each clamped to a sane range; anything not measured, or measured
- * badly, keeps `DEFAULT_THRESHOLDS`):
- * - Silence: the floor is the median level of the silent windows. The
- *   silence threshold sits a few dB over it, and always well under the voice
- *   level (at most 40 % of the floor→voice gap), so a quiet voice still counts.
+ * - Noise profile: per-cell median of the silent frames (`noise.ts`). Every
+ *   step is then re-analysed with it, so the features below are measured
+ *   after removing the mic's own noise.
+ * - Silence: "silence" = less than `noiseMarginDb` over that noise. The margin
+ *   covers how much the silent step itself wandered (+2.5 dB, at least 4 dB)
+ *   but stays under 40 % of the gap to the quietest measured signal, so a
+ *   quiet voice still counts. `maxSilenceDb` (never silence above) sits
+ *   under the quietest signal, or 15 dB over the room when none was measured.
  * - Voice: the voice-band share, modulation and pause-rate thresholds drop to
  *   ~60–70 % of what this voice showed (never raised over the defaults: they
  *   are already permissive), and the spectral-stability cap goes over it.
@@ -17,9 +21,13 @@
  *   halfway between them.
  * - Noise flatness stays over what voice and music showed.
  *
- * Storage (per device, localStorage) lives in `calibration-store.ts`.
+ * Anything not measured, or measured badly, keeps `DEFAULT_THRESHOLDS`, and
+ * everything is clamped to `THRESHOLD_LIMITS`. Storage (per device,
+ * localStorage) lives in `calibration-store.ts`.
  */
-import { DEFAULT_THRESHOLDS, windowFeatures, type FrameFeatures, type Thresholds, type WindowFeatures } from './classify'
+import { DEFAULT_THRESHOLDS, frameFeatures, windowFeatures, type FrameFeatures, type Thresholds, type WindowFeatures } from './classify'
+import { estimateProfile, type NoiseProfile } from './noise'
+import type { RawFrame } from './pipeline'
 
 /** Frames per analysis window (2 s at one frame per 100 ms, like the session monitor). */
 export const CAL_WINDOW_FRAMES = 20
@@ -27,20 +35,24 @@ export const CAL_WINDOW_FRAMES = 20
 export const CAL_HOP_FRAMES = 5
 /** Duration of each step. */
 export const CAL_STEP_MS = 5000
+/** A silence step with fewer frames than this (2 s) is not usable. */
+export const MIN_SILENCE_FRAMES = 20
 
 export interface CalibrationMeasurements {
   /** Windows recorded while the room was silent (required). */
   silence: readonly WindowFeatures[]
-  /** Windows recorded while the player talked (empty = not measured). */
+  /** Windows recorded while the player talked (empty = skipped). */
   voice: readonly WindowFeatures[]
-  /** Windows recorded with the player's music (null/empty = skipped, e.g. headphones). */
+  /** Windows recorded with music through the speakers (null/empty = skipped). */
   music?: readonly WindowFeatures[] | null
 }
 
-export type CalibrationNote = 'noSilence' | 'voiceTooQuiet' | 'musicTooQuiet' | 'noisyRoom'
+export type CalibrationNote = 'noSilence' | 'voiceTooQuiet' | 'musicTooQuiet' | 'noisyRoom' | 'unsteadySilence'
 
 export interface CalibrationResult {
   thresholds: Thresholds
+  /** The mic's own noise (null when the silence step was unusable). */
+  noise: NoiseProfile | null
   /** Which steps were usable. */
   measured: { silence: boolean; voice: boolean; music: boolean }
   /** Median levels (dBFS), for the summary. */
@@ -68,8 +80,8 @@ export function stepWindows(frames: readonly FrameFeatures[], size = CAL_WINDOW_
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
 /** Quantile (0–1) of finite values, linear interpolation; null when empty. */
-export function quantile(values: readonly number[], q: number): number | null {
-  const v = values.filter(Number.isFinite).sort((a, b) => a - b)
+export function quantile(values: readonly (number | null)[], q: number): number | null {
+  const v = values.filter((x): x is number => typeof x === 'number' && Number.isFinite(x)).sort((a, b) => a - b)
   if (v.length === 0) return null
   const pos = clamp(q, 0, 1) * (v.length - 1)
   const lo = Math.floor(pos)
@@ -77,18 +89,18 @@ export function quantile(values: readonly number[], q: number): number | null {
   return v[lo]! + (v[hi]! - v[lo]!) * (pos - lo)
 }
 
-const median = (values: readonly number[]) => quantile(values, 0.5)
-const pick = (ws: readonly WindowFeatures[], k: keyof WindowFeatures) => ws.map((w) => w[k])
+const median = (values: readonly (number | null)[]) => quantile(values, 0.5)
+const pick = <K extends keyof WindowFeatures>(ws: readonly WindowFeatures[], k: K) => ws.map((w) => w[k])
 const round = (v: number, step: number) => Math.round(v / step) * step
 
-/** Minimum gap (dB) over the floor for a voice/music step to count as measured. */
+/** Minimum gap (dB) over the mic noise for a voice/music step to count as measured. */
 export const MIN_SIGNAL_GAP_DB = 6
 
 /** Limits every personal threshold is kept within (also applied to stored values). */
 export const THRESHOLD_LIMITS: Record<keyof Thresholds, readonly [number, number]> = {
-  silenceDb: [-80, -40],
-  floorMarginDb: [2, 8],
-  maxSilenceDb: [-80, -30],
+  silenceDb: [-90, -50],
+  noiseMarginDb: [2.5, 10],
+  maxSilenceDb: [-60, -20],
   noiseFlatness: [0.3, 0.6],
   voiceRatio: [0.3, 0.7],
   voiceModulationDb: [2.5, 8],
@@ -109,45 +121,56 @@ export function sanitizeThresholds(raw: Partial<Record<keyof Thresholds, unknown
       out[k] = clamp(v, lo, hi)
     }
   }
-  // A loud-room cap under the absolute silence level would make no sense.
-  if (out.maxSilenceDb < out.silenceDb) out.maxSilenceDb = Math.min(THRESHOLD_LIMITS.maxSilenceDb[1], out.silenceDb + 3)
+  // The loud-room cap must stay over the absolute silence level.
+  if (out.maxSilenceDb < out.silenceDb + 3) out.maxSilenceDb = Math.min(THRESHOLD_LIMITS.maxSilenceDb[1], out.silenceDb + 3)
   // "Very tonal" music must stay clearly under broadband noise.
   if (out.musicFlatness > out.noiseFlatness - 0.1) out.musicFlatness = Math.max(THRESHOLD_LIMITS.musicFlatness[0], out.noiseFlatness - 0.1)
   return out
 }
 
-export function calibrate(m: CalibrationMeasurements): CalibrationResult {
+/** Gap of a step over the mic noise: level over the profile when known, else over the silent level. */
+function gapOf(ws: readonly WindowFeatures[], floorDb: number): number | null {
+  const above = median(pick(ws, 'aboveDb'))
+  if (above !== null) return above
+  const lvl = median(pick(ws, 'rmsDb'))
+  return lvl === null ? null : lvl - floorDb
+}
+
+export function calibrate(m: CalibrationMeasurements, noise: NoiseProfile | null = null): CalibrationResult {
   const notes: CalibrationNote[] = []
   const th: Thresholds = { ...DEFAULT_THRESHOLDS }
 
   const floorDb = median(pick(m.silence, 'rmsDb'))
   if (floorDb === null) {
     // Nothing recorded at all: nothing personal can be derived.
-    return { thresholds: { ...DEFAULT_THRESHOLDS }, measured: { silence: false, voice: false, music: false }, floorDb: null, voiceDb: null, musicDb: null, notes: ['noSilence'] }
+    return { thresholds: { ...DEFAULT_THRESHOLDS }, noise: null, measured: { silence: false, voice: false, music: false }, floorDb: null, voiceDb: null, musicDb: null, notes: ['noSilence'] }
   }
-  // A "silent" room this loud (fan, street) is still fine: it becomes the floor, but say so.
+  // A "silent" room this loud (fan, street) is still fine: it becomes the mic noise, but say so.
   if (floorDb > -45) notes.push('noisyRoom')
+  const spread = (quantile(pick(m.silence, 'rmsDb'), 0.9) ?? floorDb) - (quantile(pick(m.silence, 'rmsDb'), 0.1) ?? floorDb)
+  if (spread > 6) notes.push('unsteadySilence')
 
-  const voiceLevel = median(pick(m.voice, 'rmsDb'))
-  const voiceOk = voiceLevel !== null && voiceLevel - floorDb >= MIN_SIGNAL_GAP_DB
+  const voiceGap = m.voice.length > 0 ? gapOf(m.voice, floorDb) : null
+  const voiceOk = voiceGap !== null && voiceGap >= MIN_SIGNAL_GAP_DB
   if (m.voice.length > 0 && !voiceOk) notes.push('voiceTooQuiet')
   const music = m.music ?? []
-  const musicLevel = median(pick(music, 'rmsDb'))
-  const musicOk = musicLevel !== null && musicLevel - floorDb >= MIN_SIGNAL_GAP_DB
+  const musicGap = music.length > 0 ? gapOf(music, floorDb) : null
+  const musicOk = musicGap !== null && musicGap >= MIN_SIGNAL_GAP_DB
   if (music.length > 0 && !musicOk) notes.push('musicTooQuiet')
+  const voiceLevel = voiceOk ? median(pick(m.voice, 'rmsDb')) : null
+  const musicLevel = musicOk ? median(pick(music, 'rmsDb')) : null
 
   // ---- Silence ---------------------------------------------------------------
-  // Loudest silent window + a little: brief creaks in the silent step should still read as silence.
+  // How far over the noise the silent step itself went (≈ 0 when measured against its own profile).
+  const silTop = quantile(pick(m.silence, 'aboveDb'), 0.9) ?? 0
+  const gaps = [voiceOk ? voiceGap : null, musicOk ? musicGap : null].filter((v): v is number => v !== null)
+  const gap = gaps.length > 0 ? Math.min(...gaps) : null
+  const margin = Math.max(4, silTop + 2.5)
+  th.noiseMarginDb = gap !== null ? Math.max(THRESHOLD_LIMITS.noiseMarginDb[0], Math.min(margin, gap * 0.4)) : margin
   const floorTop = quantile(pick(m.silence, 'rmsDb'), 0.9) ?? floorDb
-  const signals = [voiceOk ? voiceLevel : null, musicOk ? musicLevel : null].filter((v): v is number => v !== null)
-  const quietest = signals.length > 0 ? Math.min(...signals) : null
-  const gap = quietest !== null ? quietest - floorDb : null
-  // Margin over the floor: 3–6 dB, but never more than 40 % of the way to the quietest signal.
-  const margin = gap !== null ? Math.min(6, Math.max(3, floorTop - floorDb + 2), gap * 0.4) : Math.min(6, Math.max(3, floorTop - floorDb + 2))
-  th.silenceDb = floorDb + margin
-  th.floorMarginDb = gap !== null ? Math.min(DEFAULT_THRESHOLDS.floorMarginDb, Math.max(2, gap * 0.4)) : DEFAULT_THRESHOLDS.floorMarginDb
-  // Cap for the adaptive floor: stays under the quietest signal (or 14 dB over this floor when none was measured).
-  th.maxSilenceDb = quietest !== null ? quietest - Math.max(3, gap! * 0.4) : floorDb + 14
+  const levels = [voiceLevel, musicLevel].filter((v): v is number => v !== null)
+  const quietest = levels.length > 0 ? Math.min(...levels) : null
+  th.maxSilenceDb = Math.max(floorTop + 3, quietest !== null ? quietest - Math.max(3, (quietest - floorDb) * 0.4) : floorDb + 15)
 
   // ---- Voice -----------------------------------------------------------------
   const v = voiceOk ? m.voice : []
@@ -187,13 +210,38 @@ export function calibrate(m: CalibrationMeasurements): CalibrationResult {
   const flats = [median(pick(v, 'flatness')), mFlat].filter((x): x is number => x !== null)
   if (flats.length > 0) th.noiseFlatness = Math.max(DEFAULT_THRESHOLDS.noiseFlatness, Math.max(...flats) + 0.1)
 
-  const thresholds = sanitizeThresholds(th)
   return {
-    thresholds,
+    thresholds: sanitizeThresholds(th),
+    noise,
     measured: { silence: true, voice: voiceOk, music: musicOk },
     floorDb,
-    voiceDb: voiceOk ? voiceLevel : null,
-    musicDb: musicOk ? musicLevel : null,
+    voiceDb: voiceLevel,
+    musicDb: musicLevel,
     notes,
   }
+}
+
+export interface CalibrationRecording {
+  silence: readonly RawFrame[]
+  voice: readonly RawFrame[]
+  music?: readonly RawFrame[] | null
+}
+
+/**
+ * The whole calibration from the raw frames of each step: the noise profile
+ * from the silent frames, then every step analysed with it.
+ */
+export function calibrateFrames(rec: CalibrationRecording): CalibrationResult {
+  const raw = (fs: readonly RawFrame[], noise: NoiseProfile | null) => fs.map((f) => frameFeatures(f.spectrumDb, f.sampleRate, f.rmsDb, noise))
+  if (rec.silence.length < MIN_SILENCE_FRAMES) return calibrate({ silence: [], voice: [] })
+  const noise = estimateProfile(raw(rec.silence, null).map((f) => f.cells))
+  if (!noise) return calibrate({ silence: [], voice: [] })
+  return calibrate(
+    {
+      silence: stepWindows(raw(rec.silence, noise)),
+      voice: stepWindows(raw(rec.voice, noise)),
+      music: rec.music ? stepWindows(raw(rec.music, noise)) : null,
+    },
+    noise,
+  )
 }

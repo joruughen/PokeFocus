@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { calibrate, quantile, sanitizeThresholds, stepWindows, THRESHOLD_LIMITS } from './calibrate'
-import { applyHeadphones, classifyWindow, DEFAULT_THRESHOLDS, type FrameFeatures, type Thresholds, type WindowFeatures } from './classify'
+import { classifyWindow, DEFAULT_THRESHOLDS, type FrameFeatures, type Thresholds, type WindowFeatures } from './classify'
+import { NOISE_CELLS, type NoiseProfile } from './noise'
 
 const W = (p: Partial<WindowFeatures>): WindowFeatures => ({
   rmsDb: -60,
+  aboveDb: null,
   modulationDb: 1,
   lowEnergyRate: 0,
   flatness: 0.3,
@@ -24,9 +26,10 @@ const many = (n: number, base: Partial<WindowFeatures>, spread: Partial<Record<k
     return out
   })
 
-const quietRoom = many(7, { rmsDb: -68, flatness: 0.5, stability: 0.9 }, { rmsDb: 1 })
-const quietVoice = many(7, { rmsDb: -50, voiceRatio: 0.5, modulationDb: 4, lowEnergyRate: 0.12, stability: 0.6, flatness: 0.15, tonalPeaks: 2 }, { rmsDb: 2, voiceRatio: 0.03 })
-const music = many(7, { rmsDb: -44, voiceRatio: 0.4, modulationDb: 1.5, lowEnergyRate: 0, stability: 0.8, flatness: 0.1, tonalPeaks: 2 }, { stability: 0.03 })
+// Windows as measured against the calibrated noise profile (aboveDb ≈ 0 for the silent room).
+const quietRoom = many(7, { rmsDb: -68, aboveDb: 0.3, flatness: 0.5, stability: 0.9 }, { rmsDb: 1, aboveDb: 0.6 })
+const quietVoice = many(7, { rmsDb: -50, aboveDb: 18, voiceRatio: 0.5, modulationDb: 4, lowEnergyRate: 0.12, stability: 0.6, flatness: 0.15, tonalPeaks: 2 }, { rmsDb: 2, aboveDb: 2, voiceRatio: 0.03 })
+const music = many(7, { rmsDb: -44, aboveDb: 24, voiceRatio: 0.4, modulationDb: 1.5, lowEnergyRate: 0, stability: 0.8, flatness: 0.1, tonalPeaks: 2 }, { stability: 0.03 })
 
 function within(th: Thresholds) {
   for (const [k, [lo, hi]] of Object.entries(THRESHOLD_LIMITS) as [keyof Thresholds, readonly [number, number]][]) {
@@ -43,26 +46,26 @@ describe('calibrate', () => {
     expect(r.notes).toContain('noSilence')
   })
 
-  it('silence only: personal silence level over the floor, everything else default', () => {
+  it('silence only: margin over the mic noise and a loud-room cap over the floor, everything else default', () => {
     const r = calibrate({ silence: quietRoom, voice: [] })
     expect(r.measured).toEqual({ silence: true, voice: false, music: false })
     expect(r.floorDb).toBeCloseTo(-68, 5)
-    expect(r.thresholds.silenceDb).toBeGreaterThan(-68)
-    expect(r.thresholds.silenceDb).toBeLessThanOrEqual(-62)
+    expect(r.thresholds.noiseMarginDb).toBeGreaterThanOrEqual(4)
+    expect(r.thresholds.noiseMarginDb).toBeLessThan(5)
+    expect(r.thresholds.maxSilenceDb).toBeCloseTo(-53, 5)
     expect(r.thresholds.voiceRatio).toBe(DEFAULT_THRESHOLDS.voiceRatio)
     expect(r.thresholds.musicPeaks).toBe(DEFAULT_THRESHOLDS.musicPeaks)
   })
 
-  it('a quiet mic: the default thresholds call this voice silence or noise; the calibrated ones call it voice', () => {
-    // Defaults: −50 dB voice with a modest voice-band share is not recognised.
-    expect(quietVoice.map((w) => classifyWindow(w, null)).filter((k) => k === 'voice').length).toBeLessThan(quietVoice.length)
+  it('a quiet mic: the default thresholds miss this voice; the calibrated ones call it voice', () => {
+    expect(quietVoice.map((w) => classifyWindow(w)).filter((k) => k === 'voice').length).toBeLessThan(quietVoice.length)
     const r = calibrate({ silence: quietRoom, voice: quietVoice })
     expect(r.measured.voice).toBe(true)
     within(r.thresholds)
-    for (const w of quietVoice) expect(classifyWindow(w, null, r.thresholds)).toBe('voice')
-    for (const w of quietRoom) expect(classifyWindow(w, null, r.thresholds)).toBe('silence')
-    // The silence level stays well under the voice.
-    expect(r.thresholds.silenceDb).toBeLessThan(-50 - 5)
+    for (const w of quietVoice) expect(classifyWindow(w, r.thresholds)).toBe('voice')
+    for (const w of quietRoom) expect(classifyWindow(w, r.thresholds)).toBe('silence')
+    // Silence stays well under the voice.
+    expect(r.thresholds.noiseMarginDb).toBeLessThanOrEqual(18 * 0.4)
     expect(r.thresholds.maxSilenceDb).toBeLessThan(-52)
   })
 
@@ -70,31 +73,42 @@ describe('calibrate', () => {
     const r = calibrate({ silence: quietRoom, voice: quietVoice, music })
     expect(r.measured).toEqual({ silence: true, voice: true, music: true })
     within(r.thresholds)
-    for (const w of music) expect(classifyWindow(w, null, r.thresholds)).toBe('music')
-    for (const w of quietVoice) expect(classifyWindow(w, null, r.thresholds)).toBe('voice')
-    for (const w of quietRoom) expect(classifyWindow(w, null, r.thresholds)).toBe('silence')
+    for (const w of music) expect(classifyWindow(w, r.thresholds)).toBe('music')
+    for (const w of quietVoice) expect(classifyWindow(w, r.thresholds)).toBe('voice')
+    for (const w of quietRoom) expect(classifyWindow(w, r.thresholds)).toBe('silence')
     expect(r.thresholds.musicPeaks).toBeLessThanOrEqual(2)
   })
 
-  it('a step too close to the floor is not used, and says so', () => {
-    const r = calibrate({ silence: quietRoom, voice: many(5, { rmsDb: -66 }), music: many(5, { rmsDb: -67 }) })
+  it('a step too close to the mic noise is not used, and says so', () => {
+    const r = calibrate({ silence: quietRoom, voice: many(5, { rmsDb: -66, aboveDb: 2 }), music: many(5, { rmsDb: -67, aboveDb: 1 }) })
     expect(r.measured).toEqual({ silence: true, voice: false, music: false })
     expect(r.notes).toEqual(expect.arrayContaining(['voiceTooQuiet', 'musicTooQuiet']))
     expect(r.thresholds.voiceRatio).toBe(DEFAULT_THRESHOLDS.voiceRatio)
   })
 
-  it('a noisy room: thresholds stay clamped and voice stays over the silence level', () => {
-    const room = many(7, { rmsDb: -38, flatness: 0.55 }, { rmsDb: 1 })
-    const voice = many(7, { rmsDb: -30, voiceRatio: 0.7, modulationDb: 7, lowEnergyRate: 0.25, stability: 0.5, flatness: 0.2 })
+  it('without levels over the noise (old data) the gap falls back to the level over the silent step', () => {
+    const r = calibrate({ silence: many(5, { rmsDb: -68 }), voice: many(5, { rmsDb: -66 }) })
+    expect(r.measured.voice).toBe(false)
+  })
+
+  it('a noisy room: thresholds stay clamped and voice is not silence', () => {
+    const room = many(7, { rmsDb: -38, aboveDb: 0, flatness: 0.55 }, { rmsDb: 1 })
+    const voice = many(7, { rmsDb: -30, aboveDb: 10, voiceRatio: 0.7, modulationDb: 7, lowEnergyRate: 0.25, stability: 0.5, flatness: 0.2 })
     const r = calibrate({ silence: room, voice })
     within(r.thresholds)
     expect(r.notes).toContain('noisyRoom')
-    for (const w of voice) expect(classifyWindow(w, -38, r.thresholds)).toBe('voice')
+    for (const w of voice) expect(classifyWindow(w, r.thresholds)).toBe('voice')
+    for (const w of room) expect(classifyWindow(w, r.thresholds)).toBe('silence')
   })
 
-  it('a digitally silent mic clamps the silence level at its limit', () => {
-    const r = calibrate({ silence: many(5, { rmsDb: -100 }), voice: [] })
-    expect(r.thresholds.silenceDb).toBe(THRESHOLD_LIMITS.silenceDb[0])
+  it('an unsteady silent step is flagged', () => {
+    const r = calibrate({ silence: many(7, { rmsDb: -60, aboveDb: 1 }, { rmsDb: 6 }), voice: [] })
+    expect(r.notes).toContain('unsteadySilence')
+  })
+
+  it('a digitally silent mic keeps every threshold within its limits', () => {
+    const r = calibrate({ silence: many(5, { rmsDb: -100, aboveDb: 0 }), voice: [] })
+    expect(r.thresholds.maxSilenceDb).toBe(THRESHOLD_LIMITS.maxSilenceDb[0])
     within(r.thresholds)
   })
 })
@@ -109,13 +123,19 @@ describe('sanitizeThresholds', () => {
     expect(sanitizeThresholds(null)).toEqual(DEFAULT_THRESHOLDS)
   })
   it('keeps the loud-room cap over the silence level', () => {
-    const th = sanitizeThresholds({ silenceDb: -42, maxSilenceDb: -70 })
-    expect(th.maxSilenceDb).toBeGreaterThanOrEqual(th.silenceDb)
+    const th = sanitizeThresholds({ silenceDb: -52, maxSilenceDb: -70 })
+    expect(th.maxSilenceDb).toBeGreaterThanOrEqual(th.silenceDb + 3)
+  })
+  it('old (v1) thresholds: the removed floor margin is ignored, the new margin gets its default', () => {
+    const th = sanitizeThresholds({ silenceDb: -62, floorMarginDb: 3, maxSilenceDb: -50 } as Record<string, unknown>)
+    expect(th.noiseMarginDb).toBe(DEFAULT_THRESHOLDS.noiseMarginDb)
+    expect(th.silenceDb).toBe(-62)
+    expect('floorMarginDb' in th).toBe(false)
   })
 })
 
 describe('stepWindows / quantile', () => {
-  const frame = (rmsDb: number): FrameFeatures => ({ rmsDb, flatness: 0.3, centroidHz: 1000, voiceRatio: 0.5, tonalPeaks: 0, profile: [1, 2, 3] })
+  const frame = (rmsDb: number): FrameFeatures => ({ rmsDb, cleanDb: rmsDb, aboveDb: null, flatness: 0.3, centroidHz: 1000, voiceRatio: 0.5, tonalPeaks: 0, profile: [1, 2, 3], cells: [] })
   it('slides 2 s windows every 0.5 s over a 5 s step', () => {
     expect(stepWindows(Array.from({ length: 50 }, () => frame(-60)))).toHaveLength(7)
     expect(stepWindows(Array.from({ length: 8 }, () => frame(-60)))).toHaveLength(1)
@@ -124,34 +144,41 @@ describe('stepWindows / quantile', () => {
   it('quantile', () => {
     expect(quantile([3, 1, 2], 0.5)).toBe(2)
     expect(quantile([0, 10], 0.25)).toBe(2.5)
+    expect(quantile([null, 4], 0.5)).toBe(4)
     expect(quantile([], 0.5)).toBeNull()
   })
 })
 
 describe('stored calibration', () => {
-  it('parses per-device entries, sanitizes thresholds and drops garbage', async () => {
-    const { __parseCalibration, thresholdsFor, saveCalibration } = await import('./calibration-store')
-    const s = __parseCalibration({ devices: { abc: { thresholds: { silenceDb: -500 }, at: 5, measured: { silence: true } }, bad: 3 }, last: 'abc' })
-    expect(Object.keys(s.devices)).toEqual(['abc'])
+  it('parses per-device entries, sanitizes thresholds and profiles and drops garbage', async () => {
+    const { __parseCalibration, calibrationFor, isCalibrated, saveCalibration } = await import('./calibration-store')
+    const noise: NoiseProfile = { db: Array(NOISE_CELLS).fill(-90) }
+    const s = __parseCalibration({
+      devices: {
+        // A v1 entry: no noise profile.
+        abc: { thresholds: { silenceDb: -500 }, at: 5, measured: { silence: true } },
+        def: { thresholds: {}, noise, at: 6, measured: { silence: true } },
+        broken: { thresholds: {}, noise: { db: [1, 2] }, at: 7 },
+        bad: 3,
+      },
+      last: 'abc',
+    })
+    expect(Object.keys(s.devices).sort()).toEqual(['abc', 'broken', 'def'])
     expect(s.devices.abc!.thresholds.silenceDb).toBe(THRESHOLD_LIMITS.silenceDb[0])
+    expect(s.devices.abc!.noise).toBeNull()
+    expect(s.devices.def!.noise).toEqual(noise)
+    expect(s.devices.broken!.noise).toBeNull()
     expect(s.devices.abc!.measured).toEqual({ silence: true, voice: false, music: false })
     expect(s.last).toBe('abc')
     expect(__parseCalibration('nope')).toEqual({ devices: {}, last: null })
     // Without localStorage (node), saving still works in memory; unknown devices get the defaults.
-    const r = calibrate({ silence: quietRoom, voice: quietVoice })
+    const r = { ...calibrate({ silence: quietRoom, voice: quietVoice }), noise }
     saveCalibration('mic-1', r)
-    expect(thresholdsFor('mic-1')).toEqual(r.thresholds)
-    expect(thresholdsFor('other')).toEqual(DEFAULT_THRESHOLDS)
-    expect(thresholdsFor(null)).toEqual(DEFAULT_THRESHOLDS)
-  })
-})
-
-describe('headphones', () => {
-  it('counts silent windows as music, keeps the rest', () => {
-    expect(applyHeadphones('silence', true)).toBe('music')
-    expect(applyHeadphones('voice', true)).toBe('voice')
-    expect(applyHeadphones('noise', true)).toBe('noise')
-    expect(applyHeadphones('music', true)).toBe('music')
-    expect(applyHeadphones('silence', false)).toBe('silence')
+    expect(calibrationFor('mic-1')).toEqual({ thresholds: r.thresholds, noise })
+    expect(isCalibrated('mic-1')).toBe(true)
+    saveCalibration('mic-2', { ...r, noise: null })
+    expect(isCalibrated('mic-2')).toBe(false)
+    expect(calibrationFor('other')).toEqual({ thresholds: DEFAULT_THRESHOLDS, noise: null })
+    expect(calibrationFor(null)).toEqual({ thresholds: DEFAULT_THRESHOLDS, noise: null })
   })
 })

@@ -1,14 +1,16 @@
 /**
  * Sound profile classifier (GDD §4.3). Pure: no Web Audio here, so it is unit
- * tested on synthetic spectra and feature vectors. `monitor.ts` feeds it.
+ * tested on synthetic spectra and feature vectors. `pipeline.ts` feeds it.
  *
  * Pipeline:
- *   1. `frameFeatures` — one analyser frame (~43 ms, every 100 ms): level,
- *      spectral flatness, centroid, share of energy in the voice band, tonal
- *      peaks and a coarse band profile.
- *   2. `windowFeatures` — the frames of one 2 s window: mean level, level
- *      modulation, low-energy-frame rate (speech pauses), spectral stability.
+ *   1. `frameFeatures` — one analyser frame (~43 ms, every 100 ms). The mic's
+ *      own noise (`noise.ts` profile) is subtracted from every bin first;
+ *      then level over that noise, denoised level, spectral flatness,
+ *      centroid, voice-band share, tonal peaks and a coarse band profile.
+ *   2. `windowFeatures` — the frames of one 2 s window: level, level over the
+ *      noise, modulation, low-energy-frame rate (speech pauses), stability.
  *   3. `classifyWindow` — simple rules → silence / voice / music / noise.
+ *      Silence = nothing meaningfully over the mic's own noise.
  *   4. `addWindow` / `profileOf` — seconds per kind → shares sent at claim.
  *
  * It is a heuristic, not a model: it tells "quiet room" from "someone
@@ -16,40 +18,53 @@
  * study style, and errs towards `noise` when unsure. Known limits: songs with
  * prominent vocals often read as `voice`; a quiet podcast close to the noise
  * floor reads as `silence`; very compressed music (lo-fi with vinyl hiss)
- * can read as `noise`.
+ * can read as `noise`; music on headphones is not heard at all.
  */
 import type { SoundProfile } from '../../../engine'
+import { binNoise, cellPowers, NOISE_HI_HZ, NOISE_LO_HZ, SUB_ALPHA, SUB_BETA, type NoiseProfile } from './noise'
 
 export type SoundKind = 'silence' | 'voice' | 'music' | 'noise'
 export const SOUND_KINDS: readonly SoundKind[] = ['silence', 'music', 'voice', 'noise']
 
-/** Analysed band (Hz): below 80 is mains hum and desk thumps, above 8 kHz little that matters. */
-const LO_HZ = 80
-const HI_HZ = 8000
+/** Analysed band (Hz): the high-pass filter removes hum and thumps below 100 Hz; over 8 kHz little matters. */
+const LO_HZ = NOISE_LO_HZ
+const HI_HZ = NOISE_HI_HZ
 const VOICE_LO_HZ = 300
 const VOICE_HI_HZ = 3400
 /** Log-spaced bands of the coarse profile (for stability between frames). */
 const PROFILE_BANDS = 16
+/** A tonal peak must stand this far over the mic noise in its bin (power ratio: 10 dB). */
+const PEAK_OVER_NOISE = 10
+/** Cap of one bin's power ratio over the noise in `aboveDb` (60 dB). */
+const MAX_RATIO = 1e6
 
 export interface FrameFeatures {
   /** RMS level of the time-domain frame, dBFS (−100 for digital silence). */
   rmsDb: number
+  /** Mean bin power of 100–8000 Hz after removing the mic noise, dB (spectrum scale). Drives modulation and pauses. */
+  cleanDb: number
+  /** Mean per-bin power over the mic noise profile, dB (≈ 0 = only the mic's own noise); null without a profile. */
+  aboveDb: number | null
   /** Spectral flatness 0–1 (1 = white noise, ~0 = pure tone). */
   flatness: number
   /** Spectral centroid, Hz. */
   centroidHz: number
-  /** Share of the 80–8000 Hz energy that is in 300–3400 Hz. */
+  /** Share of the 100–8000 Hz energy that is in 300–3400 Hz. */
   voiceRatio: number
-  /** Narrow peaks ≥ 12 dB over their neighbourhood (harmonics, notes). */
+  /** Narrow peaks ≥ 12 dB over their neighbourhood and 10 dB over the mic noise (harmonics, notes). */
   tonalPeaks: number
   /** Band levels (dB), for frame-to-frame stability. */
   profile: number[]
+  /** Raw (not denoised) mean power per noise cell, linear: input of the noise tracker and the calibration. */
+  cells: number[]
 }
 
 export interface WindowFeatures {
   /** Level of the window (energy mean of the frames), dBFS. */
   rmsDb: number
-  /** Standard deviation of frame levels, dB (speech is choppy, music and noise steadier). */
+  /** Level over the mic noise (energy mean of the frames), dB; null without a profile. */
+  aboveDb: number | null
+  /** Standard deviation of the frames' denoised levels, dB (speech is choppy, music and noise steadier). */
   modulationDb: number
   /** Fraction of frames 10 dB or more below the window level (pauses between words). */
   lowEnergyRate: number
@@ -63,11 +78,11 @@ export interface WindowFeatures {
 }
 
 export interface Thresholds {
-  /** Absolute level under which a window is always silence. */
+  /** Absolute level (dBFS) under which a window is always silence (muted or near-digital silence). */
   silenceDb: number
-  /** A window within this many dB of the adaptive noise floor is silence… */
-  floorMarginDb: number
-  /** …but never above this level (a loud steady room is not "silence"). */
+  /** Silence = less than this many dB over the mic's own noise… */
+  noiseMarginDb: number
+  /** …and never louder than this (dBFS): a loud steady room is not "silence". */
   maxSilenceDb: number
   /** Flatness from which the sound is broadband noise. */
   noiseFlatness: number
@@ -85,9 +100,9 @@ export interface Thresholds {
 }
 
 export const DEFAULT_THRESHOLDS: Thresholds = {
-  silenceDb: -52,
-  floorMarginDb: 6,
-  maxSilenceDb: -38,
+  silenceDb: -70,
+  noiseMarginDb: 5,
+  maxSilenceDb: -35,
   noiseFlatness: 0.42,
   voiceRatio: 0.55,
   voiceModulationDb: 5,
@@ -113,44 +128,67 @@ export function rmsDbOf(samples: ArrayLike<number>): number {
 
 /**
  * Features of one frame. `spectrumDb` is `AnalyserNode.getFloatFrequencyData`
- * (dB per bin, bin i centred at i · sampleRate / (2 · length)).
+ * (dB per bin, bin i centred at i · sampleRate / (2 · length)). With a
+ * `noise` profile the mic's noise is subtracted from every bin first
+ * (power − 2 × noise, with a floor of 8 % of the bin's power but never over
+ * 8 % of the profile's median noise, so leftover hum flattens out instead of
+ * keeping its comb shape), and a tonal peak must stand 10 dB over the noise
+ * of its bin: steady hiss and hum lines no longer look like tones or sound.
  */
-export function frameFeatures(spectrumDb: ArrayLike<number>, sampleRate: number, rmsDb: number): FrameFeatures {
+export function frameFeatures(spectrumDb: ArrayLike<number>, sampleRate: number, rmsDb: number, noise: NoiseProfile | null = null): FrameFeatures {
   const n = spectrumDb.length
   const binHz = sampleRate / (2 * n)
   const lo = Math.max(1, Math.ceil(LO_HZ / binHz))
   const hi = Math.min(n - 1, Math.floor(HI_HZ / binHz))
+  const nb = noise ? binNoise(noise, n, sampleRate) : null
   let total = 0
+  let ratioSum = 0
+  let ratioBins = 0
   let voice = 0
   let weighted = 0
   let logSum = 0
   let count = 0
   const db: number[] = []
+  const rawDb: number[] = []
+  const strong: boolean[] = []
   for (let i = lo; i <= hi; i++) {
     const d = Number.isFinite(spectrumDb[i]!) ? Math.max(-160, spectrumDb[i]!) : -160
-    db.push(d)
-    const p = Math.pow(10, d / 10) + EPS
+    const pr = Math.pow(10, d / 10)
+    const nz = nb ? nb.bins[i]! : 0
+    const p = (nb ? Math.max(pr - SUB_ALPHA * nz, Math.min(SUB_BETA * pr, nb.floor)) : pr) + EPS
+    db.push(10 * Math.log10(p))
+    rawDb.push(d)
+    strong.push(!nb || pr >= PEAK_OVER_NOISE * nz)
     const f = i * binHz
+    if (nz > 0) {
+      ratioSum += Math.min(pr / nz, MAX_RATIO)
+      ratioBins++
+    }
     total += p
     weighted += p * f
     logSum += Math.log(p)
     count++
     if (f >= VOICE_LO_HZ && f <= VOICE_HI_HZ) voice += p
   }
-  if (count === 0) return { rmsDb, flatness: 1, centroidHz: 0, voiceRatio: 0, tonalPeaks: 0, profile: [] }
+  const cells = cellPowers(spectrumDb, sampleRate)
+  if (count === 0) return { rmsDb, cleanDb: -160, aboveDb: null, flatness: 1, centroidHz: 0, voiceRatio: 0, tonalPeaks: 0, profile: [], cells }
   const flatness = Math.min(1, Math.exp(logSum / count) / (total / count))
+  // Mean per-bin power ratio over the noise: every bin weighs the same, so loud narrow hum lines cannot hide broadband sound.
+  const aboveDb = nb && ratioBins > 0 ? 10 * Math.log10(ratioSum / ratioBins) : null
 
-  // Tonal peaks: local maxima ≥ 12 dB over the mean of a ±8-bin neighbourhood.
+  // Tonal peaks: local maxima ≥ 12 dB over the mean of a ±8-bin neighbourhood of the raw spectrum (subtraction
+  // leaves random spikes in leftover noise; a raw noise bin practically never stands 12 dB over its neighbours),
+  // and 10 dB over the mic noise of the bin (steady hum lines are not tones).
   let tonalPeaks = 0
   const R = 8
-  for (let k = 1; k < db.length - 1; k++) {
-    const v = db[k]!
-    if (v < db[k - 1]! || v < db[k + 1]!) continue
+  for (let k = 1; k < rawDb.length - 1; k++) {
+    const v = rawDb[k]!
+    if (!strong[k] || v < rawDb[k - 1]! || v < rawDb[k + 1]!) continue
     let s = 0
     let c = 0
-    for (let j = Math.max(0, k - R); j <= Math.min(db.length - 1, k + R); j++) {
+    for (let j = Math.max(0, k - R); j <= Math.min(rawDb.length - 1, k + R); j++) {
       if (Math.abs(j - k) <= 1) continue
-      s += db[j]!
+      s += rawDb[j]!
       c++
     }
     if (c > 0 && v - s / c >= 12) tonalPeaks++
@@ -174,7 +212,17 @@ export function frameFeatures(spectrumDb: ArrayLike<number>, sampleRate: number,
     profile.push(c > 0 ? 10 * Math.log10(s / c + EPS) : -160)
   }
 
-  return { rmsDb, flatness, centroidHz: weighted / total, voiceRatio: voice / total, tonalPeaks, profile }
+  return {
+    rmsDb,
+    cleanDb: 10 * Math.log10(total / count),
+    aboveDb,
+    flatness,
+    centroidHz: weighted / total,
+    voiceRatio: voice / total,
+    tonalPeaks,
+    profile,
+    cells,
+  }
 }
 
 function correlation(a: readonly number[], b: readonly number[]): number {
@@ -201,19 +249,22 @@ function correlation(a: readonly number[], b: readonly number[]): number {
   return da > 0 && dbb > 0 ? num / Math.sqrt(da * dbb) : 1
 }
 
+const energyDb = (vals: readonly number[]) => 10 * Math.log10(vals.reduce((s, v) => s + Math.pow(10, v / 10), 0) / Math.max(1, vals.length) + EPS)
+
 /** Summary of the frames of one window (null if there are none). */
 export function windowFeatures(frames: readonly FrameFeatures[]): WindowFeatures | null {
   const n = frames.length
   if (n === 0) return null
-  let energy = 0
-  for (const f of frames) energy += Math.pow(10, f.rmsDb / 10)
-  const rmsDb = 10 * Math.log10(energy / n + EPS)
-  const levels = frames.map((f) => f.rmsDb)
+  const rmsDb = energyDb(frames.map((f) => f.rmsDb))
+  const aboveDb = frames.every((f) => f.aboveDb !== null) ? energyDb(frames.map((f) => f.aboveDb!)) : null
+  // Modulation and pauses on the denoised level: pauses between words fall under the mic noise, not just to it.
+  const levels = frames.map((f) => f.cleanDb)
+  const level = energyDb(levels)
   const meanLevel = levels.reduce((s, v) => s + v, 0) / n
   const modulationDb = Math.sqrt(levels.reduce((s, v) => s + (v - meanLevel) ** 2, 0) / n)
-  const lowEnergyRate = levels.filter((v) => v <= rmsDb - 10).length / n
+  const lowEnergyRate = levels.filter((v) => v <= level - 10).length / n
   // Spectral shape averaged over the audible frames only (pauses would drag it towards the room noise).
-  const loud = frames.filter((f) => f.rmsDb > rmsDb - 10)
+  const loud = frames.filter((f) => f.cleanDb > level - 10)
   const src = loud.length > 0 ? loud : frames
   const avg = (k: 'flatness' | 'centroidHz' | 'voiceRatio' | 'tonalPeaks') => src.reduce((s, f) => s + f[k], 0) / src.length
   let corr = 0
@@ -224,6 +275,7 @@ export function windowFeatures(frames: readonly FrameFeatures[]): WindowFeatures
   }
   return {
     rmsDb,
+    aboveDb,
     modulationDb,
     lowEnergyRate,
     flatness: avg('flatness'),
@@ -235,24 +287,19 @@ export function windowFeatures(frames: readonly FrameFeatures[]): WindowFeatures
   }
 }
 
-/** Level under which a window counts as silence, given the adaptive floor. */
-export function silenceLevel(floorDb: number | null, th: Thresholds = DEFAULT_THRESHOLDS): number {
-  if (floorDb === null) return th.silenceDb
-  return Math.max(th.silenceDb, Math.min(th.maxSilenceDb, floorDb + th.floorMarginDb))
-}
-
 /**
- * Noise floor tracker: follows the quietest windows down at once and creeps
- * up slowly (0.1 dB per window ≈ 3 dB/min), so a steady fan or fridge
- * becomes "the room" while a burst of noise does not.
+ * Silence = nothing meaningfully over the mic's own noise: less than
+ * `noiseMarginDb` over the noise profile (and not louder than
+ * `maxSilenceDb`), or under the absolute `silenceDb`. Without a profile
+ * (only the first window of an uncalibrated mic) just the absolute level.
  */
-export function updateFloor(floorDb: number | null, windowDb: number): number {
-  if (floorDb === null || windowDb < floorDb) return windowDb
-  return Math.min(windowDb, floorDb + 0.1)
+export function isSilent(w: WindowFeatures, th: Thresholds = DEFAULT_THRESHOLDS): boolean {
+  if (w.rmsDb < th.silenceDb) return true
+  return w.aboveDb !== null && w.aboveDb < th.noiseMarginDb && w.rmsDb <= th.maxSilenceDb
 }
 
-export function classifyWindow(w: WindowFeatures, floorDb: number | null = null, th: Thresholds = DEFAULT_THRESHOLDS): SoundKind {
-  if (w.rmsDb < silenceLevel(floorDb, th)) return 'silence'
+export function classifyWindow(w: WindowFeatures, th: Thresholds = DEFAULT_THRESHOLDS): SoundKind {
+  if (isSilent(w, th)) return 'silence'
   if (w.flatness >= th.noiseFlatness) return 'noise'
   const choppy = w.modulationDb >= th.voiceModulationDb || w.lowEnergyRate >= th.voiceLowEnergyRate
   if (w.voiceRatio >= th.voiceRatio && choppy && w.stability < th.voiceMaxStability) return 'voice'
@@ -262,15 +309,20 @@ export function classifyWindow(w: WindowFeatures, floorDb: number | null = null,
 }
 
 /**
- * "I listen to music on headphones" (self-declared, opt-in): the mic cannot
- * hear headphone music, so silent windows count as music. Everything else is
- * kept (talking or room noise is still heard).
- *
- * Music played through speakers — including the app's own focus music — is
- * picked up by the mic and already counts as music; that is fine.
+ * May this window teach the noise tracker that the room got louder? Only
+ * silence, or steady sound without tones a little over the floor (a fan, a
+ * higher mic gain) — never speech or music, never a loud room.
  */
-export function applyHeadphones(kind: SoundKind, headphones: boolean): SoundKind {
-  return headphones && kind === 'silence' ? 'music' : kind
+export function quietLike(w: WindowFeatures, kind: SoundKind, th: Thresholds = DEFAULT_THRESHOLDS): boolean {
+  if (w.rmsDb > th.maxSilenceDb) return false
+  if (kind === 'silence') return true
+  return (
+    w.aboveDb !== null &&
+    w.aboveDb < th.noiseMarginDb + 3 &&
+    w.tonalPeaks < 1 &&
+    w.modulationDb < th.voiceModulationDb &&
+    w.lowEnergyRate < th.voiceLowEnergyRate
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -291,8 +343,12 @@ export function tallySeconds(t: SoundTally): number {
   return t.silence + t.music + t.voice + t.noise
 }
 
-/** Minimum analysed time before a profile is sent. */
-export const MIN_PROFILE_SECONDS = 60
+/**
+ * Minimum analysed time before a profile is sent: 15 windows of 2 s. Real
+ * sessions last ≥ 15 min, so this only rules out nearly empty samples (mic
+ * lost at once, dev clock); the shares only tilt encounters slightly.
+ */
+export const MIN_PROFILE_SECONDS = 30
 
 /**
  * Shares of the analysed time (sum 1, three decimals, never over 1.003), or

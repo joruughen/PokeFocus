@@ -8,8 +8,8 @@ import {
   parseTally,
   profileOf,
   rmsDbOf,
-  silenceLevel,
-  updateFloor,
+  isSilent,
+  quietLike,
   windowFeatures,
   type FrameFeatures,
   type WindowFeatures,
@@ -56,6 +56,7 @@ const voiced = (formant: number, level = -45) =>
 
 const W = (p: Partial<WindowFeatures>): WindowFeatures => ({
   rmsDb: -30,
+  aboveDb: null,
   modulationDb: 2,
   lowEnergyRate: 0,
   flatness: 0.2,
@@ -137,19 +138,22 @@ describe('window features', () => {
     expect(classifyWindow(music)).toBe('music')
     const noise = windowFeatures(Array.from({ length: 20 }, (_, i) => frame(-32, white(-55, i))))!
     expect(classifyWindow(noise)).toBe('noise')
-    const quiet = windowFeatures(Array.from({ length: 20 }, (_, i) => frame(-70, white(-120, i))))!
+    const quiet = windowFeatures(Array.from({ length: 20 }, (_, i) => frame(-80, white(-120, i))))!
     expect(classifyWindow(quiet)).toBe('silence')
   })
 })
 
 describe('classifyWindow (feature vectors)', () => {
-  it('silence: below the absolute threshold or near the adaptive floor', () => {
-    expect(classifyWindow(W({ rmsDb: -60 }))).toBe('silence')
-    // A steady fan at −44 dB is "the room" once the floor has learnt it…
-    expect(classifyWindow(W({ rmsDb: -44, flatness: 0.6 }), -46)).toBe('silence')
-    // …but not without a floor, and a loud room is never silence.
-    expect(classifyWindow(W({ rmsDb: -44, flatness: 0.6 }), null)).toBe('noise')
-    expect(classifyWindow(W({ rmsDb: -36, flatness: 0.6 }), -36)).toBe('noise')
+  it('silence: under the absolute level, or close to the mic noise (and not loud)', () => {
+    expect(classifyWindow(W({ rmsDb: -80 }))).toBe('silence')
+    // A steady −44 dBFS hiss that is the mic's own noise (≈ 0 dB over its profile) is silence…
+    expect(classifyWindow(W({ rmsDb: -44, aboveDb: 1, flatness: 0.6 }))).toBe('silence')
+    // …but not without a profile, not well over the noise, and a loud room is never silence.
+    expect(classifyWindow(W({ rmsDb: -44, aboveDb: null, flatness: 0.6 }))).toBe('noise')
+    expect(classifyWindow(W({ rmsDb: -44, aboveDb: 9, flatness: 0.6 }))).toBe('noise')
+    expect(classifyWindow(W({ rmsDb: -30, aboveDb: 1, flatness: 0.6 }))).toBe('noise')
+    expect(isSilent(W({ rmsDb: -50, aboveDb: 4.9 }))).toBe(true)
+    expect(isSilent(W({ rmsDb: -50, aboveDb: 5 }))).toBe(false)
   })
 
   it('noise: broadband (high flatness) even if choppy', () => {
@@ -172,14 +176,15 @@ describe('classifyWindow (feature vectors)', () => {
     expect(classifyWindow(W({ flatness: 0.3, tonalPeaks: 1, stability: 0.3, voiceRatio: 0.3 }))).toBe('noise')
   })
 
-  it('floor: drops at once, creeps up slowly; silence level is clamped', () => {
-    expect(updateFloor(null, -50)).toBe(-50)
-    expect(updateFloor(-50, -60)).toBe(-60)
-    expect(updateFloor(-60, -30)).toBeCloseTo(-59.9, 5)
-    expect(silenceLevel(null)).toBe(-52)
-    expect(silenceLevel(-70)).toBe(-52)
-    expect(silenceLevel(-46)).toBe(-40)
-    expect(silenceLevel(-20)).toBe(-38)
+  it('quietLike: what may teach the noise tracker that the room got louder', () => {
+    expect(quietLike(W({ rmsDb: -60, aboveDb: 1 }), 'silence')).toBe(true)
+    // Steady, toneless, a little over the floor (a fan): yes.
+    expect(quietLike(W({ rmsDb: -55, aboveDb: 6, tonalPeaks: 0, modulationDb: 1 }), 'noise')).toBe(true)
+    // Speech, tones, too far over the floor, or a loud room: no.
+    expect(quietLike(W({ rmsDb: -55, aboveDb: 6, modulationDb: 7 }), 'voice')).toBe(false)
+    expect(quietLike(W({ rmsDb: -55, aboveDb: 6, tonalPeaks: 2 }), 'noise')).toBe(false)
+    expect(quietLike(W({ rmsDb: -55, aboveDb: 12 }), 'noise')).toBe(false)
+    expect(quietLike(W({ rmsDb: -30, aboveDb: 1 }), 'silence')).toBe(false)
   })
 })
 
@@ -199,7 +204,8 @@ describe('tally → profile', () => {
   })
 
   it('too little analysed time → no profile; ignores bad durations', () => {
-    expect(profileOf(addWindow(EMPTY_TALLY, 'music', 30))).toBeNull()
+    expect(profileOf(addWindow(EMPTY_TALLY, 'music', 29))).toBeNull()
+    expect(profileOf(addWindow(EMPTY_TALLY, 'music', 30))).not.toBeNull()
     expect(addWindow(EMPTY_TALLY, 'music', -5)).toBe(EMPTY_TALLY)
     expect(addWindow(EMPTY_TALLY, 'music', NaN)).toBe(EMPTY_TALLY)
     expect(dominantOf(EMPTY_TALLY)).toBeNull()
