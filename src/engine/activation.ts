@@ -25,7 +25,7 @@ import { addDays, inHourWindow, localToTs, MINUTE_MS, startOfLocalDay, toLocal, 
 /** Team size limit (`setTeam` in box.ts); the Bug condition tops out with a full team of Bug types. */
 const TEAM_SIZE = 6
 
-/** Weather that a type waits for (the player picks the weather in Settings for now). */
+/** Weather that a type waits for (the real weather of the location or city). */
 export type WeatherNeed = 'rain' | 'cold'
 
 /**

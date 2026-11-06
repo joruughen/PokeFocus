@@ -21,7 +21,7 @@ import {
 
 const ctx = defaultContext()
 
-/** `weather`: what the session would use (detected or manual); defaults to `profile.weather`. */
+/** `weather`: what the session would use (`useSessionWeather().effective`; pass it — the engine default `profile.weather` is a dev-only override). */
 export function conditionEnvNow(state: PlayerState, now: number, plannedMinutes: number, weather?: WeatherInput | null): ConditionEnv {
   return conditionEnvAt(state, now, plannedMinutes, weather !== undefined ? { weather } : {})
 }

@@ -113,10 +113,19 @@ Los textos visibles van en ES y EN (`src/i18n/locales/{es,en}.json`).
 - **Clima real:**
   - el servidor consulta Open-Meteo (geocodificación más tiempo actual, sin clave) con la ciudad del perfil al iniciar la sesión;
   - lo cachea unos 30 min por ciudad y lo pasa al reducer por `ActionEnv`, que lo guarda en la sesión activa y lo usa al reclamar;
-  - si falla la red, usa el clima manual de Ajustes o `null`;
+  - si falla la red, `null` (el clima manual quedó solo para desarrollo en el paquete G);
   - en tests se inyecta un fetch falso (`Deps`);
-  - Ajustes muestra el clima detectado, y el selector manual queda como respaldo.
+  - Ajustes muestra el clima detectado.
 - **i18n:** `mic.*`, `weather.*`.
+
+## G — Clima por ubicación, sin clima manual, y calibración del micrófono
+
+- **Sin clima manual para jugadores.** Si no se detecta, no hay clima (Agua y Hielo apagados; Fuego solo por su franja de la tarde). `setWeather` es una acción de desarrollo (`DEV_ACTIONS`): el servidor la rechaza sin `DEV_TOOLS=1`, y `resolveSessionWeather` ignora `profile.weather` fuera de desarrollo, también en partidas antiguas. El selector solo está en el panel de desarrollo.
+- **Clima por la ubicación del dispositivo**, con la ciudad escrita como respaldo. "Usar mi ubicación" en Ajustes y como aviso compacto en la preparación de la sesión (Geolocation API, contexto seguro). El cliente redondea a ~0,1° (~10 km) antes de enviar; el reducer vuelve a redondear y guarda solo la celda en `profile.location` (opcional; las partidas antiguas = null). El servidor consulta Open-Meteo por lat/lon sin geocodificar y cachea por celda. Se puede quitar. Sin enfriamiento.
+  - Por qué en el perfil y no con `start`: el servidor inicia las sesiones de los invitados de un grupo de estudio, que pueden no tener la app abierta. La celda de ~10 km es el mínimo necesario para eso.
+- **Calibración del micrófono** (~15 s, opcional): silencio 5 s, voz 5 s y música 5 s opcional ("Saltar: uso audífonos", que activa la opción de audífonos). `calibrate()` (puro, `src/ui/lib/mic/calibrate.ts`) deriva umbrales personales con límites; lo no medido usa `DEFAULT_THRESHOLDS`. Se guarda por `deviceId` en localStorage (`calibration-store.ts`). Medidor en vivo en el asistente y en Ajustes.
+- **"Escucho música con audífonos"** (opcional, recordado): las ventanas de silencio cuentan como música (`applyHeadphones`). La música por parlantes, también la de enfoque de la app, ya cuenta como música.
+- **i18n:** `mic.*`, `weather.*`, `location.*`.
 
 ## Balance (después de A)
 

@@ -46,7 +46,7 @@ import {
   type WeatherInput,
 } from '../engine'
 import { EMPTY_DOC, type ActionResults, type GameAction, type GameActionType, type GameDoc, type SessionTimer } from './protocol'
-import { resolveSessionWeather } from './weather'
+import { resolveSessionWeather, toGeoCell } from './weather'
 
 /** Days a timezone change stays locked (prevents shifting day/week keys to farm streaks and leagues). */
 export const TIMEZONE_LOCK_DAYS = 30
@@ -65,7 +65,7 @@ export interface ActionEnv {
    * client). null/absent = solo session (Fairy condition off).
    */
   friendOverlap?: number | null
-  /** Real weather of the profile city at `start` (server fetch); null/absent = unknown → manual fallback. */
+  /** Real weather of the profile location or city at `start` (server fetch); null/absent = unknown → no weather (manual only in dev). */
   weather?: WeatherInput | null
   ctx?: EngineContext
 }
@@ -82,6 +82,8 @@ export const DEV_ACTIONS: ReadonlySet<GameActionType> = new Set<GameActionType>(
   'devLevelUp',
   'devAddRandomPokemon',
   'resetAll',
+  // Manual weather: dev-panel override only (players never pick the weather, GDD §9.2).
+  'setWeather',
 ])
 
 export function isDevAction(type: GameActionType): boolean {
@@ -145,6 +147,8 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
         patch.timezoneChangedAt = t
       }
       if (a.patch.city !== undefined) patch.city = a.patch.city
+      // Only a rounded ~0.1° cell is stored (the server validation re-rounds it too).
+      if (a.patch.location !== undefined) patch.location = a.patch.location ? toGeoCell(a.patch.location.lat, a.patch.location.lon) : null
       return withPlayer({ ...p, profile: { ...p.profile, ...patch } })
     }
     case 'setWeather':
@@ -203,8 +207,8 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
           focusInputs: { screenshotLabels: label ? [label] : null, missedCaptures: 0 },
           friendOverlap: env.friendOverlap ?? null,
           soundProfile: a.soundProfile ?? null,
-          // Fixed at start; older saves without it fall back to profile.weather.
-          ...(session.weather !== undefined ? { weather: session.weather } : {}),
+          // Fixed at start. Older saves without it get no weather (the manual one only in dev).
+          weather: session.weather !== undefined ? session.weather : resolveSessionWeather(null, p.profile.weather, env.dev).weather,
         },
         rng,
         ctx,

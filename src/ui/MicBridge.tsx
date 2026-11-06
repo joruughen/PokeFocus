@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { clearMicTallies, startMic, stopMic } from './lib/mic/monitor'
+import { clearMicTallies, setMicHeadphones, startMic, stopMic } from './lib/mic/monitor'
 import { useGame } from './store/game'
 import { usePrefs } from './store/prefs'
 import { usePhase } from './store/selectors'
@@ -14,7 +14,11 @@ export function MicBridge() {
   const loaded = useGame((s) => s.loaded)
   const sessionId = useGame((s) => s.player?.activeSession?.id ?? null)
   const phase = usePhase()
+  const headphones = usePrefs((s) => s.micHeadphones)
   const listen = enabled && sessionId !== null && phase === 'focus'
+
+  // Takes effect from the next 2 s window, also mid-session.
+  useEffect(() => setMicHeadphones(headphones), [headphones])
 
   useEffect(() => {
     if (listen && sessionId) void startMic(sessionId)

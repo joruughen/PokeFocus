@@ -152,6 +152,8 @@ Si el usuario no concedió el permiso de compartir pantalla: `valor_captura = 0.
 - Es opcional (interruptor en la preparación de la sesión, recordado en el navegador) y se analiza **en el navegador** con Web Audio API. **El audio nunca sale del dispositivo.**
 - Solo funciona en un contexto seguro (`localhost` o HTTPS). Sin él, o sin permiso, se explica en una línea y la sesión sigue sin perfil.
 - Cada 2 s se clasifica la ventana actual como `silencio` / `voz` / `música` / `ruido_ambiente` con reglas simples: nivel RMS frente a un suelo de ruido adaptativo, planitud espectral (ruido), energía en la banda de voz (300–3400 Hz) con modulación y pausas (voz), y picos tonales con un espectro estable (música). Las pausas no cuentan, y el micrófono se libera al pausar, terminar o cancelar.
+- **Calibración (opcional, ~15 s):** se ofrece la primera vez que se activa el micrófono y se puede repetir en Ajustes. Paso 1: 5 s de silencio (suelo de ruido del cuarto y del micrófono). Paso 2: 5 s hablando (nivel y rasgos de la voz). Paso 3, opcional: 5 s de la música del jugador por los parlantes, con "Saltar: uso audífonos". De esas medidas salen umbrales personales (umbral de silencio entre el suelo y la voz; referencias de banda de voz, modulación y estabilidad; picos tonales y estabilidad de la música si se midió), siempre dentro de límites razonables y con los valores estándar para lo que no se midió. Se guardan por dispositivo (navegador, por `deviceId` del micrófono). Un medidor en vivo ("Ahora detecto: Música") en el asistente y en Ajustes permite comprobarlo.
+- **"Escucho música con audífonos"** (opcional, recordado): el micrófono no oye la música de los audífonos, así que con esta opción los ratos clasificados como silencio cuentan como música. Lo declara el jugador; se acepta ese margen. La música por parlantes, también la música de enfoque de la propia app, la oye el micrófono y cuenta como música (aceptado).
 - Al reclamar se envían solo los porcentajes, por ejemplo `{silencio: 0.62, música: 0.30, voz: 0.08, ruido: 0}` (cada uno entre 0 y 1, suma ≤ 1,05; hace falta al menos 1 min analizado).
 - **No afecta al Foco.** Activa las condiciones de Volador (música o ruido ≥ 30 %) y Psíquico (silencio ≥ 70 %) (§9.2), y el perfil dominante, o **estilo de estudio**, inclina **ligeramente** qué tipos aparecen en el grupo salvaje:
 
@@ -464,7 +466,15 @@ Los tipos importan **dos veces**:
 | Social | Hada, Volador (ruido) |
 | Fin de semana | Tierra, Normal |
 
-**Clima:** el servidor consulta Open-Meteo (geocodificación y tiempo actual, sin API key) con la ciudad del perfil al iniciar la sesión, y lo fija en la sesión activa. Se cachea 30 min por ciudad y nunca hace esperar más de 2 s. Si no hay ciudad o falla la consulta, se usa el clima manual de Ajustes (o ninguno). Lluvia, llovizna, chubascos y tormenta cuentan como lluvia; cielo despejado de día, como sol; los códigos de nieve, como nieve.
+**Clima:** el servidor consulta Open-Meteo (tiempo actual, sin API key) al iniciar la sesión, y lo fija en la sesión activa. Nunca hace esperar más de 2 s.
+
+- **Ubicación del dispositivo** (Ajustes → "Usar mi ubicación", o el aviso compacto de la preparación de la sesión): la Geolocation API del navegador, que exige un contexto seguro (`localhost` o HTTPS). El cliente redondea las coordenadas a una celda de ~0,1° (~10 km) **antes de enviarlas**, y el perfil guarda solo esa celda (`profile.location`). El servidor la manda tal cual a Open-Meteo, sin geocodificación, y cachea 30 min por celda. El jugador puede quitarla cuando quiera.
+- **Ciudad escrita** (respaldo): si no hay ubicación, o su consulta falla, se geocodifica la ciudad del perfil (caché de 30 min por ciudad).
+- **Si no se detecta nada, no hay clima:** Agua y Hielo no se activan, y Fuego solo por su franja de 12:00 a 18:00. **El jugador no elige el clima.** El clima manual existe solo en el panel de desarrollo y el servidor solo lo acepta con `DEV_TOOLS=1` (entonces sustituye al detectado); en producción se rechaza y se ignora también en partidas antiguas que lo tengan guardado.
+- Sin enfriamiento para cambiar la ciudad o la ubicación.
+- Lluvia, llovizna, chubascos y tormenta cuentan como lluvia; cielo despejado de día, como sol; los códigos de nieve, como nieve.
+
+Se guarda la celda redondeada en el perfil, y no se envía con cada `start`, porque el servidor también inicia sesiones sin el cliente: al arrancar un grupo de estudio empieza la sesión de cada invitado, que puede no tener la app abierta.
 
 ### 9.3 Doble tipo
 

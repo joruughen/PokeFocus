@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { DAY_MS, HOUR_MS, type FocusLabel } from '../../engine'
 import { Button, IconButton, PixelIcon, Segmented, toast } from '../components'
 import { cx } from '../lib/cx'
+import { WEATHER_PRESETS, weatherKind, type WeatherKind } from '../lib/conditions'
 import { errorText } from '../lib/errors'
+import { refreshWeather } from '../lib/weather'
 import { fmtClock } from '../lib/format'
 
 const AudioLab = lazy(() => import('../../audio/AudioLab').then((m) => ({ default: m.AudioLab })))
@@ -130,6 +132,28 @@ export function DevPanel() {
             ))}
           </select>
         </label>
+      </Section>
+
+      <Section title={t('dev.weather')}>
+        {/* Manual weather override: the server honors it only with DEV_TOOLS=1 (players never pick the weather). */}
+        <Segmented<WeatherKind | 'real'>
+          label={t('dev.weather')}
+          value={player?.profile.weather ? weatherKind(player.profile.weather) : 'real'}
+          onChange={(w) => {
+            const weather = w === 'real' ? null : WEATHER_PRESETS[w]
+            void run(
+              game.setWeather(weather).then((err) => {
+                if (!err && player) void refreshWeather({ ...player.profile, weather })
+                return err
+              }),
+            )
+          }}
+          options={[
+            { value: 'real', label: t('dev.weatherReal') },
+            ...(['clear', 'sun', 'rain', 'cold'] as const).map((w) => ({ value: w, ariaLabel: t(`weather.${w}`), label: <PixelIcon name={w} size={18} /> })),
+          ]}
+        />
+        <p className="mt-1 text-xs text-mist-400">{t('dev.weatherNote')}</p>
       </Section>
 
       <Section title={t('dev.inventory')}>

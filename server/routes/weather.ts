@@ -17,10 +17,11 @@ export function weatherRoutes(deps: Deps) {
     const [row] = await deps.db.select({ doc: playerDocs.doc }).from(playerDocs).where(eq(playerDocs.userId, user.id))
     const profile = row?.doc.player?.profile
     const city = profile?.city?.trim() || null
-    const manual = profile?.weather ?? null
-    const detected = await deps.weather.current(city)
-    const { weather, source } = resolveSessionWeather(detected?.weather ?? null, manual, deps.env.devTools)
-    const body: WeatherResponse = { city, detected, weather, source }
+    const location = profile?.location ?? null
+    const detected = await deps.weather.current({ location, city })
+    // profile.weather (manual) only counts with DEV_TOOLS=1.
+    const { weather, source } = resolveSessionWeather(detected?.weather ?? null, profile?.weather ?? null, deps.env.devTools)
+    const body: WeatherResponse = { city, location, detected, weather, source }
     return c.json(body)
   })
 

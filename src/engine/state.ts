@@ -95,8 +95,8 @@ export interface ActiveSession {
   startHeals: { uid: string; amount: number; sourceUid: string }[]
   /**
    * Weather of the session, fixed when it starts (real weather of the
-   * profile city, or the manual fallback). Absent in older saves: claim then
-   * uses `profile.weather`.
+   * profile location or city; null = unknown). Absent in older saves: claim
+   * then uses no weather (or `profile.weather` with DEV_TOOLS=1).
    */
   weather?: WeatherInput | null
 }
@@ -260,10 +260,22 @@ export interface PlayerProfile {
   locale: LocaleCode
   /** IANA zone (e.g. 'America/Lima') or fixed UTC offset in minutes. */
   timezone: TimeZoneSpec
+  /** Typed city: fallback for the real weather when there is no device location. */
   city: string | null
+  /**
+   * Device location rounded to a ~0.1° cell (~10 km) by the client, for the
+   * real weather (wins over `city`). Only the rounded cell is ever stored, so
+   * the server can look up the weather when it starts a session (study groups
+   * start invitees' sessions without their client). Absent in older saves = null.
+   */
+  location?: { lat: number; lon: number } | null
   /** Last time the timezone was changed (ms). Changes are locked for 30 days (anti-cheat on day/week keys). */
   timezoneChangedAt?: number | null
-  /** Placeholder for the city's current weather (set by the app; null = unknown). */
+  /**
+   * Manual weather. Only honored with DEV_TOOLS=1 (dev panel override): in
+   * production the server ignores it, so old saves that still carry one get
+   * no weather unless it is detected (GDD §9.2 "Clima").
+   */
   weather: WeatherInput | null
   createdAt: number
 }

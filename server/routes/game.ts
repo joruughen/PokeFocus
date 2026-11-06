@@ -37,8 +37,10 @@ export async function runGameAction(
   const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
   const before = row?.doc ?? EMPTY_DOC
   const friendOverlap = action.type === 'claim' ? await claimOverlap(tx, user.id, before) : null
-  // Real weather of the profile city, fixed on the session at start (≤ 2 s, cached; null → manual fallback).
-  const weather = action.type === 'start' ? ((await deps.weather.current(before.player?.profile.city ?? null))?.weather ?? null) : undefined
+  // Real weather of the profile location (else city), fixed on the session at start (≤ 2 s, cached; null = no weather).
+  // Also for sessions the server starts for study-group invitees, which is why the rounded location lives in the profile.
+  const profile = before.player?.profile
+  const weather = action.type === 'start' ? ((await deps.weather.current({ location: profile?.location ?? null, city: profile?.city ?? null }))?.weather ?? null) : undefined
   const r = applyAction(before, action, { now: opts.now, rng: opts.rng, dev: deps.env.devTools, trainerName: user.trainerName, friendOverlap, weather })
   if (!r.ok) return r
   await syncActiveSession(tx, user.id, before, r.doc)

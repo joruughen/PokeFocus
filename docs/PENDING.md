@@ -85,7 +85,8 @@ La especificación completa está en `docs/session-depth-plan.md`.
 - **D. Guía de los 18 tipos**, con "cuándo se activa" y un planificador "¿Y si empiezo a las…?".
 - **D. Botón para silenciar la música** en la pantalla de la sesión de estudio.
 - **F. Micrófono**, analizado en el navegador sin enviar audio. Define estilos de estudio que influyen ligeramente en los tipos de salvajes y activa Volador y Psíquico.
-- **F. Clima real con Open-Meteo**, con el clima manual como respaldo.
+- **F. Clima real con Open-Meteo**, por la ubicación del dispositivo (redondeada a ~10 km) o la ciudad escrita. Sin clima manual para jugadores (solo en el panel de desarrollo, con DEV_TOOLS=1): si no se detecta, no hay clima.
+- **G. Calibración del micrófono** (~15 s, por dispositivo), medidor en vivo y la opción "Escucho música con audífonos".
 
 ## Fases siguientes (GDD §20)
 
