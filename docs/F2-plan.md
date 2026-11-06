@@ -48,6 +48,8 @@ navegador (React)  ──fetch /api/* (cookie pf_session)──▶  server/ (Hon
 - `active_study_sessions` — `user_id pk fk`, `session_id text`, `started_at`. **Unicidad = una sesión de estudio por usuario.** Se inserta en `start` y se borra en `claim`/`cancel`, en la misma transacción que el doc.
 - `league_scores` — `user_id fk`, `period ('week'|'month')`, `period_key text`, `points int`, `updated_at`; PK `(user_id, period, period_key)`; índice `(period, period_key, points desc)`. Se actualiza tras cada acción que cambie `player.league.*Points`.
 - `friendships` — `requester_id`, `addressee_id`, `status ('pending'|'accepted')`, `created_at`; PK `(requester_id, addressee_id)`; restricción `requester_id <> addressee_id`.
+- `push_subscriptions` — `id uuid pk`, `user_id fk on delete cascade`, `endpoint text unique`, `p256dh`, `auth`, `user_agent null`, `created_at`, `last_success_at null`. Índice por `user_id`.
+- `push_sent` — `user_id fk`, `session_id`, `kind ('session-end')`, `sent_at null` (null = liberado para reintentar), `attempts`; PK `(user_id, session_id, kind)`: como mucho un push por sesión, también tras reiniciar.
 
 Escrituras del doc: transacción con `SELECT … FOR UPDATE` sobre `player_docs` → `applyAction` → `UPDATE … version = version + 1`. Así dos pestañas nunca se pisan.
 
@@ -75,6 +77,9 @@ Todas bajo `/api`, JSON, cookie `pf_session`. Errores: `{ error: string }` con 4
 
 **Rankings**
 - `GET /leaderboard?scope=global|country|friends&period=week|month` → `LeaderboardResponse` (top 100 + fila propia). `periodKey` = clave actual del jugador que consulta. Con `anonymousRankings`, en `global` y `country` la fila de ese usuario lleva `trainerName: null` salvo la propia; `anonymous` va en todas las filas.
+
+**Web Push** (aviso de fin de sesión cuando la pestaña está congelada; detalle en `docs/server.md`)
+- `GET /push/config` → `{ enabled, publicKey }`. `POST /push/subscribe` `{ endpoint, keys }` → 204. `POST /push/unsubscribe` `{ endpoint }` → 204. `POST /push/test` → `{ sent }`. Sin claves VAPID: 404 `push_disabled`.
 
 **Eventos**
 - `GET /events` (SSE) → `ServerEvent`: `game` (otra pestaña cambió el doc), `friends` (solicitud nueva/aceptada), `logout` (sesión revocada). Ping cada 25 s.

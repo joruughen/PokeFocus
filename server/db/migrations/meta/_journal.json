@@ -29,6 +29,13 @@
       "when": 1793989071648,
       "tag": "0003_account_locks_privacy",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793994119406,
+      "tag": "0004_web_push",
+      "breakpoints": true
     }
   ]
 }

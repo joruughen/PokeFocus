@@ -19,6 +19,10 @@ export const RULES = {
   groupWriteUser: { limit: 120, windowMs: 15 * 60_000 },
   /** Admin API requests per client IP (a successful token check clears the counter). */
   adminIp: { limit: 10, windowMs: 15 * 60_000 },
+  /** Web Push subscribe + unsubscribe per user. */
+  pushWriteUser: { limit: 30, windowMs: 15 * 60_000 },
+  /** POST /api/push/test per user (each one sends real notifications). */
+  pushTestUser: { limit: 5, windowMs: 60 * 60_000 },
 } satisfies Record<string, RateRule>
 
 export class RateLimiter {

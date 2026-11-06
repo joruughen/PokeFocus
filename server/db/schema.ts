@@ -178,5 +178,43 @@ export const maintenanceWindows = pgTable(
   ],
 )
 
+/**
+ * Web Push subscriptions (server/push.ts). `endpoint` is unique: the same browser
+ * logging in with another account moves the row to that account.
+ */
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    userAgent: text('user_agent'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    lastSuccessAt: ts('last_success_at'),
+  },
+  (t) => [index('push_subscriptions_user_idx').on(t.userId)],
+)
+
+/** Claims of sent pushes: the PK makes "at most once per (user, session, kind)" hold across restarts. */
+export const pushSent = pgTable(
+  'push_sent',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    sessionId: text('session_id').notNull(),
+    kind: text('kind').notNull().default('session-end'),
+    /** Time of the last claim; NULL = released after an all-transient failure (the next tick may retry). */
+    sentAt: ts('sent_at').defaultNow(),
+    /** Delivery attempts so far (at most PUSH_MAX_ATTEMPTS). */
+    attempts: integer('attempts').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.sessionId, t.kind] })],
+)
+
 export type UserRow = typeof users.$inferSelect
 export type AuthSessionRow = typeof authSessions.$inferSelect

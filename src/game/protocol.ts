@@ -421,3 +421,63 @@ export interface AdminMaintenanceResponse {
   items: AdminMaintenanceItem[]
   serverNow: number
 }
+
+// ---------------------------------------------------------------------------
+// Web Push: the end-of-session notice when the page cannot show it
+// ---------------------------------------------------------------------------
+
+/**
+ * The page shows the end-of-session notification itself (leader tab, then
+ * `markNotified`). A hidden tab can be frozen by the browser (Chrome's Memory /
+ * Energy Saver), and then nobody notifies, the player claims after the 5-minute
+ * window and gets the late-claim multiplier. So the SERVER also pushes, as a
+ * fallback, through the browser's push service (FCM, Mozilla autopush, Apple…).
+ *
+ * Rule (server/push.ts): a push is sent for a session when ALL hold:
+ *  - the player has at least one push subscription;
+ *  - `timer.pausedAt === null` and `timer.notified === false` (the page did not
+ *    notify: that flag is the dedupe, so an open page never doubles the notice);
+ *  - now >= timer.endsAt + PUSH_GRACE_MS (the page gets that long to notify first);
+ *  - timer.endsAt > now - PUSH_MAX_AGE_MS (no stale pushes after downtime);
+ *  - nothing was sent for (user, sessionId) before (at most once per session).
+ * The claim window itself is NOT changed (5 minutes).
+ *
+ * Endpoints (all need the session cookie; the Origin/JSON CSRF guard applies):
+ *   GET  /api/push/config      → PushConfigResponse
+ *   POST /api/push/subscribe   body PushSubscribeRequest → 204 (upsert by endpoint;
+ *                               a known endpoint moves to the caller)
+ *   POST /api/push/unsubscribe body { endpoint } → 204 (only the caller's own; idempotent)
+ *   POST /api/push/test        → 200 { sent: number } — sends PushPayload type 'test'
+ *                               to the caller's subscriptions
+ * Errors: 404 `push_disabled` (server has no VAPID keys; also for subscribe/test),
+ * 400 `invalid_body` (endpoint must be https on a known push-service host, sizes
+ * bounded), 409 `too_many` (more than MAX_PUSH_SUBSCRIPTIONS), 409 `no_subscription`
+ * (test with none), 429 `rate_limited`.
+ */
+export const PUSH_GRACE_MS = 20_000
+export const PUSH_MAX_AGE_MS = 30 * 60_000
+export const MAX_PUSH_SUBSCRIPTIONS = 10
+/** Notification tag: the page and the service worker use the same one so a second notice replaces the first. */
+export const PUSH_TAG = 'pokefocus-session'
+
+export interface PushConfigResponse {
+  /** False when the server has no VAPID keys configured. */
+  enabled: boolean
+  /** VAPID public key (base64url, the applicationServerKey), null when disabled. */
+  publicKey: string | null
+}
+
+export interface PushSubscribeRequest {
+  endpoint: string
+  keys: { p256dh: string; auth: string }
+}
+
+/** JSON body of every push the server sends (already localized to the player's language). */
+export interface PushPayload {
+  type: 'session-end' | 'test'
+  title: string
+  body: string
+  tag: string
+  /** Path to open when the notification is clicked. */
+  url: string
+}

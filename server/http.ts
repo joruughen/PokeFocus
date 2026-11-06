@@ -10,6 +10,7 @@ import { authSessions, users, type AuthSessionRow, type UserRow } from './db/sch
 import type { EventBus } from './events'
 import type { RateLimiter } from './rate-limit'
 import type { FetchLike, WeatherService } from './weather'
+import type { PushService } from './push'
 import { hashToken, looksLikeToken, SESSION_COOKIE, SESSION_RENEW_AFTER_MS, SESSION_TTL_MS } from './auth/tokens'
 import { DEV_NOW_HEADER, type PublicUser } from '../src/game/protocol'
 
@@ -24,6 +25,8 @@ export interface Deps {
   fetch: FetchLike
   /** Real weather per city, cached (built from `fetch` + `clock`). */
   weather: WeatherService
+  /** Web Push (disabled without VAPID keys). The scheduler in server/index.ts calls runDue(). */
+  push: PushService
 }
 
 export type AppEnv = {

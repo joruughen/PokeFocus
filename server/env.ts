@@ -6,6 +6,30 @@ import { z } from 'zod'
 
 const flag = z.enum(['0', '1']).default('0').transform((v) => v === '1')
 
+const emptyAsUnset = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v)
+
+/** Decoded byte length of a strict base64url string (no padding), or null when malformed. */
+export function base64urlLength(s: string): number | null {
+  if (!/^[A-Za-z0-9_-]+$/.test(s) || s.length % 4 === 1) return null
+  return Buffer.from(s, 'base64url').length
+}
+
+/** An uncompressed P-256 point is 65 bytes starting with 0x04. */
+const isUncompressedPoint = (v: string) => base64urlLength(v) === 65 && Buffer.from(v, 'base64url')[0] === 0x04
+
+/** VAPID keys (Web Push). Issues never echo the value (the private key is a secret). */
+const vapidKey = (bytes: number, hint: string) =>
+  z.preprocess(
+    emptyAsUnset,
+    z
+      .string()
+      .refine((v) => (bytes === 65 ? isUncompressedPoint(v.trim()) : base64urlLength(v.trim()) === bytes), {
+        message: `must be a base64url ${hint} (${bytes} bytes); generate a pair with npm run vapid`,
+      })
+      .transform((v) => v.trim())
+      .optional(),
+  )
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(8787),
@@ -36,7 +60,30 @@ const schema = z.object({
     (v) => (v === '' ? undefined : v),
     z.string().min(24, 'must be at least 24 characters (e.g. openssl rand -hex 24)').optional(),
   ),
+  /** Web Push (VAPID). All three or none; none = push disabled (404 push_disabled). */
+  VAPID_PUBLIC_KEY: vapidKey(65, 'uncompressed P-256 public key'),
+  VAPID_PRIVATE_KEY: vapidKey(32, 'P-256 private key'),
+  VAPID_SUBJECT: z.preprocess(
+    emptyAsUnset,
+    z
+      .string()
+      .trim()
+      .max(256)
+      .refine((v) => /^mailto:[^\s@]+@[^\s@]+$/.test(v) || /^https:\/\/[^\s/]+/.test(v), { message: 'must start with mailto: or https://' })
+      .optional(),
+  ),
+}).superRefine((e, ctx) => {
+  const set = [e.VAPID_PUBLIC_KEY, e.VAPID_PRIVATE_KEY, e.VAPID_SUBJECT].filter((v) => v !== undefined).length
+  if (set !== 0 && set !== 3) {
+    ctx.addIssue({ code: 'custom', path: ['VAPID_*'], message: 'set all three of VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT, or none' })
+  }
 })
+
+export interface VapidConfig {
+  publicKey: string
+  privateKey: string
+  subject: string
+}
 
 export interface Env {
   nodeEnv: 'development' | 'production' | 'test'
@@ -51,6 +98,8 @@ export interface Env {
   cookieSecure: boolean
   /** Admin API token; undefined = admin API disabled (404 admin_disabled). */
   adminToken: string | undefined
+  /** Web Push keys; null = push disabled. Never logged. */
+  vapid: VapidConfig | null
 }
 
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
@@ -74,5 +123,9 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     staticDir: e.STATIC_DIR,
     cookieSecure: e.COOKIE_SECURE === 'auto' ? production : e.COOKIE_SECURE === '1',
     adminToken: e.ADMIN_TOKEN,
+    vapid:
+      e.VAPID_PUBLIC_KEY && e.VAPID_PRIVATE_KEY && e.VAPID_SUBJECT
+        ? { publicKey: e.VAPID_PUBLIC_KEY, privateKey: e.VAPID_PRIVATE_KEY, subject: e.VAPID_SUBJECT }
+        : null,
   }
 }

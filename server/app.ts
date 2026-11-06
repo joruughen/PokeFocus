@@ -12,6 +12,7 @@ import type { Env } from './env'
 import type { Db } from './db/client'
 import { EventBus } from './events'
 import { ApiError, type AppEnv, type Deps } from './http'
+import { createPushService, type PushSender, type PushService } from './push'
 import { RateLimiter } from './rate-limit'
 import { adminRoutes } from './routes/admin'
 import { announcementRoutes } from './routes/announcements'
@@ -19,6 +20,7 @@ import { authRoutes } from './routes/auth'
 import { eventRoutes } from './routes/events'
 import { gameRoutes } from './routes/game'
 import { groupRoutes } from './routes/groups'
+import { pushRoutes } from './routes/push'
 import { friendRoutes, leaderboardRoutes } from './routes/social'
 import { weatherRoutes } from './routes/weather'
 import { createWeatherService, type FetchLike, type WeatherService } from './weather'
@@ -34,6 +36,10 @@ export interface AppOptions {
   /** Outbound HTTP for Open-Meteo (default: global fetch). */
   fetch?: FetchLike
   weather?: WeatherService
+  /** Web Push service (default: built from env.vapid + `pushSender`). */
+  push?: PushService
+  /** Outbound push delivery (default: web-push); a fake in tests. */
+  pushSender?: PushSender
 }
 
 export function createApp(opts: AppOptions) {
@@ -47,6 +53,7 @@ export function createApp(opts: AppOptions) {
     clock,
     fetch: fetchFn,
     weather: opts.weather ?? createWeatherService({ fetch: fetchFn, clock }),
+    push: opts.push ?? createPushService({ env: opts.env, db: opts.db, clock, sender: opts.pushSender }),
   }
   const { env } = deps
   const app = new Hono<AppEnv>()
@@ -75,6 +82,7 @@ export function createApp(opts: AppOptions) {
   api.route('/weather', weatherRoutes(deps))
   api.route('/announcements', announcementRoutes(deps))
   api.route('/admin', adminRoutes(deps))
+  api.route('/push', pushRoutes(deps))
   api.get('/health', (c) => c.json({ ok: true }))
   api.all('*', () => {
     throw new ApiError(404, 'not_found')
@@ -85,6 +93,15 @@ export function createApp(opts: AppOptions) {
     // Built client from the same origin (SPA fallback to index.html).
     const root = resolve(env.staticDir)
     const indexPath = resolve(root, 'index.html')
+    const swPath = resolve(root, 'sw.js')
+    // Service worker (Web Push): always revalidated, real JS MIME type, and never the
+    // SPA index.html when missing (a registration must fail cleanly with 404).
+    app.on(['GET', 'HEAD'], '/sw.js', (c) => {
+      if (!existsSync(swPath)) return c.text('Not found', 404)
+      c.header('Content-Type', 'text/javascript; charset=utf-8')
+      c.header('Cache-Control', 'no-cache')
+      return c.body(readFileSync(swPath))
+    })
     app.use('/*', serveStatic({ root: env.staticDir }))
     app.get('*', (c) => {
       if (!existsSync(indexPath)) return c.text('Client not built (run npm run build)', 404)
