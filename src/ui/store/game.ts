@@ -93,6 +93,10 @@ export interface GameState extends GameDoc {
   throwBall: (ref: WildRef, ball: ThrowBall) => Promise<{ ok: true; outcome: ThrowOutcome } | { ok: false; error: GameActionError }>
   applyStatus: (chargeId: string, ref: WildRef) => Promise<GameActionError | null>
   reroll: (chargeId: string, ref: WildRef) => Promise<GameActionError | null>
+  /** Manual damage split (before the wave's first ball). */
+  assignDamage: (waveIndex: number, uid: string, wildIndex: number | null) => Promise<GameActionError | null>
+  autoAssignDamage: (waveIndex: number) => Promise<GameActionError | null>
+  setAutoDamage: (value: boolean) => Promise<GameActionError | null>
   nextWave: () => Promise<GameActionError | null>
   finishWaves: () => Promise<GameActionError | null>
 
@@ -249,6 +253,9 @@ export const useGame = create<GameState>()((set, get) => {
     },
     applyStatus: async (chargeId, ref) => errOf(await dispatch({ type: 'applyStatus', chargeId, ref })),
     reroll: async (chargeId, ref) => errOf(await dispatch({ type: 'reroll', chargeId, ref })),
+    assignDamage: async (waveIndex, uid, wildIndex) => errOf(await dispatch({ type: 'assignDamage', waveIndex, uid, wildIndex })),
+    autoAssignDamage: async (waveIndex) => errOf(await dispatch({ type: 'autoAssignDamage', waveIndex })),
+    setAutoDamage: async (value) => errOf(await dispatch({ type: 'setAutoDamage', value })),
     nextWave: async () => errOf(await dispatch({ type: 'nextWave' })),
     finishWaves: async () => errOf(await dispatch({ type: 'finishWaves' })),
 

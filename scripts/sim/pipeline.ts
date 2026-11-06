@@ -11,6 +11,7 @@
 import { deepMerge, type GameConfig, type GameConfigOverrides, type EngineContext } from '../../src/engine/index.ts'
 import { minWildLevel, wildLevelRange } from '../../src/engine/index.ts'
 import type { ProfileAgg } from './aggregate.ts'
+import type { DamagePolicy } from './capture-policy.ts'
 import { crossingDays, LEVEL_TARGETS, legendaryShareAt, proposeThresholds, rewardedSessions, thresholdsOf } from './analysis.ts'
 import {
   makeContext,
@@ -47,6 +48,8 @@ export interface PipelineOptions {
   proposeSeeds: number
   /** Run the species-value harness. */
   species: boolean
+  /** Damage split policy of the simulated players in every matrix run (default `auto`). */
+  damagePolicy?: DamagePolicy
   log?: (msg: string) => void
   progress?: (label: string, done: number, total: number) => void
 }
@@ -117,10 +120,10 @@ export function runPipeline(o: PipelineOptions): Results {
   const cfg = ctx.config
 
   log(`Línea base: ${o.profiles.length} perfiles × ${o.seeds} semillas × ${o.weeks} semanas`)
-  const baseline = runMatrix({ ctx, profiles: o.profiles, seeds: o.seeds, weeks: o.weeks, missions: o.missions, onProgress: (l, d, t) => prog(`línea base (${l})`, d, t) })
+  const baseline = runMatrix({ ctx, profiles: o.profiles, seeds: o.seeds, weeks: o.weeks, missions: o.missions, damagePolicy: o.damagePolicy, onProgress: (l, d, t) => prog(`línea base (${l})`, d, t) })
   let noMissions: ProfileAgg | null = null
   if (o.missions && o.profiles.includes('constant')) {
-    const r = runMatrix({ ctx, profiles: ['constant'], seeds: o.seeds, weeks: o.weeks, missions: false })
+    const r = runMatrix({ ctx, profiles: ['constant'], seeds: o.seeds, weeks: o.weeks, missions: false, damagePolicy: o.damagePolicy })
     noMissions = r.constant
   }
   log('Nivelado de referencia')
@@ -275,7 +278,7 @@ export function runPipeline(o: PipelineOptions): Results {
     log('Simulación con la propuesta')
     const ctx1 = makeContext(stage1Cfg, patchedSpecies)
     const seeds1 = Math.min(o.seeds, o.proposeSeeds)
-    stage1 = runMatrix({ ctx: ctx1, profiles: o.profiles, seeds: seeds1, seedsByProfile: { constant: Math.min(o.seeds, seeds1 * 2) }, weeks: o.weeks, missions: o.missions, onProgress: (l, d, t) => prog(`propuesta (${l})`, d, t) })
+    stage1 = runMatrix({ ctx: ctx1, profiles: o.profiles, seeds: seeds1, seedsByProfile: { constant: Math.min(o.seeds, seeds1 * 2) }, weeks: o.weeks, missions: o.missions, damagePolicy: o.damagePolicy, onProgress: (l, d, t) => prog(`propuesta (${l})`, d, t) })
 
     // A. League thresholds from the proposal's own steady-state points.
     const s1c = stage1.constant

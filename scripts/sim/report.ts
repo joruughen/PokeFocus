@@ -723,7 +723,7 @@ export function renderReport(r: Results, command: string): string {
   const o = r.opts
   return `# Informe de balance — PokeFocus (simulador F0)
 
-> Generado el ${date} con \`${command}\` en ${n0(r.seconds)} s. ${o.seeds} semillas × ${o.weeks} semanas × ${profs.length} perfiles${o.config && Object.keys(o.config).length ? ' · config con overrides' : ' · config del repositorio'}${o.speciesPatch && Object.keys(o.speciesPatch).length ? ' · parches de especies' : ''}.
+> Generado el ${date} con \`${command}\` en ${n0(r.seconds)} s. ${o.seeds} semillas × ${o.weeks} semanas × ${profs.length} perfiles${o.config && Object.keys(o.config).length ? ' · config con overrides' : ' · config del repositorio'}${o.speciesPatch && Object.keys(o.speciesPatch).length ? ' · parches de especies' : ''} · reparto del daño: \`${o.damagePolicy ?? 'auto'}\`.
 > Solo usa la API pública del motor, con semillas fijas: la misma orden da el mismo informe. Las políticas del jugador simulado están al principio de \`scripts/simulate.ts\`.
 
 ## Resumen

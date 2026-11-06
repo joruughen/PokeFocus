@@ -155,7 +155,7 @@ describe('capture damage: classic formula (GDD §11.3)', () => {
 
   it('reroll: the new wild takes the hits aimed at its slot', () => {
     const team = [makeMon('squirtle', 20, { uid: 'a' })]
-    const { result, state } = runSession(makePlayer(team), 25, 5)
+    const { result, state } = runSession(makePlayer(team, { autoDamage: true }), 25, 5)
     const applied = applySessionResult(state, result)
     if (!applied.ok) throw new Error(applied.error)
     const s0 = applied.value.state

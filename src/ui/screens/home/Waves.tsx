@@ -1,14 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import i18n from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   BALL_ORDER,
+  damageTokens,
   defaultContext,
+  effectiveHits,
   encounterModifiers,
+  estimateTokenDamage,
+  isManualWave,
+  lockWaveDamage,
+  previewAssignment,
+  wastedDamage,
   studyBallMaxLevelFor,
   pokemonView,
   wildCatchChance,
   type Charge,
   type CounterResult,
+  type DamageToken,
   type PokemonView,
   type ThrowBall,
   type ThrowOutcome,
@@ -16,7 +25,7 @@ import {
   type WildPokemon,
   type WildRef,
 } from '../../../engine'
-import { ArtIcon, BallIcon, Button, HelpDot, IvQuality, Panel, Platform, PokemonCard, ProgressBar, Sprite, Stage, StudyBallIcon, toast, Tooltip, TypeBadge } from '../../components'
+import { ArtIcon, BallIcon, Button, HelpDot, IvQuality, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Sprite, Stage, StudyBallIcon, toast, Tooltip, TypeBadge } from '../../components'
 import { emitHintEvent, hintAnchor, useHintEvent, useHintScreen, useHints } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
@@ -51,6 +60,8 @@ export function Waves() {
   const doThrow = useGame((s) => s.throwBall)
   const applyStatus = useGame((s) => s.applyStatus)
   const reroll = useGame((s) => s.reroll)
+  const assignDamage = useGame((s) => s.assignDamage)
+  const autoAssignDamage = useGame((s) => s.autoAssignDamage)
   const nextWave = useGame((s) => s.nextWave)
   const finishWaves = useGame((s) => s.finishWaves)
   const busy = useBusy()
@@ -74,6 +85,8 @@ export function Waves() {
    */
   const [frozenCard, setFrozenCard] = useState<PokemonView | null>(null)
   const [targeting, setTargeting] = useState<Charge | null>(null)
+  /** Damage token picked in the tray (member uid): the next wild tapped receives it. */
+  const [picked, setPicked] = useState<string | null>(null)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
 
@@ -82,6 +95,7 @@ export function Waves() {
     setSelected(Math.max(0, wave.wilds.findIndex((w) => w.outcome === 'pending')))
     setBall(wave.studyBall === 'available' ? 'study-ball' : 'poke-ball')
     setTargeting(null)
+    setPicked(null)
     // The wave arrives: rustle, then one "!" per wild, a shimmer for a shiny.
     sfx('waveAppear')
     wave.wilds.forEach((_, i) => sfxLater('wildAppear', 450 + i * 160, { pan: wave.wilds.length > 1 ? -0.6 + (1.2 * i) / (wave.wilds.length - 1) : 0, volume: 0.7 }))
@@ -96,7 +110,37 @@ export function Waves() {
     useHints.setState((h) => ({ values: { ...h.values, 'waves.studyBall': { level: studyMax } } }))
   }, [studyMax])
 
+  // Manual damage split: tokens, what a throw would lock in, and the live preview of the picked token.
+  const manual = isManualWave(wave)
+  const editable = manual && !wave.damageLocked
+  const tokens = useMemo(() => {
+    if (!manual) return []
+    const order = (uid: string) => {
+      const i = player.team.indexOf(uid)
+      return i < 0 ? 99 : i
+    }
+    return damageTokens(wave)
+      .filter((tk) => player.pokemon[tk.uid])
+      .sort((a, b) => order(a.uid) - order(b.uid))
+  }, [wave, manual, player])
+  const atThrow = useMemo(() => (editable ? lockWaveDamage(wave) : wave), [wave, editable])
+  const pickedToken = editable ? (tokens.find((tk) => tk.uid === picked) ?? null) : null
+  const previews = useMemo(
+    () => (pickedToken ? wave.wilds.map((_, i) => previewAssignment(wave, pickedToken.uid, pickedToken.assigned === i ? null : i).wilds[i] ?? null) : null),
+    [wave, pickedToken],
+  )
+  const effHits = useMemo(() => effectiveHits(wave), [wave])
+  useHintEvent('damageTokens', editable && tokens.length > 0)
+  useEffect(() => {
+    if (!picked) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setPicked(null)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [picked])
+
   const sel = wave.wilds[selected]
+  /** The selected wild as the throw will see it (a manual wave locks first: unassigned tokens go automatic). */
+  const selAtThrow = atThrow.wilds[selected]
   const leaderUid = player.team.find((u) => (player.pokemon[u]?.energy.current ?? 0) > 0) ?? player.team[0]
   const leader = leaderUid ? pokemonView(player, leaderUid, now) : null
   const counterTarget = counterFx ? pokemonView(player, counterFx.counter.targetUid, now) : null
@@ -109,13 +153,14 @@ export function Waves() {
     ...BALL_ORDER.map((b) => ({ ball: b as ThrowBall, count: player.inventory[b] ?? 0, usable: (player.inventory[b] ?? 0) > 0 })),
   ]
   const ballOk = balls.find((b) => b.ball === ball)?.usable ?? false
-  const chance = sel && sel.outcome === 'pending' ? wildCatchChance(player, sel, ball) : 0
-  const canThrow = Boolean(sel && sel.outcome === 'pending' && ballOk && !anim && !targeting && !busy)
+  const chance = selAtThrow && selAtThrow.outcome === 'pending' ? wildCatchChance(player, selAtThrow, ball) : 0
+  const canThrow = Boolean(sel && sel.outcome === 'pending' && ballOk && !anim && !targeting && !pickedToken && !busy)
 
   const onThrow = async () => {
     if (!sel || !canThrow) return
     const ref = { waveIndex: enc.currentWave, wildIndex: selected }
-    const before = sel
+    // Show the HP the throw locks in (manual waves), not the half-assigned one.
+    const before = selAtThrow ?? sel
     const energyBefore = player.pokemon[leaderUid ?? '']?.energy.current ?? 0
     // The server rolls the throw; the animation plays once its answer is here
     // (the wild keeps showing `before` until the result lands).
@@ -198,6 +243,19 @@ export function Waves() {
     const err = charge.kind === 'status' ? await applyStatus(charge.id, ref) : await reroll(charge.id, ref)
     if (err) toast.add({ title: errorText(err, 'charge'), type: 'danger' })
   }
+  const onAssign = async (i: number) => {
+    if (!pickedToken || busy) return
+    const tk = pickedToken
+    setPicked(null)
+    setSelected(i)
+    const err = await assignDamage(enc.currentWave, tk.uid, tk.assigned === i ? null : i)
+    if (err) toast.add({ title: damageErrorText(err), type: 'danger' })
+  }
+  const onAutoAssign = async () => {
+    setPicked(null)
+    const err = await autoAssignDamage(enc.currentWave)
+    if (err) toast.add({ title: damageErrorText(err), type: 'danger' })
+  }
   const advance = async (fn: () => Promise<string | null>) => {
     const err = await fn()
     if (err) toast.add({ title: errorText(err), type: 'danger' })
@@ -244,19 +302,38 @@ export function Waves() {
                   first={i === 0}
                   maxFails={mods.maxFailedThrows}
                   revealIvs={mods.revealWildIvs}
-                  hitters={hittersOf(wave.hits, i)}
+                  hitters={hittersOf(effHits, i)}
                   anim={anim && anim.ref.wildIndex === i ? anim : null}
                   targeting={targeting}
+                  assigning={pickedToken ? (pickedToken.assigned === i ? 'unassign' : 'assign') : null}
+                  preview={previews?.[i] ?? null}
+                  manual={manual}
                   busy={busy}
                   night={scene.time === 'night'}
                   studyAvailable={wave.studyBall === 'available'}
-                  onSelect={() => (targeting ? void onTarget(i) : setSelected(i))}
+                  onSelect={() => (targeting ? void onTarget(i) : pickedToken ? void onAssign(i) : setSelected(i))}
                 />
               </li>
             )
           })}
         </ul>
       </Stage>
+
+      {manual && tokens.length > 0 && (
+        <DamageTray
+          tokens={tokens}
+          wave={wave}
+          editable={editable}
+          picked={pickedToken?.uid ?? null}
+          selectedWild={sel && sel.outcome === 'pending' ? sel : null}
+          disabled={busy || Boolean(anim)}
+          onPick={(uid) => {
+            setTargeting(null)
+            setPicked(picked === uid ? null : uid)
+          }}
+          onAuto={() => void onAutoAssign()}
+        />
+      )}
 
       {enc.charges.length > 0 && (
         <Panel variant="frame" title={t('waves.charges.title')} help="waves.charges" headingLevel={3} {...hintAnchor('waves.charges')}>
@@ -267,7 +344,10 @@ export function Waves() {
                   variant={targeting?.id === c.id ? 'primary' : 'secondary'}
                   icon={c.kind === 'reroll' ? 'reroll' : c.status === 'sleep' ? 'sleep' : 'bolt'}
                   disabled={busy}
-                  onClick={() => setTargeting(targeting?.id === c.id ? null : c)}
+                  onClick={() => {
+                    setPicked(null)
+                    setTargeting(targeting?.id === c.id ? null : c)
+                  }}
                   aria-pressed={targeting?.id === c.id}
                 >
                   {c.kind === 'reroll' ? t('waves.charges.reroll') : t(`waves.charges.${c.status ?? 'sleep'}`)}
@@ -317,7 +397,7 @@ export function Waves() {
                   checked={ball === b.ball}
                   disabled={!b.usable}
                   reason={b.reason}
-                  chance={sel && sel.outcome === 'pending' && b.usable ? wildCatchChance(player, sel, b.ball) : null}
+                  chance={selAtThrow && selAtThrow.outcome === 'pending' && b.usable ? wildCatchChance(player, selAtThrow, b.ball) : null}
                   onPick={() => setBall(b.ball)}
                 />
               ))}
@@ -333,6 +413,7 @@ export function Waves() {
             <p className={cx('text-right text-sm', sel && sel.outcome === 'pending' && !ballOk ? 'max-w-[28ch] text-amber-400' : 'text-mist-300')} aria-live="polite">
               {sel && sel.outcome === 'pending' ? (ballOk ? t('waves.chance', { pct: fmtPct(chance, lng) }) : (balls.find((b) => b.ball === ball)?.reason ?? t('errors.throw.no_ball'))) : ' '}
             </p>
+            {editable && tokens.length > 0 && <p className="text-right text-xs text-mist-400">{t('damage.throwLocks')}</p>}
           </div>
         </Panel>
       </div>
@@ -366,6 +447,149 @@ function hittersOf(hits: Wave['hits'], index: number): { uid: string; slug: stri
     .map(([uid, n]) => ({ uid, slug: player?.pokemon[uid]?.speciesSlug ?? '', hits: n }))
     .filter((h) => h.slug)
     .sort((a, b) => b.hits - a.hits)
+}
+
+/** Rule errors of the damage actions: `damage.errors.*`, then the shared charge/wave texts. */
+function damageErrorText(code: string): string {
+  return i18n.exists(`damage.errors.${code}`) ? i18n.t(`damage.errors.${code}`) : errorText(code, 'charge')
+}
+
+/** Damage tokens of a manual wave: pick one, then tap a wild. "Auto" splits the rest like automatic mode. */
+function DamageTray({
+  tokens,
+  wave,
+  editable,
+  picked,
+  selectedWild,
+  disabled,
+  onPick,
+  onAuto,
+}: {
+  tokens: DamageToken[]
+  wave: Wave
+  editable: boolean
+  picked: string | null
+  selectedWild: WildPokemon | null
+  disabled: boolean
+  onPick: (uid: string) => void
+  onAuto: () => void
+}) {
+  const { t } = useTranslation()
+  const names = useNames()
+  const player = usePlayer()
+  const unassigned = tokens.filter((tk) => tk.assigned === null).length
+  const pickedName = picked ? names.species(player.pokemon[picked]?.speciesSlug ?? '') : ''
+  return (
+    <Panel
+      variant="frame"
+      title={t('damage.title')}
+      help="waves.damage"
+      headingLevel={3}
+      {...hintAnchor('waves.damage')}
+      actions={
+        editable ? (
+          <Tooltip content={t('damage.autoTip')}>
+            <Button size="sm" variant="secondary" onClick={onAuto} disabled={disabled || unassigned === 0}>
+              {t('damage.auto')}
+            </Button>
+          </Tooltip>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 text-sm text-mist-400">
+            <PixelIcon name="lock" size={10} />
+            {t('damage.locked')}
+          </span>
+        )
+      }
+    >
+      <ul className="flex flex-wrap gap-2.5">
+        {tokens.map((tk) => (
+          <li key={tk.uid}>
+            <TokenButton token={tk} wave={wave} editable={editable} picked={picked === tk.uid} selectedWild={selectedWild} disabled={disabled} onPick={() => onPick(tk.uid)} />
+          </li>
+        ))}
+      </ul>
+      {editable && (
+        <p className="mt-3 text-sm text-mist-300" aria-live="polite">
+          {picked ? t('damage.pickWild', { name: pickedName }) : `${t('damage.howTo')} ${t('damage.lockNote')}`}
+          {!picked && <span className="ml-2 text-mist-400">· {unassigned > 0 ? t('damage.unassigned', { count: unassigned }) : t('damage.allAssigned')}</span>}
+        </p>
+      )}
+    </Panel>
+  )
+}
+
+function TokenButton({
+  token,
+  wave,
+  editable,
+  picked,
+  selectedWild,
+  disabled,
+  onPick,
+}: {
+  token: DamageToken
+  wave: Wave
+  editable: boolean
+  picked: boolean
+  selectedWild: WildPokemon | null
+  disabled: boolean
+  onPick: () => void
+}) {
+  const { t, i18n: inst } = useTranslation()
+  const lng = inst.language
+  const names = useNames()
+  const player = usePlayer()
+  const slug = player.pokemon[token.uid]?.speciesSlug ?? ''
+  const name = names.species(slug)
+  const a = token.assigned
+  const target = typeof a === 'number' ? wave.wilds[a] : undefined
+  const where = typeof a === 'number' ? (target ? names.species(target.speciesSlug) : '?') : a === 'auto' ? t('damage.auto') : null
+  const est = selectedWild ? estimateTokenDamage(token, selectedWild) : null
+  const moveName = (m: string | null) => (m ? names.move(m) : t('damage.noMove'))
+  const effText = (e: number) => (e === 0 ? t('damage.eff.immune') : e > 1 ? t('damage.eff.super', { mult: e }) : e < 1 ? t('damage.eff.weak', { mult: e }) : t('damage.eff.normal'))
+  const tip = (
+    <div className="flex flex-col gap-1">
+      <p className="font-display text-base">{name}</p>
+      <p>{token.moves.map((m) => `${moveName(m.move)} ×${m.hits}`).join(' · ')}</p>
+      {est && selectedWild ? (
+        <>
+          <p className="mt-1 border-t border-dusk-500/30 pt-1">{t('damage.vs', { name: names.species(selectedWild.speciesSlug), pct: fmtPct(Math.min(1, est.fraction), lng) })}</p>
+          <ul className="text-xs">
+            {est.moves.map((m) => (
+              <li key={m.move ?? '-'} className={cx(m.effectiveness > 1 && 'text-leaf-700', m.effectiveness < 1 && 'text-cheek-600')}>
+                {moveName(m.move)} ({names.type(m.type)}): {effText(m.effectiveness)}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="text-xs text-dusk-600">{t('damage.pickForEstimate')}</p>
+      )}
+    </div>
+  )
+  const state = where ? (a === 'auto' ? t('damage.toAuto') : t('damage.to', { name: where })) : t('damage.notAssigned')
+  return (
+    <Tooltip variant="help" content={tip}>
+      <button
+        type="button"
+        aria-pressed={editable ? picked : undefined}
+        aria-disabled={!editable || disabled}
+        aria-label={`${t('damage.tokenLabel', { name, count: token.hits })}, ${state}`}
+        onClick={() => editable && !disabled && onPick()}
+        className={cx(
+          'flex items-center gap-1 py-1 pr-2.5 pl-0.5 shadow-raised transition-[translate,background-color] duration-75',
+          picked ? 'translate-y-[3px] bg-volt-400 text-ink shadow-pressed' : 'bg-dusk-700 text-mist-100 hover:bg-dusk-600',
+          editable && a === null && !picked && 'outline-2 -outline-offset-2 outline-volt-300/70 outline-dashed',
+          (!editable || disabled) && 'cursor-default',
+        )}
+      >
+        <Sprite kind="icon" slug={slug} alt="" className="-my-2" />
+        <span className="font-num text-lg leading-none">×{token.hits}</span>
+        {/* On phones the dashed outline alone says "unassigned", so three tokens fit per row. */}
+        <span className={cx('ml-1 max-w-[9ch] truncate text-xs', picked ? 'text-dusk-800' : 'text-mist-300', !where && 'max-sm:hidden')}>{where ? `→ ${where}` : t('damage.notAssigned')}</span>
+      </button>
+    </Tooltip>
+  )
 }
 
 function counterLine(c: CounterResult, t: (k: string, o?: Record<string, unknown>) => string, names: ReturnType<typeof useNames>): string {
@@ -444,8 +668,17 @@ function WildCard({
   studyAvailable,
   revealIvs,
   hitters,
+  assigning,
+  preview,
+  manual,
   onSelect,
 }: {
+  /** A damage token is picked: tapping this card sends it here (or takes it back). */
+  assigning: 'assign' | 'unassign' | null
+  /** This wild as it would be with the picked token assigned/unassigned (live HP preview). */
+  preview: WildPokemon | null
+  /** The wave uses the manual split (shows wasted damage). */
+  manual: boolean
   studyAvailable: boolean
   revealIvs: boolean
   hitters: { uid: string; slug: string; hits: number }[]
@@ -469,7 +702,9 @@ function WildCard({
   const result = anim?.stage === 'result' ? anim.outcome.kind : null
   // A status charge can't target a wild that already sleeps or is paralyzed.
   const statusTaken = targeting?.kind === 'status' && Boolean(wild.status)
-  const disabled = (done && !targeting) || Boolean(anim) || (targeting !== null && done) || statusTaken || (busy && targeting !== null)
+  const disabled = (done && !targeting) || Boolean(anim) || (targeting !== null && done) || statusTaken || (busy && (targeting !== null || assigning !== null)) || (assigning !== null && done)
+  const hpShown = preview && !done ? preview.hpFraction : wild.hpFraction
+  const overkill = manual && !done && wastedDamage(preview ?? wild, ctx.config) > 0.5
   return (
     <button
       type="button"
@@ -484,12 +719,15 @@ function WildCard({
         t('waves.failsLeft', { count: left }),
         done ? t(wild.outcome === 'caught' ? 'waves.caught' : 'waves.fled') : '',
         statusTaken ? t('waves.charges.hasStatus') : '',
+        preview && !done ? t('damage.preview', { pct: fmtPct(preview.hpFraction, i18n.language) }) : '',
+        overkill ? t('damage.overkill') : '',
+        assigning && !done ? t(assigning === 'assign' ? 'damage.assignHere' : 'damage.unassignHere') : '',
       ]
         .filter(Boolean)
         .join('. ')}
       className={cx(
         'group relative flex w-full flex-col items-center text-left outline-offset-4 disabled:cursor-default',
-        targeting && !done && !statusTaken && 'cursor-crosshair',
+        ((targeting && !done && !statusTaken) || (assigning && !done)) && 'cursor-crosshair',
         statusTaken && 'opacity-60',
       )}
     >
@@ -569,9 +807,14 @@ function WildCard({
         <div className="mt-2" {...(first ? hintAnchor('waves.hp') : {})}>
           <div className="flex items-center gap-2">
             <span className="w-12 font-display text-sm text-dusk-600">{t('waves.hp')}</span>
-            <ProgressBar className="flex-1" size="sm" variant="hp" value={wild.hpFraction} from={1} max={1} label={t('waves.hpLabel', { name })} />
-            <span className="w-10 text-right font-num text-lg leading-none">{fmtPct(wild.hpFraction, i18n.language)}</span>
+            <ProgressBar className="flex-1" size="sm" variant="hp" value={hpShown} from={preview && !done ? wild.hpFraction : 1} max={1} label={t('waves.hpLabel', { name })} />
+            <span className={cx('w-10 text-right font-num text-lg leading-none', preview && !done && preview.hpFraction !== wild.hpFraction && 'text-exp-600')}>{fmtPct(hpShown, i18n.language)}</span>
           </div>
+          {overkill && (
+            <p className="mt-1 text-right text-xs text-amber-700" title={t('damage.overkillTip', { pct: fmtPct(ctx.config.capture.minHpFraction, i18n.language) })}>
+              {t('damage.overkill')}
+            </p>
+          )}
         </div>
         <div className="mt-2 flex items-center gap-2 text-xs" {...(first ? hintAnchor('waves.fails') : {})}>
           <span className="w-12 font-display text-sm text-dusk-600">{t('waves.tries')}</span>
@@ -605,6 +848,7 @@ function WildCard({
           <p className="mt-1.5 text-xs text-volt-700">{t('waves.shinyGuarantee', { ball: names.item(wild.guaranteedBall) })}</p>
         )}
         {targeting && !done && <p className="mt-1.5 font-display text-sm text-exp-600">{t('waves.charges.applyHere')}</p>}
+        {assigning && !done && <p className="mt-1.5 font-display text-sm text-exp-600">{t(assigning === 'assign' ? 'damage.assignHere' : 'damage.unassignHere')}</p>}
       </div>
       <span className="sr-only">{index + 1}</span>
     </button>

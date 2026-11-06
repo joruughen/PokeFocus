@@ -6,6 +6,7 @@
 import { registerHints } from './engine'
 import './partB'
 import './social'
+import './damage'
 
 registerHints([
   // Home / pre-session

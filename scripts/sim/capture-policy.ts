@@ -5,6 +5,11 @@
 import {
   advanceWave,
   applyStatusCharge,
+  assignDamage,
+  autoAssignDamage,
+  damageTokens,
+  estimateTokenDamage,
+  isManualWave,
   ballCovers,
   BALL_ORDER,
   getSpecies,
@@ -22,7 +27,18 @@ import {
 } from '../../src/engine/index.ts'
 import type { LegendaryEncounter, Tally } from './types.ts'
 
+/**
+ * How the simulated player splits the damage tokens of a wave (docs/session-depth-plan.md §A).
+ * - `auto`: the "Auto" preference (claims in automatic mode: the engine's maxHp-weighted split).
+ * - `concentrate-valuable`: every token on one wild: legendary > shiny > species not caught yet > highest level.
+ * - `type-smart`: each token on the wild it damages most (absolute damage, type effectiveness included).
+ */
+export type DamagePolicy = 'auto' | 'concentrate-valuable' | 'type-smart'
+export const DAMAGE_POLICIES: readonly DamagePolicy[] = ['auto', 'concentrate-valuable', 'type-smart']
+
 export interface CaptureCtx {
+  /** Damage split policy (default `auto`). */
+  damagePolicy?: DamagePolicy
   rng: Rng
   now: number
   ctx: EngineContext
@@ -87,6 +103,7 @@ export function playEncounter(state: PlayerState, c: CaptureCtx): PlayerState {
     const enc = s.encounter
     const wi = enc.currentWave
     const last = wi === enc.waves.length - 1
+    s = allocateDamage(s, wi, c)
     registerWave(s, wi, c)
     s = useRerolls(s, wi, c)
     s = useStatuses(s, wi, last, c)
@@ -95,6 +112,48 @@ export function playEncounter(state: PlayerState, c: CaptureCtx): PlayerState {
     s = advanceWave(s, c.ctx)
   }
   return s
+}
+
+/** Assign the wave's damage tokens with the policy (manual waves only; automatic ones are already split). */
+function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): PlayerState {
+  const wave = state.encounter?.waves[wi]
+  if (!wave || !isManualWave(wave) || wave.damageLocked) return state
+  const policy = c.damagePolicy ?? 'auto'
+  const pending = pendingIdx(state, wi)
+  let s = state
+  if (policy !== 'auto' && pending.length > 0) {
+    const tokens = damageTokens(wave)
+    if (policy === 'concentrate-valuable') {
+      const rank = (w: WildPokemon) => [w.isLegendary ? 1 : 0, w.isShiny ? 1 : 0, s.pokedex.caught.includes(w.speciesSlug) ? 0 : 1, w.level]
+      const better = (a: number[], b: number[]) => {
+        for (let k = 0; k < a.length; k++) if ((a[k] as number) !== (b[k] as number)) return (a[k] as number) > (b[k] as number)
+        return false
+      }
+      let target = pending[0] as number
+      for (const i of pending) if (better(rank(wave.wilds[i] as WildPokemon), rank(wave.wilds[target] as WildPokemon))) target = i
+      for (const tk of tokens) {
+        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: target }, c.ctx)
+        if (r.ok) s = r.value
+      }
+    } else {
+      for (const tk of tokens) {
+        let best = pending[0] as number
+        let bestDmg = -1
+        for (const i of pending) {
+          const d = estimateTokenDamage(tk, wave.wilds[i] as WildPokemon, c.ctx).damage
+          if (d > bestDmg) {
+            bestDmg = d
+            best = i
+          }
+        }
+        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: best }, c.ctx)
+        if (r.ok) s = r.value
+      }
+    }
+  }
+  // Anything left (and the whole wave under `auto`) takes the automatic split.
+  const r = autoAssignDamage(s, wi, c.ctx)
+  return r.ok ? r.value : s
 }
 
 function registerWave(s: PlayerState, wi: number, c: CaptureCtx): void {

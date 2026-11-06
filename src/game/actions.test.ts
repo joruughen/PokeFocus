@@ -173,3 +173,40 @@ describe('timezone lock', () => {
     expect(applyAction(doc, { type: 'updateProfile', patch: { timezone: 'Asia/Tokyo' } }, env(T0 + DAY, { dev: true })).ok).toBe(true)
   })
 })
+
+describe('damage split', () => {
+  const claimWith = (autoDamage: boolean | null) => {
+    let doc = newPlayer()
+    if (autoDamage !== null) doc = must(doc, { type: 'setAutoDamage', value: !autoDamage }, env(T0))
+    doc = must(doc, { type: 'start', minutes: 30 }, env(T0))
+    // The preference can still change during the session (and on the claim screen).
+    if (autoDamage !== null) doc = must(doc, { type: 'setAutoDamage', value: autoDamage }, env(T0 + 10 * MINUTE_MS))
+    return must(doc, { type: 'claim', devFocusLabel: 'studying' }, env(T0 + 31 * MINUTE_MS, { dev: true }))
+  }
+  const t = T0 + 32 * MINUTE_MS
+
+  it('defaults to manual; assign, auto and the lock at the first ball', () => {
+    let doc = claimWith(null)
+    const enc = doc.player!.encounter!
+    expect(enc.damageMode).toBe('manual')
+    expect(enc.waves[0]!.wilds.every((w) => w.hpFraction === 1)).toBe(true)
+    doc = must(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))
+    expect(doc.player!.encounter!.waves[0]!.assignments).toEqual({ p1: 0 })
+    expect(doc.player!.encounter!.waves[0]!.wilds[0]!.hpFraction).toBeLessThan(1)
+    doc = must(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: null }, env(t))
+    doc = must(doc, { type: 'autoAssignDamage', waveIndex: 0 }, env(t))
+    expect(doc.player!.encounter!.waves[0]!.assignments).toEqual({ p1: 'auto' })
+    doc = must(doc, { type: 'throwBall', ref: { waveIndex: 0, wildIndex: 0 }, ball: 'poke-ball' }, env(t))
+    expect(doc.player!.encounter!.waves[0]!.damageLocked).toBe(true)
+    expect(applyAction(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))).toEqual({ ok: false, error: 'damage_locked' })
+  })
+
+  it('autoDamage on at claim: the encounter is automatic and keeps that mode after the preference changes', () => {
+    let doc = claimWith(true)
+    expect(doc.player!.autoDamage).toBe(true)
+    expect(doc.player!.encounter!.damageMode).toBe('auto')
+    doc = must(doc, { type: 'setAutoDamage', value: false }, env(t))
+    expect(doc.player!.encounter!.damageMode).toBe('auto')
+    expect(applyAction(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))).toEqual({ ok: false, error: 'damage_auto' })
+  })
+})

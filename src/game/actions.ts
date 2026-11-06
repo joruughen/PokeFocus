@@ -12,6 +12,8 @@ import {
   advanceWave,
   applySessionResult,
   applyStatusCharge,
+  assignDamage,
+  autoAssignDamage,
   cancelSession,
   claimAllMissions,
   claimMission,
@@ -29,6 +31,7 @@ import {
   MINUTE_MS,
   releasePokemon,
   rerollWild,
+  setAutoDamage,
   setLeader,
   setTeam,
   startSession,
@@ -220,6 +223,16 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       const r = rerollWild(p, a.chargeId, a.ref, rng, ctx)
       return r.ok ? withPlayer(r.value) : fail(r.error)
     }
+    case 'assignDamage': {
+      const r = assignDamage(p, { waveIndex: a.waveIndex, uid: a.uid, wildIndex: a.wildIndex }, ctx)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'autoAssignDamage': {
+      const r = autoAssignDamage(p, a.waveIndex, ctx)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'setAutoDamage':
+      return withPlayer(setAutoDamage(p, a.value))
     case 'nextWave':
       if (!p.encounter) return fail('no_encounter')
       return withPlayer(advanceWave(p, ctx))

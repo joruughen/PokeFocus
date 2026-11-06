@@ -195,9 +195,24 @@ export interface Wave {
   contributions: EnergyContribution[]
   /** Per-wild hits that produced each wild's `damage` (absent in encounters saved before the damage model). */
   hits?: WaveHit[]
+  /**
+   * Manual damage split (`EncounterState.damageMode: 'manual'`): team member uid →
+   * wild slot that takes all of its hits, or `'auto'` (its hits keep their
+   * `WaveHit.target`, today's maxHp-weighted split). Members missing here deal
+   * no damage yet. Absent = automatic mode (or an older save): `hits` apply as rolled.
+   */
+  assignments?: Record<string, DamageAssignment>
+  /** The first ball of the wave was thrown: assignments are frozen (unassigned members went to `'auto'`). */
+  damageLocked?: boolean
   /** Types whose condition counted as active for species weighting. */
   activeConditionTypes: TypeSlug[]
 }
+
+/** Where a damage token goes: a wild slot, or the automatic split. */
+export type DamageAssignment = number | 'auto'
+
+/** How the session's damage reaches the wilds (copied from `PlayerState.autoDamage` at claim). */
+export type DamageMode = 'auto' | 'manual'
 
 export interface Charge {
   id: string
@@ -226,6 +241,8 @@ export interface EncounterState {
   gen: WaveGenParams
   /** When-context of the session, for counterattack effects. */
   env: { localHour: number; weekend: boolean; weather: WeatherInput | null; noPauses: boolean; sessionMinutes: number }
+  /** Fixed at claim. Absent (older saves) = `'auto'`. */
+  damageMode?: DamageMode
 }
 
 // ---------------------------------------------------------------------------
@@ -284,6 +301,8 @@ export interface PlayerState {
   counters: { pokemon: number; session: number; charge: number }
   /** Daily/weekly missions and claimed Pokédex milestones (absent in older saves; see missions.ts). */
   missions?: MissionsState
+  /** Preference: split the wave damage automatically (no assignment step). Absent = false. */
+  autoDamage?: boolean
 }
 
 export type FocusInputs = {

@@ -8,6 +8,7 @@ import { fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
+import { AutoDamageToggle } from './AutoDamageToggle'
 import { timerOf, useGame } from '../../store/game'
 import { usePlayer, useScene } from '../../store/selectors'
 
@@ -86,6 +87,7 @@ export function Claim({ late }: { late: boolean }) {
         <Button {...hintAnchor('claim.button')} size="lg" icon="star" onClick={() => void onClaim()} disabled={busy} aria-busy={busy} beacon={!late} data-sfx="none">
           {t('claim.button')}
         </Button>
+        <AutoDamageToggle disabled={busy} />
       </section>
     </div>
   )

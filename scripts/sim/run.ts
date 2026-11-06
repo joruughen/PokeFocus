@@ -55,7 +55,9 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
     ctx,
   )
   if (!created.ok) throw new Error(created.error)
-  let state: PlayerState = created.value
+  const damagePolicy = o.damagePolicy ?? 'auto'
+  // `auto` = the "Auto" preference on: encounters are claimed in automatic mode (the engine's split).
+  let state: PlayerState = { ...created.value, autoDamage: damagePolicy === 'auto' }
   if (o.soloStarter) state = { ...state, inventory: {} }
 
   const weeks = o.weeks
@@ -206,7 +208,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
     const capNow = claimedAt + MINUTE_MS
     if (o.captures && state.encounter) {
       const caughtBefore = new Set(state.pokedex.caught)
-      state = playEncounter(state, { rng, now: capNow, ctx, tally, ratios: m.dmgRatioByWeek[weekIdx] ?? [], legendary: m.legendaryEncounters })
+      state = playEncounter(state, { damagePolicy, rng, now: capNow, ctx, tally, ratios: m.dmgRatioByWeek[weekIdx] ?? [], legendary: m.legendaryEncounters })
       for (const sl of state.pokedex.caught) if (!caughtBefore.has(sl)) m.speciesFirstCaughtDay[sl] = dayIdx
     } else if (state.encounter) {
       state = finishEncounter(state, ctx)

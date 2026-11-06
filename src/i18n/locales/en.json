@@ -755,7 +755,7 @@
     "waves": {
       "hp": {
         "title": "HP after the damage",
-        "body": "Your team already weakened these Pokémon with the energy it made while you studied. Less HP means an easier catch. It never drops below 5%."
+        "body": "Your team weakens these Pokémon with the damage it dealt while you studied. Less HP means an easier catch. It never drops below 5%."
       },
       "studyBall": {
         "title": "Study Ball",
@@ -796,6 +796,10 @@
       "iv": {
         "title": "You can see quality",
         "body": "A technique in your team reveals the quality (IVs) of wild Pokémon. Go for the ones with more stars."
+      },
+      "damage": {
+        "title": "Split the damage",
+        "body": "Each token is the damage one of your Pokémon dealt in this block. Tap one, then a wild, to send it all there. You can change it until you throw the first ball. In a hurry? Press Auto."
       }
     },
     "box": {
@@ -1425,5 +1429,49 @@
       "body": "Share your code or type a classmate's. Once they accept, you'll see their level, league and team."
     },
     "connected": "You're friends now! They had already sent you a request."
+  },
+  "damage": {
+    "title": "Your team's damage",
+    "howTo": "Tap a token, then a wild: all of that Pokémon's damage goes to it.",
+    "lockNote": "The first ball you throw locks the damage; unassigned tokens are split automatically.",
+    "locked": "Damage locked: you already threw a ball in this wave.",
+    "pickWild": "Now tap a wild to send it {{name}}'s damage.",
+    "auto": "Auto",
+    "autoTip": "Split the unassigned tokens like automatic mode does: at random, leaning toward the wilds with more HP.",
+    "unassigned_one": "{{count}} unassigned",
+    "unassigned_other": "{{count}} unassigned",
+    "allAssigned": "All assigned",
+    "tokenLabel": "{{name}}, {{count}} hits",
+    "to": "to {{name}}",
+    "toAuto": "automatic split",
+    "notAssigned": "unassigned",
+    "noMove": "Normal hit",
+    "vs": "Against {{name}}: {{pct}} of its HP",
+    "pickForEstimate": "Pick a wild to see the estimated damage.",
+    "eff": {
+      "super": "super effective ×{{mult}}",
+      "weak": "not very effective ×{{mult}}",
+      "immune": "no effect",
+      "normal": "×1"
+    },
+    "overkill": "Too much damage",
+    "overkillTip": "HP never drops below {{pct}}: the extra damage is wasted. Send a token to another wild.",
+    "preview": "With this token: {{pct}}",
+    "assignHere": "Send here",
+    "unassignHere": "Take back",
+    "throwLocks": "Throwing locks the damage.",
+    "errors": {
+      "damage_locked": "This wave's damage is already locked.",
+      "damage_auto": "This wave splits its damage automatically.",
+      "unknown_token": "That Pokémon did no damage in this wave.",
+      "unknown_wave": "That wave doesn't exist."
+    },
+    "toggle": {
+      "label": "Automatic damage split",
+      "on": "Your team splits its damage among the wilds on its own.",
+      "off": "You choose which wild gets each Pokémon's damage.",
+      "tip": "Without Auto, in every wave you decide which wild each Pokémon sends its damage to. With Auto, it is split at random, leaning toward the wilds with more HP. It applies when you claim the session.",
+      "fixed": "Applies when you claim."
+    }
   }
 }

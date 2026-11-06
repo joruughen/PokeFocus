@@ -9,6 +9,7 @@ import { fmtClock, fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
 import { useNow } from '../../store/clock'
+import { AutoDamageToggle } from './AutoDamageToggle'
 import { timerOf, useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
 
@@ -134,6 +135,7 @@ export function FocusSession() {
           </Button>
         </div>
         <p className="mt-4 max-w-[52ch] text-sm text-mist-400">{t('session.rockNote')}</p>
+        <AutoDamageToggle compact className="mt-6" />
       </section>
 
       <Dialog

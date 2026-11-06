@@ -20,6 +20,7 @@ import { clampMinutes, fmtClock, fmtInt, fmtWeekday } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { primeSignals } from '../../lib/notify'
 import { scheduleSessionEnd, sfx } from '../../lib/sound'
+import { AutoDamageToggle } from './AutoDamageToggle'
 import { BreakOffer, useBreakOffer } from './Break'
 import { Checklist } from './Checklist'
 import { useNow } from '../../store/clock'
@@ -160,6 +161,8 @@ export function PreSession() {
               <Segmented label={t('home.plan.weather')} value={wk} onChange={(w) => void setWeather(WEATHER_PRESETS[w]).then((err) => err && toast.add({ title: errorText(err), type: 'danger' }))} options={weatherOptions} />
               <p className="mt-2 text-sm text-mist-400">{t(`weather.effect.${wk}`)}</p>
             </div>
+
+            <AutoDamageToggle />
 
             {allOut ? (
               <p {...hintAnchor('home.energy')} className="flex items-start gap-2 bg-dusk-900 p-3 text-sm text-amber-400 inset-shadow-well" role="status">

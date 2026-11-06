@@ -1,3 +1,4 @@
+import type { DamagePolicy } from './capture-policy.ts'
 import type { EngineContext, LeagueId, TypeSlug } from '../../src/engine/index.ts'
 import type { ProfileId } from './profiles.ts'
 
@@ -21,6 +22,8 @@ export interface RunOptions {
   soloStarter: boolean
   /** Record per-session records (needed for coverage and wave stats). */
   detail: boolean
+  /** Damage split policy (default `auto`: the player keeps the "Auto" preference on). */
+  damagePolicy?: DamagePolicy
 }
 
 export interface SessionRec {
