@@ -10,7 +10,7 @@ import { authSessions, users, type AuthSessionRow, type UserRow } from './db/sch
 import type { EventBus } from './events'
 import type { RateLimiter } from './rate-limit'
 import { hashToken, looksLikeToken, SESSION_COOKIE, SESSION_RENEW_AFTER_MS, SESSION_TTL_MS } from './auth/tokens'
-import type { PublicUser } from '../src/game/protocol'
+import { DEV_NOW_HEADER, type PublicUser } from '../src/game/protocol'
 
 export interface Deps {
   env: Env
@@ -136,3 +136,12 @@ export function requireAuth(deps: Deps): MiddlewareHandler<AppEnv> {
 }
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Game time: server clock, or x-dev-now only with DEV_TOOLS=1. */
+export function gameTime(deps: Deps, c: Ctx): number {
+  if (deps.env.devTools) {
+    const v = Number(c.req.header(DEV_NOW_HEADER))
+    if (Number.isFinite(v) && v > 0) return Math.floor(v)
+  }
+  return deps.clock()
+}

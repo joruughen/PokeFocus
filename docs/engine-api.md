@@ -65,7 +65,7 @@ Starter (`config.starters`) at `starterLevel`, 1 technique equipped, `starterPok
      focusInputs: { screenshotLabels: string[] | null /* null = no permission */, missedCaptures },
      soundProfile?: { silence, music, voice, noise } | null,
      weather?: { rain, sun, snow?, tempC } | null,   // default: state.profile.weather
-     friendOverlap?: number | null,                  // 0–1, Fairy condition
+     friendOverlap?: number | null,                  // 0–1 accompanied share (study group, server-computed); Fairy = 1 + (fairy − 1) × overlap
    }, rng): Result<SessionResult, 'no_active_session' | 'invalid_times'>
    ```
    Pure simulation. Key `SessionResult` fields:

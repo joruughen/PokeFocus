@@ -2,27 +2,58 @@
 import { randomBytes } from 'node:crypto'
 import { Hono } from 'hono'
 import { eq } from 'drizzle-orm'
-import { createRng } from '../../src/engine'
+import { createRng, type Rng } from '../../src/engine'
 import { applyAction, isDevAction } from '../../src/game/actions'
-import { DEV_NOW_HEADER, DEV_SEED_HEADER, EMPTY_DOC, type ActionResponse, type GameDoc, type GameSnapshot } from '../../src/game/protocol'
+import { DEV_SEED_HEADER, EMPTY_DOC, type ActionResponse, type ActionResults, type GameAction, type GameDoc, type GameSnapshot } from '../../src/game/protocol'
 import type { Tx } from '../db/client'
 import { activeStudySessions, leagueScores, playerDocs } from '../db/schema'
-import { ApiError, readBody, requireAuth, type AppEnv, type Ctx, type Deps } from '../http'
+import { claimOverlap, publishGroupEvents, syncGroupMembership, type PendingGroupEvent } from '../groups'
+import { ApiError, gameTime, readBody, requireAuth, type AppEnv, type Ctx, type Deps } from '../http'
 import { asGameAction, gameActionBody } from '../validation'
+
+/** Fresh RNG for an action: x-dev-seed only with DEV_TOOLS=1. */
+export function actionRng(deps: Deps, c: Ctx): Rng {
+  const seed = deps.env.devTools ? c.req.header(DEV_SEED_HEADER) : undefined
+  return createRng(seed && seed.length <= 128 ? seed : randomBytes(16).toString('hex'))
+}
+
+export type RunOutcome =
+  | { ok: true; doc: GameDoc; result: ActionResults[keyof ActionResults]; version: number; groupEvents: PendingGroupEvent[] }
+  | { ok: false; error: string }
+
+/**
+ * One game action inside a transaction: lock the doc -> (claim: group overlap
+ * from the stored intervals) -> reducer -> active session / group membership /
+ * league mirrors -> version + 1. Also used by the study-group routes to start
+ * members' sessions (`viaGroup`). Events are NOT published here (after commit).
+ */
+export async function runGameAction(
+  tx: Tx,
+  deps: Deps,
+  user: { id: string; trainerName: string },
+  action: GameAction,
+  opts: { now: number; rng: Rng; viaGroup?: boolean },
+): Promise<RunOutcome> {
+  const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
+  const before = row?.doc ?? EMPTY_DOC
+  const friendOverlap = action.type === 'claim' ? await claimOverlap(tx, user.id, before) : null
+  const r = applyAction(before, action, { now: opts.now, rng: opts.rng, dev: deps.env.devTools, trainerName: user.trainerName, friendOverlap })
+  if (!r.ok) return r
+  await syncActiveSession(tx, user.id, before, r.doc)
+  const groupEvents = await syncGroupMembership(tx, user.id, before, r.doc, action.type, opts.now, opts.viaGroup ?? false)
+  if (action.type === 'resetAll') await tx.delete(leagueScores).where(eq(leagueScores.userId, user.id))
+  else await syncLeagueScores(tx, user.id, before, r.doc, deps.clock())
+  const version = (row?.version ?? 0) + 1
+  const updatedAt = new Date(deps.clock())
+  if (row) await tx.update(playerDocs).set({ doc: r.doc, version, updatedAt }).where(eq(playerDocs.userId, user.id))
+  else await tx.insert(playerDocs).values({ userId: user.id, doc: r.doc, version, updatedAt })
+  return { ok: true, doc: r.doc, result: r.result, version, groupEvents }
+}
 
 export function gameRoutes(deps: Deps) {
   const { db, env, bus } = deps
   const app = new Hono<AppEnv>()
   app.use('*', requireAuth(deps))
-
-  /** Game time: server clock, or x-dev-now only with DEV_TOOLS=1. */
-  const gameNow = (c: Ctx): number => {
-    if (env.devTools) {
-      const v = Number(c.req.header(DEV_NOW_HEADER))
-      if (Number.isFinite(v) && v > 0) return Math.floor(v)
-    }
-    return deps.clock()
-  }
 
   app.get('/', async (c) => {
     const user = c.get('user')
@@ -31,7 +62,7 @@ export function gameRoutes(deps: Deps) {
       await db.insert(playerDocs).values({ userId: user.id, doc: EMPTY_DOC, version: 0 }).onConflictDoNothing()
       row = { doc: EMPTY_DOC, version: 0 }
     }
-    const snap: GameSnapshot = { doc: row.doc, version: row.version, serverNow: gameNow(c) }
+    const snap: GameSnapshot = { doc: row.doc, version: row.version, serverNow: gameTime(deps, c) }
     return c.json(snap)
   })
 
@@ -39,26 +70,12 @@ export function gameRoutes(deps: Deps) {
     const user = c.get('user')
     const action = asGameAction(await readBody(c, gameActionBody))
     if (isDevAction(action.type) && !env.devTools) throw new ApiError(403, 'dev_disabled')
-    const now = gameNow(c)
-    const seed = env.devTools ? c.req.header(DEV_SEED_HEADER) : undefined
-    const rng = createRng(seed && seed.length <= 128 ? seed : randomBytes(16).toString('hex'))
-
-    const out = await db.transaction(async (tx) => {
-      const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
-      const before = row?.doc ?? EMPTY_DOC
-      const r = applyAction(before, action, { now, rng, dev: env.devTools, trainerName: user.trainerName })
-      if (!r.ok) return r
-      await syncActiveSession(tx, user.id, before, r.doc)
-      if (action.type === 'resetAll') await tx.delete(leagueScores).where(eq(leagueScores.userId, user.id))
-      else await syncLeagueScores(tx, user.id, before, r.doc, deps.clock())
-      const version = (row?.version ?? 0) + 1
-      const updatedAt = new Date(deps.clock())
-      if (row) await tx.update(playerDocs).set({ doc: r.doc, version, updatedAt }).where(eq(playerDocs.userId, user.id))
-      else await tx.insert(playerDocs).values({ userId: user.id, doc: r.doc, version, updatedAt })
-      return { ok: true as const, doc: r.doc, result: r.result, version }
-    })
+    const now = gameTime(deps, c)
+    const rng = actionRng(deps, c)
+    const out = await db.transaction((tx) => runGameAction(tx, deps, user, action, { now, rng }))
     if (!out.ok) throw new ApiError(out.error === 'dev_disabled' ? 403 : 409, out.error)
     bus.publish(user.id, { type: 'game', version: out.version })
+    await publishGroupEvents(deps, user, out.groupEvents)
     const body: ActionResponse = { doc: out.doc, version: out.version, serverNow: now, result: out.result }
     return c.json(body)
   })

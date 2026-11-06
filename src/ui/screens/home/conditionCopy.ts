@@ -25,6 +25,6 @@ export function conditionRuleValues(minutes: number): Record<string, string | nu
     streak: c.dragonStreakDays,
     missed: c.darkMissedDays,
     steelWindow: c.steelWindowMinutes,
-    overlap: Math.round(c.fairyOverlap * 100),
+    fairyPct: pct(c.fairy),
   }
 }

@@ -100,7 +100,6 @@ export interface GameConfig {
     steel: number
     steelWindowMinutes: number
     fairy: number
-    fairyOverlap: number
     electricMaxMinutes: number
     electricChainGapMinutes: number
     fightingMinMinutes: number

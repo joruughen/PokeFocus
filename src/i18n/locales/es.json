@@ -271,7 +271,7 @@
       "dragon": "Con una racha de {{streak}} días o más.",
       "dark": "El día que vuelves tras {{missed}} días o más sin estudiar.",
       "steel": "Si empiezas a ±{{steelWindow}} min de la hora en que empezaste ayer.",
-      "fairy": "Estudiando a la vez que un amigo (próximamente)."
+      "fairy": "Estudiando en grupo con amigos: hasta +{{fairyPct}} %, proporcional al tiempo acompañado."
     }
   },
   "league": {
@@ -1425,5 +1425,111 @@
       "body": "Comparte tu código o escribe el de un compañero. Cuando acepten, verás su nivel, su liga y su equipo."
     },
     "connected": "¡Ya son amigos! Esa persona ya te había enviado una solicitud."
+  },
+  "group": {
+    "title": "Estudiar con amigos",
+    "intro": "Invita a tus amigos a la misma sesión. Tus Pokémon de tipo Hada ganan hasta +{{pct}} %, en proporción al tiempo que estudias acompañado.",
+    "noFairyHint": "Ahora no tienes ningún Pokémon de tipo Hada en el equipo: el bonus solo les afecta a ellos.",
+    "studyWithFriends": "Estudiar con amigos",
+    "pickFriends": "Elige a quién invitar a una sesión de {{minutes}} min (la duración que tienes seleccionada).",
+    "sendInvites_one": "Invitar a {{count}} amigo · {{minutes}} min",
+    "sendInvites_other": "Invitar a {{count}} amigos · {{minutes}} min",
+    "rules": "Cuando pulses Empezar, todos los que aceptaron empiezan a la vez. Pausar o cancelar te saca del grupo: tu sesión sigue en solitario, pero ya no sumas tiempo acompañado.",
+    "noFriends": "Todavía no tienes amigos aceptados.",
+    "goFriends": "Agrega amigos",
+    "host": "anfitrión",
+    "inviteStatus": {
+      "pending": "esperando",
+      "accepted": "listo",
+      "declined": "rechazó",
+      "joined": "estudiando",
+      "failed": "no pudo empezar"
+    },
+    "lobbyHost": "Sala de {{minutes}} min.",
+    "expiresIn_one": "Caduca en {{count}} min si no empiezas.",
+    "expiresIn_other": "Caduca en {{count}} min si no empiezas.",
+    "lateJoinNote": "Quien no haya respondido aún podrá unirse tarde, con menos tiempo acompañado.",
+    "start_one": "Empezar en grupo · {{count}} listo",
+    "start_other": "Empezar en grupo · {{count}} listos",
+    "startAloneNote": "Nadie ha aceptado todavía: si empiezas ya, estarás solo hasta que alguien se una.",
+    "inviteMore": "Invitar a más",
+    "disband": "Cancelar el grupo",
+    "lobbyGuest": "Estás en la sala de {{name}} ({{minutes}} min). La sesión empieza cuando {{name}} pulse Empezar.",
+    "guestNote": "Tu sesión empezará sola en ese momento, aunque estés en otra pantalla.",
+    "leaveLobby": "Salir de la sala",
+    "reason": {
+      "pause": "pausó",
+      "cancel": "canceló",
+      "leave": "salió",
+      "finished": "terminó"
+    },
+    "notice": {
+      "invite": "{{name}} te invita a estudiar",
+      "inviteBody": "Acepta o rechaza la invitación arriba.",
+      "accept": "{{name}} aceptó tu invitación",
+      "decline": "{{name}} no se une al grupo",
+      "start": "¡{{name}} empezó la sesión de grupo!",
+      "startBody": "Tu sesión ya está en marcha.",
+      "join": "{{name}} se unió al grupo",
+      "disband": "{{name}} canceló el grupo",
+      "failed": "{{name}} no pudo empezar con el grupo",
+      "failedMe": "No pudimos empezar tu sesión del grupo",
+      "failedMeBody": "Ya tenías otra sesión en marcha o tu equipo no puede estudiar.",
+      "left": "{{name}} salió del grupo ({{reason}})",
+      "leftBody": "Su tiempo deja de contar como compañía para ti.",
+      "youLeft": "Saliste del grupo ({{reason}})",
+      "youLeftBody": "Tu sesión sigue en solitario; el tiempo acompañado ya no suma."
+    },
+    "session": {
+      "title": "Sesión en grupo",
+      "members": "Miembros del grupo",
+      "you": "{{name}} (tú)",
+      "studying": "estudiando",
+      "done": "terminó",
+      "leftBecause": "fuera · {{reason}}",
+      "accompanied": "Acompañado {{x}} de {{y}} min",
+      "estimate": "Hada ×{{mult}} estimado",
+      "pauseWarning": "Si pausas o cancelas, sales del grupo y no puedes volver a entrar.",
+      "alone": "Ahora nadie más estudia en el grupo: el tiempo acompañado no suma.",
+      "youLeft": "Saliste del grupo ({{reason}}). El bonus Hada se queda con el tiempo que ya llevabas acompañado.",
+      "noFairy": "Ningún Pokémon de tu equipo es de tipo Hada: el bonus no se aplicará.",
+      "srSummary_one": "{{count}} compañero sigue estudiando. Solapamiento estimado {{pct}}.",
+      "srSummary_other": "{{count}} compañeros siguen estudiando. Solapamiento estimado {{pct}}."
+    },
+    "results": {
+      "title": "Estudio en grupo",
+      "accompanied": "Acompañado {{x}} de {{y}} min ({{pct}}).",
+      "applied": "Bonus Hada aplicado a {{who}}.",
+      "noFairy": "Ningún Pokémon de tipo Hada en tu equipo: el bonus no se aplicó.",
+      "none": "Nadie más estuvo en el grupo mientras estudiabas: sin bonus Hada.",
+      "formula": "Hada = 1 + (×{{max}} − 1) × fracción acompañada."
+    },
+    "invites": {
+      "label": "Invitaciones a estudiar",
+      "title": "{{name}} te invita a estudiar {{minutes}} min",
+      "lobby_one": "Empieza cuando pulse Empezar (caduca en {{count}} min).",
+      "lobby_other": "Empieza cuando pulse Empezar (caduca en {{count}} min).",
+      "lateJoin": "Ya empezaron: si te unes, tu sesión empieza ahora y estarás acompañado menos tiempo.",
+      "fairy": "Tus Pokémon Hada ganan bonus por el tiempo acompañado.",
+      "busy": "Termina o cancela tu sesión actual para unirte.",
+      "accept": "Aceptar",
+      "join": "Unirme ahora",
+      "decline": "Rechazar",
+      "accepted": "Te uniste a la sala de {{name}}",
+      "joined": "¡Te uniste al grupo! Tu sesión ya empezó."
+    },
+    "errors": {
+      "not_friends": "Solo puedes estudiar en grupo con amigos aceptados.",
+      "cannot_invite_self": "No puedes invitarte a ti mismo.",
+      "already_in_group": "Ya estás en otra sala de grupo. Sal de ella primero.",
+      "group_full": "El grupo está lleno (máximo 8 personas).",
+      "group_ended": "Ese grupo ya terminó o caducó.",
+      "invite_closed": "Esa invitación ya no está abierta.",
+      "not_host": "Solo el anfitrión puede hacer eso.",
+      "not_in_group": "No estás en ese grupo.",
+      "session_active": "Ya tienes una sesión en marcha.",
+      "no_player": "Elige tu Pokémon inicial primero.",
+      "not_found": "Ese grupo ya no existe."
+    }
   }
 }

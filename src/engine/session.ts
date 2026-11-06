@@ -348,6 +348,8 @@ export interface SessionResult {
   soundProfile: SoundProfile | null
   weather: WeatherInput | null
   screenshotLabels: string[] | null
+  /** Accompanied share (0–1) of a study-group session (Fairy condition); null/absent = solo. */
+  friendOverlap?: number | null
   /** Activations of techniques with limitPerWeek (key `uid:move`). */
   weeklyUses: Record<string, number>
   note: string | null
@@ -894,6 +896,7 @@ export function completeSession(
     soundProfile,
     weather,
     screenshotLabels: input.focusInputs.screenshotLabels ? input.focusInputs.screenshotLabels.map(String) : null,
+    friendOverlap: input.friendOverlap ?? null,
     weeklyUses,
     note: session.note,
     subjectTag: session.subjectTag,

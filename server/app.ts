@@ -16,6 +16,7 @@ import { RateLimiter } from './rate-limit'
 import { authRoutes } from './routes/auth'
 import { eventRoutes } from './routes/events'
 import { gameRoutes } from './routes/game'
+import { groupRoutes } from './routes/groups'
 import { friendRoutes, leaderboardRoutes } from './routes/social'
 
 export const BODY_LIMIT = 64 * 1024
@@ -58,6 +59,7 @@ export function createApp(opts: AppOptions) {
   api.route('/game', gameRoutes(deps))
   api.route('/friends', friendRoutes(deps))
   api.route('/leaderboard', leaderboardRoutes(deps))
+  api.route('/groups', groupRoutes(deps))
   api.route('/events', eventRoutes(deps))
   api.get('/health', (c) => c.json({ ok: true }))
   api.all('*', () => {

@@ -11,6 +11,7 @@ import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { GroupFairyNote } from './GroupStudy'
 
 const cfg = defaultContext().config
 
@@ -111,6 +112,7 @@ export function Results() {
               <span className="mr-1 text-sm text-dusk-600">{t('results.why')}</span>
               {why}
             </div>
+            <GroupFairyNote result={result} />
           </div>
           <div className="flex items-end gap-4 pb-1">
             {result.members.map((m, i) => (

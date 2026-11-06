@@ -70,6 +70,24 @@ describe('study session', () => {
     expect(applyAction(doc, { type: 'nextWave' }, env(dev.now))).toEqual({ ok: false, error: 'no_encounter' })
   })
 
+  it('claim takes the group overlap from env (Fairy proportional), never from the action', () => {
+    const base = newPlayer()
+    const p1 = base.player!.pokemon.p1!
+    // A Fairy-type team member (swap the starter's species).
+    let doc: GameDoc = { ...base, player: { ...base.player!, pokemon: { p1: { ...p1, speciesSlug: 'clefairy', equippedMoves: [], learnedMoves: [] } } } }
+    doc = must(doc, { type: 'start', minutes: 30 }, env(T0))
+    const fairy = 1.4
+    const solo = applyAction(doc, { type: 'claim' }, env(T0 + 31 * MINUTE_MS))
+    const half = applyAction(doc, { type: 'claim' }, env(T0 + 31 * MINUTE_MS, { friendOverlap: 0.5 }))
+    expect(solo.ok && half.ok).toBe(true)
+    if (!solo.ok || !half.ok) return
+    expect(solo.result.outcome.result.friendOverlap).toBeNull()
+    expect(solo.result.outcome.result.members[0]?.conditionType).not.toBe('fairy')
+    expect(half.result.outcome.result.friendOverlap).toBe(0.5)
+    expect(half.result.outcome.result.members[0]).toMatchObject({ conditionType: 'fairy' })
+    expect(half.result.outcome.result.members[0]?.conditionMult).toBeCloseTo(1 + (fairy - 1) * 0.5)
+  })
+
   it('pause/resume shifts endsAt by the paused time; claim refuses while paused', () => {
     let doc = must(newPlayer(), { type: 'start', minutes: 20 }, env(T0))
     doc = must(doc, { type: 'pause' }, env(T0 + 5 * MINUTE_MS))

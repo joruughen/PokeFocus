@@ -271,7 +271,7 @@
       "dragon": "With a streak of {{streak}} days or more.",
       "dark": "The day you come back after {{missed}} or more days without studying.",
       "steel": "If you start within ±{{steelWindow}} min of when you started yesterday.",
-      "fairy": "Studying at the same time as a friend (coming soon)."
+      "fairy": "Studying in a group with friends: up to +{{fairyPct}}%, in proportion to the time together."
     }
   },
   "league": {
@@ -1425,5 +1425,111 @@
       "body": "Share your code or type a classmate's. Once they accept, you'll see their level, league and team."
     },
     "connected": "You're friends now! They had already sent you a request."
+  },
+  "group": {
+    "title": "Study with friends",
+    "intro": "Invite friends to the same session. Your Fairy-type Pokémon get up to +{{pct}}%, in proportion to the time you study together.",
+    "noFairyHint": "You have no Fairy-type Pokémon on your team right now: the bonus only affects them.",
+    "studyWithFriends": "Study with friends",
+    "pickFriends": "Choose who to invite to a {{minutes}}-min session (the duration you have selected).",
+    "sendInvites_one": "Invite {{count}} friend · {{minutes}} min",
+    "sendInvites_other": "Invite {{count}} friends · {{minutes}} min",
+    "rules": "When you press Start, everyone who accepted starts at the same time. Pausing or cancelling takes you out of the group: your session goes on solo, but accompanied time stops counting.",
+    "noFriends": "You have no accepted friends yet.",
+    "goFriends": "Add friends",
+    "host": "host",
+    "inviteStatus": {
+      "pending": "waiting",
+      "accepted": "ready",
+      "declined": "declined",
+      "joined": "studying",
+      "failed": "could not start"
+    },
+    "lobbyHost": "{{minutes}}-min room.",
+    "expiresIn_one": "Expires in {{count}} min if you don't start.",
+    "expiresIn_other": "Expires in {{count}} min if you don't start.",
+    "lateJoinNote": "Anyone who hasn't answered yet can join late, with less accompanied time.",
+    "start_one": "Start as a group · {{count}} ready",
+    "start_other": "Start as a group · {{count}} ready",
+    "startAloneNote": "Nobody has accepted yet: if you start now, you'll be alone until someone joins.",
+    "inviteMore": "Invite more",
+    "disband": "Cancel the group",
+    "lobbyGuest": "You're in {{name}}'s room ({{minutes}} min). The session starts when {{name}} presses Start.",
+    "guestNote": "Your session will start by itself at that moment, even on another screen.",
+    "leaveLobby": "Leave the room",
+    "reason": {
+      "pause": "paused",
+      "cancel": "cancelled",
+      "leave": "left",
+      "finished": "finished"
+    },
+    "notice": {
+      "invite": "{{name}} invites you to study",
+      "inviteBody": "Accept or decline the invite at the top.",
+      "accept": "{{name}} accepted your invite",
+      "decline": "{{name}} won't join the group",
+      "start": "{{name}} started the group session!",
+      "startBody": "Your session is running.",
+      "join": "{{name}} joined the group",
+      "disband": "{{name}} cancelled the group",
+      "failed": "{{name}} couldn't start with the group",
+      "failedMe": "We couldn't start your group session",
+      "failedMeBody": "You already had another session running, or your team can't study.",
+      "left": "{{name}} left the group ({{reason}})",
+      "leftBody": "Their time no longer counts as company for you.",
+      "youLeft": "You left the group ({{reason}})",
+      "youLeftBody": "Your session goes on solo; accompanied time stops counting."
+    },
+    "session": {
+      "title": "Group session",
+      "members": "Group members",
+      "you": "{{name}} (you)",
+      "studying": "studying",
+      "done": "finished",
+      "leftBecause": "out · {{reason}}",
+      "accompanied": "Accompanied {{x}} of {{y}} min",
+      "estimate": "Fairy ×{{mult}} estimated",
+      "pauseWarning": "If you pause or cancel, you leave the group and can't rejoin.",
+      "alone": "Nobody else is studying in the group now: accompanied time isn't counting.",
+      "youLeft": "You left the group ({{reason}}). The Fairy bonus keeps the accompanied time you already had.",
+      "noFairy": "No Pokémon on your team is Fairy-type: the bonus won't apply.",
+      "srSummary_one": "{{count}} partner still studying. Estimated overlap {{pct}}.",
+      "srSummary_other": "{{count}} partners still studying. Estimated overlap {{pct}}."
+    },
+    "results": {
+      "title": "Group study",
+      "accompanied": "Accompanied {{x}} of {{y}} min ({{pct}}).",
+      "applied": "Fairy bonus applied to {{who}}.",
+      "noFairy": "No Fairy-type Pokémon on your team: the bonus didn't apply.",
+      "none": "Nobody else was in the group while you studied: no Fairy bonus.",
+      "formula": "Fairy = 1 + (×{{max}} − 1) × accompanied share."
+    },
+    "invites": {
+      "label": "Study invites",
+      "title": "{{name}} invites you to study {{minutes}} min",
+      "lobby_one": "Starts when they press Start (expires in {{count}} min).",
+      "lobby_other": "Starts when they press Start (expires in {{count}} min).",
+      "lateJoin": "They already started: if you join, your session starts now with less accompanied time.",
+      "fairy": "Your Fairy Pokémon get a bonus for the time together.",
+      "busy": "Finish or cancel your current session to join.",
+      "accept": "Accept",
+      "join": "Join now",
+      "decline": "Decline",
+      "accepted": "You joined {{name}}'s room",
+      "joined": "You joined the group! Your session has started."
+    },
+    "errors": {
+      "not_friends": "You can only study in a group with accepted friends.",
+      "cannot_invite_self": "You can't invite yourself.",
+      "already_in_group": "You're already in another group room. Leave it first.",
+      "group_full": "The group is full (8 people max).",
+      "group_ended": "That group has ended or expired.",
+      "invite_closed": "That invite is no longer open.",
+      "not_host": "Only the host can do that.",
+      "not_in_group": "You're not in that group.",
+      "session_active": "You already have a session running.",
+      "no_player": "Choose your starter Pokémon first.",
+      "not_found": "That group no longer exists."
+    }
   }
 }

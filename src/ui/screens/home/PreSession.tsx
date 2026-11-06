@@ -22,6 +22,7 @@ import { primeSignals } from '../../lib/notify'
 import { scheduleSessionEnd, sfx } from '../../lib/sound'
 import { BreakOffer, useBreakOffer } from './Break'
 import { Checklist } from './Checklist'
+import { GroupStudyPanel } from './GroupStudy'
 import { useNow } from '../../store/clock'
 import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
@@ -185,6 +186,7 @@ export function PreSession() {
 
         <div className="flex flex-col gap-8">
           {breakOffer && <BreakOffer />}
+          <GroupStudyPanel minutes={minutes} />
           <Checklist />
           <ConditionsPanel rows={cond.rows} minutes={minutes} />
           <LeaguePanel now={now} />

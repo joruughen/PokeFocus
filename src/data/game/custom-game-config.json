@@ -116,7 +116,6 @@
     "steel": 1.35,
     "steelWindowMinutes": 60,
     "fairy": 1.4,
-    "fairyOverlap": 0.8,
     "electricMaxMinutes": 25,
     "electricChainGapMinutes": 15,
     "fightingMinMinutes": 50,

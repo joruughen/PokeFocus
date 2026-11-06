@@ -11,7 +11,7 @@ import type {
   LeaderboardScope,
 } from '../../src/game/protocol'
 import { normalizeFriendCode } from '../auth/tokens'
-import type { Db } from '../db/client'
+import type { Db, Tx } from '../db/client'
 import { friendships, leagueScores, playerDocs, users } from '../db/schema'
 import { ApiError, readBody, requireAuth, UUID_RE, type AppEnv, type Deps } from '../http'
 import { friendRequestBody } from '../validation'
@@ -21,7 +21,7 @@ const MAX_FRIENDS = 200
 const LEADERBOARD_SIZE = 100
 
 /** Accepted friend ids of a user. */
-async function friendIds(db: Db, userId: string): Promise<string[]> {
+export async function friendIds(db: Db | Tx, userId: string): Promise<string[]> {
   const rows = await db
     .select({ a: friendships.requesterId, b: friendships.addresseeId })
     .from(friendships)

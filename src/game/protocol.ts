@@ -251,11 +251,68 @@ export interface LeaderboardResponse {
   total: number
 }
 
+// ---------------------------------------------------------------------------
+// Study groups (/api/groups) — docs/session-depth-plan.md §C
+// ---------------------------------------------------------------------------
+
+export type StudyGroupStatus = 'lobby' | 'started' | 'ended'
+/** `joined` = started a session in the group; `failed` = could not start it when the host started. */
+export type GroupInviteStatus = 'pending' | 'accepted' | 'declined' | 'joined' | 'failed'
+/** Why a member left: pausing or cancelling leaves the group; `finished` = claimed. */
+export type GroupLeaveReason = 'pause' | 'cancel' | 'leave' | 'finished'
+
+export interface StudyGroupMember {
+  userId: string
+  trainerName: string
+  /** Start of their session in the group (game time, ms). */
+  joinedAt: number
+  /** joinedAt + minutes: after this they are no longer studying. */
+  endsAt: number
+  leftAt: number | null
+  leftReason: GroupLeaveReason | null
+}
+
+export interface StudyGroupInvite {
+  userId: string
+  trainerName: string
+  status: GroupInviteStatus
+}
+
+export interface StudyGroupView {
+  id: string
+  hostId: string
+  hostName: string
+  minutes: number
+  status: StudyGroupStatus
+  createdAt: number
+  startedAt: number | null
+  /** Lobby: when it lapses if not started. Started: last moment a late join makes sense. */
+  expiresAt: number
+  members: StudyGroupMember[]
+  /** Everyone invited (not the host). */
+  invites: StudyGroupInvite[]
+  /** The caller's relation to the group. */
+  me: { host: boolean; invite: GroupInviteStatus | null; member: boolean }
+}
+
+/** GET /api/groups */
+export interface GroupsResponse {
+  /** The lobby I host / accepted, or the group of my running session. */
+  current: StudyGroupView | null
+  /** Pending invites I can still answer. */
+  invites: StudyGroupView[]
+  serverNow: number
+}
+
+export type GroupEventKind = 'invite' | 'accept' | 'decline' | 'start' | 'join' | 'leave' | 'disband' | 'failed'
+
 /** Server-sent events on GET /api/events (EventSource). */
 export type ServerEvent =
   | { type: 'game'; version: number }
   | { type: 'friends' }
   | { type: 'logout' }
+  /** Something changed in a study group I belong to or am invited to (refetch GET /api/groups). */
+  | { type: 'group'; groupId: string; kind: GroupEventKind; userId: string; trainerName: string; reason?: GroupLeaveReason }
 
 /** Header names used only when the server runs with DEV_TOOLS=1. */
 export const DEV_NOW_HEADER = 'x-dev-now'

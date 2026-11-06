@@ -24,7 +24,10 @@ export interface ConditionEnv {
   weather: WeatherInput | null
   soundProfile: SoundProfile | null
   pausedSeconds: number
-  /** Overlap (0–1) with a friend's session, null if unknown. */
+  /**
+   * Share (0–1) of the session spent in a study group with at least one other
+   * active member (computed by the server from the group intervals); null = solo.
+   */
   friendOverlap: number | null
   /** Completed sessions earlier the same local day. */
   sessionsEarlierToday: number
@@ -122,8 +125,12 @@ export function typeConditionMult(type: TypeSlug, env: ConditionEnv, cfg: GameCo
       diff = Math.min(diff, 1440 - diff)
       return on(diff <= c.steelWindowMinutes, c.steel)
     }
-    case 'fairy':
-      return on(env.friendOverlap !== null && env.friendOverlap >= c.fairyOverlap, c.fairy)
+    case 'fairy': {
+      // Proportional to the accompanied share of the session (study groups): 1 + (M − 1) · overlap.
+      if (isForced) return c.fairy
+      const o = env.friendOverlap === null ? 0 : Math.min(1, Math.max(0, env.friendOverlap))
+      return o > 0 ? 1 + (c.fairy - 1) * o : 1
+    }
   }
 }
 
