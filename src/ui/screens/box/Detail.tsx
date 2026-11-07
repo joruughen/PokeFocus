@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, pokemonView } from '../../../engine'
-import { Button, Dialog, DialogClose, EmptyState, HelpDot, IconButton, InfoTip, IvQuality, Panel, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, StatRow, STAT_ORDER, toast, Tooltip, TypeBadge } from '../../components'
+import { Button, Dialog, DialogClose, EmptyState, IconButton, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
@@ -17,6 +17,7 @@ import { EvolveMoment } from './EvolveMoment'
 import { filteredMons, useBoxFilters } from './filters'
 import { Candies, EnergyBond, Evolution } from './Growth'
 import { roleNatureFit } from './roleNature'
+import { StatsPanel } from './StatsPanel'
 import { Techniques } from './Techniques'
 
 const ctx = defaultContext()
@@ -64,7 +65,6 @@ export function Detail({ uid }: { uid: string }) {
   const fit = roleNatureFit(view.species.role, nature)
   const root = lineRoot(view.species)
   const releaseGain = cfg.progression.candiesOnRelease[view.species.stage - 1] ?? 1
-  const statScale = Math.max(50, Math.ceil(Math.max(...STAT_ORDER.map((k) => view.stats[k])) / 50) * 50)
 
   const teamAction = async () => {
     const err = await (inTeam ? setTeam(player.team.filter((u) => u !== uid)) : setTeam([...player.team, uid]))
@@ -194,67 +194,7 @@ export function Detail({ uid }: { uid: string }) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-8">
-          <Panel title={t('detail.stats')} help="detail.stats">
-            <div className="flex flex-col gap-2.5">
-              {STAT_ORDER.map((k) => (
-                <StatRow key={k} stat={k} value={view.stats[k]} nature={p.nature} scale={statScale} className="grid-cols-[9.5rem_1fr_3rem]" />
-              ))}
-            </div>
-            <ul className="mt-4 grid grid-cols-1 gap-1.5 bg-dusk-900 p-3 text-sm text-mist-300 inset-shadow-well">
-              <li>{t('detail.every', { time: fmtInterval(view.actionIntervalSeconds) })}</li>
-              <li>{t('detail.perAction', { points: view.pointsPerAction.toLocaleString(i18n.language, { maximumFractionDigits: 1 }) })}</li>
-              <li>{t('detail.techMult', { mult: view.techniqueMultiplier.toLocaleString(i18n.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) })}</li>
-            </ul>
-
-            <dl className="mt-5 flex flex-col gap-4">
-              <div>
-                <dt className="flex items-center gap-2 font-display text-base text-mist-300">
-                  {t('detail.nature')}
-                  <InfoTip label={t('roleInfo.natureAria')} content={<span className="flex flex-col gap-1"><span className="font-display text-base">{t('detail.nature')}</span><span>{t('roleInfo.natureTip')}</span></span>} />
-                </dt>
-                <dd className="mt-0.5">
-                  <span className="font-display text-lg text-mist-50">{names.nature(p.nature)}</span>{' '}
-                  {nature?.increased && nature.decreased ? (
-                    <span className="text-sm">
-                      <span className="text-leaf-400">+{t(`stats.${nature.increased}.name`)}</span> <span className="text-cheek-400">−{t(`stats.${nature.decreased}.name`)}</span>
-                    </span>
-                  ) : (
-                    <span className="text-sm text-mist-400">{t('detail.neutral')}</span>
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="font-display text-base text-mist-300">{t('detail.ability')}</dt>
-                <dd className="mt-0.5">
-                  {p.ability ? (
-                    <>
-                      <span className="font-display text-lg text-mist-50">{names.ability(p.ability)}</span>
-                      <p className="text-sm text-mist-300">{names.abilityDesc(p.ability)}</p>
-                    </>
-                  ) : (
-                    <span className="text-sm text-mist-400">{t('detail.noAbility')}</span>
-                  )}
-                </dd>
-              </div>
-              <div {...hintAnchor('detail.iv')}>
-                <dt className="flex items-center gap-2 font-display text-base text-mist-300">
-                  {t('iv.title')}
-                  <HelpDot hint="detail.iv" />
-                </dt>
-                <dd className="mt-1">
-                  <IvQuality ivs={p.ivs} />
-                </dd>
-              </div>
-              <div>
-                <dt className="font-display text-base text-mist-300">{t('detail.met')}</dt>
-                <dd className="mt-0.5 text-sm text-mist-300">
-                  {p.caughtBall === 'starter'
-                    ? t('detail.starter')
-                    : t('detail.caughtWith', { level: p.metLevel, ball: p.caughtBall === 'study-ball' ? t('balls.study') : names.item(p.caughtBall), date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(p.caughtAt) })}
-                </dd>
-              </div>
-            </dl>
-          </Panel>
+          <StatsPanel view={view} />
           <EnergyBond view={view} inSession={inSession} />
         </div>
       </div>
@@ -299,10 +239,4 @@ export function Detail({ uid }: { uid: string }) {
       {moment && <EvolveMoment {...moment} onClose={() => setMoment(null)} />}
     </div>
   )
-}
-
-function fmtInterval(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = Math.round(seconds % 60)
-  return m > 0 ? `${m} min ${s} s` : `${s} s`
 }

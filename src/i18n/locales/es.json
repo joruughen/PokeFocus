@@ -82,7 +82,7 @@
     },
     "defense": {
       "name": "Aguante",
-      "what": "Cuánto rinde aunque tu Foco baje, y cuánto resiste los contraataques.",
+      "what": "Resiste los contraataques y sube hasta un 10 % sus puntos y su EXP: con Aguante 100 rinde ×1,05 y con 200 o más, ×1,10.",
       "base": "Defensa"
     },
     "summary": "Resumen",
@@ -110,7 +110,7 @@
     "sessionTip": "{{date}}: {{points}} puntos en {{minutes}} min",
     "focusTitle": "Foco",
     "focusLabel": "Foco de las últimas sesiones",
-    "focusNote": "El Foco multiplica casi todo lo que gana tu equipo. Estudiar sin distracciones lo mantiene al 100%.",
+    "focusNote": "El Foco multiplica casi todo lo que gana tu equipo. Es el mismo para toda la sesión: 100 % si reclamas a tiempo (hasta 5 minutos después de terminar) y 50 % si tardas. El Aguante de cada Pokémon le suma hasta un 10 % más de puntos y EXP.",
     "focusTip": "{{date}}: Foco {{pct}}",
     "historyTitle": "Historial",
     "col": {
@@ -150,7 +150,7 @@
     },
     "guardian": {
       "name": "Guardián",
-      "body": "Mucho Aguante: rinde aunque tu Foco baje y resiste contraataques. Buen líder."
+      "body": "Mucho Aguante: resiste contraataques y gana hasta un 10 % más de puntos y EXP. Buen líder."
     },
     "support": {
       "name": "Apoyo",
@@ -254,7 +254,11 @@
       "pickOf": "Pasar a {{out}} a la Caja y poner a {{in}} en su lugar",
       "done": "{{in}} ocupa el lugar de {{out}}",
       "doneLeader": "{{in}} ocupa el lugar de {{out}} y es el nuevo líder"
-    }
+    },
+    "memberTitle": "Tu Pokémon",
+    "memberWhy": "Va en el puesto {{n}}: solo recibe los contraataques si los que van delante se quedan sin Energía.",
+    "seeSheet": "Ver ficha completa",
+    "selectOf": "Ver los datos de {{name}}"
   },
   "items": {
     "dust": "Polvo de Estudio",
@@ -415,7 +419,7 @@
     "why": "Por qué:",
     "whyCondition": "Condición de {{type}} activa para {{who}}.",
     "whyTechnique": "Técnica activada durante la sesión.",
-    "whyFocus": "Tu Foco multiplica los puntos, la EXP y el Polvo.",
+    "whyFocus": "Tu Foco multiplica los puntos, la EXP y el Polvo: 100 % si reclamas a tiempo, 50 % si tardas.",
     "focus": "Foco {{pct}}",
     "whyLate": "Reclamaste fuera de la ventana de 5 minutos.",
     "late": "Reclamo tarde ×{{mult}}",
@@ -764,14 +768,14 @@
     "realTime": "Hora real",
     "session": "Sesión",
     "finishNow": "Terminar la sesión ya",
-    "focusLabel": "Etiqueta de Foco simulada",
+    "focusLabel": "Foco simulado (solo desarrollo)",
     "labels": {
       "studying": "Estudiando (100%)",
       "educational": "Material educativo (100%)",
       "chat": "Chat (60%)",
       "social": "Redes sociales (40%)",
       "game": "Juego (20%)",
-      "none": "Sin permiso de pantalla (85%)"
+      "none": "Normal (100%)"
     },
     "inventory": "Objetos",
     "addBalls": "+ Balls",
@@ -999,7 +1003,7 @@
       },
       "focus": {
         "title": "Foco",
-        "body": "Mide cuánto estudiaste de verdad (en el prototipo lo simula el panel de desarrollo). Multiplica puntos, EXP y Polvo, y el Aguante de cada Pokémon lo amortigua."
+        "body": "Es el rendimiento base de tu sesión: 100 % si reclamas dentro de los 5 minutos tras terminar, y 50 % si tardas. Multiplica puntos, EXP y Polvo, y el Aguante de cada Pokémon le suma hasta un 10 % a sus puntos y su EXP."
       },
       "leaderboards": {
         "title": "Rankings",
@@ -1056,11 +1060,23 @@
       "damage": "Daño",
       "passive": "Pasiva",
       "activable": "Activable"
+    },
+    "kindHelp": {
+      "damage": "Daño: en cada acción genera Energía de captura del tipo de la técnica. Esa energía debilita a los salvajes para que sea más fácil atraparlos.",
+      "passive": "Pasiva: está siempre activa mientras la tengas equipada. No depende de la suerte: su efecto (puntos, EXP, defensa…) se aplica durante toda la sesión.",
+      "activable": "Activable: en cada acción tiene una probabilidad de saltar y dar su efecto (por ejemplo, dormir a un salvaje). Algunas tienen un límite por sesión o por semana."
     }
   },
   "iv": {
     "title": "Calidad (IVs)",
     "short": "Calidad",
+    "overall": "Calidad general",
+    "perStat": "Por estadística",
+    "statLabel": "{{stat}}: {{word}}",
+    "max": "Máximo",
+    "what": "Los IVs son valores ocultos de 0 a 31, uno por estadística, que cada Pokémon recibe al nacer. Aquí ves su calidad, no el número exacto.",
+    "fixed": "Son fijos de por vida: no cambian al subir de nivel, al evolucionar ni por la naturaleza. Lo que sí cambia son las estadísticas.",
+    "effect": "Un IV alto suma un poco a esa estadística en cada nivel, y se nota más cuanto más alto es el nivel.",
     "label": "Calidad: {{word}}",
     "tier": {
       "0": "Floja",
@@ -1147,6 +1163,9 @@
     "released_other": "Soltaste a {{name}}: +{{count}} caramelos de {{line}}",
     "lockedSession": "{{name}} está estudiando. Podrás cambiar sus técnicas, usar caramelos o evolucionarlo al terminar la sesión.",
     "stats": "Estadísticas",
+    "tabsLabel": "Estadísticas o IVs de este Pokémon",
+    "tabStats": "Estadísticas",
+    "tabIvs": "IVs",
     "every": "Actúa cada {{time}} durante la sesión.",
     "perAction": "Da unos {{points}} puntos por acción (antes de condiciones y Foco).",
     "techMult": "Sus técnicas activables se multiplican ×{{mult}} por su Técnica.",
@@ -1215,6 +1234,12 @@
   "evo": {
     "title": "Evolución",
     "button": "Evolucionar",
+    "previewShow": "Ver cambios de estadísticas",
+    "previewHide": "Ocultar cambios de estadísticas",
+    "previewTitle": "Al evolucionar",
+    "previewNote": "Calculado a nivel {{level}}. Los IVs y la naturaleza se mantienen; solo cambia la especie.",
+    "previewBest": "Mayor subida",
+    "previewRow": "{{stat}}: de {{from}} a {{to}} ({{delta}})",
     "none": "{{name}} no evoluciona.",
     "final": "{{name}} ya está en su forma final.",
     "itemHave": "Tienes {{count}}",
@@ -1689,7 +1714,7 @@
       "encounterType": "más salvajes de tipo {{type}} ({{mult}}).",
       "sync": "un {{pct}} de los salvajes puede tener su naturaleza.",
       "focusFloor": "su Foco no bajó de {{pct}}.",
-      "focusLabelFloor": "algunas capturas de pantalla le valieron al menos {{pct}}.",
+      "focusLabelFloor": "algunas etiquetas de Foco le valieron al menos {{pct}}.",
       "lateClaimImmune": "no le afectó reclamar tarde.",
       "conditionBonusMult": "multiplica su bonus de condición ({{mult}}).",
       "lastActionMult": "su última acción valió {{mult}}.",

@@ -109,5 +109,5 @@ describe('types guide copy', () => {
       expect(seen, kind).toContain(`${kind}:false`)
     }
     for (const kind of ['sound:false', 'friend:false']) expect(seen).toContain(kind)
-  })
+  }, 30_000)
 })

@@ -25,6 +25,7 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer } from '../../store/selectors'
 import { lineRoot, useEvoCondition } from '../shared/EvoLine'
+import { EvolutionPreview } from './EvolutionPreview'
 
 const ctx = defaultContext()
 const cfg = ctx.config
@@ -201,6 +202,7 @@ export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locke
                   {o.evolution.trigger === 'item' && o.evolution.item && <span className="block text-xs text-mist-400">{t('evo.itemHave', { count: player.inventory[o.evolution.item] ?? 0 })}</span>}
                 </span>
               </div>
+              <EvolutionPreview pokemon={p} to={o.to} />
               <Button icon="sparkle" className="w-full justify-center" disabled={Boolean(o.blockedBy) || Boolean(locked) || busy} onClick={() => onEvolve(o.to)} beacon={!o.blockedBy && !locked} data-sfx="none">
                 {t('evo.button')}
               </Button>

@@ -29,6 +29,48 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.7.0',
+    date: '2026-11-06',
+    title: { es: 'Foco más claro, estadísticas y equipo', en: 'Clearer Focus, stats and team' },
+    items: [
+      {
+        kind: 'improved',
+        text: {
+          es: 'El Foco ahora se entiende solo: 100% si reclamas a tiempo y 50% si tardas. El Aguante de cada Pokémon lo sube hasta un 10% más, y eso se nota en sus puntos y su EXP. Tus recompensas totales se mantienen.',
+          en: 'Focus is now simple: 100% if you claim on time and 50% if you are late. Each Pokémon’s Grit raises it up to 10% more, which shows in its points and EXP. Your overall rewards stay the same.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'En la ficha de un Pokémon, la tarjeta de datos tiene dos pestañas: «Estadísticas» (lo que rinde ahora) e «IVs» (la calidad de cada estadística, que no cambia nunca).',
+          en: 'On a Pokémon’s detail screen, the data card has two tabs: “Stats” (how it performs now) and “IVs” (the quality of each stat, which never changes).',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Antes de evolucionar puedes ver cuánto subirá cada estadística («Ver cambios de estadísticas»). Algunas evoluciones bajan alguna estadística y se muestra en rojo.',
+          en: 'Before evolving you can see how much each stat will change (“See stat changes”). Some evolutions lower a stat, and it shows in red.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'En Equipo, haz clic en cualquier Pokémon del equipo para ver sus datos en el panel de la derecha, sin ir a la Caja.',
+          en: 'On the Team screen, click any team member to see its details in the right panel, without going to the Box.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Las etiquetas Daño, Pasiva y Activable de las técnicas ahora explican qué hacen al pasar el ratón (o al tocarlas).',
+          en: 'The Damage, Passive and Activable labels on techniques now explain what they do when you hover (or tap) them.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.6.0',
     date: '2026-11-06',
     title: { es: 'Avisos que llegan aunque la pestaña duerma', en: 'Notices that arrive even if the tab sleeps' },
@@ -38,6 +80,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         text: {
           es: 'En Ajustes → Sesiones puedes activar «Avisos aunque la pestaña esté dormida o cerrada»: el servidor también te avisa cuando termina tu sesión, así no pierdes la ventana de 5 minutos si tu navegador duerme la pestaña mientras estudias en otra.',
           en: 'In Settings → Sessions you can turn on “Notices even when the tab is asleep or closed”: the server also tells you when your session ends, so you do not miss the 5-minute window if your browser puts the tab to sleep while you study in another one.',
+        },
+      },
+      {
+        kind: 'fixed',
+        text: {
+          es: 'Los textos del Foco ya dicen cómo funciona de verdad (85 % si reclamas a tiempo, la mitad si tardas) y el Aguante explica cuánto Foco recupera.',
+          en: 'The Focus texts now say how it really works (85% if you claim on time, half if you are late) and Grit explains how much Focus it recovers.',
         },
       },
       {

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ALL_TYPES, defaultContext, isAsleepAt, typeEffectiveness, type PokemonView } from '../../../engine'
 import { HelpDot, IconButton, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, RoleBadge, Sprite, Stage, toast, TypeBadge } from '../../components'
@@ -51,6 +51,10 @@ export default function Team() {
     apply(next, j === 0 || i === 0 ? t('team.newLeader', { name: names.species(player.pokemon[next[0]!]?.speciesSlug ?? '') }) : undefined)
   }
   const leader = views[0]
+  // Which team member the side panel describes (the leader by default, and again if the selected one leaves the team).
+  const [selectedUid, setSelectedUid] = useState<string | null>(null)
+  const selectedIndex = Math.max(0, views.findIndex((v) => v.pokemon.uid === selectedUid))
+  const selected = views[selectedIndex] ?? leader
 
   return (
     <div className="flex flex-col gap-8">
@@ -72,7 +76,11 @@ export default function Team() {
       <Stage time={scene.time} weather={scene.weather} className="px-4 pt-8 pb-5">
         <ol className="flex flex-wrap justify-center gap-x-3 gap-y-6 xl:justify-start" aria-label={t('team.title')}>
           {views.map((v, i) => (
-            <li key={v.pokemon.uid} className="w-[10.5rem]">
+            <li
+              key={v.pokemon.uid}
+              className={cx('w-[10.5rem] cursor-pointer', selected?.pokemon.uid === v.pokemon.uid && 'outline-2 outline-offset-2 outline-volt-400')}
+              onClick={() => setSelectedUid(v.pokemon.uid)}
+            >
               <PokemonCard view={v} leader={i === 0} night={scene.time === 'night'} dim={asleep(v)} />
             </li>
           ))}
@@ -97,6 +105,8 @@ export default function Team() {
                 asleep={asleep(v)}
                 index={i}
                 count={views.length}
+                selected={selected?.pokemon.uid === v.pokemon.uid}
+                onSelect={() => setSelectedUid(v.pokemon.uid)}
                 locked={locked || busy}
                 onUp={() => move(i, -1)}
                 onDown={() => move(i, 1)}
@@ -118,7 +128,7 @@ export default function Team() {
         </Panel>
 
         <div className="flex min-w-0 flex-col gap-8">
-          {leader && <LeaderPanel view={leader} />}
+          {selected && <MemberPanel view={selected} index={selectedIndex} />}
           <BoxPicker at={minute * 60_000} disabled={locked || busy} onApply={apply} />
         </div>
       </div>
@@ -126,7 +136,7 @@ export default function Team() {
   )
 }
 
-function SlotRow({ view, asleep, index, count, locked, onUp, onDown, onLeader, onRemove }: { view: PokemonView; asleep: boolean; index: number; count: number; locked: boolean; onUp: () => void; onDown: () => void; onLeader: () => void; onRemove: () => void }) {
+function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp, onDown, onLeader, onRemove }: { view: PokemonView; asleep: boolean; index: number; count: number; selected: boolean; onSelect: () => void; locked: boolean; onUp: () => void; onDown: () => void; onLeader: () => void; onRemove: () => void }) {
   const { t } = useTranslation()
   const names = useNames()
   const p = view.pokemon
@@ -135,10 +145,24 @@ function SlotRow({ view, asleep, index, count, locked, onUp, onDown, onLeader, o
   const tired = !asleep && view.energy > 0 && (SESSION_MIN * 60) / view.actionIntervalSeconds > view.actionsLeft
   const warn = asleep ? { icon: 'sleep' as const, text: t('team.warnAsleep') } : view.energy <= 0 ? { icon: 'bolt' as const, text: t('team.warnExhausted') } : tired ? { icon: 'bolt' as const, text: t('team.warnTired', { minutes: SESSION_MIN }) } : null
   return (
-    <li className={cx('grid grid-cols-[auto_minmax(0,1fr)] gap-3 bg-dusk-900 p-3 inset-shadow-well sm:grid-cols-[auto_minmax(0,1fr)_auto]', leader && 'outline-2 -outline-offset-2 outline-volt-400')} {...(leader ? hintAnchor('team.leader') : {})}>
-      <span className={cx('grid size-9 place-items-center font-num text-2xl leading-none shadow-frame', leader ? 'bg-volt-400 text-ink' : 'bg-dusk-700 text-mist-100')} aria-label={leader ? t('team.leader') : t('detail.slot', { n: index + 1 })}>
+    <li
+      className={cx('grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 bg-dusk-900 p-3 inset-shadow-well sm:grid-cols-[auto_minmax(0,1fr)_auto]', selected && 'outline-2 -outline-offset-2 outline-volt-400')}
+      onClick={(e) => {
+        // A click on the row selects it; the buttons and links inside keep their own job.
+        if (!(e.target as HTMLElement).closest('a, button')) onSelect()
+      }}
+      {...(leader ? hintAnchor('team.leader') : {})}
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={selected}
+        aria-label={t('team.selectOf', { name })}
+        title={t('team.selectOf', { name })}
+        className={cx('grid size-9 place-items-center font-num text-2xl leading-none shadow-frame', leader ? 'bg-volt-400 text-ink' : 'bg-dusk-700 text-mist-100 hover:bg-dusk-600')}
+      >
         {leader ? <PixelIcon name="crown" size={20} /> : index + 1}
-      </span>
+      </button>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Sprite kind="icon" slug={p.speciesSlug} alt="" />
@@ -178,25 +202,32 @@ function SlotRow({ view, asleep, index, count, locked, onUp, onDown, onLeader, o
   )
 }
 
-/** Why the leader matters: it takes the counterattacks (GDD §11.4). Grit, Energy and type weaknesses. */
-function LeaderPanel({ view }: { view: PokemonView }) {
+/** The selected team member: the leader by default (it takes the counterattacks, GDD §11.4). Grit, Energy and type weaknesses. */
+function MemberPanel({ view, index }: { view: PokemonView; index: number }) {
   const { t } = useTranslation()
   const names = useNames()
   const weak = ALL_TYPES.filter((a) => typeEffectiveness(a, view.types, ctx.chart) > 1)
   const resist = ALL_TYPES.filter((a) => typeEffectiveness(a, view.types, ctx.chart) < 1)
   const name = names.species(view.pokemon.speciesSlug)
+  const leader = index === 0
   return (
-    <Panel title={t('team.leaderTitle')} help="team.leader" {...hintAnchor('team.leaderPanel')}>
+    <Panel title={leader ? t('team.leaderTitle') : t('team.memberTitle')} help={leader ? 'team.leader' : undefined} {...hintAnchor('team.leaderPanel')}>
       <div className="flex items-center gap-3">
         <span className="grid h-16 w-20 shrink-0 place-items-center bg-dusk-900 inset-shadow-well">
           <Sprite kind="icon" slug={view.pokemon.speciesSlug} scale={2} alt="" />
         </span>
         <div>
           <p className="flex items-center gap-2 font-display text-xl">
-            <PixelIcon name="crown" size={20} className="text-volt-400" />
+            {leader && <PixelIcon name="crown" size={20} className="text-volt-400" />}
             {name}
           </p>
-          <p className="text-sm text-mist-300">{t('team.leaderWhy')}</p>
+          <p className="text-sm text-mist-300">{leader ? t('team.leaderWhy') : t('team.memberWhy', { n: index + 1 })}</p>
+          <p className="mt-1 flex flex-wrap items-center gap-2">
+            <RoleBadge role={view.species.role} />
+            <a href={`#/box/${view.pokemon.uid}`} className="text-sm underline decoration-dusk-500 underline-offset-4 hover:text-volt-300">
+              {t('team.seeSheet')}
+            </a>
+          </p>
         </div>
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-3">

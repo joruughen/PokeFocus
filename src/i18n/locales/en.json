@@ -82,7 +82,7 @@
     },
     "defense": {
       "name": "Grit",
-      "what": "How well it performs when your Focus drops, and how well it takes counterattacks.",
+      "what": "It takes counterattacks better and raises its points and EXP by up to 10%: Grit 100 performs ×1.05, and 200 or more ×1.10.",
       "base": "Defense"
     },
     "summary": "Summary",
@@ -110,7 +110,7 @@
     "sessionTip": "{{date}}: {{points}} points in {{minutes}} min",
     "focusTitle": "Focus",
     "focusLabel": "Focus of recent sessions",
-    "focusNote": "Focus multiplies almost everything your team earns. Studying without distractions keeps it at 100%.",
+    "focusNote": "Focus multiplies almost everything your team earns. It is the same for the whole session: 100% if you claim on time (within 5 minutes of the end) and 50% if you are late. Each Pokémon's Grit adds up to 10% more points and EXP for it.",
     "focusTip": "{{date}}: Focus {{pct}}",
     "historyTitle": "History",
     "col": {
@@ -150,7 +150,7 @@
     },
     "guardian": {
       "name": "Guardian",
-      "body": "High Grit: performs even when your Focus drops and takes counterattacks well. A good leader."
+      "body": "High Grit: takes counterattacks well and earns up to 10% more points and EXP. A good leader."
     },
     "support": {
       "name": "Support",
@@ -254,7 +254,11 @@
       "pickOf": "Move {{out}} to the Box and put {{in}} in its place",
       "done": "{{in}} takes {{out}}'s place",
       "doneLeader": "{{in}} takes {{out}}'s place and is the new leader"
-    }
+    },
+    "memberTitle": "Your Pokémon",
+    "memberWhy": "In slot {{n}}: it only takes counterattacks if the ones ahead run out of Energy.",
+    "seeSheet": "See full sheet",
+    "selectOf": "Show details for {{name}}"
   },
   "items": {
     "dust": "Study Dust",
@@ -415,7 +419,7 @@
     "why": "Why:",
     "whyCondition": "{{type}} condition active for {{who}}.",
     "whyTechnique": "Technique triggered during the session.",
-    "whyFocus": "Your Focus multiplies points, EXP and Dust.",
+    "whyFocus": "Your Focus multiplies points, EXP and Dust: 100% if you claim on time, 50% if you are late.",
     "focus": "Focus {{pct}}",
     "whyLate": "You claimed after the 5-minute window.",
     "late": "Late claim ×{{mult}}",
@@ -764,14 +768,14 @@
     "realTime": "Real time",
     "session": "Session",
     "finishNow": "Finish session now",
-    "focusLabel": "Simulated Focus label",
+    "focusLabel": "Simulated Focus (development only)",
     "labels": {
       "studying": "Studying (100%)",
       "educational": "Educational content (100%)",
       "chat": "Chat (60%)",
       "social": "Social media (40%)",
       "game": "Game (20%)",
-      "none": "No screen permission (85%)"
+      "none": "Normal (100%)"
     },
     "inventory": "Items",
     "addBalls": "+ Balls",
@@ -999,7 +1003,7 @@
       },
       "focus": {
         "title": "Focus",
-        "body": "It measures how much you really studied (in the prototype the dev panel simulates it). It multiplies points, EXP and Dust, and each Pokémon's Grit softens drops."
+        "body": "It is your session's base performance: 100% if you claim within 5 minutes of the end, and 50% if you are late. It multiplies points, EXP and Dust, and each Pokémon's Grit adds up to 10% to its own points and EXP."
       },
       "leaderboards": {
         "title": "Leaderboards",
@@ -1056,11 +1060,23 @@
       "damage": "Damage",
       "passive": "Passive",
       "activable": "Activable"
+    },
+    "kindHelp": {
+      "damage": "Damage: on every action it generates catch energy of the technique's type. That energy weakens wild Pokémon so they are easier to catch.",
+      "passive": "Passive: always on while it is equipped. It does not depend on luck: its effect (points, EXP, defense…) applies for the whole session.",
+      "activable": "Activable: on every action it has a chance to trigger and give its effect (for example, put a wild Pokémon to sleep). Some have a limit per session or per week."
     }
   },
   "iv": {
     "title": "Quality (IVs)",
     "short": "Quality",
+    "overall": "Overall quality",
+    "perStat": "Per stat",
+    "statLabel": "{{stat}}: {{word}}",
+    "max": "Max",
+    "what": "IVs are hidden values from 0 to 31, one per stat, that every Pokémon is born with. Here you see their quality, not the exact number.",
+    "fixed": "They are fixed for life: they do not change with level, evolution or nature. The stats are what change.",
+    "effect": "A high IV adds a little to that one stat at every level, and it shows more the higher the level.",
     "label": "Quality: {{word}}",
     "tier": {
       "0": "Weak",
@@ -1147,6 +1163,9 @@
     "released_other": "You released {{name}}: +{{count}} {{line}} candies",
     "lockedSession": "{{name}} is studying. You can change its techniques, use candies or evolve it when the session ends.",
     "stats": "Stats",
+    "tabsLabel": "Stats or IVs of this Pokémon",
+    "tabStats": "Stats",
+    "tabIvs": "IVs",
     "every": "Acts every {{time}} during a session.",
     "perAction": "Gives about {{points}} points per action (before conditions and Focus).",
     "techMult": "Its Technique multiplies its activable techniques ×{{mult}}.",
@@ -1215,6 +1234,12 @@
   "evo": {
     "title": "Evolution",
     "button": "Evolve",
+    "previewShow": "See stat changes",
+    "previewHide": "Hide stat changes",
+    "previewTitle": "When it evolves",
+    "previewNote": "Worked out at level {{level}}. IVs and nature stay the same; only the species changes.",
+    "previewBest": "Biggest gain",
+    "previewRow": "{{stat}}: from {{from}} to {{to}} ({{delta}})",
     "none": "{{name}} doesn't evolve.",
     "final": "{{name}} is already in its final form.",
     "itemHave": "You have {{count}}",
@@ -1689,7 +1714,7 @@
       "encounterType": "more {{type}}-type wilds ({{mult}}).",
       "sync": "{{pct}} of wilds may share its nature.",
       "focusFloor": "its Focus did not drop below {{pct}}.",
-      "focusLabelFloor": "some screenshots counted at least {{pct}} for it.",
+      "focusLabelFloor": "some Focus labels counted at least {{pct}} for it.",
       "lateClaimImmune": "claiming late did not affect it.",
       "conditionBonusMult": "multiplies its condition bonus ({{mult}}).",
       "lastActionMult": "its last action was worth {{mult}}.",

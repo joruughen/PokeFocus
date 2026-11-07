@@ -52,3 +52,20 @@ describe('Detail: species role vs nature', () => {
     })
   }
 })
+
+describe('Detail: Stats | IVs card and the evolution preview', () => {
+  for (const lng of ['es', 'en'] as const) {
+    it(`opens on the Stats tab (IV block moved to its own tab) and offers the collapsed evolution preview (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      load('hardy')
+      const html = render()
+      expect(html).not.toMatch(/detail\.tab|evo\.preview|iv\.what/) // no raw keys
+      expect(html).toMatch(new RegExp(`role="tab"[^>]*aria-selected="true"[^>]*>${i18n.t('detail.tabStats')}<`))
+      expect(html).toContain(`>${i18n.t('detail.tabIvs')}</button>`)
+      expect(html).not.toContain(i18n.t('iv.overall')) // the quality block lives in the IVs tab
+      // Pidgey → Pidgeotto is offered (blocked by level, but still previewable): collapsed toggle, no numbers yet.
+      expect(html).toContain(i18n.t('evo.previewShow'))
+      expect(html).not.toContain(i18n.t('evo.previewTitle'))
+    })
+  }
+})
