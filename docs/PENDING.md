@@ -77,7 +77,7 @@ Panel de desarrollo contra un servidor de producción: con `?dev` el panel se ab
 
 - **Foco rediseñado:** 100 % si reclamas a tiempo, 50 % si tardas (la ventana sigue en 5 min). El Aguante sube el Foco **de cada Pokémon** por encima de 100 %: `Foco × (1 + 0,10 × min(1, Aguante/200))`, solo para sus puntos y EXP; Polvo, tamaño de oleada, legendarios y shiny usan el Foco de la sesión (sin Aguante). Claves renombradas: `focus.baseValue` (antes `noPermissionValue`), `actions.defenseFocusMaxBonus` / `defenseFocusCap`.
 - **Economía neutral:** como pasar de 0,85 a 1,0 subía todo un 17,6 %, se escalaron ×0,85 `pointsBase`/`pointsSpAtkDivisor`, `expPerMinute`, `dustPerMinute`, `legendaryChance` (y `shinyChance` ×0,9); `lowFocusThreshold` 0,5 → 0,75 para que reclamar tarde siga quitando un salvaje. Simulador, 60 semillas × 12 semanas: puntos semanales −0,8 % a +1,8 %, ligas, curva de nivel y polvo iguales.
-- **Estadísticas | IVs** en la ficha: la pestaña por defecto muestra lo que rinde ahora; la de IVs muestra la **calidad** por estadística (estrellas y palabra), **sin el número exacto** (el GDD los trata como valores ocultos). **«Al evolucionar»:** vista previa de cuánto cambia cada estadística (no todas suben: Caterpie → Metapod baja Ritmo y Captura; Metapod → Butterfree baja Aguante).
+- **Estadísticas | IVs** en la ficha: la pestaña por defecto muestra lo que rinde ahora; la de IVs muestra, por estadística, el **número exacto** (`iv/31`), su calidad (estrellas y palabra) y cuánto suma hoy a esa estadística (`+N`). **«Al evolucionar»:** vista previa de cuánto cambia cada estadística (no todas suben: Caterpie → Metapod baja Ritmo y Captura; Metapod → Butterfree baja Aguante).
 - **Equipo:** clic en un Pokémon del equipo para ver sus datos en el panel de la derecha. **Etiquetas Daño / Pasiva / Activable** con globo de ayuda.
 
 ## Revisión del Foco: por decidir
@@ -85,7 +85,6 @@ Panel de desarrollo contra un servidor de producción: con `?dev` el panel se ab
 - **La calibración original asumía un Foco medio de ≈0,90, pero producción daba 0,85:** el simulador con etiquetas (como antes) da 82,8k puntos semanales para el jugador constante y 32 % llega a Maestra; con el Foco real de producción da 71,2k y 13 %. Es decir, los jugadores reales llevaban ~14 % menos de lo diseñado. Se mantuvo la economía como estaba (neutral). **Si quitas el reescalado ×0,85** (y dejas el Foco al 100 % sin compensar), las recompensas suben un 17,6 % y quedan en lo calibrado (≈83k, Maestra 32 %). Decisión tuya.
 - **El Aguante ya no «asegura» contra reclamar tarde:** con Aguante 200 y reclamo tardío, antes rendía el 77 % de lo normal y ahora el 50 %. A tiempo, el Aguante paga un poco más (+0,6 % con Aguante 100, +1,1 % con 200). Con Aguante típico (25–120) el tope de +10 % casi no se alcanza.
 - **Suelos de Foco Interno (75 %) y Pie Tambaleante (70 %)** se mantuvieron como valores absolutos: ahora solo importan al reclamar tarde y, en recompensa real, son algo menores que antes (Foco Interno ≈0,64 en la escala antigua). Para igualar habría que subirlo a 0,88.
-- **IVs:** la pestaña muestra calidad sin número; si prefieres ver el 0–31 exacto, es un cambio pequeño.
 - El número de «puntos por acción» de la ficha ahora es ~15 % menor porque ya es el valor real con Foco al 100 %.
 
 ## Hecho: Despiste, cuenta y limpieza (2026-11-06, v0.5.0)

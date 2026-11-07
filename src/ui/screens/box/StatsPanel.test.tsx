@@ -43,7 +43,7 @@ describe('StatsPanel tabs', () => {
       expect(h).not.toContain(L.quality)
     })
 
-    it(`IVs tab: overall quality, the three sentences, per-stat quality and no exact numbers (${lng})`, async () => {
+    it(`IVs tab: overall quality, the three sentences, per-stat quality, the exact IV numbers and what each adds (${lng})`, async () => {
       await i18n.changeLanguage(lng)
       const h = html('ivs')
       expect(h).not.toMatch(/iv\.[a-z]|detail\.tab/) // no raw keys
@@ -62,8 +62,13 @@ describe('StatsPanel tabs', () => {
       expect(h).toContain(stat('speed', 1))
       expect(t).toContain(i18n.t('iv.max'))
       expect(t.split(i18n.t('iv.max')).length - 1).toBe(1)
-      // The exact IV values are never printed (they are not shown as numbers in the game).
-      expect(t.replace(i18n.t('iv.what'), '')).not.toMatch(/\b31\b|\b97\b|\b186\b|\b20\b|\b12\b/)
+      // The exact IV values are shown as `iv/31` next to the quality, with what each adds today.
+      expect(t).toMatch(/31\s?\/\s?31/)
+      expect(t).toMatch(/\b0\s?\/\s?31/)
+      expect(t).toMatch(/\b8\s?\/\s?31/)
+      expect(t).toMatch(/[+]\d+/)
+      expect(t).not.toMatch(/(?:oculto|hidden)/i)
+      expect(h).toMatch(/aria-label="[^"]*IV 31[^"]*"|aria-label="[^"]*IV 0[^"]*"/)
       // The help button of the IV hint.
       expect(h).toContain(i18n.t('hint.helpFor', { title: i18n.t('hints.detail.iv.title') }))
     })

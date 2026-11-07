@@ -941,7 +941,7 @@
       },
       "iv": {
         "title": "Quality (IVs)",
-        "body": "Each individual is born with hidden values from 0 to 31 for each stat. Higher quality means better stats, especially at high levels. No two Bulbasaur are the same."
+        "body": "Each individual is born with values from 0 to 31 for each stat (its IVs). Higher IVs mean better stats, especially at high levels. No two Bulbasaur are the same."
       },
       "stats": {
         "title": "PokeFocus stats",
@@ -1074,7 +1074,7 @@
     "perStat": "Per stat",
     "statLabel": "{{stat}}: {{word}}",
     "max": "Max",
-    "what": "IVs are hidden values from 0 to 31, one per stat, that every Pokémon is born with. Here you see their quality, not the exact number.",
+    "what": "IVs are values from 0 to 31, one per stat, that every Pokémon is born with. Here you see the number, its quality and how much it adds to that stat today.",
     "fixed": "They are fixed for life: they do not change with level, evolution or nature. The stats are what change.",
     "effect": "A high IV adds a little to that one stat at every level, and it shows more the higher the level.",
     "label": "Quality: {{word}}",
@@ -1084,7 +1084,9 @@
       "2": "Good",
       "3": "Excellent",
       "4": "Near perfect"
-    }
+    },
+    "adds": "adds +{{n}} today",
+    "rowLabel": "{{stat}}: IV {{iv}} of {{max}}, {{word}}, adds {{adds}} today"
   },
   "bag": {
     "title": "Bag",

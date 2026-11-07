@@ -43,8 +43,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
-          es: 'En la ficha de un Pokémon, la tarjeta de datos tiene dos pestañas: «Estadísticas» (lo que rinde ahora) e «IVs» (la calidad de cada estadística, que no cambia nunca).',
-          en: 'On a Pokémon’s detail screen, the data card has two tabs: “Stats” (how it performs now) and “IVs” (the quality of each stat, which never changes).',
+          es: 'En la ficha de un Pokémon, la tarjeta de datos tiene dos pestañas: «Estadísticas» (lo que rinde ahora) e «IVs» (el valor exacto de 0 a 31 de cada estadística y cuánto suma hoy; no cambia nunca).',
+          en: 'On a Pokémon’s detail screen, the data card has two tabs: “Stats” (how it performs now) and “IVs” (the exact 0–31 value of each stat and how much it adds today; it never changes).',
         },
       },
       {

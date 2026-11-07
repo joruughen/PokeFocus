@@ -941,7 +941,7 @@
       },
       "iv": {
         "title": "Calidad (IVs)",
-        "body": "Cada individuo nace con valores ocultos de 0 a 31 en cada estadística. Más calidad, mejores estadísticas, sobre todo a nivel alto. Dos Bulbasaur nunca son iguales."
+        "body": "Cada individuo nace con valores de 0 a 31 en cada estadística (los IVs). Más IV, mejores estadísticas, sobre todo a nivel alto. Dos Bulbasaur nunca son iguales."
       },
       "stats": {
         "title": "Estadísticas de PokeFocus",
@@ -1074,7 +1074,7 @@
     "perStat": "Por estadística",
     "statLabel": "{{stat}}: {{word}}",
     "max": "Máximo",
-    "what": "Los IVs son valores ocultos de 0 a 31, uno por estadística, que cada Pokémon recibe al nacer. Aquí ves su calidad, no el número exacto.",
+    "what": "Los IVs son valores de 0 a 31, uno por estadística, que cada Pokémon recibe al nacer. Aquí ves el número, su calidad y cuánto suma hoy a esa estadística.",
     "fixed": "Son fijos de por vida: no cambian al subir de nivel, al evolucionar ni por la naturaleza. Lo que sí cambia son las estadísticas.",
     "effect": "Un IV alto suma un poco a esa estadística en cada nivel, y se nota más cuanto más alto es el nivel.",
     "label": "Calidad: {{word}}",
@@ -1084,7 +1084,9 @@
       "2": "Buena",
       "3": "Excelente",
       "4": "Casi perfecta"
-    }
+    },
+    "adds": "suma +{{n}} hoy",
+    "rowLabel": "{{stat}}: IV {{iv}} de {{max}}, {{word}}, suma {{adds}} hoy"
   },
   "bag": {
     "title": "Mochila",

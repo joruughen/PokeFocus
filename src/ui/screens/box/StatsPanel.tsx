@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { defaultContext, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
+import { computeStats, defaultContext, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
 import { ArtIcon, HelpDot, InfoTip, IvQuality, Panel, Stars, STAT_ICON, STAT_ORDER, StatRow, Tabs } from '../../components'
 import { hintAnchor } from '../../hints'
 import { useNames } from '../../lib/names'
@@ -113,6 +113,10 @@ function IvsTab({ view }: { view: PokemonView }) {
   const { t } = useTranslation()
   const ivs: BaseStats = view.pokemon.ivs
   const ivMax = ctx.config.progression.ivMax
+  // What each IV adds to the stat today: the stat with its IV minus the same stat with that IV at 0 (same species, level and nature).
+  const p = view.pokemon
+  const now = computeStats({ speciesSlug: p.speciesSlug, level: p.level, ivs, nature: p.nature }, ctx)
+  const adds = (k: StatKey) => now[k] - computeStats({ speciesSlug: p.speciesSlug, level: p.level, ivs: { ...ivs, [k]: 0 }, nature: p.nature }, ctx)[k]
   return (
     <>
       <div {...hintAnchor('detail.iv')}>
@@ -138,14 +142,19 @@ function IvsTab({ view }: { view: PokemonView }) {
           const word = t(`iv.tier.${tier}`)
           const name = t(`stats.${k}.name`)
           return (
-            <li key={k} className="grid grid-cols-[9.5rem_1fr] items-center gap-3">
+            <li key={k} className="grid grid-cols-[9.5rem_1fr] items-center gap-3" aria-label={t('iv.rowLabel', { stat: name, iv: ivs[k], max: ivMax, word, adds: adds(k) })}>
               <span className="flex items-center gap-1.5 font-display text-base text-mist-100">
                 <ArtIcon name={STAT_ICON[k]} size={24} className="text-volt-300" />
                 {name}
               </span>
-              <span className="flex items-center gap-2">
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <Stars value={tier} max={4} label={t('iv.statLabel', { stat: name, word })} />
                 <span className="text-xs text-mist-300">{word}</span>
+                <span className="font-num text-xl leading-none tabular">
+                  {ivs[k]}
+                  <span className="text-base text-mist-400">/{ivMax}</span>
+                </span>
+                <span className="text-xs text-mist-400">{t('iv.adds', { n: adds(k) })}</span>
                 {ivs[k] >= ivMax && <span className="bg-volt-400 px-1 font-display text-xs text-ink">{t('iv.max')}</span>}
               </span>
             </li>
