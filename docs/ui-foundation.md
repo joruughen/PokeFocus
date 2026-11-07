@@ -138,7 +138,7 @@ Import from `src/ui/components`. Every component takes `className`.
 | `toast` / `ToastViewport` | `toast.add({ title, description?, type: 'info'\|'success'\|'danger' })` | Callable anywhere, including store code |
 | `ProgressBar` | `value`, `max`, `variant: energy\|hp\|exp\|volt`, `label` (a11y), `valueText?`, `from?` (trail), `ticks?`, `size` | `role="meter"`. `energy`/`hp` colors: green >50%, amber >20%, red otherwise |
 | `TypeBadge` | `type`, `size: sm\|md`, `muted?` | Localized name from `types.json` |
-| `StatRow` | `stat`, `value`, `scale?`, `nature?` | PokeFocus name + art icon + help tooltip "basada en Velocidad"; ▲/▼ from the nature. Also exports `STAT_ORDER`, `STAT_ICON` |
+| `StatRow` | `stat`, `value`, `scale?`, `nature?`, `breakdown?` | PokeFocus name + art icon + help tooltip with what it does and, with `breakdown` (`screens/box/statBreakdown.ts`), where the number comes from: species and level + nature + IV = total. Never the original Pokémon stat names (PS, Special Attack…). ▲/▼ from the nature. Also exports `STAT_ORDER`, `STAT_ICON` |
 | `Sprite` | `kind: showdown\|icon\|item`, `slug`, `shiny?`, `scale` (integer), `fit?` (items), `flip?`, `alt` | Sizes itself to natural size × scale. A missing file renders a framed placeholder |
 | `BallIcon` / `StudyBallIcon` | `ball`, `size` | Item sprite, or the art Study Ball |
 | `PokemonCard` | `view: PokemonView`, `variant: stage\|compact`, `leader?`, `condition?`, `energy?`, `energyFrom?`, `floating?`, `shake?`, `dim?`, `night?`, `footer?` | Sprite + battle nameplate (name, level, types, Energy, crown, ×condition) |

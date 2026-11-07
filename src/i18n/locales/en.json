@@ -52,38 +52,31 @@
     "disable": "Don't show tips"
   },
   "stats": {
-    "basedOn": "based on {{stat}}",
     "natureUp": "Raised by its nature",
     "natureDown": "Lowered by its nature",
     "hp": {
       "name": "Energy",
-      "what": "How long it can keep studying through the day.",
-      "base": "HP"
+      "what": "How long it can keep studying through the day."
     },
     "speed": {
       "name": "Pace",
-      "what": "How often it acts during a session.",
-      "base": "Speed"
+      "what": "How often it acts during a session."
     },
     "specialAttack": {
       "name": "Output",
-      "what": "How many points each action gives.",
-      "base": "Sp. Atk"
+      "what": "How many points each action gives."
     },
     "attack": {
       "name": "Catch",
-      "what": "How much catch energy it makes to weaken wild Pokémon.",
-      "base": "Attack"
+      "what": "How much catch energy it makes to weaken wild Pokémon."
     },
     "specialDefense": {
       "name": "Technique",
-      "what": "Chance to trigger its techniques.",
-      "base": "Sp. Def"
+      "what": "Chance to trigger its techniques."
     },
     "defense": {
       "name": "Grit",
-      "what": "It takes counterattacks better and raises its points and EXP by up to 10%: Grit 100 performs ×1.05, and 200 or more ×1.10.",
-      "base": "Defense"
+      "what": "It takes counterattacks better and raises its points and EXP by up to 10%: Grit 100 performs ×1.05, and 200 or more ×1.10."
     },
     "summary": "Summary",
     "tile": {
@@ -125,7 +118,14 @@
       "title": "Your stats start with your first session",
       "body": "Here you'll see your minutes per day, each session's points and how your Focus changes."
     },
-    "weekEmpty": "You haven't studied this week yet. Your first session will show up here."
+    "weekEmpty": "You haven't studied this week yet. Your first session will show up here.",
+    "breakdown": {
+      "title": "How your {{total}} adds up",
+      "base": "Your species and its level",
+      "nature": "Nature",
+      "iv": "IV (luck at birth)",
+      "note": "Everything grows with level; evolving raises the species part."
+    }
   },
   "roles": {
     "scholar": {
@@ -1086,7 +1086,8 @@
       "4": "Near perfect"
     },
     "adds": "adds +{{n}} today",
-    "rowLabel": "{{stat}}: IV {{iv}} of {{max}}, {{word}}, adds {{adds}} today"
+    "rowLabel": "{{stat}}: IV {{iv}} of {{max}}, {{word}}, adds {{adds}} today",
+    "where": "Hover (or tap) a stat name on the Stats tab to see which parts make up its number."
   },
   "bag": {
     "title": "Bag",

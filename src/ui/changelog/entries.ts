@@ -48,6 +48,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         },
       },
       {
+        kind: 'improved',
+        text: {
+          es: 'Al pasar el ratón (o tocar) una estadística ves de dónde sale su número: tu especie y su nivel, la naturaleza y el IV. Ya no se muestran los nombres internos de las estadísticas.',
+          en: 'Hover (or tap) a stat to see where its number comes from: your species and its level, the nature and the IV. The internal stat names are no longer shown.',
+        },
+      },
+      {
         kind: 'new',
         text: {
           es: 'Antes de evolucionar puedes ver cuánto subirá cada estadística («Ver cambios de estadísticas»). Algunas evoluciones bajan alguna estadística y se muestra en rojo.',

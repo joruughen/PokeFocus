@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { computeStats, defaultContext, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
+import { defaultContext, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
 import { ArtIcon, HelpDot, InfoTip, IvQuality, Panel, Stars, STAT_ICON, STAT_ORDER, StatRow, Tabs } from '../../components'
 import { hintAnchor } from '../../hints'
 import { useNames } from '../../lib/names'
+import { statBreakdown } from './statBreakdown'
 
 const ctx = defaultContext()
 
@@ -57,7 +58,7 @@ function StatsTab({ view }: { view: PokemonView }) {
     <>
       <div className="flex flex-col gap-2.5">
         {STAT_ORDER.map((k) => (
-          <StatRow key={k} stat={k} value={view.stats[k]} nature={p.nature} scale={statScale} className="grid-cols-[9.5rem_1fr_3rem]" />
+          <StatRow key={k} stat={k} value={view.stats[k]} nature={p.nature} breakdown={statBreakdown(p, k, ctx)} scale={statScale} className="grid-cols-[9.5rem_1fr_3rem]" />
         ))}
       </div>
       <ul className="mt-4 grid grid-cols-1 gap-1.5 bg-dusk-900 p-3 text-sm text-mist-300 inset-shadow-well">
@@ -115,8 +116,7 @@ function IvsTab({ view }: { view: PokemonView }) {
   const ivMax = ctx.config.progression.ivMax
   // What each IV adds to the stat today: the stat with its IV minus the same stat with that IV at 0 (same species, level and nature).
   const p = view.pokemon
-  const now = computeStats({ speciesSlug: p.speciesSlug, level: p.level, ivs, nature: p.nature }, ctx)
-  const adds = (k: StatKey) => now[k] - computeStats({ speciesSlug: p.speciesSlug, level: p.level, ivs: { ...ivs, [k]: 0 }, nature: p.nature }, ctx)[k]
+  const adds = (k: StatKey) => statBreakdown(p, k, ctx).iv
   return (
     <>
       <div {...hintAnchor('detail.iv')}>
@@ -133,6 +133,7 @@ function IvsTab({ view }: { view: PokemonView }) {
         <p>{t('iv.what')}</p>
         <p>{t('iv.fixed')}</p>
         <p>{t('iv.effect')}</p>
+        <p>{t('iv.where')}</p>
       </div>
 
       <h3 className="mt-5 mb-2 font-display text-base text-mist-300">{t('iv.perStat')}</h3>

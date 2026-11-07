@@ -52,38 +52,31 @@
     "disable": "No mostrar consejos"
   },
   "stats": {
-    "basedOn": "basada en {{stat}}",
     "natureUp": "Su naturaleza la sube",
     "natureDown": "Su naturaleza la baja",
     "hp": {
       "name": "Energía",
-      "what": "Cuánto aguanta estudiando a lo largo del día.",
-      "base": "PS"
+      "what": "Cuánto aguanta estudiando a lo largo del día."
     },
     "speed": {
       "name": "Ritmo",
-      "what": "Cada cuánto actúa durante la sesión.",
-      "base": "Velocidad"
+      "what": "Cada cuánto actúa durante la sesión."
     },
     "specialAttack": {
       "name": "Rendimiento",
-      "what": "Cuántos puntos da cada acción.",
-      "base": "Ataque Especial"
+      "what": "Cuántos puntos da cada acción."
     },
     "attack": {
       "name": "Captura",
-      "what": "Cuánta Energía de captura genera para debilitar salvajes.",
-      "base": "Ataque"
+      "what": "Cuánta Energía de captura genera para debilitar salvajes."
     },
     "specialDefense": {
       "name": "Técnica",
-      "what": "Probabilidad de activar sus técnicas.",
-      "base": "Defensa Especial"
+      "what": "Probabilidad de activar sus técnicas."
     },
     "defense": {
       "name": "Aguante",
-      "what": "Resiste los contraataques y sube hasta un 10 % sus puntos y su EXP: con Aguante 100 rinde ×1,05 y con 200 o más, ×1,10.",
-      "base": "Defensa"
+      "what": "Resiste los contraataques y sube hasta un 10 % sus puntos y su EXP: con Aguante 100 rinde ×1,05 y con 200 o más, ×1,10."
     },
     "summary": "Resumen",
     "tile": {
@@ -125,7 +118,14 @@
       "title": "Tus estadísticas empiezan con tu primera sesión",
       "body": "Aquí verás tus minutos por día, los puntos de cada sesión y cómo evoluciona tu Foco."
     },
-    "weekEmpty": "Aún no estudiaste esta semana. Tu primera sesión aparecerá aquí."
+    "weekEmpty": "Aún no estudiaste esta semana. Tu primera sesión aparecerá aquí.",
+    "breakdown": {
+      "title": "Así sale tu {{total}}",
+      "base": "Tu especie y su nivel",
+      "nature": "Naturaleza",
+      "iv": "IV (suerte al nacer)",
+      "note": "Al subir de nivel crece todo; al evolucionar, sube la parte de la especie."
+    }
   },
   "roles": {
     "scholar": {
@@ -1086,7 +1086,8 @@
       "4": "Casi perfecta"
     },
     "adds": "suma +{{n}} hoy",
-    "rowLabel": "{{stat}}: IV {{iv}} de {{max}}, {{word}}, suma {{adds}} hoy"
+    "rowLabel": "{{stat}}: IV {{iv}} de {{max}}, {{word}}, suma {{adds}} hoy",
+    "where": "Pasa el ratón (o toca) el nombre de cada estadística, en la pestaña Estadísticas, para ver de qué partes sale su número."
   },
   "bag": {
     "title": "Mochila",

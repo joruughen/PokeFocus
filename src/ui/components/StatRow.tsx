@@ -17,6 +17,8 @@ export const STAT_ICON: Record<StatKey, ArtIconName> = {
 /** Display order of the six stats in PokeFocus. */
 export const STAT_ORDER: StatKey[] = ['hp', 'speed', 'specialAttack', 'attack', 'specialDefense', 'defense']
 
+const signed = (n: number) => (n >= 0 ? `+${n}` : `−${Math.abs(n)}`)
+
 export interface StatRowProps {
   stat: StatKey
   value: number
@@ -24,15 +26,18 @@ export interface StatRowProps {
   scale?: number
   /** Nature slug: shows ▲/▼ when it raises or lowers this stat. */
   nature?: string
+  /** Where the number comes from (species and level, nature, IV); shown in the help tooltip. */
+  breakdown?: { base: number; nature: number; iv: number; total: number }
   className?: string
 }
 
 /**
  * One stat with its PokeFocus name (never the original one, GDD §5.1) and a
- * help tooltip: what it does + "basada en Velocidad".
- * Labels: `stats.<key>.name`, `.what`, and `stats.<key>.base` for the original name.
+ * help tooltip: what it does and, when `breakdown` is given, where its number
+ * comes from (species and level + nature + IV = total).
+ * Labels: `stats.<key>.name` and `.what`; `stats.breakdown.*`.
  */
-export function StatRow({ stat, value, scale = 200, nature, className }: StatRowProps) {
+export function StatRow({ stat, value, scale = 200, nature, breakdown, className }: StatRowProps) {
   const { t } = useTranslation()
   const n = nature ? defaultContext().naturesBySlug.get(nature) : undefined
   const mod = n?.increased === stat ? 'up' : n?.decreased === stat ? 'down' : null
@@ -46,7 +51,26 @@ export function StatRow({ stat, value, scale = 200, nature, className }: StatRow
           <span className="flex flex-col gap-1">
             <span className="font-display text-base">{t(`stats.${stat}.name`)}</span>
             <span>{t(`stats.${stat}.what`)}</span>
-            <span className="text-xs text-dusk-500">{t('stats.basedOn', { stat: t(`stats.${stat}.base`) })}</span>
+            {breakdown && (
+              <span className="mt-1 flex flex-col gap-0.5 border-t-2 border-dusk-600/20 pt-1.5">
+                <span className="font-display text-sm">{t('stats.breakdown.title', { total: breakdown.total })}</span>
+                <span className="flex justify-between gap-4">
+                  <span>{t('stats.breakdown.base')}</span>
+                  <span className="font-num text-base leading-none">{breakdown.base}</span>
+                </span>
+                {breakdown.nature !== 0 && (
+                  <span className="flex justify-between gap-4">
+                    <span>{t('stats.breakdown.nature')}</span>
+                    <span className="font-num text-base leading-none">{signed(breakdown.nature)}</span>
+                  </span>
+                )}
+                <span className="flex justify-between gap-4">
+                  <span>{t('stats.breakdown.iv')}</span>
+                  <span className="font-num text-base leading-none">{signed(breakdown.iv)}</span>
+                </span>
+                <span className="text-xs text-dusk-500">{t('stats.breakdown.note')}</span>
+              </span>
+            )}
           </span>
         }
       >
