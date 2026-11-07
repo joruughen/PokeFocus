@@ -88,8 +88,9 @@ export function buildEnv(
  * min(actions the clock allows, actions its energy affords) × points per action.
  * Includes the type condition, Bond and its own passive modifiers (not heals).
  */
-export function expectedSessionPoints(state: PlayerState, p: OwnedPokemon, env: ConditionEnv, now: number, ctx: EngineContext, focus = 0.9): number {
+export function expectedSessionPoints(state: PlayerState, p: OwnedPokemon, env: ConditionEnv, now: number, ctx: EngineContext, focus?: number): number {
   const cfg = ctx.config
+  focus ??= cfg.focus.baseValue
   const stats = computeStats(p, ctx)
   const energy = energyAt(state, p, now, ctx)
   const wc: WhenContext = {

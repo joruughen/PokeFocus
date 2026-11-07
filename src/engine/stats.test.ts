@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createEngineContext, defaultContext } from './context'
 import { createIndividual, rollAbility, rollIvs } from './individual'
 import { createRng } from './rng'
-import { computeStats, effectiveBase, natureMultiplier, statValue } from './stats'
+import { computeStats, defenseFocusBonus, effectiveBase, effectiveFocus, natureMultiplier, statValue } from './stats'
 import { extraMoveCandidates, getTechnique, isUsableMove, techniqueSlots } from './moves'
 
 const ctx = defaultContext()
@@ -126,5 +126,34 @@ describe('extra move unlock levels (progression.extraMoveUnlock)', () => {
     const view = pokemonView(makePlayer([p]), 'a', 0, ctx)!
     expect(view.lockedExtraMoves.map((x) => [x.technique.slug, x.unlockLevel])).toEqual([['solar-beam', 40], ['safeguard', 15]])
     expect(view.extraMoves.every((x) => !x.unlocked)).toBe(true)
+  })
+})
+
+describe('Grit raises the Pokémon\'s own Focus (GDD §4, §5.1)', () => {
+  it('effective = Focus × (1 + 0.10 · min(1, Def / 200)): exact values at Def 0 / 100 / 200', () => {
+    expect(cfg.actions.defenseFocusMaxBonus).toBe(0.1)
+    expect(cfg.actions.defenseFocusCap).toBe(200)
+    expect(effectiveFocus(1, 0, cfg)).toBeCloseTo(1, 10)
+    expect(effectiveFocus(1, 100, cfg)).toBeCloseTo(1.05, 10)
+    expect(effectiveFocus(1, 200, cfg)).toBeCloseTo(1.1, 10)
+    expect(defenseFocusBonus(50, cfg)).toBeCloseTo(0.025, 10)
+  })
+
+  it('is monotonic in Defense and capped at +10 % from Def 200 on', () => {
+    let prev = 0
+    for (let def = 0; def <= 400; def += 5) {
+      const f = effectiveFocus(1, def, cfg)
+      expect(f).toBeGreaterThanOrEqual(prev)
+      expect(f).toBeLessThanOrEqual(1.1 + 1e-12)
+      prev = f
+    }
+    expect(effectiveFocus(1, 250, cfg)).toBeCloseTo(1.1, 10)
+    expect(effectiveFocus(1, 999, cfg)).toBeCloseTo(1.1, 10)
+  })
+
+  it('a late claim (Focus 0.5) keeps the same relative bonus: 0.5 → 0.525 at Def 100, 0.55 at Def ≥ 200', () => {
+    expect(effectiveFocus(0.5, 0, cfg)).toBeCloseTo(0.5, 10)
+    expect(effectiveFocus(0.5, 100, cfg)).toBeCloseTo(0.525, 10)
+    expect(effectiveFocus(0.5, 200, cfg)).toBeCloseTo(0.55, 10)
   })
 })

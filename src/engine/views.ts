@@ -11,7 +11,7 @@ import {
   actionIntervalSeconds,
   basePointsPerAction,
   computeStats,
-  defenseFocusShare,
+  defenseFocusBonus,
   energyCostPerAction,
   masteryMultiplier,
   masteryStars,
@@ -30,7 +30,8 @@ export interface PokemonView {
   actionIntervalSeconds: number
   pointsPerAction: number
   techniqueMultiplier: number
-  defenseFocusShare: number
+  /** Grit bonus on its own Focus (0 … 0.10). */
+  defenseFocusBonus: number
   energyCostPerAction: number
   /** Approx. actions left today with current energy. */
   actionsLeft: number
@@ -74,7 +75,7 @@ export function pokemonView(state: PlayerState, uid: string, now: number, ctx: E
     actionIntervalSeconds: actionIntervalSeconds(stats.speed, cfg),
     pointsPerAction: basePointsPerAction(stats.specialAttack, cfg),
     techniqueMultiplier: techniqueMultiplier(stats.specialDefense, cfg),
-    defenseFocusShare: defenseFocusShare(stats.defense, cfg),
+    defenseFocusBonus: defenseFocusBonus(stats.defense, cfg),
     energyCostPerAction: cost,
     actionsLeft: Math.ceil(energy / cost),
     bondBonus: bondBonus(p.bondMinutes, ctx),

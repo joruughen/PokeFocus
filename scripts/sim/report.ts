@@ -665,7 +665,7 @@ function summary(c: Ctx): string {
   const cross = crossingDays(r.reference, (d) => d.starterExpLevel, [30, 50])
   if (cross[0] && cross[1]) {
     const slow = (cross[0].day ?? 0) > 24 || (cross[1].day ?? 999) > 105
-    out.push(`**Nivelado:** el Pokémon de referencia (sin caramelos) llega a nv. 30 el día ${cross[0].day ? Math.round(cross[0].day) : '—'} (objetivo 21) y a nv. 50 el día ${cross[1].day ? Math.round(cross[1].day) : '> ' + (r.reference[0]?.days.length ?? 0)} (objetivo ~91): con el Foco real (~0.9) la curva va ${slow ? 'lenta' : 'en objetivo'}.`)
+    out.push(`**Nivelado:** el Pokémon de referencia (sin caramelos) llega a nv. 30 el día ${cross[0].day ? Math.round(cross[0].day) : '—'} (objetivo 21) y a nv. 50 el día ${cross[1].day ? Math.round(cross[1].day) : '> ' + (r.reference[0]?.days.length ?? 0)} (objetivo ~91): con el Foco real (100 % a tiempo, 50 % tarde) la curva va ${slow ? 'lenta' : 'en objetivo'}.`)
   }
   if (kon) {
     const d = kon.runs.map((x) => x.days[x.days.length - 1] as PlayerMetrics['days'][number])
@@ -736,7 +736,7 @@ Perfiles (zona horaria fija UTC−5; la semana empieza en lunes; clima por día:
 
 ${prof}
 
-Supuestos del simulador (no vienen del motor): ~15 % de las sesiones con etiqueta chat/social/juego (Foco medio ≈ 0.9), 20 % de sesiones con una pausa, 5 % de reclamaciones tardías, micrófono activo en el 60 % de las sesiones, sin amigos (Hada nunca activa) y las misiones del motor (reclamadas al completarlas). Todo jugador empieza con un inicial al azar. "Semanas estables" = ${STEADY_FROM_WEEK}–${o.weeks}. Cada (perfil, semilla) repite siempre el mismo calendario, clima y etiquetas aunque cambie la config, así que las comparaciones antes/después son pareadas.
+Supuestos del simulador (no vienen del motor): Foco como en producción (sin etiquetas de captura: 100 % al reclamar a tiempo, 50 % en el 5 % de reclamaciones tardías; las etiquetas solo sirven al panel de desarrollo), 20 % de sesiones con una pausa, micrófono activo en el 60 % de las sesiones, sin amigos (Hada nunca activa) y las misiones del motor (reclamadas al completarlas). Todo jugador empieza con un inicial al azar. "Semanas estables" = ${STEADY_FROM_WEEK}–${o.weeks}. Cada (perfil, semilla) repite siempre el mismo calendario, clima y retrasos al reclamar aunque cambie la config, así que las comparaciones antes/después son pareadas.
 
 Fuera del modelo: Pociones y Revivir y caramelos de tipo (se ganan con misiones pero no se usan), Teralitos y MT (sin uso aún), Tera, intercambios, amistad (Hada), Dominio elegido a mano (se usa la carga por defecto) y cualquier decisión estética del jugador. Los topes y umbrales propuestos dependen de que el jugador real capture con una eficiencia parecida a la simulada.
 

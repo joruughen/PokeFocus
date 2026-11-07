@@ -77,11 +77,12 @@ const LABEL_ALIASES: Record<string, string> = {
 
 /**
  * Screenshot value (GDD §4.1): mean of label values, missed captures count as
- * `missedCaptureValue`; no permission (or nothing to average) → `noPermissionValue`.
+ * `missedCaptureValue`; no labels (production: there is no classifier) or nothing to average →
+ * `baseValue` (1.0). The labels only exist for the dev panel's simulated screenshots.
  * `labelFloors` (focusLabelFloor) raise specific labels for one Pokémon.
  */
 export function captureValue(inputs: FocusInputs, cfg: GameConfig, labelFloors: Partial<Record<string, number>> = {}): number {
-  if (inputs.screenshotLabels === null) return cfg.focus.noPermissionValue
+  if (inputs.screenshotLabels === null) return cfg.focus.baseValue
   const values: number[] = []
   for (const raw of inputs.screenshotLabels) {
     const label = LABEL_ALIASES[raw] ?? raw
@@ -89,7 +90,7 @@ export function captureValue(inputs: FocusInputs, cfg: GameConfig, labelFloors: 
     values.push(Math.max(v, labelFloors[label] ?? 0))
   }
   for (let i = 0; i < Math.max(0, inputs.missedCaptures); i++) values.push(cfg.focus.missedCaptureValue)
-  if (values.length === 0) return cfg.focus.noPermissionValue
+  if (values.length === 0) return cfg.focus.baseValue
   return values.reduce((a, b) => a + b, 0) / values.length
 }
 
@@ -387,7 +388,7 @@ export interface SessionResult {
   lateClaim: boolean
   /** Daily diminishing-returns factor (0–1). */
   rewardFactor: number
-  /** Player focus: screenshot value × late-claim multiplier. */
+  /** Session Focus: base value (1.0) × late-claim multiplier (0.5). No Grit bonus: drives dust, wave size, legendary and shiny odds. */
   focus: number
   captureValue: number
   /** Types whose condition was active at the start (incl. Normal). */

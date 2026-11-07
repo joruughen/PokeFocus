@@ -115,13 +115,15 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 
 ## 4. Foco (índice de concentración)
 
-**Foco** es un valor de 0.0 a 1.0 por sesión. Afecta a las **recompensas** (puntos, EXP, Polvo) y a la **calidad de los encuentros** (número de Pokémon, probabilidad de raros y shiny).
+**Foco** es un valor de 0.0 a 1.0 por sesión. Afecta a las **recompensas** (puntos, EXP, Polvo) y a la **calidad de los encuentros** (número de Pokémon, probabilidad de raros y shiny). El Aguante de cada Pokémon sube su propio Foco por encima del 100 % (hasta ×1.10, solo para sus puntos y su EXP; §5.1).
 
-> **Estado (2026-11-05): la clasificación de pantalla con IA fue descartada.** El Foco no mira tu pantalla ni vigila otras pestañas o aplicaciones (principio 5). Hoy es una **etiqueta neutra**: el servidor usa el mismo valor base para todos (0.85) y, aparte de algunas habilidades (Foco Interno, Levitación…), lo único que lo cambia es reclamar a tiempo:
+> **Estado (2026-11-06): la clasificación de pantalla con IA fue descartada (2026-11-05) y el Foco se simplificó.** El Foco no mira tu pantalla ni vigila otras pestañas o aplicaciones (principio 5). Es igual para todos y lo único que lo cambia es reclamar a tiempo (aparte de algunas habilidades: Foco Interno, Levitación…):
 >
-> `Foco = 0.85 × (1.0 si reclamó a tiempo, 0.5 si tarde)`, y después la Defensa del Pokémon lo sube (`Foco_efectivo`, §5.1).
+> `Foco = 1.0 si reclamas dentro de los 5 minutos tras terminar, 0.5 si tarde` (`focus.baseValue` × `session.lateClaimMultiplier`).
 >
-> El 0.85 es el valor que el diseño original daba a "sin permiso de pantalla" (`focus.noPermissionValue` en la configuración) **[calibrar]**. En lugar de las capturas, la fase F3 entregó el **perfil sonoro con el micrófono** (§4.3) y el **clima real** con Open-Meteo (§9.2); ver `docs/PENDING.md` (F3). En la configuración, `focus.model` y las claves de las capturas (`screenshotsPerSession`, `screenshotWindow`, `screenshotMinGapMinutes`, `missedCaptureValue`) quedan sin uso. Solo el panel de desarrollo (`DEV_TOOLS=1`) puede simular una etiqueta de pantalla, para probar el motor.
+> Después el **Aguante** (Defensa) de cada Pokémon sube **su** Foco por encima del 100 %: `Foco_efectivo = Foco × (1 + 0.10 · min(1, Def / 200))` (§5.1), solo para sus puntos y su EXP. El Polvo, el tamaño de la oleada y las tiradas de legendario y shiny usan el Foco de la sesión, sin Aguante.
+>
+> Hasta el 2026-11-06 el valor base era 0.85 (el que el diseño original daba a "sin permiso de pantalla", `focus.noPermissionValue`) y el Aguante "recuperaba" parte del Foco que faltaba. Al pasar a 1.0 se multiplicaron por 0.85 los valores base (puntos por acción, EXP/min, Polvo/min, legendario; shiny ×0.9) para que las recompensas reales no cambien (verificado con el simulador). En lugar de las capturas, la fase F3 entregó el **perfil sonoro con el micrófono** (§4.3) y el **clima real** con Open-Meteo (§9.2); ver `docs/PENDING.md` (F3). En la configuración, `focus.model` y las claves de las capturas (`screenshotsPerSession`, `screenshotWindow`, `screenshotMinGapMinutes`, `missedCaptureValue`) quedan sin uso. Solo el panel de desarrollo (`DEV_TOOLS=1`) puede simular una etiqueta de pantalla, para probar el motor.
 
 ### 4.1 Componentes (diseño original, descartado el 2026-11-05)
 
@@ -147,7 +149,7 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 
 `Foco = valor_captura × (1.0 si reclamó a tiempo, 0.5 si tarde)`
 
-Si el usuario no concedió el permiso de compartir pantalla: `valor_captura = 0.85` **[calibrar]**. Es un valor neutro que no penaliza mucho, pero da un pequeño incentivo para activarlo.
+Si el usuario no concedió el permiso de compartir pantalla: `valor_captura = 0.85` **[calibrar]**. Es un valor neutro que no penaliza mucho, pero da un pequeño incentivo para activarlo. *(Hoy, sin capturas, el valor base es 1.0: ver el estado al principio de §4.)*
 
 ### 4.2 Captura de pantalla: implementación (diseño original, no construido)
 
@@ -217,10 +219,10 @@ Otras = floor((floor((2·Base + IV) · Nivel / 100) + 5) · Naturaleza)     // N
 | Rol | Estadística | Fórmula |
 |---|---|---|
 | Frecuencia de acción | Velocidad | `intervalo_seg = 300 · 60 / (60 + Vel)` |
-| Puntos por acción | Ataque Esp. | `puntos = (5 + AtEsp / 4) · M` |
+| Puntos por acción | Ataque Esp. | `puntos = 0.85 · (5 + AtEsp / 4) · M` (en la configuración, `pointsBase` 4.25 y `pointsSpAtkDivisor` 4 / 0.85; el 0.85 compensa que el Foco base pasara de 0.85 a 1.0) |
 | Energía de captura | Ataque | `energía = (Atq / 5) · (potencia_técnica / 60)` |
 | Activación de técnicas | Def. Esp. | `Mult_Técnica = min(2.0, 0.5 + DefEsp / 100)`, multiplica la probabilidad base de cada técnica (§7.2) |
-| Aguante con poco Foco y ante contraataques | Defensa | `Foco_efectivo = Foco + (1 − Foco) · min(0.5, Def / 400)`; también reduce el daño de los contraataques (§11.4) |
+| Aguante: más rendimiento y resistencia a los contraataques | Defensa | `Foco_efectivo = Foco × (1 + 0.10 · min(1, Def / 200))`: Def 100 → ×1.05, Def ≥ 200 → ×1.10 (`defenseFocusMaxBonus`, `defenseFocusCap`), solo para los puntos y la EXP del Pokémon; también reduce el daño de los contraataques (§11.4) |
 | Energía diaria | PS | Cuántas acciones puede hacer al día (ver §5.3) |
 
 #### Nombres en pantalla
@@ -234,7 +236,7 @@ Internamente se usan las estadísticas reales de PokeAPI (los valores base de ca
 | Ataque Esp. (`special-attack`) | **Rendimiento** | **Output** | Cuántos puntos da cada acción |
 | Ataque (`attack`) | **Captura** | **Catch** | Cuánta Energía de captura genera para debilitar salvajes |
 | Def. Esp. (`special-defense`) | **Técnica** | **Technique** | Probabilidad de activar técnicas |
-| Defensa (`defense`) | **Aguante** | **Grit** | Cuánto rinde aunque tu Foco sea bajo, y cuánto resiste los contraataques (§11.4) |
+| Defensa (`defense`) | **Aguante** | **Grit** | Hasta un 10 % más de puntos y EXP, y cuánto resiste los contraataques (§11.4) |
 
 - En la ficha del Pokémon, cada estadística tiene un tooltip con su explicación y, en letra pequeña, en qué estadística original se basa (por ejemplo, *"basada en Velocidad"*). Así quien conoce los juegos entiende por qué un Jolteon tiene tanto Ritmo.
 - Las naturalezas se muestran con estos nombres: Miedosa = *"+Ritmo −Captura"*.
@@ -251,8 +253,8 @@ M = Condición_de_tipo (1.0–1.5) × Vínculo (1.0–1.2) × Foco_efectivo × E
 | Recompensa | Fórmula base **[calibrar]** |
 |---|---|
 | Puntos de Equipo | Suma de los puntos de todas las acciones del equipo |
-| EXP (a cada miembro del equipo) | `29 · minutos · Foco_efectivo` → 725 EXP por sesión de 25 min con Foco 1.0 (calibrado para un Foco real ≈ 0.9) |
-| Polvo de Estudio (del jugador) | `10 · minutos · Foco` → 250 por sesión de 25 min |
+| EXP (a cada miembro del equipo) | `24.65 · minutos · Foco_efectivo` (= 0.85 × 29) → ≈ 616 EXP por sesión de 25 min con Foco 1.0 y sin Aguante (lo mismo que daban 29/min con el antiguo Foco 0.85) |
+| Polvo de Estudio (del jugador) | `8.5 · minutos · Foco` (= 0.85 × 10) → ≈ 213 por sesión de 25 min a tiempo |
 | Poké Balls | 2 por sesión completada |
 | Ball de Estudio | 1 por oleada (cada 25 min), solo para esa oleada (no acumulable, §11.1) |
 
@@ -304,7 +306,7 @@ Cada naturaleza sube una estadística un 10% y baja otra un 10%. Con los roles d
 | Naturaleza | +10% | −10% | Lectura en PokeFocus |
 |---|---|---|---|
 | Fuerte, Dócil, Seria, Tímida, Rara | — | — | Neutras |
-| Huraña | Atq | Def | Más captura, menos aguante con poco Foco |
+| Huraña | Atq | Def | Más captura, menos Aguante |
 | Audaz | Atq | Vel | Más captura, actúa menos veces |
 | Firme | Atq | AtEsp | **Cazador:** más captura, menos puntos |
 | Pícara | Atq | DefEsp | Más captura, activa menos técnicas |
@@ -339,7 +341,7 @@ La lista completa del Pack 1 está en `data/overrides/custom-abilities.json` y s
 | Habilidad | Efecto |
 |---|---|
 | Espesura / Mar Llamas / Torrente | +30% de puntos cuando le queda menos de un tercio de Energía |
-| Foco Interno | Rinde como si tu Foco fuera al menos del 75% |
+| Foco Interno | Si reclamas tarde, su Foco no baja del 75% (en vez del 50%) |
 | Sincronía | Los salvajes tienen un 50% de probabilidad de tener su misma naturaleza |
 | Levitación | Reclamar tarde no reduce lo que genera |
 | Robustez | Los contraataques nunca lo dejan agotado |
@@ -535,7 +537,7 @@ oleadas = max(1, floor(minutos / 25))
 - Al reclamar, las oleadas se muestran **una tras otra**. Cada oleada trae su **propia Ball de Estudio** (§11.1) y recibe la Energía generada **en su bloque de 25 min** (§11.3).
 - **Bono de sesión larga:** cada oleada después de la primera aumenta la rareza. La tirada de legendario sube ×1.5 en la 2.ª oleada y ×2 desde la 3.ª, y el peso de las especies con `capture_rate` bajo también sube **[calibrar]**. Estudiar de seguido atrae a los raros.
 
-**Tamaño de cada oleada:** 4 salvajes, ±1 al azar, +1 con Dulce Aroma (en una oleada), −1 si `Foco < 0.5`. Mínimo 3.
+**Tamaño de cada oleada:** 4 salvajes, ±1 al azar, +1 con Dulce Aroma (en una oleada), −1 si `Foco < 0.75` (`lowFocusThreshold`: es decir, al reclamar tarde, Foco 0.5; el Aguante no cuenta). Mínimo 3.
 
 **Máximo por oleada según tu liga actual** (§14):
 
@@ -550,12 +552,12 @@ oleadas = max(1, floor(minutos / 25))
 
 Para cada hueco del grupo:
 
-1. **Tirada de legendario o mítico:** `0.2% × Foco` **[calibrar]**.
+1. **Tirada de legendario o mítico:** `0.136% × Foco` **[calibrar]** (0.16 % × 0.85; Foco de la sesión, sin Aguante).
 2. Si no, se elige una especie con peso `= capture_rate` (dato de PokeAPI), multiplicado por:
    - ×2 si el tipo de la especie tiene su condición activa en ese momento (p. ej. Fantasma de noche),
    - ×1.2 por el perfil sonoro dominante (§4.3),
    - ×1.25 si comparte tipo con algún miembro del equipo.
-3. **Shiny:** `1/512 × (0.5 + Foco)`.
+3. **Shiny:** `0.9/512 × (0.5 + Foco)` (Foco de la sesión: con 1.0 da lo mismo que 1/512 con el antiguo 0.85).
 
 ### 10.3 Nivel de los salvajes
 
@@ -639,7 +641,7 @@ daño_contraataque = PS_máx_líder · 0.08 · (Nivel_salvaje / Nivel_líder)^0.
 EXP total para alcanzar el nivel L = round(4 · L^2.8)
 ```
 
-Referencia con 4 sesiones de 25 min al día, Foco 1.0, el Pokémon siempre en el equipo y **sin** caramelos:
+Referencia de diseño con 4 sesiones de 25 min al día, 29 EXP/min y Foco 1.0 (hoy son 24.65 EXP/min con Foco 1.0, lo mismo que 29 con el antiguo Foco 0.85; el simulador da nv. 30 hacia el día 23 y nv. 50 hacia el 93), el Pokémon siempre en el equipo y **sin** caramelos:
 
 | Nivel | EXP total | Tiempo aproximado |
 |---|---|---|
@@ -970,7 +972,7 @@ Reglas de diseño:
 
 ## 20.2 Calibración aplicada
 
-Valores ajustados con el simulador (`npm run simulate`, informe en `docs/balance-report.md`): ligas 6,000 / 60,000 / 95,000; EXP 29/min; tope de nivel 50 con 36 especies (y 60 con 50); legendario 0.16% por hueco y captura mínima 13; rangos de nivel salvaje ampliados hasta 70; ajustes de Rendimiento en 10 especies (`data/overrides/species.json`).
+Valores ajustados con el simulador (`npm run simulate`, informe en `docs/balance-report.md`): ligas 6,000 / 60,000 / 95,000; EXP 29/min (24.65 desde que el Foco base es 1.0, §4); tope de nivel 50 con 36 especies (y 60 con 50); legendario 0.16% por hueco y captura mínima 13; rangos de nivel salvaje ampliados hasta 70; ajustes de Rendimiento en 10 especies (`data/overrides/species.json`).
 
 ---
 

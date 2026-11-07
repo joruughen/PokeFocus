@@ -26,7 +26,7 @@ export interface PlannedSession {
   /** Local minutes since day 0 at 00:00 (may exceed 1440 for sessions after midnight). */
   startMin: number
   minutes: number
-  /** Classifier label for the single screenshot. */
+  /** Classifier label for the single screenshot (dev-only; the simulated sessions send no labels). */
   label: string
   pausedSeconds: number
   /** Minutes between the end of the timer and pressing Claim. */
@@ -56,7 +56,11 @@ function rollWeather(rng: Rng): WeatherInput {
   return { rain: false, sun: false, tempC: 19 }
 }
 
-/** ~15 % of sessions get a chat / social / game label (the rest studying-like). */
+/**
+ * ~15 % of sessions get a chat / social / game label (the rest studying-like). Not sent to the engine
+ * any more (production has no screenshot classifier, see run.ts); still rolled so the schedules
+ * (and every later random draw) stay the same.
+ */
 function rollLabel(rng: Rng): string {
   const r = rng.next()
   if (r < 0.74) return 'studying'

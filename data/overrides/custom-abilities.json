@@ -53,7 +53,7 @@
   },
   "tangled-feet": {
     "effects": [{ "kind": "focusFloor", "min": 0.7 }],
-    "description": { "es": "Con Foco bajo, rinde como si tuviera al menos un 70%.", "en": "With low Focus, performs as if it had at least 70%." }
+    "description": { "es": "Si reclamas tarde, su Foco no baja del 70% (en vez de quedarse en el 50%).", "en": "If you claim late, its Focus doesn't drop below 70% (instead of 50%)." }
   },
   "big-pecks": {
     "effects": [{ "kind": "statMod", "stat": "counterDamageTaken", "mult": 0.75, "scope": "self", "when": { "isLeader": true } }],
@@ -97,7 +97,7 @@
   },
   "inner-focus": {
     "effects": [{ "kind": "focusFloor", "min": 0.75 }],
-    "description": { "es": "Rinde como si tu Foco fuera al menos del 75%.", "en": "Performs as if your Focus were at least 75%." }
+    "description": { "es": "Si reclamas tarde, su Foco no baja del 75% (en vez de quedarse en el 50%).", "en": "If you claim late, its Focus doesn't drop below 75% (instead of 50%)." }
   },
   "infiltrator": {
     "effects": [{ "kind": "effectivenessFloor", "from": 0, "to": 0.5 }],

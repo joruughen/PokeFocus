@@ -169,7 +169,10 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
         endedAt,
         claimedAt,
         pausedSeconds: ps.pausedSeconds,
-        focusInputs: { screenshotLabels: [ps.label], missedCaptures: 0 },
+        // As in production: no screenshot classifier, so the session Focus is the base value
+        // (× the late-claim multiplier). `ps.label` is still rolled (dev-panel labels only) so the
+        // schedules stay identical.
+        focusInputs: { screenshotLabels: null, missedCaptures: 0 },
         soundProfile: ps.sound,
         weather,
       },

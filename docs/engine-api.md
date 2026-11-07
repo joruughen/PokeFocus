@@ -62,7 +62,7 @@ Starter (`config.starters`) at `starterLevel`, 1 technique equipped, `starterPok
 2. ```ts
    completeSession(state, session, {
      endedAt, claimedAt, pausedSeconds,
-     focusInputs: { screenshotLabels: string[] | null /* null = no permission */, missedCaptures },
+     focusInputs: { screenshotLabels: string[] | null /* null = production: base value 1.0; labels are dev-panel only */, missedCaptures },
      soundProfile?: { silence, music, voice, noise } | null,
      weather?: { rain, sun, snow?, tempC } | null,   // default: state.profile.weather (the app always passes it: the manual weather is dev-only)
      friendOverlap?: number | null,                  // 0–1 accompanied share (study group, server-computed); Fairy = 1 + (fairy − 1) × overlap
@@ -70,7 +70,7 @@ Starter (`config.starters`) at `starterLevel`, 1 technique equipped, `starterPok
    ```
    Pure simulation. Key `SessionResult` fields:
    - `minutes` = floor(min(planned, elapsed − paused)); `valid` = minutes ≥ `session.minMinutes` (invalid → no rewards, no waves).
-   - `lateClaim` (claim > `claimWindowMinutes` after `endedAt`), `rewardFactor` (daily diminishing returns, pro-rated across 360/600 min), `focus` (player focus = screenshot value × late multiplier), `captureValue`.
+   - `lateClaim` (claim > `claimWindowMinutes` after `endedAt`), `rewardFactor` (daily diminishing returns, pro-rated across 360/600 min), `focus` (session focus = `focus.baseValue` 1.0, or the dev-panel label value, × `lateClaimMultiplier` 0.5 when late), `captureValue`.
    - `conditions` (active type conditions at start), `forcedConditions` (activateCondition: type, minute, by whom).
    - `members[]`: `uid, slot, asleep, actions, points, catchEnergy, energyStart/End/Max/Spent/Healed, exhaustedAtMinute, techniques [{move,count}], conditionMult, conditionType, focusEffective, exp, bondMinutes, masteryMinutes, rested`.
    - Session-report log on each member (optional, absent in older results; never read by the rules): `damageMoves [{move|null,count}]`, `activables [{move, attempts, activations, chanceMin/Max/Avg, limitPerSession, limitReached}]`, `passives [{source, sourceKind, effect, count}]` (passive effects that did something: per-action statMods whose `when` held, statusOnAction triggers, end/next-session heals, focus floors, encounterWeight…), `conditionLog [{type, mult, actions, forced}]`, `conditionBonusMult`.
@@ -88,9 +88,9 @@ Starter (`config.starters`) at `starterLevel`, 1 technique equipped, `starterPok
 Helpers: `captureValue(focusInputs, cfg, labelFloors?)`, `dailyRewardFactor(minutesBefore, minutes, cfg)`, `validatedMinutes`, `activationChance(baseChance, spDef, masteryMinutes, techChanceMult, cfg)`, `projectStreak`, `conditionTypes(p, at)`.
 
 ### Simulation rules (summary)
-- Actions are event-driven across the team: interval = `300·60/(60+Speed)` ÷ pace mods. Each action: points `(5 + SpAtk/4) · condition · bond · focusEff · points mods · burst`, catch energy of a random equipped damage technique (`Atk/5 · power/60`; none → Normal at `noDamageMoveEnergyFactor`), energy cost `(0.5 + L/25) · energyCost mods`, then activables roll `min(0.4, base · techMult · mastery · techChance)` up to `limitPerSession` (and `limitPerWeek`), then passive `statusOnAction`, then heal-over-time.
+- Actions are event-driven across the team: interval = `300·60/(60+Speed)` ÷ pace mods. Each action: points `(pointsBase + SpAtk/pointsSpAtkDivisor) · condition · bond · focusEff · points mods · burst` (today `0.85·(5 + SpAtk/4)`), catch energy of a random equipped damage technique (`Atk/5 · power/60`; none → Normal at `noDamageMoveEnergyFactor`), energy cost `(0.5 + L/25) · energyCost mods`, then activables roll `min(0.4, base · techMult · mastery · techChance)` up to `limitPerSession` (and `limitPerWeek`), then passive `statusOnAction`, then heal-over-time.
 - A Pokémon at 0 energy skips actions (it can act again if healed by a teammate) but still gets EXP/Bond. Members asleep from Rest do not act and do not provide team effects.
-- `focusEffective` per member = screenshot value (with its `focusLabelFloor`) × late multiplier (unless `lateClaimImmune`), then Defense share, then `focusFloor`.
+- `focusEffective` per member = capture value (`baseValue` 1.0; dev labels with its `focusLabelFloor`) × late multiplier (unless `lateClaimImmune`), then × the Grit bonus `1 + defenseFocusMaxBonus · min(1, Def / defenseFocusCap)` (`effectiveFocus`; +10 % at Def ≥ 200, so it can exceed 1), then `focusFloor`. Only points and EXP use it; dust, wave size, legendary (`legendaryChance × focus`) and shiny (`shinyChance × (0.5 + focus)`) use the session `focus`.
 - EXP = `expPerMinute · minutes · focusEff · exp mods · rewardFactor`; dust = `dustPerMinute · minutes · focus · rewardFactor`; points ×`rewardFactor`; balls = round(`pokeBallsPerSession` · rewardFactor).
 - Team-scope statMods and team primitives (`ballMult`, `maxFailedThrows`, `encounterWeight`, team-scope `counterMiss`) don't stack: the strongest member effect wins (lowest for `energyCost`, `counterDamageTaken`; highest chance for `counterMiss`).
 
@@ -178,13 +178,13 @@ Pokédex milestones (10/25/50 species caught) are claimable once each (id `dex-1
 `expForLevel(L)` = `round(4·L^2.8)`, `levelFromExp`, `levelCap(state)` / `levelCapFor(nCaught)`, `candyDustCost(level)`, `bondBonus(minutes)`, `trainerExpForLevel`, `trainerLevelFromExp`, `gainExp(p, amount, cap)`, `applyLevel`, `evolutionOptions(state, p, now)`.
 
 ## Data / rules helpers
-- Stats: `computeStats(ind)` (curves → formula), `maxEnergyOf`, `effectiveBase`, `statValue`, `actionIntervalSeconds`, `basePointsPerAction`, `catchEnergyPerAction`, `techniqueMultiplier`, `effectiveFocus`, `energyCostPerAction`, `bondMultiplier`, `masteryMultiplier`, `masteryStars`.
+- Stats: `computeStats(ind)` (curves → formula), `maxEnergyOf`, `effectiveBase`, `statValue`, `actionIntervalSeconds`, `basePointsPerAction`, `catchEnergyPerAction`, `techniqueMultiplier`, `defenseFocusBonus`, `effectiveFocus`, `energyCostPerAction`, `bondMultiplier`, `masteryMultiplier`, `masteryStars`.
 - Techniques: `getTechnique(slug)` → `{ kind: 'damage'|'passive'|'activable', type, power, damageClass, def } | null` (null = the move doesn't exist in PokeFocus), `isUsableMove`, `techniqueSlots(level)`, `equippableMoves(p)` (learned + unlocked extras; pass an object with `level`), `extraMoveUnlockLevel`, `unlockedExtraMoves`, `lockedExtraMoves`, `validateEquip`, `defaultEquipped` (new individuals only get unlocked moves).
 - Individuals: `createIndividual(slug, level, rng, { shiny?, nature? })`, `toOwnedPokemon(core, uid, now, ball)`, `rollIvs`, `rollAbility`, `definedAbilities`.
 - Conditions: `typeConditionMult`, `pokemonConditionMult`, `activeConditionTypes`, `evaluateWhen(when, wc, cfg)`.
 - Condition outlook (`activation.ts`, for the types guide and planner): `conditionOutlook(state, from, minutes, { weather? })` returns the 18 types as `{ type, mult, maxMult, active, activation }`, and `nextActivation(type, state, from, minutes, opts)` returns one `Activation`. `Activation` is data, never text: a `kind` (`always`, `window`, `weekend`, `firstOfDay`, `sameHour`, `weather`, `duration`, `chain`, `sessions`, `sound`, `team`, `noPause`, `streak`, `comeback`, `friend`) plus the numbers and the instants (epoch ms) that can be computed, such as `at` (next time it switches on) and `until` (end of the current window). Whether a type is on is always `typeConditionMult` on `conditionEnvAt`'s env, so the rules stay in one place. Like `conditionEnvAt` it assumes no pauses, no sound profile and no friend, and a start on a later day assumes nothing is studied in between. `conditionMaxMult(type, cfg)` gives the top multiplier (Poison and Bug at their cap). Time helper: `localToTs(dayKey, minuteOfDay, tz)` (a local wall-clock time to an instant, DST-aware; `startOfLocalDay` uses it).
 - Effects: `passiveEffects(p)`, `teamStatMults`, `teamCaptureMods`, `selfStatMult`.
-- Views: `pokemonView(state, uid, now)` → stats, current/max energy, interval, points/action, technique multiplier, actions left, slots, equipped/equippable techniques with mastery stars, `lockedExtraMoves: { technique, unlockLevel }[]` and `extraMoves: { technique, unlockLevel, unlocked }[]` (for "se desbloquea al nivel X"), EXP progress, evolution options.
+- Views: `pokemonView(state, uid, now)` → stats, current/max energy, interval, points/action (at Focus 1.0, before conditions), technique multiplier, Grit Focus bonus (`defenseFocusBonus`, 0–0.10), actions left, slots, equipped/equippable techniques with mastery stars, `lockedExtraMoves: { technique, unlockLevel }[]` and `extraMoves: { technique, unlockLevel, unlocked }[]` (for "se desbloquea al nivel X"), EXP progress, evolution options.
 
 ## Invariants
 - At most one `activeSession`; `applySessionResult` is idempotent by session id; throws are refused during an active session.

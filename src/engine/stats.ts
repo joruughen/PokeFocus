@@ -81,14 +81,18 @@ export function techniqueMultiplier(spDef: number, cfg: GameConfig): number {
   return Math.min(a.techMultMax, a.techMultBase + spDef / a.techMultSpDefDivisor)
 }
 
-/** Share of the missing focus that Defense recovers: min(0.5, Def / 400). */
-export function defenseFocusShare(defense: number, cfg: GameConfig): number {
-  return Math.min(cfg.actions.defenseFocusMaxShare, defense / cfg.actions.defenseFocusDivisor)
+/** Grit (Defense) bonus on a Pokémon's own Focus: 0.10 · min(1, Def / 200) (0 … +10 %). */
+export function defenseFocusBonus(defense: number, cfg: GameConfig): number {
+  const a = cfg.actions
+  return a.defenseFocusMaxBonus * Math.min(1, Math.max(0, defense) / a.defenseFocusCap)
 }
 
-/** Effective focus: Focus + (1 − Focus) · min(0.5, Def / 400). */
+/**
+ * A Pokémon's effective Focus (points and EXP): session Focus × (1 + Grit bonus),
+ * i.e. Focus · (1 + 0.10 · min(1, Def / 200)). It can exceed 1 (×1.10 at Def ≥ 200).
+ */
 export function effectiveFocus(focus: number, defense: number, cfg: GameConfig): number {
-  return focus + (1 - focus) * defenseFocusShare(defense, cfg)
+  return focus * (1 + defenseFocusBonus(defense, cfg))
 }
 
 /** Energy cost per action: 0.5 + level / 25. */

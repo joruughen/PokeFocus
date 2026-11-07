@@ -36,7 +36,8 @@ export interface GameConfig {
     screenshotsPerSession: number
     screenshotWindow: [number, number]
     screenshotMinGapMinutes: number
-    noPermissionValue: number
+    /** Session Focus when the player claims on time (× `session.lateClaimMultiplier` if late). */
+    baseValue: number
     missedCaptureValue: number
     labelValues: Record<FocusLabel, number>
     model: string
@@ -53,8 +54,9 @@ export interface GameConfig {
     techMultSpDefDivisor: number
     techMultMax: number
     maxActivationChance: number
-    defenseFocusDivisor: number
-    defenseFocusMaxShare: number
+    /** Grit (Aguante): max bonus on a Pokémon's own Focus (0.10 = +10 %), reached at `defenseFocusCap` Defense. */
+    defenseFocusMaxBonus: number
+    defenseFocusCap: number
   }
   statCurves: Record<StatKey, StatCurve>
   energy: {

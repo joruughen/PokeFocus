@@ -6,6 +6,7 @@ import { createRng } from './rng'
 import {
   activationChance,
   applySessionResult,
+  captureValue,
   completeSession,
   dailyRewardFactor,
   startSession,
@@ -13,6 +14,7 @@ import {
 import type { TechniqueDef } from './effect-types'
 import { computeStats, effectiveFocus, maxEnergyOf } from './stats'
 import { makeMon, makePlayer, MIN, runSession, STUDYING, T0 } from './test-helpers'
+import { rollWaveSize } from './waves'
 
 const ctx = defaultContext()
 const cfg = ctx.config
@@ -153,15 +155,16 @@ describe('rewards (GDD §3.2, §3.3, §4, §5.2)', () => {
     expect(capped.result.members[0]!.exp).toBe(0)
   })
 
-  it('base rewards: expPerMinute·25 EXP at focus 1, dustPerMinute·25 dust, pokeBallsPerSession balls', () => {
+  it('base rewards: expPerMinute·25·(its Focus) EXP at focus 1, dustPerMinute·25 dust, pokeBallsPerSession balls', () => {
     const p = makeMon('pidgey', 20, { uid: 'a' })
     const { result } = runSession(makePlayer([p]), 25)
     expect(result.focus).toBe(1)
-    expect(result.members[0]!.exp).toBe(Math.round(cfg.rewards.expPerMinute * 25))
+    // EXP uses the Pokémon's own Focus (session Focus × the Grit bonus); dust uses the session Focus.
+    expect(result.members[0]!.exp).toBe(Math.round(cfg.rewards.expPerMinute * 25 * effectiveFocus(1, computeStats(p).defense, cfg)))
     expect(result.dust).toBe(Math.round(cfg.rewards.dustPerMinute * 25))
     expect(result.pokeBalls).toBe(cfg.rewards.pokeBallsPerSession)
-    // Explicit config: the formula, not the tuning.
-    const c = createEngineContext({ config: { rewards: { expPerMinute: 24, dustPerMinute: 10, pokeBallsPerSession: 2 } } })
+    // Explicit config: the formula, not the tuning (no Grit bonus).
+    const c = createEngineContext({ config: { rewards: { expPerMinute: 24, dustPerMinute: 10, pokeBallsPerSession: 2 }, actions: { defenseFocusMaxBonus: 0 } } })
     const fixed = runSession(makePlayer([makeMon('pidgey', 20, { uid: 'a' }, c)], {}, c), 25, 7, {}, c).result
     expect(fixed.members[0]!.exp).toBe(600)
     expect(fixed.dust).toBe(250)
@@ -181,7 +184,7 @@ describe('rewards (GDD §3.2, §3.3, §4, §5.2)', () => {
     expect(p!.focusEffective).toBeCloseTo(effectiveFocus(0.5, computeStats(pidgey).defense, cfg))
   })
 
-  it('focus floors: no permission = 0.85, label floors per Pokémon', () => {
+  it('focus floors: no labels = base value, label floors per Pokémon', () => {
     // No shipped ability uses focusLabelFloor any more (screenshot Focus was discarded; Despiste is now a counterMiss),
     // so the primitive is exercised with a test-only ability.
     const labelCtx = createEngineContext({
@@ -199,7 +202,77 @@ describe('rewards (GDD §3.2, §3.3, §4, §5.2)', () => {
     const plain = makeMon('swinub', 20, { uid: 's', ability: 'thick-fat' }, labelCtx)
     expect(runSession(makePlayer([plain], {}, labelCtx), 25, 1, social, labelCtx).result.members[0]!.focusEffective).toBeLessThan(0.8)
     const np = runSession(makePlayer([sw], {}, labelCtx), 25, 1, { focusInputs: { screenshotLabels: null, missedCaptures: 0 } }, labelCtx)
-    expect(np.result.captureValue).toBe(cfg.focus.noPermissionValue)
+    expect(np.result.captureValue).toBe(cfg.focus.baseValue)
+  })
+})
+
+describe('session Focus: 100 % on time, 50 % late, Grit on top (GDD §4)', () => {
+  const NO_LABELS = { focusInputs: { screenshotLabels: null, missedCaptures: 0 } }
+
+  it('base value is 1.0 (production has no labels); a late claim halves it to 0.5', () => {
+    expect(cfg.focus.baseValue).toBe(1)
+    expect(captureValue(NO_LABELS.focusInputs, cfg)).toBe(1)
+    const p = makeMon('pidgey', 20, { uid: 'a', ability: 'keen-eye' }) // not Tangled Feet (a Focus floor)
+    const onTime = runSession(makePlayer([p]), 25, 1, NO_LABELS).result
+    expect(onTime.lateClaim).toBe(false)
+    expect(onTime.focus).toBe(1)
+    const late = runSession(makePlayer([p]), 25, 1, { ...NO_LABELS, claimedAt: T0 + 25 * MIN + (cfg.session.claimWindowMinutes + 1) * MIN }).result
+    expect(late.lateClaim).toBe(true)
+    expect(late.focus).toBe(0.5)
+    // Each Pokémon: session Focus × its Grit bonus.
+    const def = computeStats(p).defense
+    expect(onTime.members[0]!.focusEffective).toBeCloseTo(1 + 0.1 * Math.min(1, def / 200))
+    expect(late.members[0]!.focusEffective).toBeCloseTo(0.5 * (1 + 0.1 * Math.min(1, def / 200)))
+  })
+
+  it('the wave loses one wild on a late claim only', () => {
+    const c = createEngineContext({ config: { encounters: { waveSizeJitter: 0 } } }).config
+    const onTime = rollWaveSize(createRng(1), cfg.focus.baseValue, 'super', 0, c)
+    const late = rollWaveSize(createRng(1), cfg.focus.baseValue * cfg.session.lateClaimMultiplier, 'super', 0, c)
+    expect(late).toBe(onTime - 1)
+    // Even with the strongest Grit the session Focus (not the Pokémon's) decides the wave size.
+    expect(cfg.focus.baseValue).toBeGreaterThanOrEqual(cfg.encounters.lowFocusThreshold)
+    expect(cfg.focus.baseValue * cfg.session.lateClaimMultiplier).toBeLessThan(cfg.encounters.lowFocusThreshold)
+  })
+
+  it('Inner Focus still floors a late claim at 75 %', () => {
+    const z = makeMon('zubat', 30, { uid: 'z', ability: 'inner-focus' })
+    const plain = makeMon('zubat', 30, { uid: 'y', ability: 'keen-eye' })
+    const lateAt = { ...NO_LABELS, claimedAt: T0 + 25 * MIN + 10 * MIN }
+    const late = runSession(makePlayer([z, plain]), 25, 1, lateAt).result
+    expect(late.members[0]!.focusEffective).toBeCloseTo(0.75)
+    expect(late.members[1]!.focusEffective).toBeCloseTo(effectiveFocus(0.5, computeStats(plain).defense, cfg))
+    expect(late.members[1]!.focusEffective).toBeLessThan(0.75)
+    // On time the floor does nothing (Focus is already ≥ 100 %).
+    const onTime = runSession(makePlayer([z]), 25, 1, NO_LABELS).result
+    expect(onTime.members[0]!.focusEffective).toBeCloseTo(effectiveFocus(1, computeStats(z).defense, cfg))
+  })
+
+  it('economy is neutral: the 0.85-scaled base values pay what the old 0.85 Focus paid (±2 %)', () => {
+    // The old rule on time: Focus 0.85, effective = 0.85 + 0.15 · min(0.5, Def / 400)
+    //   = 0.85 · (1 + (0.075 / 0.85) · min(1, Def / 200)), base points 5 + SpAtk / 4, 29 EXP/min, 10 dust/min.
+    const legacy = createEngineContext({
+      config: {
+        focus: { baseValue: 0.85 },
+        actions: { pointsBase: 5, pointsSpAtkDivisor: 4, defenseFocusMaxBonus: 0.075 / 0.85, defenseFocusCap: 200 },
+        rewards: { expPerMinute: 29, dustPerMinute: 10 },
+      },
+    })
+    const mon = (c: EngineContext) => makeMon('geodude', 50, { uid: 'g' }, c)
+    const def = computeStats(mon(ctx)).defense
+    expect(def).toBeGreaterThan(80) // mid Grit
+    expect(def).toBeLessThan(150)
+    const now = runSession(makePlayer([mon(ctx)]), 50, 3, NO_LABELS).result
+    const old = runSession(makePlayer([mon(legacy)], {}, legacy), 50, 3, NO_LABELS, legacy).result
+    expect(old.focus).toBe(0.85)
+    expect(now.members[0]!.actions).toBe(old.members[0]!.actions)
+    const near = (a: number, b: number) => expect(Math.abs(a / b - 1)).toBeLessThan(0.02)
+    near(now.totalPoints, old.totalPoints)
+    near(now.members[0]!.exp, old.members[0]!.exp)
+    near(now.dust, old.dust)
+    // Legendary (× Focus) and shiny (× (0.5 + Focus)) odds per wild are unchanged on time.
+    expect(cfg.encounters.legendaryChance * cfg.focus.baseValue).toBeCloseTo(0.0016 * 0.85, 8)
+    expect(cfg.encounters.shinyChance * (0.5 + cfg.focus.baseValue)).toBeCloseTo((1 / 512) * (0.5 + 0.85), 8)
   })
 })
 

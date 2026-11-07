@@ -22,7 +22,7 @@
       0.95
     ],
     "screenshotMinGapMinutes": 3,
-    "noPermissionValue": 0.85,
+    "baseValue": 1,
     "missedCaptureValue": 0.6,
     "labelValues": {
       "studying": 1,
@@ -37,8 +37,8 @@
   "actions": {
     "intervalBaseSeconds": 300,
     "intervalSpeedOffset": 60,
-    "pointsBase": 5,
-    "pointsSpAtkDivisor": 4,
+    "pointsBase": 4.25,
+    "pointsSpAtkDivisor": 4.705882352941177,
     "energyAtkDivisor": 5,
     "energyPowerDivisor": 60,
     "noDamageMoveEnergyFactor": 0.5,
@@ -46,8 +46,8 @@
     "techMultSpDefDivisor": 100,
     "techMultMax": 2,
     "maxActivationChance": 0.4,
-    "defenseFocusDivisor": 400,
-    "defenseFocusMaxShare": 0.5
+    "defenseFocusMaxBonus": 0.1,
+    "defenseFocusCap": 200
   },
   "statCurves": {
     "_note": "Capa 1 de §20.1: efectiva = pivot + (base - pivot) * k. k < 1 comprime los extremos.",
@@ -84,8 +84,8 @@
     "boxRecoverPctPerHour": 0.1
   },
   "rewards": {
-    "expPerMinute": 29,
-    "dustPerMinute": 10,
+    "expPerMinute": 24.65,
+    "dustPerMinute": 8.5,
     "pokeBallsPerSession": 2
   },
   "bond": {
@@ -140,7 +140,7 @@
     "baseWaveSize": 4,
     "waveSizeJitter": 1,
     "minWaveSize": 3,
-    "lowFocusThreshold": 0.5,
+    "lowFocusThreshold": 0.75,
     "leagueMaxWaveSize": {
       "base": 5,
       "super": 6,
@@ -153,7 +153,7 @@
       "ultra": 2,
       "master": 3
     },
-    "legendaryChance": 0.0016,
+    "legendaryChance": 0.00136,
     "longSessionLegendaryMult": [
       1,
       1.5,
@@ -169,7 +169,7 @@
     "conditionTypeWeight": 2,
     "soundProfileWeight": 1.2,
     "teamTypeWeight": 1.25,
-    "shinyChance": 0.001953125,
+    "shinyChance": 0.0017578125,
     "roamingSessions": 3,
     "roamingChance": 0.35,
     "studyBallMaxLevel": 20,

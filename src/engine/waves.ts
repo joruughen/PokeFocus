@@ -44,7 +44,7 @@ export function blockIndexAt(seconds: number, waves: number, cfg: GameConfig): n
 }
 
 /**
- * Wave size: base + league bonus ± jitter + extra − (focus < 0.5), min 3,
+ * Wave size: base + league bonus ± jitter + extra − (session focus < lowFocusThreshold 0.75, i.e. a late claim), min 3,
  * max by league. `leagueWaveBonus` rewards climbing leagues within the week.
  */
 export function rollWaveSize(rng: Rng, focus: number, league: LeagueId, extraWild: number, cfg: GameConfig): number {

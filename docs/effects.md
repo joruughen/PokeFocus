@@ -55,7 +55,7 @@ Todas las claves presentes deben cumplirse (AND). Sin `when`, el efecto siempre 
 | `conditionBonusMult` | `mult` | Su bonificación de condición `(M − 1)` se multiplica: `1 + (M − 1) · mult` |
 | `streakProtect` | — | Si el día anterior no hubo sesiones, la racha no se rompe (respeta `limitPerWeek`) |
 | `lateClaimImmune` | — | Reclamar tarde no le aplica `lateClaimMultiplier` |
-| `focusFloor` | `min` | Para este Pokémon, `Foco_efectivo = max(Foco_efectivo, min)` |
+| `focusFloor` | `min` | Para este Pokémon, `Foco_efectivo = max(Foco_efectivo, min)`, después del bono de Aguante. Como a tiempo el Foco es 1.0, solo actúa al reclamar tarde (Foco 0.5, hasta 0.55 con Aguante) |
 | `focusLabelFloor` | `labels`, `value` | Para este Pokémon, las capturas con esas etiquetas valen al menos `value`. **Hoy ninguna habilidad la usa:** el Foco por captura de pantalla se descartó el 2026-11-05 (Despiste era la única y ahora es un `counterMiss` de equipo). La primitiva se conserva, con sus pruebas, por si vuelve a hacer falta |
 | `effectivenessFloor` | `from`, `to` | Su Energía de captura: los multiplicadores de tipo iguales a `from` pasan a `to` |
 | `encounterWeight` | `match` (`{type}` o `{natureOfSelf: true}`), `mult` | Equipo, no acumulable. `{type}`: multiplica el peso de esas especies al generar oleadas. `{natureOfSelf}`: `mult` es la probabilidad de que el salvaje tenga la misma naturaleza que este Pokémon |
