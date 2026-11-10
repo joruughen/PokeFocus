@@ -6,8 +6,8 @@ Node + Hono API that owns every player's game state. The browser only sends inte
 
 ```
 server/
-  index.ts            entry: env → database (+ migrations) → app → listen; session cleanup every hour; Web Push scheduler every 15 s
-  app.ts              createApp({ env, db, bus?, limiter?, clock?, fetch?, weather?, push?, pushSender? }) — no I/O, used by tests via app.request()
+  index.ts            entry: env → database (+ migrations) → app → listen; session cleanup every hour; Web Push scheduler every 15 s; live content tick every 30 s
+  app.ts              createApp({ env, db, bus?, limiter?, clock?, fetch?, weather?, push?, pushSender?, content? }) — no I/O, used by tests via app.request()
   env.ts              zod-validated environment
   http.ts             ApiError, body parsing, client IP, cookie helpers, requireAuth middleware
   validation.ts       zod schemas (auth bodies, GameAction discriminated union)
@@ -24,6 +24,8 @@ server/
   routes/weather.ts   /api/weather
   routes/announcements.ts  /api/announcements (public: scheduled maintenance windows)
   routes/config.ts    /api/config (public: { devTools } so the client can lock the dev panel)
+  routes/content.ts   /api/content, /api/content/:hash (public: live content, ETag / immutable by hash)
+  content/service.ts  ContentService (Deps.content): active version + events, hash, snapshots, per-action pinning, SSE broadcast
   routes/admin.ts     /api/admin/me, /reauth, /maintenance (roles; legacy ADMIN_TOKEN for maintenance)
   admin/audit.ts      audit(tx, c, entry): admin_audit row in the caller's transaction
   admin/roles.ts      setRoleByEmail, promoteAdminEmails (ADMIN_EMAILS, CLI)
@@ -118,6 +120,17 @@ Game: `GET /game` → `GameSnapshot`; `POST /game/action` with a `GameAction` �
 - Week keys are the engine's (`weekKeyOf`: the local Monday, e.g. `2026-11-02`), month keys `2026-11`.
 
 Config: `GET /config` → `ConfigResponse { devTools: boolean }` (public: no session, `Cache-Control: no-store`; `src/game/protocol.ts`). `devTools` is the server's effective `DEV_TOOLS` (always `false` in production, Docker, `npm start`): only then are `x-dev-now` / `x-dev-seed` honored and the `dev*` / `setWeather` actions accepted. The client reads it at boot; when it is `false`, the developer panel (`?dev`, Settings → Developer tools) shows a notice and hides its server-side controls (clock, finish session, items, weather, seed), drops a shifted dev clock, stops sending the dev headers and ignores the lock bypasses. If the request fails the client treats it as unknown and behaves as before (the server still refuses: `409 not_finished` on a claim with a shifted clock, `403 dev_disabled` on dev actions).
+
+Live content (docs/admin-plan.md §1, `server/content/service.ts`):
+
+- `GET /content` (public, no session) → `ContentResponse { hash, baseHash, patch, events, eventItems }`: the published version with the latest `effective_at <= now` (game time, so `x-dev-now` applies with DEV_TOOLS=1) plus the live events active now. `ETag: "<hash>"`, `Cache-Control: no-cache`; `If-None-Match` with the same hash → 304. Nothing published = `{ hash: 'base', patch: {}, events: [], eventItems: {} }`. The client rebuilds the context with `createEngineContext(resolveContent(patch, events, eventItems, { hash }))`; a `baseHash` different from its bundled `src/data/game/meta.json` means the client is stale.
+- `GET /content/:hash` → the same body for a pinned hash (`ActiveSession.contentHash` / `EncounterState.contentHash`). `Cache-Control: public, max-age=31536000, immutable` (a hash never changes meaning), except `base` (no-cache: it moves with each deploy). 404 `unknown_content` for a hash that is not in `content_snapshots` (or malformed). Drafts and archived versions are never resolved.
+- **Hash**: `'base'` when there is no patch, no active event and no event items; otherwise `sha256(baseHash + canonicalJson({ patch, events, eventItems }))` (sorted keys). The engine never hashes.
+- **Pinning** (`contentForAction` in `runGameAction`): `start` runs on the current content and the reducer stores its hash on `activeSession.contentHash` (only when it is not `'base'`, so without a published patch the saved doc is byte-for-byte what it was); the same transaction writes the `content_snapshots` row (`INSERT … ON CONFLICT DO NOTHING`). `claim` and `cancel` run on the session's content; `claim` copies the hash to `encounter.contentHash`; `throwBall`, `applyStatus`, `reroll`, `assignDamage`, `autoAssignDamage`, `nextWave`, `finishWaves` run on the encounter's. Absent hash = `'base'`. Everything else (candies, evolution, missions, team…) runs on the current content. A pinned hash missing from the snapshots (should not happen) falls back to the current content with a warning. Study-group starts go through `runGameAction`, so they pin too.
+- Publishing in the middle of a session does not change that session; a session started during an event keeps the event's content until its waves end, and one started before does not get it.
+- **Service**: published version metadata and events are kept in memory, reloaded every 60 s (lazily, on the next request) and right after a publication in this process; patches of published versions (immutable) are cached; the resolved context is memoized by `versionId + [eventId@revision]` and an LRU of 32 hashes. Events come from an injectable `EventSource` (none until `live_events`, E8). There is no admin API yet (E5): `deps.content.publish({ patch, effectiveAt?, title?, note?, parentId?, userId? })` inserts a published version (tests use it). Schema: migration `0006_content_versions` (`content_versions`, `content_snapshots`).
+- **Broadcast**: `deps.content.check()` sends `{ type: 'content', hash }` to every SSE connection (`EventBus.broadcast`) when the active hash changed since the last check. `server/index.ts` runs it every 30 s (scheduled versions, event start/end); `publish()` runs it too. The first check after boot only records the hash.
+- After a redeploy that changes the base data, an old snapshot is rebuilt on the new base (a warning is logged): only the patch and overlays are stored, not the whole data.
 
 Friends: `GET /friends` → `{ friends: FriendSummary[] }` (accepted + incoming + outgoing, oldest first); `POST /friends/request { friendCode }` → 201 `{ userId, status: 'outgoing' | 'friend' }` (code is case-insensitive, spaces/dashes ignored; an inverse pending request is accepted directly); `POST /friends/:userId/accept` → 204 (only the addressee); `DELETE /friends/:userId` → 204 (reject, cancel or unfriend).
 
@@ -219,6 +232,7 @@ Testing locally: set the three `VAPID_*` in `.env`, enable notifications in Sett
 - `{ type: 'game', version }` after every successful write of the user's doc (from any tab, including the one that made it — compare `version` and ignore what you already have).
 - `{ type: 'friends' }` to both users on request / accept / remove.
 - `{ type: 'group', groupId, kind, userId, trainerName, reason? }` to every participant of a study group on invite / accept / decline / start / join / leave / disband / failed (`kind`); `reason` on `leave` (`pause | cancel | leave | finished`). Refetch `GET /api/groups`.
+- `{ type: 'content', hash }` to **every** connection when the active live content changes (publication, scheduled version, event start/end). Refetch `GET /api/content`; screens of a pinned session keep their hash.
 - `{ type: 'logout' }` to the connections of a revoked session (logout-all, password change, DELETE /auth/sessions/:id), then the stream closes.
 
 The stream starts with `retry: 5000` and sends a `: ping` comment every 25 s. 401 if there is no session.
