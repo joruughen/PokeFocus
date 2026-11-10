@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { defaultContext, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
-import { ArtIcon, HelpDot, InfoTip, IvQuality, Panel, Stars, STAT_ICON, STAT_ORDER, StatRow, Tabs } from '../../components'
+import { abilityOutlook, defaultContext, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
+import { ArtIcon, CategoryChip, HelpDot, InfoTip, IvQuality, Panel, Stars, STAT_ICON, STAT_ORDER, StatRow, Tabs } from '../../components'
 import { hintAnchor } from '../../hints'
 import { useNames } from '../../lib/names'
 import { statBreakdown } from './statBreakdown'
@@ -89,7 +89,10 @@ function StatsTab({ view }: { view: PokemonView }) {
           <dd className="mt-0.5">
             {p.ability ? (
               <>
-                <span className="font-display text-lg text-mist-50">{names.ability(p.ability)}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-display text-lg text-mist-50">{names.ability(p.ability)}</span>
+                  <CategoryChip kind="passive" outlook={abilityOutlook(p)} pokemonName={names.pokemon(p)} />
+                </span>
                 <p className="text-sm text-mist-300">{names.abilityDesc(p.ability)}</p>
               </>
             ) : (

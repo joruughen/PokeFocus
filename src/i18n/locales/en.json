@@ -447,7 +447,8 @@
     "newSlot": "Gained a technique slot",
     "evolution": "{{name}} can evolve into {{to}}",
     "capped": "Reached the level cap ({{cap}}): catch more species to raise it.",
-    "pointsShort": "points"
+    "pointsShort": "points",
+    "howPoints": "How is it calculated?"
   },
   "waves": {
     "title": "Wave {{n}} of {{total}}",
@@ -1088,9 +1089,45 @@
       "activable": "Activable"
     },
     "kindHelp": {
-      "damage": "Damage: on every action it generates catch energy of the technique's type. That energy weakens wild Pokémon so they are easier to catch.",
-      "passive": "Passive: always on while it is equipped. It does not depend on luck: its effect (points, EXP, defense…) applies for the whole session.",
-      "activable": "Activable: on every action it has a chance to trigger and give its effect (for example, put a wild Pokémon to sleep). Some have a limit per session or per week."
+      "damage": "Damage: every action with this technique adds catch Energy of its type. At the end of each 25-minute block that Energy turns into damage to the wild Pokémon of the wave: with less HP they are easier to catch.",
+      "passive": "Passive: it does not roll dice. While equipped it works on its own, always or whenever its condition holds (time, weather, Energy…).",
+      "activable": "Activable: on every action it rolls a die and, if it hits, gives its effect (for example, put a wild Pokémon to sleep). Some have a limit per session or per week."
+    },
+    "tip": {
+      "withName": "With {{name}}:",
+      "paceMore": "An ability of its can speed it up in some sessions.",
+      "damage": {
+        "energy": "Every action adds {{energy}} catch Energy of {{type}} type (from its Catch and the power {{power}}).",
+        "stab": "It matches its own type: 50% more damage.",
+        "pace": "It acts every {{seconds}} s: about {{actions}} actions per 25-minute wave.",
+        "share": "With {{count}} damage techniques equipped, it uses this one on {{pct}} of its actions.",
+        "wave": "In one wave this technique adds ≈ {{energy}} Energy.",
+        "why": "What it is for: more Energy, more damage and less HP on the wild; with less HP, the Ball has a better chance. Its HP never drops below {{min}}%, so extra damage is wasted. If the type is effective against the wild, the damage is multiplied.",
+        "counter": "In the waves, sending {{name}} against a wild Pokémon is a final attack: the wild strikes back and takes Energy from it, unless it is asleep or paralyzed. Each action costs {{cost}} Energy (on a full bar, ≈ {{n}} actions). If a Ball fails, the counterattack goes to the leader."
+      },
+      "activable": {
+        "chance": "Chance per action: {{pct}}.",
+        "how": "Base {{base}} × {{tech}} (Technique) × {{mastery}} (Mastery)",
+        "howExtra": " × {{extra}} (abilities)",
+        "cap": "Cap: {{pct}} per action.",
+        "rolls": "It rolls on every action (every {{seconds}} s): about {{actions}} rolls per 25-minute wave.",
+        "expected": "It fires ≈ {{n}} times per wave, with a {{pct}} chance of at least one.",
+        "inflicts": {
+          "sleep": "If it fires, you get a Sleep charge to use on a wild Pokémon: a sleeping one is much easier to catch and does not strike back at whoever attacks it.",
+          "paralysis": "If it fires, you get a Paralysis charge to use on a wild Pokémon: a paralyzed one is easier to catch and does not strike back at whoever attacks it."
+        },
+        "conditional": "An ability of its improves it in some sessions."
+      },
+      "passive": {
+        "always": "Always on while it is equipped.",
+        "onlyWhen": "It only works {{when}}.",
+        "alsoWhen": "Part of it is always on; the rest only works {{when}}.",
+        "or": " or ",
+        "rollAction": "Every action has a {{pct}} chance to give a {{status}} charge (up to {{limit}} per session): ≈ {{once}} to get at least one per wave.",
+        "rollMiss": "When a wild Pokémon strikes back at it, {{pct}} chance the hit misses.",
+        "rollMissTeam": "When a wild Pokémon strikes back at anyone on your team, {{pct}} chance the hit misses.",
+        "rollStatus": "If the counterattack does not miss, {{pct}} chance to leave the wild Pokémon {{status}}."
+      }
     }
   },
   "iv": {
@@ -1804,6 +1841,38 @@
       "lowFocus": "At {{pct}} Focus each wave brings one wild fewer.",
       "roaming": "A roaming legendary appeared: {{names}}.",
       "longSession": "In long sessions ({{count}} waves) later waves bring rarer species."
+    },
+    "points": {
+      "title": "How the points were calculated",
+      "intro": "Every action of every Pokémon earns points. These steps go from the basics to the total: each one multiplies the previous result and shows how much it added or took away.",
+      "teamTitle": "Whole team",
+      "total": "Total",
+      "legacy": "This session was saved before the breakdown existed.",
+      "actionsNote": "{{count}} actions in total.",
+      "step": {
+        "base": "Base points",
+        "condition": "Type condition",
+        "bond": "Bond",
+        "focus": "Focus",
+        "grit": "Grit",
+        "focusAdj": "Focus ability",
+        "mods": "Abilities and techniques",
+        "burst": "Bursts",
+        "lastAction": "Last action",
+        "daily": "Daily yield"
+      },
+      "tip": {
+        "base": "What each action earns from the Pokémon's Output, before any bonus.",
+        "condition": "Bonus from the types whose condition is active (time, weather, streak…). It is the average over all its actions.",
+        "bond": "The longer it studies with you, the more points: up to +20%.",
+        "focus": "100% if you claim on time; 50% if you take longer than {{min}} minutes.",
+        "grit": "Its Grit raises its Focus by up to 10%: with Grit 200 or more, ×1.10.",
+        "focusAdj": "An ability changed its Focus (a minimum, or late claims do not affect it).",
+        "mods": "Effects of abilities and techniques that change the points. See «Ability and passives» for each Pokémon.",
+        "burst": "Activable techniques that multiply the points of several actions in a row.",
+        "lastAction": "An ability makes its last action worth more.",
+        "daily": "After {{full}} h of study in a day rewards drop, and more from {{half}} h."
+      }
     }
   },
   "group": {

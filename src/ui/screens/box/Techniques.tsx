@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { activationChance, defaultContext, type PokemonView, type TechniqueInfo } from '../../../engine'
+import { activationChance, defaultContext, techniqueOutlook, type PokemonView, type TechniqueInfo } from '../../../engine'
 import { Button, CategoryChip, HelpDot, Panel, PixelIcon, Stars, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -180,7 +180,7 @@ function TechCard({ info, view, lng, dim }: { info: TechniqueInfo; view: Pokemon
         )}
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-        <CategoryChip kind={info.kind} />
+        <CategoryChip kind={info.kind} outlook={techniqueOutlook(view.pokemon, info.slug)} pokemonName={names.pokemon(view.pokemon)} />
         <TypeBadge type={info.type} />
       </div>
       <p className="mt-1 text-sm leading-snug text-mist-300">{desc}</p>

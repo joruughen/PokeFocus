@@ -114,6 +114,7 @@ export function Results() {
               <span className="mr-1 text-sm text-dusk-600">{t('results.why')}</span>
               {why}
             </div>
+            <SessionReportButton sessionId={result.sessionId} label={t('results.howPoints')} className="mt-3" />
             <GroupFairyNote result={result} />
             <StudyStyleLine result={result} />
           </div>
