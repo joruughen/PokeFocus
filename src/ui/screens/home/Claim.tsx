@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { defaultContext, MINUTE_MS } from '../../../engine'
 import { Button, ProgressBar, Stage, StageTeam, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
-import { errorText } from '../../lib/errors'
+import { claimErrorText } from '../../lib/errors'
 import { fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { AutoDamageToggle } from './AutoDamageToggle'
 import { timerOf, useGame } from '../../store/game'
+import { usePrefs } from '../../store/prefs'
 import { usePlayer, useScene } from '../../store/selectors'
 
 const cfg = defaultContext().config
@@ -36,7 +37,7 @@ export function Claim({ late }: { late: boolean }) {
     // Idempotent: the server claims an active session once; a second claim is refused.
     if (!(await claim())) {
       const code = useGame.getState().error
-      toast.add({ title: code && code !== 'not_finished' && code !== 'no_session' ? errorText(code) : t('errors.claimFailed'), type: 'danger' })
+      toast.add({ title: claimErrorText(code, usePrefs.getState().dev.anchor !== null), type: 'danger' })
       setBusy(false)
       return
     }

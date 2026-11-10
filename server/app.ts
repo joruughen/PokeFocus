@@ -17,6 +17,7 @@ import { RateLimiter } from './rate-limit'
 import { adminRoutes } from './routes/admin'
 import { announcementRoutes } from './routes/announcements'
 import { authRoutes } from './routes/auth'
+import { configRoutes } from './routes/config'
 import { eventRoutes } from './routes/events'
 import { gameRoutes } from './routes/game'
 import { groupRoutes } from './routes/groups'
@@ -81,6 +82,7 @@ export function createApp(opts: AppOptions) {
   api.route('/events', eventRoutes(deps))
   api.route('/weather', weatherRoutes(deps))
   api.route('/announcements', announcementRoutes(deps))
+  api.route('/config', configRoutes(deps))
   api.route('/admin', adminRoutes(deps))
   api.route('/push', pushRoutes(deps))
   api.get('/health', (c) => c.json({ ok: true }))

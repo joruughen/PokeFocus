@@ -13,7 +13,8 @@ import { MicBridge } from './MicBridge'
 import { startAnnouncements } from './store/announcements'
 import { useAuth } from './store/auth'
 import { useGame } from './store/game'
-import { devEnabled, usePrefs } from './store/prefs'
+import { devRequested, usePrefs } from './store/prefs'
+import { startServerConfig } from './store/serverConfig'
 
 // Ask the server who we are once per page load (the session is an HttpOnly cookie).
 let booted = false
@@ -22,6 +23,7 @@ function boot() {
   booted = true
   void useAuth.getState().refresh()
   startAnnouncements()
+  startServerConfig()
 }
 
 /**
@@ -63,7 +65,7 @@ export default function App() {
         {ready && hasPlayer && <SessionWatcher />}
         {ready && hasPlayer && <MicBridge />}
         {ready && <HintLayer />}
-        {ready && devEnabled() && <DevPanel />}
+        {ready && devRequested() && <DevPanel />}
       </ToastViewport>
     </TooltipProvider>
     <MusicDirector />
