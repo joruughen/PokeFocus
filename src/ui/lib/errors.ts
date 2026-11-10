@@ -7,7 +7,7 @@
 import i18n from 'i18next'
 import { isApiError } from '../api/client'
 
-export type ErrorFamily = 'throw' | 'charge' | 'box' | 'heal' | 'mission' | 'auth' | 'friends'
+export type ErrorFamily = 'throw' | 'charge' | 'box' | 'preset' | 'heal' | 'mission' | 'auth' | 'friends'
 
 export function errorText(code: string, family?: ErrorFamily, vars?: Record<string, unknown>): string {
   const t = i18n.t.bind(i18n)

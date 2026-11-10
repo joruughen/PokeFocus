@@ -27,10 +27,10 @@ export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonT
   const { t } = useTranslation()
   const names = useNames()
   const sp = ctx.speciesBySlug.get(mon.speciesSlug)
-  const name = names.species(mon.speciesSlug)
+  const name = names.pokemon(mon)
   const types = sp?.types ?? []
   const label = [
-    name,
+    names.pokemonFull(mon),
     `${t('pokemon.levelShort')} ${mon.level}`,
     mon.isShiny ? t('pokemon.shiny') : '',
     slot === 0 ? t('team.leader') : slot !== null ? t('box.inTeam') : '',
@@ -71,7 +71,7 @@ export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonT
         </span>
       </span>
       <span className="flex items-baseline justify-between gap-1 px-2 pt-1.5">
-        <span className="min-w-0 truncate font-display text-base leading-tight">{name}</span>
+        <span title={mon.nickname ? names.pokemonFull(mon) : undefined} className="min-w-0 truncate font-display text-base leading-tight">{name}</span>
         <span className="shrink-0 font-num text-lg leading-none text-mist-300">
           {t('pokemon.levelShort')}
           {mon.level}

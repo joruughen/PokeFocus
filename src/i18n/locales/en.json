@@ -696,7 +696,9 @@
       "wrong_time_of_day": "It's not the right time of day.",
       "trade_unavailable": "Trading doesn't exist yet.",
       "unsupported": "That evolution isn't available yet.",
-      "no_such_evolution": "It can't evolve into that species."
+      "no_such_evolution": "It can't evolve into that species.",
+      "nickname_too_long": "That nickname is too long (12 characters at most).",
+      "nickname_invalid": "That nickname has characters that can't be used."
     },
     "heal": {
       "unknown_pokemon": "That Pokémon is gone.",
@@ -758,7 +760,17 @@
     "already_finished": "That session already ended.",
     "already_claimed": "That was already claimed.",
     "no_encounter": "There's no active wave.",
-    "timezone_locked": "You can only change your time zone once every 30 days."
+    "timezone_locked": "You can only change your time zone once every 30 days.",
+    "preset": {
+      "preset_name_empty": "Give the team a name.",
+      "preset_name_too_long": "The name is too long (20 characters at most).",
+      "preset_name_invalid": "That name has characters that can't be used.",
+      "too_many_presets": "You already have 10 saved teams. Delete one to save another.",
+      "unknown_preset": "That saved team no longer exists.",
+      "preset_empty": "None of that team's Pokémon are left.",
+      "session_active": "You can't switch teams during a session.",
+      "team_empty": "The team needs at least one Pokémon."
+    }
   },
   "dev": {
     "title": "Developer",
@@ -1156,7 +1168,7 @@
     },
     "slot": "Slot {{n}}",
     "expToNext": "{{exp}} EXP to go",
-    "addTeam": "Add to team",
+    "addTeam": "Put on the team",
     "teamFull": "Team is full",
     "removeTeam": "Move to Box",
     "added": "{{name}} joined the team",
@@ -1185,7 +1197,10 @@
     "noAbility": "Its species has no abilities in PokeFocus yet.",
     "met": "Origin",
     "starter": "Your first partner.",
-    "caughtWith": "Caught at Lv {{level}} with a {{ball}} on {{date}}."
+    "caughtWith": "Caught at Lv {{level}} with a {{ball}} on {{date}}.",
+    "swapTeam": "Swap for…",
+    "swapTip": "The team is full: pick who it replaces and compare the two before you confirm.",
+    "swapLocked": "You can't change the team during a session."
   },
   "tech": {
     "title": "Techniques",
@@ -2147,5 +2162,87 @@
       "endInPast": "The end is already in the past.",
       "tooLong": "A window can last 14 days at most."
     }
+  },
+  "nick": {
+    "title": "Nickname for {{species}}",
+    "body": "Give it a name of its own. The Box, team and reports show the nickname, with the species as secondary text. Rankings and your friends still see the species only.",
+    "label": "Nickname",
+    "hint": "Up to {{max}} characters. Empty = no nickname.",
+    "add": "Set nickname",
+    "change": "Change nickname",
+    "remove": "Remove nickname",
+    "save": "Save nickname",
+    "saved": "{{name}} is now your {{species}}'s nickname",
+    "removed": "It goes by {{name}} again",
+    "speciesLabel": "Species: {{species}}",
+    "error": {
+      "nickname_too_long": "{{max}} characters at most.",
+      "nickname_invalid": "That nickname has characters that can't be used (line breaks or invisible ones)."
+    }
+  },
+  "presets": {
+    "title": "Saved teams",
+    "intro": "Save the team you have now under a name and switch to it in one tap, here or on the home screen before you start. Order and leader are kept.",
+    "locked": "You can't switch teams during a session. You can when it ends.",
+    "nameLabel": "Team name",
+    "namePlaceholder": "E.g. Maths revision",
+    "nameHint": "{{count}}/{{max}} characters",
+    "save": "Save current team",
+    "full": "You already have {{max}} saved teams. Delete one to save another.",
+    "empty": "No saved teams yet. Build your team and save it here.",
+    "active": "In use",
+    "allGone": "None of its Pokémon are left",
+    "someGone_one": "{{count}} Pokémon is gone",
+    "someGone_other": "{{count}} Pokémon are gone",
+    "use": "Use",
+    "useOf": "Use the team {{name}}",
+    "overwrite": "Update",
+    "overwriteOf": "Overwrite {{name}} with the current team",
+    "renameOf": "Rename {{name}}",
+    "deleteOf": "Delete {{name}}",
+    "overwriteTitle": "Overwrite “{{name}}”?",
+    "overwriteBody": "The saved team becomes your current team, with its order and leader.",
+    "overwriteConfirm": "Overwrite",
+    "overwritten": "“{{name}}” is now your current team",
+    "deleteTitle": "Delete “{{name}}”?",
+    "deleteBody": "Only the saved team is deleted. Your Pokémon are not touched.",
+    "deleteConfirm": "Delete",
+    "deleted": "Team “{{name}}” deleted",
+    "renameTitle": "Rename team",
+    "renameConfirm": "Save name",
+    "renamed": "Team renamed to “{{name}}”",
+    "saved": "Team “{{name}}” saved",
+    "applied": "Team “{{name}}” in use",
+    "appliedMissing_one": "{{count}} Pokémon of the saved team is gone and was skipped.",
+    "appliedMissing_other": "{{count}} Pokémon of the saved team are gone and were skipped.",
+    "quickTitle": "Saved teams",
+    "manage": "Manage",
+    "error": {
+      "preset_name_empty": "Give the team a name.",
+      "preset_name_too_long": "{{max}} characters at most.",
+      "preset_name_invalid": "That name has characters that can't be used."
+    }
+  },
+  "swapCmp": {
+    "pickTitle": "Swap in {{name}}",
+    "pickBody": "Who does {{name}} replace? You will see a comparison before you confirm.",
+    "pickOf": "Compare {{in}} with {{out}}",
+    "title": "{{in}} for {{out}}",
+    "entering": "Comes in",
+    "leaving": "Goes out",
+    "level": "Level",
+    "energyNow": "Energy now",
+    "types": "Types",
+    "role": "Role",
+    "ability": "Ability",
+    "techniques": "Equipped techniques",
+    "noTechniques": "No techniques equipped",
+    "differs": "different",
+    "higher": "higher",
+    "lower": "lower",
+    "takesLeader": "{{name}} will be the new team leader.",
+    "takesSlot": "{{name}} will take slot {{n}} in the order.",
+    "sure": "Are you sure you want to make the swap?",
+    "confirm": "Yes, swap"
   }
 }

@@ -14,9 +14,9 @@ export function useChargeLabel(player: PlayerState | null) {
   const { t } = useTranslation()
   const names = useNames()
   return (c: Charge) => {
-    const slug = player?.pokemon[c.sourceUid]?.speciesSlug
+    const mon = player?.pokemon[c.sourceUid]
     const what = c.kind === 'reroll' ? t('report.charge.reroll') : t(`report.charge.${c.status ?? 'sleep'}`)
-    const who = slug ? names.species(slug) : ''
+    const who = mon ? names.pokemon(mon) : ''
     return t('report.charge.tip', { what, who, source: chargeSourceName(c, player, names) })
   }
 }

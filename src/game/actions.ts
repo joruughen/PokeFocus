@@ -29,7 +29,13 @@ import {
   gainExp,
   levelCap,
   MINUTE_MS,
+  overwritePreset,
+  applyPreset,
+  deletePreset,
   releasePokemon,
+  renamePreset,
+  savePreset,
+  setNickname,
   rerollWild,
   setAutoDamage,
   setLeader,
@@ -292,6 +298,33 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
     case 'heal': {
       const r = useHealItem(p, a.uid, a.item, t, ctx)
       return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+
+    case 'setNickname': {
+      const r = setNickname(p, a.uid, a.nickname ?? '')
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+
+    // ---- Saved teams --------------------------------------------------------
+    case 'savePreset': {
+      const r = savePreset(p, a.name)
+      return r.ok ? withPlayer(r.value.state, { id: r.value.preset.id }) : fail(r.error)
+    }
+    case 'renamePreset': {
+      const r = renamePreset(p, a.id, a.name)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'overwritePreset': {
+      const r = overwritePreset(p, a.id)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'deletePreset': {
+      const r = deletePreset(p, a.id)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'applyPreset': {
+      const r = applyPreset(p, a.id, t, ctx)
+      return r.ok ? withPlayer(r.value.state, { missing: r.value.missing }) : fail(r.error)
     }
 
     // ---- Missions -----------------------------------------------------------

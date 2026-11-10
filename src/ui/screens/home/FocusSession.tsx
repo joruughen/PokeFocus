@@ -68,7 +68,7 @@ export function FocusSession() {
           members={session.teamUids.flatMap((uid) => {
             const p = player.pokemon[uid]
             return p
-              ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.species(p.speciesSlug), faded: session.asleepUids.includes(uid) }]
+              ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.pokemon(p), faded: session.asleepUids.includes(uid) }]
               : []
           })}
         />

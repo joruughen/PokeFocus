@@ -52,7 +52,7 @@ export function Claim({ late }: { late: boolean }) {
           night={scene.time === 'night'}
           members={session.teamUids.flatMap((uid) => {
             const p = player.pokemon[uid]
-            return p ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.species(p.speciesSlug) }] : []
+            return p ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.pokemonFull(p) }] : []
           })}
         />
       </Stage>

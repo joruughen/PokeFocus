@@ -24,6 +24,28 @@ export function speciesName(slug: string, lng: LocaleCode): string {
   const s = ctx.speciesBySlug.get(slug)
   return s ? pick(s.names, lng) : slug
 }
+/** What the UI needs to name one of the player's own Pokemon (an `OwnedPokemon` fits; so does a session-result member plus a lookup). */
+export interface NamedMon {
+  speciesSlug: string
+  nickname?: string | null
+}
+
+/** The nickname when it has one, else the species name. Never used for other players' Pokemon (rankings/social show species only). */
+export function pokemonName(p: NamedMon | null | undefined, lng: LocaleCode, fallbackSlug = ''): string {
+  const nick = p?.nickname?.trim()
+  if (nick) return nick
+  const slug = p?.speciesSlug ?? fallbackSlug
+  return slug ? speciesName(slug, lng) : ''
+}
+
+/** Nickname plus species for a tooltip or an aria-label: "Monito (Pikachu)"; just the species name without a nickname. */
+export function pokemonFullName(p: NamedMon | null | undefined, lng: LocaleCode, fallbackSlug = ''): string {
+  const nick = p?.nickname?.trim()
+  const slug = p?.speciesSlug ?? fallbackSlug
+  if (!slug) return nick ?? ''
+  return nick ? `${nick} (${speciesName(slug, lng)})` : speciesName(slug, lng)
+}
+
 export function typeName(type: TypeSlug, lng: LocaleCode): string {
   return pick(typeNames.get(type), lng) || type
 }
@@ -56,6 +78,10 @@ export function useNames() {
   return {
     lng,
     species: (slug: string) => speciesName(slug, lng),
+    /** Nickname or species name of one of the player's Pokemon. `fallbackSlug` is used when `p` is missing (e.g. released). */
+    pokemon: (p: NamedMon | null | undefined, fallbackSlug?: string) => pokemonName(p, lng, fallbackSlug),
+    /** "Nickname (Species)" for tooltips and aria-labels (just the species without a nickname). */
+    pokemonFull: (p: NamedMon | null | undefined, fallbackSlug?: string) => pokemonFullName(p, lng, fallbackSlug),
     type: (t: TypeSlug) => typeName(t, lng),
     move: (slug: string) => moveName(slug, lng),
     item: (slug: string) => itemName(slug, lng),

@@ -122,6 +122,32 @@ describe('game store: a cache of the server doc', () => {
   })
 })
 
+describe('game store: nicknames and saved teams', () => {
+  it('sets and removes a nickname through the server, which also validates it', async () => {
+    const g = () => useGame.getState()
+    expect(await g().setNickname('p1', '  Monito ')).toBeNull()
+    expect(g().player!.pokemon.p1!.nickname).toBe('Monito')
+    expect(await g().setNickname('p1', 'WWWWWWWWWWWWW')).toBe('nickname_too_long')
+    expect(g().player!.pokemon.p1!.nickname).toBe('Monito')
+    expect(await g().setNickname('p1', null)).toBeNull()
+    expect(g().player!.pokemon.p1!.nickname).toBeUndefined()
+  })
+  it('saves, applies, renames, overwrites and deletes a team; switching is refused during a session', async () => {
+    const g = () => useGame.getState()
+    expect(await g().savePreset('Estudio')).toEqual({ ok: true, id: 't1' })
+    expect(await g().renamePreset('t1', 'Repaso')).toBeNull()
+    expect(g().player!.teamPresets).toEqual([{ id: 't1', name: 'Repaso', uids: ['p1'] }])
+    expect(await g().applyPreset('t1')).toEqual({ ok: true, missing: 0 })
+    expect(await g().overwritePreset('t1')).toBeNull()
+    expect(await g().start(25)).toBeNull()
+    expect(await g().applyPreset('t1')).toEqual({ ok: false, error: 'session_active' })
+    expect(await g().cancel()).toBeNull()
+    expect(await g().deletePreset('t1')).toBeNull()
+    expect(g().player!.teamPresets).toEqual([])
+    expect(await g().applyPreset('t1')).toEqual({ ok: false, error: 'unknown_preset' })
+  })
+})
+
 describe('clock skew', () => {
   it('estimates the server offset from serverNow and applies it to now()', async () => {
     const skewed = installFakeServer({ skewMs: 120_000 })
