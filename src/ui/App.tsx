@@ -13,6 +13,7 @@ import { MicBridge } from './MicBridge'
 import { startAnnouncements } from './store/announcements'
 import { useAuth } from './store/auth'
 import { startContent, useContentStore } from './store/content'
+import { startLiveEvents } from './store/liveEvents'
 import { useGame } from './store/game'
 import { devRequested, usePrefs } from './store/prefs'
 import { startServerConfig } from './store/serverConfig'
@@ -26,6 +27,7 @@ function boot() {
   startAnnouncements()
   startServerConfig()
   startContent()
+  startLiveEvents()
 }
 
 /**

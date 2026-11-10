@@ -26,7 +26,7 @@ export function fmtCountdown(ms: number): string {
   return `${h > 0 ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`
 }
 
-function intlZone(tz: TimeZoneSpec): string | undefined {
+export function intlZone(tz: TimeZoneSpec): string | undefined {
   if (typeof tz === 'string') return tz
   // Fixed offsets: Etc/GMT signs are inverted.
   if (tz % 60 !== 0) return undefined
