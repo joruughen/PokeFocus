@@ -21,7 +21,9 @@ COPY src/engine ./src/engine
 COPY src/game ./src/game
 COPY src/data ./src/data
 COPY --from=build /app/dist ./dist
-RUN mkdir -p .data && chown node:node .data
+# .data/uploads is the mount point of the `uploads` volume (event images): it must exist and belong to node
+# in the image so a fresh named volume inherits that ownership.
+RUN mkdir -p .data/uploads && chown -R node:node .data
 USER node
 EXPOSE 8787
 CMD ["npm", "start"]

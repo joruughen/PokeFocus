@@ -11,6 +11,8 @@ export default defineConfig({
     // streamed through as is (http-proxy does not buffer).
     proxy: {
       '/api': { target: 'http://localhost:8787', changeOrigin: false },
+      // Event images (server/uploads.ts).
+      '/media': { target: 'http://localhost:8787', changeOrigin: false },
     },
   },
   build: {

@@ -10,7 +10,7 @@
  *   POST   /drafts/:id/validate        admin      full validation (with the engine smoke test) + diff; stores the result
  *   POST   /drafts/:id/publish         admin + sudo   { effectiveAt?, confirm?, note? }: now, or scheduled when in the future
  *   POST   /versions/:id/rollback      admin + sudo   { confirm?, note? }: a NEW version copying that patch, in force now
- *   GET    /spawn-preview              admin      ?versionId&hour&weather&trainerLevel → species the wild pool offers
+ *   GET    /spawn-preview              admin      ?versionId&eventId&hour&weather&trainerLevel → species the wild pool offers (eventId: with that live event resolved on top, drafts too)
  *
  * Writes go through the ContentService (`publishDraft` / `publish`, in the route's transaction;
  * `refresh()` after the commit reloads it and broadcasts the new hash). Publishing and rollback
@@ -39,8 +39,9 @@ import type {
 import { audit } from '../../admin/audit'
 import { patchHash, type ResolvedContent } from '../../content/service'
 import type { Db, Tx } from '../../db/client'
-import { contentVersions, users } from '../../db/schema'
-import { ApiError, readBody, requireElevated, type AppEnv, type Ctx, type Deps } from '../../http'
+import { overlayOf } from '../../content/events'
+import { contentVersions, liveEvents, users } from '../../db/schema'
+import { ApiError, readBody, requireElevated, UUID_RE, type AppEnv, type Ctx, type Deps } from '../../http'
 import { RULES } from '../../rate-limit'
 import type { Limit, Staff } from './players'
 
@@ -65,6 +66,8 @@ const rollbackBody = z.object({ confirm: z.boolean().optional(), note: noteField
 const listQuery = z.object({ status: z.enum(['draft', 'published', 'archived']).optional() })
 const previewQuery = z.object({
   versionId: z.coerce.number().int().positive().optional(),
+  /** Preview with this live event (any status, drafts included) resolved on top of the content. */
+  eventId: z.string().regex(UUID_RE).optional(),
   hour: z.coerce.number().int().min(0).max(23).default(12),
   weather: z.enum(['rain', 'sun', 'snow', 'clear', 'unknown']).default('clear'),
   trainerLevel: z.coerce.number().int().min(1).max(100).default(1),
@@ -363,6 +366,7 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     let ctx = active.ctx
     let hash = active.hash
     let versionId: number | null = active.versionId
+    let patch = active.patch
     if (q.data.versionId !== undefined && q.data.versionId !== active.versionId) {
       const [row] = await db.select().from(contentVersions).where(eq(contentVersions.id, q.data.versionId))
       if (!row) throw new ApiError(404, 'not_found')
@@ -375,6 +379,18 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       }
       hash = row.hash ?? 'preview'
       versionId = row.id
+      patch = row.patch
+    }
+    if (q.data.eventId !== undefined) {
+      const [ev] = await db.select().from(liveEvents).where(eq(liveEvents.id, q.data.eventId))
+      if (!ev) throw new ApiError(404, 'not_found')
+      try {
+        const events = [...active.events.filter((e) => e.id !== ev.id), overlayOf(ev)]
+        ctx = createEngineContext(resolveContent(patch, events, active.eventItems, { hash: `preview-${ev.id}` }))
+      } catch {
+        throw new ApiError(422, 'invalid_patch')
+      }
+      hash = `preview-${ev.id}`
     }
     const body: AdminSpawnPreview = { versionId, hash, hour: q.data.hour, weather: q.data.weather, trainerLevel: q.data.trainerLevel, ...spawnPreview(ctx, q.data) }
     return c.json(body)

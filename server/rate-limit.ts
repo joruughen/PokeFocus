@@ -33,6 +33,12 @@ export const RULES = {
   adminContentCompute: { limit: 30, windowMs: 15 * 60_000 },
   /** Publish, schedule and rollback per staff user. */
   adminContentPublish: { limit: 10, windowMs: 15 * 60_000 },
+  /** Event drafts and published edits (create, edit, delete) per staff user. */
+  adminEventWrite: { limit: 120, windowMs: 15 * 60_000 },
+  /** Publish and archive events per staff user (publishing runs the smoke test). */
+  adminEventPublish: { limit: 20, windowMs: 15 * 60_000 },
+  /** Image uploads per staff user (each one decodes and re-encodes an image: CPU and RAM). */
+  adminUpload: { limit: 20, windowMs: 15 * 60_000 },
   /** Web Push subscribe + unsubscribe per user. */
   pushWriteUser: { limit: 30, windowMs: 15 * 60_000 },
   /** POST /api/push/test per user (each one sends real notifications). */

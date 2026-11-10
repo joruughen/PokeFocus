@@ -2,7 +2,7 @@
 import { sql } from 'drizzle-orm'
 import { bigserial, boolean, char, check, doublePrecision, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import type { ContentPatch, ContentItem, EventOverlay } from '../../src/engine/content'
-import type { GameDoc } from '../../src/game/protocol'
+import type { AdminContentValidation, EventOverlayBody, GameDoc, LiveEventText } from '../../src/game/protocol'
 
 /** What `resolveContent` takes (stored in content_snapshots.resolved). */
 export interface ResolvedContentInput {
@@ -302,6 +302,77 @@ export const contentSnapshots = pgTable('content_snapshots', {
   resolved: jsonb('resolved').$type<ResolvedContentInput>().notNull(),
   createdAt: ts('created_at').notNull().defaultNow(),
 })
+
+/**
+ * Event images (docs/admin-plan.md §3): re-encoded by sharp (webp, no metadata) and
+ * stored on disk under UPLOADS_DIR as `events/<sha256>.webp` (+ `-480.webp`).
+ * `sha256` is the hash of the stored main image (identical images are stored once);
+ * the original file name is never kept.
+ */
+export const uploads = pgTable('uploads', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sha256: text('sha256').notNull().unique(),
+  mime: text('mime').notNull().default('image/webp'),
+  /** Bytes of the main image and of the 480 px card version. */
+  bytes: integer('bytes').notNull(),
+  thumbBytes: integer('thumb_bytes').notNull().default(0),
+  width: integer('width').notNull(),
+  height: integer('height').notNull(),
+  /** Relative to UPLOADS_DIR. */
+  path: text('path').notNull(),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: ts('created_at').notNull().defaultNow(),
+})
+
+/**
+ * Live events (docs/admin-plan.md §2, §6). `overlay` is the EventOverlay without id, slug and
+ * dates (the id is this row's id); only `published` rows reach the ContentService
+ * (a future `starts_at` = scheduled; `archived` events stay known for their items' names).
+ * `revision` +1 on every edit of a published event (snapshots in live_event_revisions).
+ */
+export const liveEvents = pgTable(
+  'live_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: text('slug').notNull().unique(),
+    status: text('status', { enum: ['draft', 'published', 'archived'] }).notNull().default('draft'),
+    startsAt: ts('starts_at').notNull(),
+    endsAt: ts('ends_at').notNull(),
+    name: jsonb('name').$type<LiveEventText>().notNull(),
+    description: jsonb('description').$type<LiveEventText>().notNull(),
+    imageId: uuid('image_id').references(() => uploads.id),
+    overlay: jsonb('overlay').$type<EventOverlayBody>().notNull(),
+    revision: integer('revision').notNull().default(1),
+    /** Result of the last save/publish validation. */
+    validation: jsonb('validation').$type<AdminContentValidation>(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+    publishedBy: uuid('published_by').references(() => users.id, { onDelete: 'set null' }),
+    publishedAt: ts('published_at'),
+  },
+  (t) => [
+    check('live_events_status_check', sql`${t.status} in ('draft', 'published', 'archived')`),
+    check('live_events_range_check', sql`${t.endsAt} > ${t.startsAt}`),
+    index('live_events_status_idx').on(t.status, t.startsAt, t.endsAt),
+    index('live_events_image_idx').on(t.imageId),
+  ],
+)
+
+/** What a published event looked like at each revision (written at publish and on every published edit). */
+export const liveEventRevisions = pgTable(
+  'live_event_revisions',
+  {
+    eventId: uuid('event_id')
+      .notNull()
+      .references(() => liveEvents.id, { onDelete: 'cascade' }),
+    revision: integer('revision').notNull(),
+    snapshot: jsonb('snapshot').notNull(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.eventId, t.revision] })],
+)
 
 /**
  * One row per claimed (valid) study session, written in the claim's transaction
