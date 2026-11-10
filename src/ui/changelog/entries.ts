@@ -29,6 +29,55 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.9.0',
+    date: '2026-11-10',
+    title: { es: 'Combate, Energía y gestión del equipo', en: 'Combat, Energy and team management' },
+    items: [
+      {
+        kind: 'improved',
+        text: {
+          es: 'Mandar a un Pokémon contra un salvaje es un ataque definitivo: el salvaje le contraataca a él. Si antes lo duermes o lo paralizas, no puede responder. Si falla una Ball, el contraataque va siempre a tu líder.',
+          en: 'Sending a Pokémon against a wild one is a final attack: the wild one strikes back at it. Put it to sleep or paralyze it first and it can’t answer. When a Ball fails, the counterattack always goes to your leader.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Los salvajes pegan más fuerte (×1,5), pero cada acción gasta menos Energía: un Pokémon aguanta unas 4–6 sesiones seguidas sin descanso. Ves la Energía de todo el equipo durante la sesión y en las oleadas.',
+          en: 'Wild Pokémon hit harder (×1.5), but each action costs less Energy: a Pokémon lasts about 4–6 back-to-back sessions without breaks. You can see the whole team’s Energy during the session and in the waves.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Motes: ponle a cada Pokémon un nombre propio de hasta 12 caracteres desde su ficha.',
+          en: 'Nicknames: give each Pokémon a name of its own, up to 12 characters, from its detail page.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Equipos guardados: guarda tu equipo con un nombre y cámbiate a él con un toque, en Equipo o en el inicio antes de empezar.',
+          en: 'Saved teams: save your team under a name and switch to it in one tap, from Team or from the home screen before you start.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Desde la ficha de un Pokémon puedes meterlo en el equipo o cambiarlo por otro, con una comparación antes de confirmar.',
+          en: 'From a Pokémon’s detail page you can add it to the team or swap it for another member, with a comparison before you confirm.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Tras cada actualización, una ventana te cuenta qué hay de nuevo (solo una vez y nunca en mitad de una sesión).',
+          en: 'After each update, a window tells you what’s new (only once, and never in the middle of a session).',
+        },
+      },
+    ],
+  },
+  {
     version: '0.8.0',
     date: '2026-11-09',
     title: { es: 'Música en los descansos y arreglos', en: 'Break music and fixes' },
