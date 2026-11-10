@@ -240,6 +240,19 @@ export interface PublicUser {
    * see "Anonymous trainer"). Friends' leaderboard and my own row always show it.
    */
   anonymousRankings: boolean
+  /** Admin panel access; players are 'player'. The server decides, the client only shows or hides the link. */
+  role: UserRole
+}
+
+/** player < support < admin (docs/admin-plan.md §4). */
+export type UserRole = 'player' | 'support' | 'admin'
+
+/** GET /api/admin/me (support or admin). `elevatedUntil` is epoch ms of the sudo mode, null when not elevated. */
+export interface AdminMeResponse {
+  role: UserRole
+  elevated: boolean
+  elevatedUntil: number | null
+  serverNow: number
 }
 
 export interface AuthSessionInfo {
@@ -407,6 +420,9 @@ export interface AnnouncementsResponse {
  * Admin API, guarded by `Authorization: Bearer <ADMIN_TOKEN>` (the server env
  * var; unset = admin API off → 404 `admin_disabled`; wrong token → 401
  * `unauthorized`; too many wrong tokens from an IP → 429 `rate_limited`).
+ *
+ * Since E2 the maintenance routes also accept a signed-in user with role
+ * 'admin' (session cookie, no Authorization header); the token is deprecated.
  *
  *   GET    /api/admin/maintenance      → AdminMaintenanceResponse
  *   POST   /api/admin/maintenance      body MaintenanceCreateRequest → 201 { item: AdminMaintenanceItem }

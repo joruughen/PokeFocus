@@ -96,10 +96,12 @@ export const pushApi = {
   test: () => api.post<{ sent: number }>('/push/test'),
 }
 
-const bearer = (token: string) => ({ Authorization: `Bearer ${token}` })
+/** Empty token = no header: the server then uses the signed-in session (role admin). */
+const bearer = (token: string) => (token ? { Authorization: `Bearer ${token}` } : undefined)
 
 /**
- * Admin API (server env ADMIN_TOKEN). A wrong token answers 401, which must NOT
+ * Admin API: the session of a user with role admin (empty `token`), or the deprecated
+ * server env ADMIN_TOKEN. A wrong token answers 401, which must NOT
  * sign the player out, hence `allow401` on every call.
  */
 export const adminApi = {

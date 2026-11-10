@@ -8,12 +8,18 @@ import { serve } from '@hono/node-server'
 import { createApp } from './app'
 import { openDatabase } from './db/client'
 import { loadEnv } from './env'
+import { promoteAdminEmails } from './admin/roles'
 import { deleteExpiredSessions } from './routes/auth'
 
 if (existsSync('.env')) process.loadEnvFile('.env')
 
 const env = loadEnv()
 const database = await openDatabase({ databaseUrl: env.databaseUrl, pgliteDir: env.pgliteDir })
+if (env.adminEmails.length > 0) {
+  const { promoted, missing } = await promoteAdminEmails(database.db, env.adminEmails)
+  if (promoted.length > 0) console.log(`[server] ADMIN_EMAILS: promoted ${promoted.length} account(s) to admin`)
+  if (missing.length > 0) console.warn(`[server] ADMIN_EMAILS: ${missing.length} email(s) have no account yet (register first, then restart)`)
+}
 const { app, deps } = createApp({ env, db: database.db })
 
 const HOUR = 3_600_000

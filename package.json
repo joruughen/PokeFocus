@@ -18,7 +18,8 @@
     "simulate": "tsx scripts/simulate.ts",
     "simulate:damage": "tsx scripts/simulate-damage.ts",
     "db:generate": "drizzle-kit generate",
-    "vapid": "tsx scripts/generate-vapid.ts"
+    "vapid": "tsx scripts/generate-vapid.ts",
+    "admin:role": "tsx scripts/admin-role.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

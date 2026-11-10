@@ -41,6 +41,7 @@ function freshUser(trainerName: string): PublicUser {
     nameChangedAt: null,
     countryChangedAt: null,
     anonymousRankings: false,
+    role: 'player',
   }
 }
 

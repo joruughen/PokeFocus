@@ -60,6 +60,18 @@ const schema = z.object({
     (v) => (v === '' ? undefined : v),
     z.string().min(24, 'must be at least 24 characters (e.g. openssl rand -hex 24)').optional(),
   ),
+  /**
+   * Comma-separated emails promoted to role `admin` at start-up (idempotent, audited as
+   * actor 'system'). The accounts must already exist. Unknown emails are ignored.
+   */
+  ADMIN_EMAILS: z.preprocess(
+    emptyAsUnset,
+    z
+      .string()
+      .transform((v) => v.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean))
+      .pipe(z.array(z.string().max(254).refine((e) => /^[^\s@]+@[^\s@]+$/.test(e), { message: 'must be a comma-separated list of emails' })))
+      .optional(),
+  ),
   /** Web Push (VAPID). All three or none; none = push disabled (404 push_disabled). */
   VAPID_PUBLIC_KEY: vapidKey(65, 'uncompressed P-256 public key'),
   VAPID_PRIVATE_KEY: vapidKey(32, 'P-256 private key'),
@@ -98,6 +110,8 @@ export interface Env {
   cookieSecure: boolean
   /** Admin API token; undefined = admin API disabled (404 admin_disabled). */
   adminToken: string | undefined
+  /** Emails promoted to admin at start-up (lower-case). */
+  adminEmails: string[]
   /** Web Push keys; null = push disabled. Never logged. */
   vapid: VapidConfig | null
 }
@@ -123,6 +137,7 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     staticDir: e.STATIC_DIR,
     cookieSecure: e.COOKIE_SECURE === 'auto' ? production : e.COOKIE_SECURE === '1',
     adminToken: e.ADMIN_TOKEN,
+    adminEmails: [...new Set(e.ADMIN_EMAILS ?? [])],
     vapid:
       e.VAPID_PUBLIC_KEY && e.VAPID_PRIVATE_KEY && e.VAPID_SUBJECT
         ? { publicKey: e.VAPID_PUBLIC_KEY, privateKey: e.VAPID_PRIVATE_KEY, subject: e.VAPID_SUBJECT }
