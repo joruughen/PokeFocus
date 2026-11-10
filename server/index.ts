@@ -1,7 +1,7 @@
 /**
  * Server entry: load env, open the database (migrations run on startup),
- * build the app and listen; hourly session cleanup and the Web Push scheduler
- * (every 15 s, only with VAPID keys). See docs/server.md.
+ * build the app and listen; hourly session cleanup, the Web Push scheduler
+ * (every 15 s, only with VAPID keys) and the live content tick (every 30 s). See docs/server.md.
  */
 import { existsSync } from 'node:fs'
 import { serve } from '@hono/node-server'
@@ -56,6 +56,22 @@ const pushTick = async () => {
 const pushTimer = deps.push.enabled ? setInterval(pushTick, PUSH_TICK_MS) : null
 pushTimer?.unref()
 
+// Live content (server/content/service.ts): every 30 s, if the active content hash
+// changed (scheduled version, event start/end, publication), broadcast it over SSE.
+// The first run only records the hash at boot.
+const CONTENT_TICK_MS = 30_000
+const contentTick = async () => {
+  try {
+    const hash = await deps.content.check()
+    if (hash) console.log(`[content] active content is now ${hash === 'base' ? 'base' : hash.slice(0, 12)}`)
+  } catch (e) {
+    console.error('[content] check failed:', e instanceof Error ? e.message : 'unknown error')
+  }
+}
+void contentTick()
+const contentTimer = setInterval(contentTick, CONTENT_TICK_MS)
+contentTimer.unref()
+
 const server = serve({ fetch: app.fetch, port: env.port }, (info) => {
   const db = database.driver === 'pglite' ? `PGlite (${env.pgliteDir})` : 'PostgreSQL'
   console.log(`[server] listening on http://localhost:${info.port} · ${env.nodeEnv} · ${db}${env.devTools ? ' · DEV_TOOLS=1' : ''}`)
@@ -70,6 +86,7 @@ const shutdown = (signal: string) => {
   console.log(`[server] ${signal}: shutting down`)
   clearInterval(timer)
   if (pushTimer) clearInterval(pushTimer)
+  clearInterval(contentTimer)
   server.close()
   // Open SSE streams keep the HTTP server alive: don't wait for them.
   void database.close().finally(() => process.exit(0))

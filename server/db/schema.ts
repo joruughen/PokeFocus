@@ -1,7 +1,15 @@
 /** Drizzle schema (PostgreSQL / PGlite). See docs/F2-plan.md § Esquema. */
 import { sql } from 'drizzle-orm'
-import { boolean, char, check, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { boolean, char, check, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import type { ContentPatch, ContentItem, EventOverlay } from '../../src/engine/content'
 import type { GameDoc } from '../../src/game/protocol'
+
+/** What `resolveContent` takes (stored in content_snapshots.resolved). */
+export interface ResolvedContentInput {
+  patch: ContentPatch
+  events: EventOverlay[]
+  eventItems: Record<string, ContentItem>
+}
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' })
 
@@ -244,6 +252,56 @@ export const adminAudit = pgTable(
   },
   (t) => [index('admin_audit_created_idx').on(t.createdAt.desc()), index('admin_audit_target_idx').on(t.targetType, t.targetId)],
 )
+
+/**
+ * Live content versions (docs/admin-plan.md §1–2): each one is a full patch over
+ * the shipped data (not a delta). Published versions are immutable; the active
+ * one is the published version with the latest `effective_at <= now` (a future
+ * `effective_at` = scheduled). Rollback = a new version copying an old patch.
+ */
+export const contentVersions = pgTable(
+  'content_versions',
+  {
+    id: serial('id').primaryKey(),
+    status: text('status', { enum: ['draft', 'published', 'archived'] }).notNull().default('draft'),
+    patch: jsonb('patch').$type<ContentPatch>().notNull(),
+    /** `baseHash` of the shipped data the patch was written against. */
+    baseHash: text('base_hash'),
+    /** sha256 of the canonical patch. */
+    hash: text('hash'),
+    parentId: integer('parent_id'),
+    title: text('title'),
+    note: text('note'),
+    /** null while a draft; in the future = scheduled. */
+    effectiveAt: ts('effective_at'),
+    /** Validation result (errors, warnings) of the last save/publish. */
+    validation: jsonb('validation'),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    publishedBy: uuid('published_by').references(() => users.id, { onDelete: 'set null' }),
+    publishedAt: ts('published_at'),
+  },
+  (t) => [
+    check('content_versions_status_check', sql`${t.status} in ('draft', 'published', 'archived')`),
+    index('content_versions_status_effective_idx').on(t.status, t.effectiveAt),
+  ],
+)
+
+/**
+ * Resolved content by hash (patch + active event overlays + event item names),
+ * written the first time a session pins that hash, so a claim can rebuild the
+ * exact context after a restart or a later publication. Never deleted while a
+ * session or encounter uses it (pruned after ~90 days).
+ */
+export const contentSnapshots = pgTable('content_snapshots', {
+  hash: text('hash').primaryKey(),
+  baseHash: text('base_hash').notNull(),
+  versionId: integer('version_id'),
+  /** `{ [eventId]: revision }` of the active events. */
+  eventRevs: jsonb('event_revs').$type<Record<string, number>>().notNull(),
+  resolved: jsonb('resolved').$type<ResolvedContentInput>().notNull(),
+  createdAt: ts('created_at').notNull().defaultNow(),
+})
 
 export type UserRow = typeof users.$inferSelect
 export type AuthSessionRow = typeof authSessions.$inferSelect

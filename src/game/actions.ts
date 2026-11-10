@@ -47,6 +47,7 @@ import {
   useCandy,
   useHealItem,
   validatedMinutes,
+  type ActiveSession,
   type EngineContext,
   type PlayerState,
   type Rng,
@@ -76,7 +77,13 @@ export interface ActionEnv {
   friendOverlap?: number | null
   /** Real weather of the profile location or city at `start` (server fetch); null/absent = unknown → no weather (manual only in dev). */
   weather?: WeatherInput | null
+  /** Engine context of this action (server: the live content, pinned per session; see server/content/service.ts). Default: `defaultContext()`. */
   ctx?: EngineContext
+  /**
+   * `start` only: live content hash pinned on the new session (`ActiveSession.contentHash`).
+   * Absent or 'base' = nothing is written (the saved doc stays as without live content).
+   */
+  contentHash?: string
 }
 
 export type ActionOutcome<T extends GameActionType = GameActionType> =
@@ -170,7 +177,7 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       const { weather } = resolveSessionWeather(env.weather, p.profile.weather, env.dev)
       const started = r.value.state.activeSession
       return done({
-        player: started ? { ...r.value.state, activeSession: { ...started, weather } } : r.value.state,
+        player: started ? { ...r.value.state, activeSession: { ...started, weather, ...pinned(env.contentHash) } } : r.value.state,
         timer: { sessionId: r.value.session.id, endsAt: t + a.minutes * MINUTE_MS, pausedAt: null, pausedMs: 0, notified: false },
         outcome: null,
         breakTimer: null,
@@ -222,7 +229,8 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       const applied = applySessionResult(p, res.value, ctx)
       if (!applied.ok) return fail(applied.error)
       const outcome = { result: res.value, events: applied.value.events, before: beforeOf(p, res.value), seen: false }
-      return done({ ...doc, player: applied.value.state, timer: null, outcome }, { outcome })
+      // The waves of the full blocks run on the content the session pinned, as after a claim.
+      return done({ ...doc, player: pinEncounter(applied.value.state, session), timer: null, outcome }, { outcome })
     }
     case 'markNotified': {
       const timer = timerOf(doc)
@@ -255,6 +263,8 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       if (!res.ok) return fail(res.error)
       const applied = applySessionResult(p, res.value, ctx)
       if (!applied.ok) return fail(applied.error)
+      // The waves of this session run on the content the session pinned.
+      const player = pinEncounter(applied.value.state, session)
       const levels: Record<string, number> = {}
       const exp: Record<string, number> = {}
       for (const m of res.value.members) {
@@ -265,7 +275,7 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
         }
       }
       const outcome = { result: res.value, events: applied.value.events, before: { levels, exp, trainerLevel: p.trainer.level }, seen: false }
-      return done({ ...doc, player: applied.value.state, timer: null, outcome }, { outcome })
+      return done({ ...doc, player, timer: null, outcome }, { outcome })
     }
 
     // ---- Waves --------------------------------------------------------------
@@ -449,6 +459,17 @@ function beforeOf(p: PlayerState, result: SessionResult): LastOutcome['before'] 
     }
   }
   return { levels, exp, trainerLevel: p.trainer.level }
+}
+
+/** The waves of a session (claimed or cancelled) run on the content the session pinned. */
+function pinEncounter(player: PlayerState, session: ActiveSession): PlayerState {
+  const enc = player.encounter
+  return enc && session.contentHash !== undefined && enc.sessionId === session.id ? { ...player, encounter: { ...enc, contentHash: session.contentHash } } : player
+}
+
+/** `{ contentHash }` to spread on a new session, or nothing for the base content. */
+function pinned(hash: string | undefined): { contentHash?: string } {
+  return hash !== undefined && hash !== 'base' ? { contentHash: hash } : {}
 }
 
 function sumChains(p: PlayerState): number {

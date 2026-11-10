@@ -11,6 +11,7 @@ import type { EventBus } from './events'
 import type { RateLimiter } from './rate-limit'
 import type { FetchLike, WeatherService } from './weather'
 import type { PushService } from './push'
+import type { ContentService } from './content/service'
 import { hashToken, looksLikeToken, SESSION_COOKIE, SESSION_RENEW_AFTER_MS, SESSION_TTL_MS } from './auth/tokens'
 import { DEV_NOW_HEADER, type PublicUser, type UserRole } from '../src/game/protocol'
 
@@ -27,6 +28,8 @@ export interface Deps {
   weather: WeatherService
   /** Web Push (disabled without VAPID keys). The scheduler in server/index.ts calls runDue(). */
   push: PushService
+  /** Live content: active version/events and the content pinned by each session (server/content/service.ts). */
+  content: ContentService
 }
 
 export type AppEnv = {

@@ -6,6 +6,7 @@ import { createRng, type Rng } from '../../src/engine'
 import { applyAction, isDevAction } from '../../src/game/actions'
 import { DEV_SEED_HEADER, EMPTY_DOC, type ActionResponse, type ActionResults, type GameAction, type GameDoc, type GameSnapshot } from '../../src/game/protocol'
 import type { Tx } from '../db/client'
+import { contentForAction } from '../content/service'
 import { activeStudySessions, leagueScores, playerDocs } from '../db/schema'
 import { claimOverlap, publishGroupEvents, syncGroupMembership, type PendingGroupEvent } from '../groups'
 import { ApiError, gameTime, readBody, requireAuth, type AppEnv, type Ctx, type Deps } from '../http'
@@ -23,7 +24,8 @@ export type RunOutcome =
 
 /**
  * One game action inside a transaction: lock the doc -> (claim: group overlap
- * from the stored intervals) -> reducer -> active session / group membership /
+ * from the stored intervals) -> live content for the action (pinned per
+ * session, see server/content/service.ts) -> reducer -> active session / group membership /
  * league mirrors -> version + 1. Also used by the study-group routes to start
  * members' sessions (`viaGroup`). Events are NOT published here (after commit).
  */
@@ -43,8 +45,11 @@ export async function runGameAction(
   // Also for sessions the server starts for study-group invitees, which is why the rounded location lives in the profile.
   const profile = before.player?.profile
   const weather = action.type === 'start' ? ((await deps.weather.current({ location: profile?.location ?? null, city: profile?.city ?? null }))?.weather ?? null) : undefined
-  const r = applyAction(before, action, { now: opts.now, rng: opts.rng, dev: deps.env.devTools, trainerName: user.trainerName, friendOverlap, weather })
+  // Live content: start → current (pinned on the session); claim/cancel → the session's; waves → the encounter's.
+  const content = await contentForAction(deps.content, tx, before, action.type, opts.now)
+  const r = applyAction(before, action, { now: opts.now, rng: opts.rng, dev: deps.env.devTools, trainerName: user.trainerName, friendOverlap, weather, ctx: content.ctx, contentHash: content.hash })
   if (!r.ok) return r
+  if (action.type === 'start' && r.doc.player?.activeSession?.contentHash) await deps.content.persist(tx, content)
   await syncActiveSession(tx, user.id, before, r.doc)
   const groupEvents = await syncGroupMembership(tx, user.id, before, r.doc, action.type, opts.now, opts.viaGroup ?? false)
   if (action.type === 'resetAll') await tx.delete(leagueScores).where(eq(leagueScores.userId, user.id))

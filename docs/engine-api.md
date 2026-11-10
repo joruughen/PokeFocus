@@ -192,6 +192,7 @@ Live admin content and events (design: `docs/admin-plan.md` §1). Layers, lowest
 - `EngineContext` live fields: `contentHash` (`'base'` = shipped data), `spawn: Map<slug, ResolvedSpawn>` (empty = no rules), `events: ActiveEvent[]`.
 - **Golden invariant** (tested in `content.test.ts`): `resolveContent({}, [], {})` is `{}`, so its context equals `createEngineContext()` and sessions, claims and throws are bit-identical. Live rules only apply when present (no extra RNG draws, no `×1`).
 - `setDefaultContext(ctx | null)`: `defaultContext()` returns the active context, or the memoized base one (`baseContext()`). Tests that set it reset it in `afterEach`. `baseContent()` returns the shipped data, techniques, abilities and missions.
+- **Pinning** (`state.ts`): `ActiveSession.contentHash?` and `EncounterState.contentHash?` (absent = `'base'`). The reducer (`src/game/actions.ts`) writes `env.contentHash` on the new session at `start` (never `'base'`) and copies the session's hash to the encounter at `claim`; the engine carries it along (`{ ...enc }`). The server picks `env.ctx` per action from those hashes (`server/content/service.ts`, docs/server.md «Live content»).
 - `src/data/game/meta.json` = `{ baseHash }`: sha256 of the canonical JSON of the 10 game data files, written by `npm run build:data` (`scripts/lib/base-hash.ts`, Node only); `scripts/lib/base-hash.test.ts` checks it is up to date.
 
 ## Data / rules helpers
