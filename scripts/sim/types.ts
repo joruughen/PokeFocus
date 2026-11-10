@@ -26,6 +26,14 @@ export interface RunOptions {
   onLegendaryEncounter?: (state: PlayerState, now: number) => void
   /** Damage split policy (default `auto`: the player keeps the "Auto" preference on). */
   damagePolicy?: DamagePolicy
+  /**
+   * Cancel probe (GDD §5.6, `npx tsx scripts/simulate-cancel.ts`): every long session (> 25 min) is
+   * cancelled at `atFraction` of its planned minutes (at least 15); with `restart`, a new session for
+   * the minutes left starts right away (when they reach the 15-min minimum). Absent = never cancels.
+   */
+  cancel?: { atFraction: number; restart: boolean; /** Control: plan and complete the same pieces instead of cancelling. */ planned?: boolean }
+  /** Every session is claimed on time (claim delay 0): the cancel probe compares players who are there at the end. */
+  onTimeClaims?: boolean
 }
 
 export interface SessionRec {

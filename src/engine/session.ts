@@ -1115,8 +1115,8 @@ export function completeSession(
     members: memberResults,
     totalPoints,
     dust: rewarded ? Math.round(cfg.rewards.dustPerMinute * minutes * focus * rewardFactor) : 0,
-    // Per-session Poké Balls come with the waves: none for a session cancelled before its first full block.
-    pokeBalls: rewarded && nWaves > 0 ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
+    // Per-session Poké Balls are for completed sessions: a cancelled one would double them with cancel + restart (GDD §5.6).
+    pokeBalls: rewarded && !cancelled ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
     energyByBlock,
     waves,
     charges: rewarded ? charges : [],
