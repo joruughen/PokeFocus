@@ -7,6 +7,8 @@ import type { Species, TypeChart, TypeSlug } from './data-types'
 import { createIndividual, isLegendarySpecies } from './individual'
 import { chance, pick, randInt, weightedPick, type Rng } from './rng'
 import type { EnergyContribution, IndividualCore, WaveGenParams, WaveHit, WildPokemon } from './state'
+import { legendaryChanceFor, shinyChanceFor, spawnMultiplier, spawnWeatherOf, type SpawnEnv } from './spawn'
+import type { EncounterState } from './state'
 import { computeStats } from './stats'
 
 // --- Type chart --------------------------------------------------------------
@@ -216,6 +218,13 @@ export interface RollWildParams {
   /** Force a species (roaming legendaries). */
   forceSpecies?: string
   isRoaming?: boolean
+  /** Hour and weather of the session (live spawn rules). Absent = unknown: species limited to some hours/weather do not appear. */
+  env?: Pick<EncounterState['env'], 'localHour' | 'weather'>
+}
+
+/** Spawn env of a roll (live spawn rules, src/engine/spawn.ts). */
+function spawnEnvOf(p: Pick<RollWildParams, 'env' | 'gen'>): SpawnEnv {
+  return { hour: p.env ? p.env.localHour : null, weather: spawnWeatherOf(p.env?.weather), trainerLevel: p.gen.trainerLevel }
 }
 
 function multAt(list: readonly number[], i: number): number {
@@ -234,7 +243,19 @@ export function speciesWeight(sp: Species, p: Omit<RollWildParams, 'contribution
   if (sp.types.some((t) => p.gen.teamTypes.includes(t))) w *= e.teamTypeWeight
   let typeMult = 1
   for (const t of sp.types) typeMult = Math.max(typeMult, p.gen.typeWeightMults[t] ?? 1)
+  // Live spawn rules (admin × featured): only for species with a rule, so the base weights stay bit-identical.
+  if (ctx.spawn.has(sp.slug)) w *= spawnMultiplier(sp.slug, spawnEnvOf(p), ctx)
   return w * typeMult
+}
+
+/**
+ * Legendary of a legendary roll: uniform, or weighted by the live spawn rules
+ * when some legendary has one (null = every legendary is ruled out → a normal wild).
+ */
+function pickLegendary(rng: Rng, pool: readonly Species[], p: RollWildParams, ctx: EngineContext): Species | null {
+  if (!pool.some((s) => ctx.spawn.has(s.slug))) return pick(rng, pool)
+  const env = spawnEnvOf(p)
+  return weightedPick(rng, pool, (s) => spawnMultiplier(s.slug, env, ctx))
 }
 
 /** Roll one wild Pokémon. */
@@ -246,11 +267,16 @@ export function rollWild(rng: Rng, p: RollWildParams, ctx: EngineContext = defau
   let level: number
   const range = wildLevelRange(p.gen.trainerLevel, cfg)
   const legendaryPool = all.filter(isLegendarySpecies)
+  let rolledLegendary: Species | null = null
   if (p.forceSpecies) {
     sp = getSpecies(p.forceSpecies, ctx)
     level = isLegendarySpecies(sp) ? Math.max(e.legendaryMinLevel, randInt(rng, range.min, range.max)) : randInt(rng, Math.max(range.min, minWildLevel(sp, ctx)), Math.max(range.max, minWildLevel(sp, ctx)))
-  } else if (legendaryPool.length > 0 && chance(rng, e.legendaryChance * p.gen.focus * multAt(e.longSessionLegendaryMult, p.waveIndex))) {
-    sp = pick(rng, legendaryPool)
+  } else if (
+    legendaryPool.length > 0 &&
+    chance(rng, legendaryChanceFor(ctx) * p.gen.focus * multAt(e.longSessionLegendaryMult, p.waveIndex)) &&
+    (rolledLegendary = pickLegendary(rng, legendaryPool, p, ctx)) !== null
+  ) {
+    sp = rolledLegendary
     level = Math.max(e.legendaryMinLevel, randInt(rng, range.min, range.max))
   } else {
     level = randInt(rng, range.min, range.max)
@@ -258,7 +284,7 @@ export function rollWild(rng: Rng, p: RollWildParams, ctx: EngineContext = defau
     if (pool.length === 0) pool = all.filter((s) => !isLegendarySpecies(s) && s.stage === 1)
     sp = weightedPick(rng, pool, (s) => speciesWeight(s, p, ctx)) ?? (pool[0] as Species)
   }
-  const isShiny = chance(rng, e.shinyChance * (0.5 + p.gen.focus))
+  const isShiny = chance(rng, shinyChanceFor(sp, ctx) * (0.5 + p.gen.focus))
   const nature = p.gen.syncNature && chance(rng, p.gen.syncNature.chance) ? p.gen.syncNature.nature : undefined
   const core = createIndividual(sp.slug, level, rng, { shiny: isShiny, nature }, ctx)
   const legendary = isLegendarySpecies(sp)

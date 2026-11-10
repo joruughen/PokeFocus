@@ -567,7 +567,7 @@ export function validateEventOverlay(input: unknown, opts: ValidateEventOptions 
     const p = `featured.${i}`
     const sp = ctx.speciesBySlug.get(f.species)
     if (!sp) issues.error('unknown_species', `${p}.species`, `unknown species ${f.species}`)
-    else if (isLegendarySpecies(sp)) issues.warn('featured_legendary', `${p}.species`, 'legendaries are not drawn by weight: featuring has no effect')
+    else if (isLegendarySpecies(sp)) issues.warn('featured_legendary', `${p}.species`, 'featuring a legendary only changes which legendary appears, not how often (use legendaryChanceMult)')
     if (featured.has(f.species)) issues.error('duplicate_featured', `${p}.species`, `${f.species} featured twice`)
     featured.add(f.species)
     if (f.weightMult > BIG_CHANGE_FACTOR) issues.warn('big_change', `${p}.weightMult`, `featured weight ×${f.weightMult}`, { value: f.weightMult, factor: BIG_CHANGE_FACTOR }, true)

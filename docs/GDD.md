@@ -578,6 +578,12 @@ Para cada hueco del grupo:
    - ×1.25 si comparte tipo con algún miembro del equipo.
 3. **Shiny:** `0.9/512 × (0.5 + Foco)` (Foco de la sesión: con 1.0 da lo mismo que 1/512 con el antiguo 0.85).
 
+**Contenido en vivo y eventos** (`docs/admin-plan.md` §6): el admin puede desactivar una especie, limitarla a unas horas, a un clima o a un nivel de entrenador, y multiplicar su peso. Una especie limitada por hora o clima **no aparece si la hora o el clima son desconocidos**. Los eventos activos al **empezar** la sesión (contenido fijado) añaden:
+- **Especies destacadas:** su peso se multiplica (× el del admin). Siguen sin aparecer por debajo de su nivel mínimo.
+- **Shiny del evento:** se usa la probabilidad del evento si es mayor que la base, para todas las especies o solo las destacadas; el factor `(0.5 + Foco)` se aplica igual.
+- **Legendario:** la tirada de legendario se multiplica por el factor del evento.
+- **Drops:** cada oleada puede dar objetos del evento (probabilidad por oleada, con un máximo por sesión). Se tiran con un azar aparte, así que no cambian los salvajes.
+
 ### 10.3 Nivel de los salvajes
 
 - Base y forma: un rango que crece con el nivel de entrenador. Por ejemplo, entrenador nivel 1: niveles 2–10; nivel 30: niveles 15–40 **[calibrar]**.
@@ -771,6 +777,9 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 | Diarias (3) | Completa 3 sesiones · Captura 2 Pokémon · Haz una sesión ≥ 50 min | Poké/Super Balls, Polvo, Pociones |
 | Semanales (3) | Captura 10 tipo Bicho · Estudia 5 días · Activa 20 técnicas | Caramelos de tipo, Ultra Ball, Teralitos |
 | Pokédex | Registra 10/25/50 especies | Piedras, MT |
+| Evento | Lista fija de cada evento activo (sin sorteo) | Las que defina el evento |
+
+Las **misiones de evento** avanzan mientras el evento está activo; una sesión (y las capturas de sus oleadas) cuenta si empezó durante el evento, aunque se reclame después. Se pueden reclamar hasta 7 días después de que termine.
 
 ---
 

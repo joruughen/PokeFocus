@@ -1,14 +1,15 @@
 /**
  * Spawn preview (docs/admin-plan.md §4 `spawn-preview`): which species the
  * wild pool offers for an hour × weather × trainer level, under a given
- * content. Uses the same rule as the coverage check (`spawnRuleMult`).
+ * content. Uses the engine's spawn rule (`spawnRuleMult`, src/engine/spawn.ts),
+ * the same one the coverage check and `waves.ts` apply.
  */
 import type { EngineContext } from '../../engine/context'
 import { isLegendarySpecies } from '../../engine/individual'
 import { minWildLevel, wildLevelRange } from '../../engine/waves'
 import type { SpawnWeather } from '../../engine/content'
 import type { AdminSpawnPreview, AdminSpawnWeather } from '../protocol'
-import { spawnRuleMult } from './coverage'
+import { legendaryChanceFor, spawnRuleMult } from '../../engine/spawn'
 
 export type SpawnPreviewSlot = Pick<AdminSpawnPreview, 'wildLevel' | 'species' | 'count' | 'legendaryChance' | 'rules'>
 
@@ -45,5 +46,5 @@ export function spawnPreview(ctx: EngineContext, env: { hour: number; weather: A
       ...(r.weather && { weather: [...r.weather] }),
       ...(r.minTrainerLevel !== undefined && { minTrainerLevel: r.minTrainerLevel }),
     }))
-  return { wildLevel: range, species, count: species.length, legendaryChance: ctx.config.encounters.legendaryChance, rules }
+  return { wildLevel: range, species, count: species.length, legendaryChance: legendaryChanceFor(ctx), rules }
 }

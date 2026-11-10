@@ -287,7 +287,7 @@ export function rerollWild(state: PlayerState, chargeId: string, ref: WildRef, r
   if (!wave) return err('unknown_wild')
   // The new wild takes the damage aimed at its slot (in manual mode: the tokens assigned to it).
   const hits = wave.hits ? effectiveHits(wave) : undefined
-  const fresh = rollWild(rng, { waveIndex: ref.waveIndex, gen: enc.gen, activeConditionTypes: wave.activeConditionTypes, contributions: wave.contributions, hits, slot: ref.wildIndex }, ctx)
+  const fresh = rollWild(rng, { waveIndex: ref.waveIndex, gen: enc.gen, activeConditionTypes: wave.activeConditionTypes, contributions: wave.contributions, hits, slot: ref.wildIndex, env: enc.env }, ctx)
   let next = replaceWild(enc, ref, fresh)
   let inventory = state.inventory
   const nw = next.waves[ref.waveIndex]
