@@ -659,3 +659,143 @@ export interface AdminPlayerDetail {
   authSessions: { id: string; createdAt: number; lastSeenAt: number; userAgent: string | null }[]
   serverNow: number
 }
+
+// ---------------------------------------------------------------------------
+// Admin: live content (docs/admin-plan.md §4, delivery E5)
+// ---------------------------------------------------------------------------
+
+/**
+ *   GET    /api/admin/content/live                       → AdminContentLiveResponse         (support+)
+ *   GET    /api/admin/content/versions?status=           → AdminContentVersionsResponse     (support+; newest first, at most 100)
+ *   GET    /api/admin/content/versions/:id               → AdminContentVersionResponse      (support+; diff against the active patch)
+ *   POST   /api/admin/content/drafts {from?, fromVersionId?, title?, note?} → 201 AdminContentVersionResponse (admin)
+ *   PUT    /api/admin/content/drafts/:id {patch?, title?, note?}            → AdminContentVersionResponse (admin; saves even with errors)
+ *   DELETE /api/admin/content/drafts/:id                 → 204                              (admin)
+ *   POST   /api/admin/content/drafts/:id/validate        → AdminContentValidateResponse     (admin; full, with the engine smoke test)
+ *   POST   /api/admin/content/drafts/:id/publish {effectiveAt?, confirm?, note?} → AdminContentVersionResponse (admin + sudo)
+ *   POST   /api/admin/content/versions/:id/rollback {confirm?, note?}    → 201 AdminContentVersionResponse (admin + sudo)
+ *   GET    /api/admin/content/spawn-preview?versionId&hour&weather&trainerLevel → AdminSpawnPreview (admin)
+ *
+ * Every mutation is audited in its own transaction (`content.draft.create|update|delete`, `content.publish`,
+ * `content.schedule`, `content.rollback`). Drafts never reach `/api/content`: only published versions do.
+ * Errors: 400 invalid_body / invalid_id / invalid_query / invalid_effective_at, 403 forbidden / elevation_required,
+ * 404 not_found, 409 (`not_draft`, `not_published`, `too_many_drafts`, `confirm_required`),
+ * 422 `validation_failed` { errors, warnings, requiresConfirm }, 429 rate_limited.
+ */
+export type AdminContentStatus = 'draft' | 'published' | 'archived'
+
+export interface ContentIssue {
+  code: string
+  path: string
+  message: string
+  params?: Record<string, unknown>
+  requiresConfirm?: boolean
+}
+
+/** Result of the content validation (src/game/content/validate.ts) as stored on the version and returned. */
+export interface AdminContentValidation {
+  ok: boolean
+  errors: ContentIssue[]
+  warnings: ContentIssue[]
+  /** Some warning needs `confirm: true` to publish (changes beyond ×3, probabilities ×5). */
+  requiresConfirm: boolean
+  /** The engine smoke test ran (PUT saves without it; /validate and publishing always run it). */
+  smoke: boolean
+  /** Epoch ms when it was computed. */
+  at: number
+}
+
+export interface AdminContentAuthor {
+  id: string
+  trainerName: string
+}
+
+export interface AdminContentVersionSummary {
+  id: number
+  status: AdminContentStatus
+  title: string | null
+  note: string | null
+  parentId: number | null
+  hash: string | null
+  /** Epoch ms: null while a draft, in the future = scheduled. */
+  effectiveAt: number | null
+  createdBy: AdminContentAuthor | null
+  createdAt: number
+  publishedBy: AdminContentAuthor | null
+  publishedAt: number | null
+  /** It is the version in force now. */
+  active: boolean
+  /** Published with `effectiveAt` in the future. */
+  scheduled: boolean
+  /** Counts of the last saved validation (null = never validated). */
+  validation: { ok: boolean; errors: number; warnings: number; requiresConfirm: boolean; smoke: boolean } | null
+}
+
+/** One changed path of a patch compared with the active one. `before`/`after`: the patch value, else the base value when known, else null. */
+export interface AdminContentDiffEntry {
+  path: string
+  kind: 'added' | 'changed' | 'removed'
+  before: unknown
+  after: unknown
+}
+
+export interface AdminContentVersion extends AdminContentVersionSummary {
+  patch: ContentPatch
+  baseHash: string | null
+  /** Full last saved validation. */
+  validationDetail: AdminContentValidation | null
+}
+
+export interface AdminContentVersionResponse {
+  version: AdminContentVersion
+  /** Against the active patch (empty when this is the active version). */
+  diff: AdminContentDiffEntry[]
+  serverNow: number
+}
+
+export interface AdminContentVersionsResponse {
+  items: AdminContentVersionSummary[]
+  serverNow: number
+}
+
+export interface AdminContentValidateResponse {
+  validation: AdminContentValidation
+  diff: AdminContentDiffEntry[]
+  serverNow: number
+}
+
+export interface AdminContentLiveResponse {
+  /** Hash of the content in force ('base' = none). */
+  hash: string
+  baseHash: string
+  active: AdminContentVersionSummary | null
+  /** The next published version that takes effect in the future. */
+  scheduled: AdminContentVersionSummary | null
+  /** Live events active now. */
+  events: { id: string; slug: string; startsAt: number; endsAt: number }[]
+  serverNow: number
+}
+
+export type AdminSpawnWeather = 'rain' | 'sun' | 'snow' | 'clear' | 'unknown'
+
+export interface AdminSpawnPreview {
+  /** Version previewed (null = the active content, which may have none). */
+  versionId: number | null
+  hash: string
+  hour: number
+  weather: AdminSpawnWeather
+  trainerLevel: number
+  wildLevel: { min: number; max: number }
+  /**
+   * Non-legendary species that can appear, most likely first. `probability` is
+   * the average share over the wild levels of the band with a neutral wave
+   * (first wave, no condition/sound/team bonuses): weight = captureRate × the
+   * spawn rule multiplier. Legendaries are rolled apart with `legendaryChance`.
+   */
+  species: { slug: string; probability: number; weight: number; weightMult: number }[]
+  /** Species with weight > 0 (== species.length). */
+  count: number
+  legendaryChance: number
+  /** Species with a spawn rule in this content (admin or events), enabled or not. */
+  rules: { slug: string; enabled: boolean; weightMult: number; hours?: [number, number][]; weather?: string[]; minTrainerLevel?: number }[]
+}

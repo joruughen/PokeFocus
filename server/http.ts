@@ -46,7 +46,7 @@ export type AppEnv = {
 export type Ctx = Context<AppEnv>
 
 /** Thrown anywhere in a handler → `{ error: code }` with `status` (see app.onError). */
-export type ApiStatus = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 429 | 500
+export type ApiStatus = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500
 
 export class ApiError extends Error {
   readonly status: ApiStatus

@@ -29,6 +29,8 @@ import { weatherRoutes } from './routes/weather'
 import { createWeatherService, type FetchLike, type WeatherService } from './weather'
 
 export const BODY_LIMIT = 64 * 1024
+/** Admin live-content bodies (a whole patch: techniques, missions…). */
+export const CONTENT_BODY_LIMIT = 512 * 1024
 
 export interface AppOptions {
   env: Env
@@ -68,7 +70,12 @@ export function createApp(opts: AppOptions) {
   app.use('*', secureHeaders())
 
   const api = new Hono<AppEnv>()
-  api.use('*', bodyLimit({ maxSize: BODY_LIMIT, onError: () => { throw new ApiError(413, 'body_too_large') } }))
+  const tooLarge = () => {
+    throw new ApiError(413, 'body_too_large')
+  }
+  const defaultLimit = bodyLimit({ maxSize: BODY_LIMIT, onError: tooLarge })
+  const contentLimit = bodyLimit({ maxSize: CONTENT_BODY_LIMIT, onError: tooLarge })
+  api.use('*', (c, next) => (c.req.path.startsWith('/api/admin/content') ? contentLimit(c, next) : defaultLimit(c, next)))
   api.use('*', async (c, next) => {
     const m = c.req.method
     if (m === 'GET' || m === 'HEAD' || m === 'OPTIONS') return next()
