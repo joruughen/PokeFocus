@@ -10,6 +10,10 @@
  *   is re-timed (a suspended clock does not advance), and the leader tab puts
  *   the bell on the audio clock if nothing was scheduled, so it rings on time
  *   even if the tab is hidden by then.
+ * - One sound across tabs (QA R-03): the tab that has the bell on a *running* audio clock holds a
+ *   Web Lock named after the session ("bell claim"). The leader tab, which is the one that notifies,
+ *   checks it at the end and stays silent when another live tab rings; otherwise it chimes itself.
+ *   The lock dies with the tab, so a closed or frozen-silent owner never leaves the end mute.
  */
 import { audio, type SfxHandle, type SfxName, type SfxOptions } from '../../audio'
 import { timerOf, useGame } from '../store/game'
@@ -32,7 +36,38 @@ export function sfxLater(name: SfxName, ms: number, opts?: SfxOptions): void {
   }
 }
 
-let endHandle: { sessionKey: string; handle: SfxHandle | null } | null = null
+let endHandle: { sessionKey: string; handle: SfxHandle | null; releaseClaim: () => void } | null = null
+
+type Locks = Pick<LockManager, 'request'>
+const locksOf = (): Locks | null => (globalThis.navigator as { locks?: Locks } | undefined)?.locks ?? null
+const claimName = (sessionKey: string) => `pokefocus-end-bell:${sessionKey}`
+
+/**
+ * Hold the bell-claim lock for `sessionKey` until the returned function is called (or the tab closes).
+ * No Web Locks: a no-op (every tab is then leader and the persisted `notified` flag is the only guard).
+ */
+function holdBellClaim(sessionKey: string): () => void {
+  const locks = locksOf()
+  if (!locks) return () => undefined
+  let released = false
+  let release: () => void = () => undefined
+  void locks
+    .request(claimName(sessionKey), () => (released ? undefined : new Promise<void>((res) => (release = res))))
+    .catch(() => undefined)
+  return () => {
+    released = true
+    release()
+  }
+}
+
+/** Only a context that is really running keeps time, so only then does this tab claim the bell. */
+function audioRunning(): boolean {
+  try {
+    return audio.getSnapshot().state === 'running'
+  } catch {
+    return false
+  }
+}
 
 /** Schedule the session-end chime for `endsAt` (game time; converted with the dev clock rate). */
 export function scheduleSessionEnd(sessionKey: string, endsAt: number): void {
@@ -45,7 +80,9 @@ export function scheduleSessionEnd(sessionKey: string, endsAt: number): void {
   } catch {
     handle = null
   }
-  endHandle = { sessionKey, handle }
+  // A bell on a suspended (frozen) clock may never ring; do not claim it, another tab can still chime.
+  const releaseClaim = handle && audioRunning() ? holdBellClaim(sessionKey) : () => undefined
+  endHandle = { sessionKey, handle, releaseClaim }
 }
 
 /**
@@ -85,7 +122,39 @@ export function syncSessionEndToAudio(owner: boolean): void {
 
 export function cancelSessionEnd(): void {
   endHandle?.handle?.stop()
+  endHandle?.releaseClaim()
   endHandle = null
+}
+
+/**
+ * The audio context stopped running (Safari `interrupted`, sound switched off): this tab's bell may
+ * not ring, so give the claim back and let the leader chime. Running again re-claims via
+ * `syncSessionEndToAudio`.
+ */
+export function dropBellClaim(): void {
+  if (!endHandle) return
+  endHandle.releaseClaim()
+  endHandle.releaseClaim = () => undefined
+}
+
+/**
+ * The leader tab at the end of a session: play the `sessionEnd` chime unless this tab already has the
+ * bell on the audio clock or another live tab holds the bell claim (that tab rings, so the sound is
+ * heard once, like the Notification). The check is async (`ifAvailable` lock probe) and falls back to
+ * chiming when anything goes wrong, so a failure never costs the end sound.
+ */
+export async function chimeUnlessOtherTabRings(sessionKey: string): Promise<void> {
+  if (sessionEndScheduled(sessionKey)) return
+  const locks = locksOf()
+  let otherRings = false
+  if (locks) {
+    try {
+      otherRings = await locks.request(claimName(sessionKey), { ifAvailable: true }, (lock) => lock === null)
+    } catch {
+      otherRings = false
+    }
+  }
+  if (!otherRings) sfx('sessionEnd')
 }
 
 /** True when the chime for this session is already on the audio clock. */

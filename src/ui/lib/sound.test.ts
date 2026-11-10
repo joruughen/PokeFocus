@@ -2,10 +2,16 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // A fake audio clock: records every scheduled bell and whether it was stopped.
 const bells: { delaySec: number; stopped: boolean }[] = []
+const played: string[] = []
+let audioState = 'running'
 vi.mock('../../audio', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../audio')>()),
   audio: {
-    sfx: () => null,
+    sfx: (name: string) => {
+      played.push(name)
+      return null
+    },
+    getSnapshot: () => ({ state: audioState }),
     sfxAt: (_name: string, delaySec: number) => {
       const bell = { delaySec, stopped: false }
       bells.push(bell)
@@ -18,14 +24,54 @@ import { MINUTE_MS } from '../../engine'
 import { useGame } from '../store/game'
 import { usePrefs } from '../store/prefs'
 import { installFakeServer } from '../test/fakeServer'
-import { cancelSessionEnd, resyncSessionEnd, scheduleSessionEnd, sessionEndScheduled, syncSessionEndToAudio } from './sound'
+import {
+  cancelSessionEnd,
+  chimeUnlessOtherTabRings,
+  dropBellClaim,
+  resyncSessionEnd,
+  scheduleSessionEnd,
+  sessionEndScheduled,
+  syncSessionEndToAudio,
+} from './sound'
 
 const live = () => bells.filter((b) => !b.stopped)
 const server = installFakeServer()
-afterAll(() => server.restore())
+afterAll(() => {
+  server.restore()
+  vi.unstubAllGlobals()
+})
+
+/** Web Locks stand-in shared by every "tab" of a test (one module instance plays all tabs). */
+function fakeLocks() {
+  const held = new Set<string>()
+  return {
+    held,
+    request: async (name: string, a: unknown, b?: unknown) => {
+      const opts = (typeof a === 'function' ? {} : a) as { ifAvailable?: boolean }
+      const cb = (typeof a === 'function' ? a : b) as (lock: { name: string } | null) => unknown
+      if (held.has(name)) {
+        if (opts.ifAvailable) return cb(null)
+        return new Promise(() => undefined) // a real queue is not needed here
+      }
+      held.add(name)
+      try {
+        return await cb({ name })
+      } finally {
+        held.delete(name)
+      }
+    },
+  }
+}
+let locks = fakeLocks()
+/** Another tab holding the bell claim (its audio clock is running and has the bell). */
+const otherTabClaims = (key: string) => void locks.request(`pokefocus-end-bell:${key}`, () => new Promise(() => undefined))
 
 beforeEach(async () => {
   bells.length = 0
+  played.length = 0
+  audioState = 'running'
+  locks = fakeLocks()
+  vi.stubGlobal('navigator', { locks })
   cancelSessionEnd()
   server.reset()
   usePrefs.setState((s) => ({ dev: { ...s.dev, anchor: null, rate: 1, seed: 'test', rngCounter: 0 } }))
@@ -100,5 +146,90 @@ describe('end-of-session bell when audio starts running (reload, then a tap)', (
     await useGame.getState().pause()
     syncSessionEndToAudio(true)
     expect(bells).toHaveLength(0)
+  })
+})
+
+describe('one end sound across tabs (QA R-03)', () => {
+  const claimOf = (key: string) => `pokefocus-end-bell:${key}`
+
+  async function startSession() {
+    await useGame.getState().start(25)
+    return useGame.getState().timer!
+  }
+
+  it('the leader stays silent when the tab that started the session rings the bell', async () => {
+    const timer = await startSession()
+    otherTabClaims(timer.sessionId) // tab B (not the leader) scheduled the bell on a running clock
+    await chimeUnlessOtherTabRings(timer.sessionId) // the leader tab A at the end
+    expect(played).toEqual([])
+  })
+
+  it('the leader chimes when no other tab has a bell (reload, or the starter never unlocked audio)', async () => {
+    const timer = await startSession()
+    await chimeUnlessOtherTabRings(timer.sessionId)
+    expect(played).toEqual(['sessionEnd'])
+  })
+
+  it('the leader chimes when the other tab closed (its lock is released)', async () => {
+    const timer = await startSession()
+    otherTabClaims(timer.sessionId)
+    locks.held.clear() // tab B closed
+    await chimeUnlessOtherTabRings(timer.sessionId)
+    expect(played).toEqual(['sessionEnd'])
+  })
+
+  it('a tab with its own bell on the audio clock does not chime on top of it', async () => {
+    const timer = await startSession()
+    scheduleSessionEnd(timer.sessionId, timer.endsAt)
+    await chimeUnlessOtherTabRings(timer.sessionId)
+    expect(played).toEqual([])
+  })
+
+  it('a bell on a running clock claims the session; cancelling gives the claim back', async () => {
+    const timer = await startSession()
+    scheduleSessionEnd(timer.sessionId, timer.endsAt)
+    await Promise.resolve()
+    expect(locks.held.has(claimOf(timer.sessionId))).toBe(true)
+    cancelSessionEnd()
+    await Promise.resolve()
+    expect(locks.held.has(claimOf(timer.sessionId))).toBe(false)
+  })
+
+  it('a bell on a suspended clock does not claim (the leader must still chime)', async () => {
+    audioState = 'suspended'
+    const timer = await startSession()
+    scheduleSessionEnd(timer.sessionId, timer.endsAt)
+    await Promise.resolve()
+    expect(locks.held.size).toBe(0)
+    // The tap that unlocks audio re-times the bell and claims the session.
+    audioState = 'running'
+    syncSessionEndToAudio(false)
+    await Promise.resolve()
+    expect(locks.held.has(claimOf(timer.sessionId))).toBe(true)
+  })
+
+  it('dropBellClaim lets the leader chime when the context stops running', async () => {
+    const timer = await startSession()
+    scheduleSessionEnd(timer.sessionId, timer.endsAt)
+    await Promise.resolve()
+    audioState = 'suspended'
+    dropBellClaim()
+    await Promise.resolve()
+    expect(locks.held.size).toBe(0)
+  })
+
+  it('a single tab (leader that started the session) rings exactly once', async () => {
+    const timer = await startSession()
+    scheduleSessionEnd(timer.sessionId, timer.endsAt)
+    await chimeUnlessOtherTabRings(timer.sessionId)
+    expect(live()).toHaveLength(1)
+    expect(played).toEqual([])
+  })
+
+  it('without Web Locks the leader chimes as before', async () => {
+    vi.stubGlobal('navigator', {})
+    const timer = await startSession()
+    await chimeUnlessOtherTabRings(timer.sessionId)
+    expect(played).toEqual(['sessionEnd'])
   })
 })

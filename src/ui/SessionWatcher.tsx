@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { audio } from '../audio'
 import { setHintsSuppressed } from './hints'
 import { chime, electLeader, isLeaderTab, notify } from './lib/notify'
-import { resyncSessionEnd, sessionEndScheduled, syncSessionEndToAudio } from './lib/sound'
+import { chimeUnlessOtherTabRings, dropBellClaim, resyncSessionEnd, syncSessionEndToAudio } from './lib/sound'
 import { onTick } from './store/clock'
 import { phaseOf, timerOf, useGame } from './store/game'
 import { now, usePrefs } from './store/prefs'
@@ -14,8 +14,8 @@ const breaksNotified = new Set<string>()
  * Background duties, no UI:
  * - suppress hints while a focus session runs;
  * - when the timer reaches 0, the leader tab notifies once (persisted flag),
- *   plays the `sessionEnd` bells (unless already scheduled on the audio clock
- *   at start) and changes the tab title;
+ *   plays the `sessionEnd` bells (unless this tab, or another live tab, already
+ *   has them on the audio clock: one sound across tabs) and changes the tab title;
  * - when a pomodoro break ends, the same signals (once per break);
  * - when the audio context starts running (first gesture after a reload, the
  *   "tap to turn sound on" chip), put the end bell on the audio clock so it
@@ -33,7 +33,7 @@ export function SessionWatcher() {
       const timer = timerOf(s)
       if ((phase === 'claim' || phase === 'late') && timer && !timer.notified && isLeaderTab()) {
         void s.markNotified()
-        if (!sessionEndScheduled(timer.sessionId)) chime()
+        void chimeUnlessOtherTabRings(timer.sessionId)
         notify(t('notify.doneTitle'), t('notify.doneBody'))
         if (document.hidden) document.title = t('notify.tabTitle')
       }
@@ -55,6 +55,7 @@ export function SessionWatcher() {
     const offAudio = audio.subscribe(() => {
       const st = audio.getSnapshot().state
       if (st === 'running' && audioState !== 'running') syncSessionEndToAudio(isLeaderTab())
+      else if (st !== 'running' && audioState === 'running') dropBellClaim()
       audioState = st
     })
     return () => {

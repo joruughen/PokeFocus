@@ -135,6 +135,14 @@ const locked = useSoundLocked() // sound on, but the context is not running yet
   `SessionWatcher` then calls `syncSessionEndToAudio()` (re-times a bell
   scheduled on a frozen clock, or the leader tab schedules it). `init()` also
   resumes Safari's `interrupted` state.
+- **One end sound across tabs** (QA R-03): the tab that has the end bell on a
+  *running* audio clock holds a Web Lock `pokefocus-end-bell:<sessionId>`
+  (`scheduleSessionEnd`; released on cancel, when the context stops running, or
+  when the tab closes). The leader tab, at the end, calls
+  `chimeUnlessOtherTabRings`: it stays silent if it has its own bell or the lock
+  is held by another tab, otherwise it chimes. A bell on a suspended context never
+  claims, so the unlocked tab is the one that sounds. Without Web Locks the leader
+  chimes as before.
 - **Microphone in a hidden tab** (`src/ui/lib/mic/monitor.ts`, its own
   AudioContext, never connected to the speakers): frames are read every 100 ms
   from the same Worker tick source (`workerTickSource`), so a 2 s window still
