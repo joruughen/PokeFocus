@@ -8,6 +8,8 @@ export interface StageTeamMember {
   shiny?: boolean
   /** Accessible name (the species name). */
   name: string
+  /** Faded sprite (asleep during the session). */
+  faded?: boolean
 }
 
 export interface StageTeamProps {
@@ -38,7 +40,7 @@ export function StageTeam({ members, night = false, bob = true, dim = false, cla
             scale={2}
             flip
             alt={m.name}
-            className={cx('relative mb-3', bob && 'motion-safe:animate-bob', dim && 'brightness-90')}
+            className={cx('relative mb-3', bob && 'motion-safe:animate-bob', dim && 'brightness-90', m.faded && 'opacity-60')}
             style={bob ? { animationDelay: `${i * 0.2}s`, animationDuration: '0.7s' } : undefined}
           />
         </div>
