@@ -362,7 +362,7 @@ describe('ContentService integration', () => {
     ])
     expect((await h.deps.content.current(now)).ctx.events).toEqual([])
     // the hash of the running event still resolves (sessions pinned to it)
-    expect((await h.deps.content.byHash(started))?.ctx.events.map((e) => e.id)).toEqual([id])
+    expect((await h.deps.content.byHash(started!))?.ctx.events.map((e) => e.id)).toEqual([id])
   })
 
   it('publishing an event with own items is announced at once (their names are known from then on)', async () => {
