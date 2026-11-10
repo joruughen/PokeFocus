@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MAINTENANCE_MAX_MS, MAINTENANCE_NOTE_MAX, type AdminMaintenanceItem } from '../../../game/protocol'
 import { adminApi, isApiError } from '../../api'
@@ -9,6 +9,8 @@ import { formatWindow, fromLocalInput, toLocalInput } from '../../lib/maintenanc
 import { MaintenanceNoticeBar } from '../../MaintenanceBanner'
 import { useAnnouncements } from '../../store/announcements'
 import { useAuth } from '../../store/auth'
+
+const MetricsPanel = lazy(() => import('./metrics/MetricsPanel'))
 
 const TOKEN_KEY = 'pokefocus:adminToken'
 const HOUR = 3_600_000
@@ -51,6 +53,8 @@ function nextHour(now: number): number {
 export default function Admin() {
   const { t } = useTranslation()
   const isAdmin = useAuth((s) => s.user?.role === 'admin')
+  // Metrics: support and admin accounts (session cookie), whatever the maintenance token says.
+  const isStaff = useAuth((s) => s.user?.role === 'admin' || s.user?.role === 'support')
   const [token, setToken] = useState(loadToken)
   const [unlocked, setUnlocked] = useState(false)
   const [items, setItems] = useState<AdminMaintenanceItem[]>([])
@@ -103,6 +107,12 @@ export default function Admin() {
         <h1 className="text-3xl">{t('admin.title')}</h1>
         <p className="max-w-[60ch] text-mist-300">{t('admin.intro')}</p>
       </header>
+
+      {isStaff && (
+        <Suspense fallback={null}>
+          <MetricsPanel />
+        </Suspense>
+      )}
 
       {!unlocked ? (
         <Panel title={t('admin.access.title')}>

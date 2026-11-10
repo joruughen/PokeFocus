@@ -8,6 +8,8 @@ import {
   type ActionResponse,
   type AdminMaintenanceItem,
   type AdminMaintenanceResponse,
+  type AdminMetricsGranularity,
+  type AdminMetricsResponse,
   type AnnouncementsResponse,
   type AuthSessionInfo,
   type FriendSummary,
@@ -105,6 +107,14 @@ const bearer = (token: string) => (token ? { Authorization: `Bearer ${token}` } 
  * sign the player out, hence `allow401` on every call.
  */
 export const adminApi = {
+  /** Metrics for support/admin accounts (session cookie only: no token). */
+  metrics: (q: { from?: number; to?: number; granularity?: AdminMetricsGranularity }) => {
+    const p = new URLSearchParams()
+    if (q.from !== undefined) p.set('from', String(q.from))
+    if (q.to !== undefined) p.set('to', String(q.to))
+    if (q.granularity) p.set('granularity', q.granularity)
+    return api.get<AdminMetricsResponse>(`/admin/metrics?${p.toString()}`)
+  },
   list: (token: string) => api.get<AdminMaintenanceResponse>('/admin/maintenance', { headers: bearer(token), allow401: true }),
   create: (token: string, body: MaintenanceCreateRequest) =>
     api.post<{ item: AdminMaintenanceItem }>('/admin/maintenance', body, { headers: bearer(token), allow401: true }),

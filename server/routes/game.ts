@@ -10,6 +10,7 @@ import { contentForAction } from '../content/service'
 import { activeStudySessions, leagueScores, playerDocs } from '../db/schema'
 import { claimOverlap, publishGroupEvents, syncGroupMembership, type PendingGroupEvent } from '../groups'
 import { ApiError, gameTime, readBody, requireAuth, type AppEnv, type Ctx, type Deps } from '../http'
+import { logSession } from '../session-log'
 import { asGameAction, gameActionBody } from '../validation'
 
 /** Fresh RNG for an action: x-dev-seed only with DEV_TOOLS=1. */
@@ -51,6 +52,7 @@ export async function runGameAction(
   if (!r.ok) return r
   if (action.type === 'start' && r.doc.player?.activeSession?.contentHash) await deps.content.persist(tx, content)
   await syncActiveSession(tx, user.id, before, r.doc)
+  await logSession(tx, user.id, action.type, before, r.doc, { contentHash: content.hash })
   const groupEvents = await syncGroupMembership(tx, user.id, before, r.doc, action.type, opts.now, opts.viaGroup ?? false)
   if (action.type === 'resetAll') await tx.delete(leagueScores).where(eq(leagueScores.userId, user.id))
   else await syncLeagueScores(tx, user.id, before, r.doc, deps.clock())

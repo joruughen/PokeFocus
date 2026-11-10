@@ -2264,6 +2264,74 @@
       "endBeforeStart": "The end must be after the start.",
       "endInPast": "The end is already in the past.",
       "tooLong": "A window can last 14 days at most."
+    },
+    "metrics": {
+      "title": "Metrics",
+      "intro": "How the game is being played: active players, sessions, minutes, Focus and rare finds. Totals only; no player is identified. Days and weeks are in UTC.",
+      "range": {
+        "label": "Period",
+        "d7": "7 days",
+        "d28": "28 days",
+        "w12": "12 weeks"
+      },
+      "loading": "Loading metrics...",
+      "retry": "Try again",
+      "empty": "No sessions in this period yet.",
+      "errors": {
+        "forbidden": "Your account cannot see metrics.",
+        "range_too_large": "That period is too long.",
+        "invalid_body": "That period is not valid."
+      },
+      "unit": {
+        "day": "day",
+        "week": "week"
+      },
+      "cards": {
+        "players": "Active players",
+        "sessions": "Sessions",
+        "hours": "Hours studied",
+        "perPlayer": "Sessions per player",
+        "catchesPerSession": "Catches per session",
+        "shiniesPer100": "Shinies per 100 sessions",
+        "legendariesPer100": "Legendaries per 100 sessions"
+      },
+      "charts": {
+        "players": "Active players per {{unit}}",
+        "sessions": "Sessions per {{unit}}",
+        "minutes": "Minutes studied per {{unit}}",
+        "playersLabel": "Bar chart: active players per {{unit}}, from {{from}} to {{to}}",
+        "sessionsLabel": "Bar chart: sessions per {{unit}}, from {{from}} to {{to}}",
+        "minutesLabel": "Bar chart: minutes studied per {{unit}}, from {{from}} to {{to}}",
+        "tip": "{{start}}: {{value}}"
+      },
+      "focus": {
+        "title": "Focus split",
+        "body": "Share of sessions by the Focus they earned.",
+        "full": "Full (1.0 or more)",
+        "mid": "Between 0.75 and 1",
+        "low": "Late claim (under 0.75)",
+        "share": "{{count}} sessions ({{pct}})"
+      },
+      "retention": {
+        "title": "Retention",
+        "body": "Of the players active in the previous {{unit}}, the share who played again in this one.",
+        "none": "Not enough data yet.",
+        "value": "{{pct}} ({{returned}} of {{prev}})",
+        "label": "Bar chart: share of returning players per {{unit}}, from {{from}} to {{to}}"
+      },
+      "table": {
+        "summary": "Data table",
+        "caption": "Metrics per {{unit}}",
+        "start": "Starts",
+        "players": "Players",
+        "sessions": "Sessions",
+        "minutes": "Minutes",
+        "catches": "Catches",
+        "shinies": "Shinies",
+        "legendaries": "Legendaries",
+        "retention": "Retention"
+      },
+      "note": "A session counts when it is claimed. Shinies and legendaries are those that appeared in the session's waves; catches follow the ball throws afterwards."
     }
   },
   "nick": {
