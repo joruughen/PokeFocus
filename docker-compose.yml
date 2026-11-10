@@ -37,6 +37,9 @@ services:
       # Back it up apart from the database; losing it locks every account out.
       PASSWORD_PEPPER: ${PASSWORD_PEPPER:?Set PASSWORD_PEPPER in .env (generate one with npm run pepper)}
       PASSWORD_PEPPER_PREVIOUS: ${PASSWORD_PEPPER_PREVIOUS:-}
+      # Event images (admin uploads, re-encoded by sharp): the `uploads` volume. Back it up together with
+      # the database (pg_dump alone does not contain the images).
+      UPLOADS_DIR: /app/.data/uploads
       # Emails promoted to role admin at start-up (the accounts must exist).
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       # Bearer token of the admin API (maintenance notices); empty = admin API off. Min. 24 chars.
@@ -45,6 +48,8 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+    volumes:
+      - uploads:/app/.data/uploads
     ports:
       # Host side: APP_BIND (default 127.0.0.1 = only this machine; put an HTTPS proxy
       # such as Caddy or `tailscale serve` in front) and APP_PORT (default 8787).
@@ -52,3 +57,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

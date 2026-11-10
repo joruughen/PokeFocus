@@ -674,7 +674,7 @@ export interface AdminPlayerDetail {
  *   POST   /api/admin/content/drafts/:id/validate        → AdminContentValidateResponse     (admin; full, with the engine smoke test)
  *   POST   /api/admin/content/drafts/:id/publish {effectiveAt?, confirm?, note?} → AdminContentVersionResponse (admin + sudo)
  *   POST   /api/admin/content/versions/:id/rollback {confirm?, note?}    → 201 AdminContentVersionResponse (admin + sudo)
- *   GET    /api/admin/content/spawn-preview?versionId&hour&weather&trainerLevel → AdminSpawnPreview (admin)
+ *   GET    /api/admin/content/spawn-preview?versionId&eventId&hour&weather&trainerLevel → AdminSpawnPreview (admin; eventId = with that live event on top, drafts too)
  *
  * Every mutation is audited in its own transaction (`content.draft.create|update|delete`, `content.publish`,
  * `content.schedule`, `content.rollback`). Drafts never reach `/api/content`: only published versions do.

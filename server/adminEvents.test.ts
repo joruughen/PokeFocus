@@ -8,6 +8,7 @@ import { asc, eq } from 'drizzle-orm'
 import type {
   AdminEventResponse,
   AdminEventsResponse,
+  AdminSpawnPreview,
   AdminUploadResponse,
   AdminUploadsResponse,
   EventOverlayBody,
@@ -392,6 +393,22 @@ describe('ContentService integration', () => {
     now = T0 + 2 * HOUR + 5 * 60_000 // past the service's reload period: it queries again
     const hit = await database.db.transaction(async (tx) => (await h.deps.content.current(now, tx)).ctx.events.map((e) => e.id))
     expect(hit).toEqual([id])
+  })
+
+  it('the admin spawn preview can include any event, even a draft', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithEvent(h, { overlay: overlay({ featured: [{ species: 'pikachu', weightMult: 3 }] }) })
+    const share = async (q: string) => {
+      const r = await h.call('GET', `/api/admin/content/spawn-preview?${q}`, { cookie: a.cookie })
+      expect(r.status, JSON.stringify(r.json)).toBe(200)
+      return (r.json as unknown as AdminSpawnPreview).species.find((s) => s.slug === 'pikachu')
+    }
+    const without = await share('hour=12&weather=clear&trainerLevel=10')
+    const withEvent = await share(`hour=12&weather=clear&trainerLevel=10&eventId=${id}`)
+    expect(withEvent!.weightMult).toBe(3)
+    expect(withEvent!.probability).toBeGreaterThan(without?.probability ?? 0)
+    expect((await h.call('GET', `/api/admin/content/spawn-preview?eventId=33333333-3333-4333-8333-333333333333`, { cookie: a.cookie })).status).toBe(404)
+    expect((await h.call('GET', `/api/admin/content/spawn-preview?eventId=nope`, { cookie: a.cookie })).status).toBe(400)
   })
 
   it('overlapping events resolve together, in (startsAt, id) order', async () => {
