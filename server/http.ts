@@ -12,7 +12,7 @@ import type { RateLimiter } from './rate-limit'
 import type { FetchLike, WeatherService } from './weather'
 import type { PushService } from './push'
 import { hashToken, looksLikeToken, SESSION_COOKIE, SESSION_RENEW_AFTER_MS, SESSION_TTL_MS } from './auth/tokens'
-import { DEV_NOW_HEADER, type PublicUser } from '../src/game/protocol'
+import { DEV_NOW_HEADER, type PublicUser, type UserRole } from '../src/game/protocol'
 
 export interface Deps {
   env: Env
@@ -33,6 +33,10 @@ export type AppEnv = {
   Variables: {
     user: UserRow
     session: AuthSessionRow
+    /** Admin routes: client IP (for the audit log). */
+    ip: string
+    /** Admin routes: 'token' when the legacy ADMIN_TOKEN authenticated the request (no `user`). */
+    actorLabel: string
   }
 }
 
@@ -95,6 +99,7 @@ export function toPublicUser(u: UserRow): PublicUser {
     nameChangedAt: u.trainerNameChangedAt?.getTime() ?? null,
     countryChangedAt: u.countryChangedAt?.getTime() ?? null,
     anonymousRankings: u.anonymousRankings,
+    role: u.role,
   }
 }
 
@@ -142,6 +147,25 @@ export function requireAuth(deps: Deps): MiddlewareHandler<AppEnv> {
     }
     c.set('user', row.user)
     c.set('session', session)
+    await next()
+  }
+}
+
+const ROLE_RANK: Record<UserRole, number> = { player: 0, support: 1, admin: 2 }
+
+/** After `requireAuth`: 403 `forbidden` unless the user's role is at least `min`. */
+export function requireRole(min: 'support' | 'admin'): MiddlewareHandler<AppEnv> {
+  return async (c, next) => {
+    if (ROLE_RANK[c.get('user').role] < ROLE_RANK[min]) throw new ApiError(403, 'forbidden')
+    await next()
+  }
+}
+
+/** After `requireAuth`: sensitive admin actions need the sudo mode (`POST /api/admin/reauth`), else 403 `elevation_required`. */
+export function requireElevated(deps: Deps): MiddlewareHandler<AppEnv> {
+  return async (c, next) => {
+    const until = c.get('session').elevatedUntil
+    if (!until || until.getTime() <= deps.clock()) throw new ApiError(403, 'elevation_required')
     await next()
   }
 }

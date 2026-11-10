@@ -18,7 +18,11 @@ export const users = pgTable('users', {
   countryChangedAt: ts('country_changed_at'),
   /** Privacy: hide the name in the global and country leaderboards. */
   anonymousRankings: boolean('anonymous_rankings').notNull().default(false),
-})
+  /** Admin panel access (docs/admin-plan.md §4): player < support < admin. */
+  role: text('role', { enum: ['player', 'support', 'admin'] }).notNull().default('player'),
+},
+(t) => [check('users_role_check', sql`${t.role} in ('player', 'support', 'admin')`)],
+)
 
 export const authSessions = pgTable(
   'auth_sessions',
@@ -32,6 +36,8 @@ export const authSessions = pgTable(
     lastSeenAt: ts('last_seen_at').notNull().defaultNow(),
     expiresAt: ts('expires_at').notNull(),
     userAgent: text('user_agent'),
+    /** Sudo mode: sensitive admin actions need `elevated_until > now` (POST /api/admin/reauth). */
+    elevatedUntil: ts('elevated_until'),
   },
   (t) => [index('auth_sessions_user_idx').on(t.userId), index('auth_sessions_expires_idx').on(t.expiresAt)],
 )
@@ -214,6 +220,29 @@ export const pushSent = pgTable(
     attempts: integer('attempts').notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.userId, t.sessionId, t.kind] })],
+)
+
+/**
+ * Append-only audit log of admin mutations, written in the same transaction as the
+ * change (server/admin/audit.ts). `actor_label` is 'token' for the legacy ADMIN_TOKEN
+ * and 'system' for the start-up promotion; `actor_id` goes null if the user is deleted.
+ */
+export const adminAudit = pgTable(
+  'admin_audit',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    actorId: uuid('actor_id').references(() => users.id, { onDelete: 'set null' }),
+    actorLabel: text('actor_label'),
+    action: text('action').notNull(),
+    targetType: text('target_type'),
+    targetId: text('target_id'),
+    before: jsonb('before'),
+    after: jsonb('after'),
+    note: text('note'),
+    ip: text('ip'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('admin_audit_created_idx').on(t.createdAt.desc()), index('admin_audit_target_idx').on(t.targetType, t.targetId)],
 )
 
 export type UserRow = typeof users.$inferSelect

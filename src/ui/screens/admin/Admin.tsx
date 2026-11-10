@@ -8,6 +8,7 @@ import { browserTimeZone } from '../../lib/format'
 import { formatWindow, fromLocalInput, toLocalInput } from '../../lib/maintenance'
 import { MaintenanceNoticeBar } from '../../MaintenanceBanner'
 import { useAnnouncements } from '../../store/announcements'
+import { useAuth } from '../../store/auth'
 
 const TOKEN_KEY = 'pokefocus:adminToken'
 const HOUR = 3_600_000
@@ -44,11 +45,12 @@ function nextHour(now: number): number {
 
 /**
  * Admin (`#/admin`, not in the menu): schedule and remove maintenance notices.
- * Guarded by the server's ADMIN_TOKEN, not by the player account. The notice
+ * Guarded by the account role (admin) or, as a deprecated fallback, the server's ADMIN_TOKEN. The notice
  * only informs players (a banner); it does not stop the server.
  */
 export default function Admin() {
   const { t } = useTranslation()
+  const isAdmin = useAuth((s) => s.user?.role === 'admin')
   const [token, setToken] = useState(loadToken)
   const [unlocked, setUnlocked] = useState(false)
   const [items, setItems] = useState<AdminMaintenanceItem[]>([])
@@ -73,8 +75,13 @@ export default function Admin() {
     }
   }
 
-  // A token kept from earlier in this tab: try it straight away.
+  // An admin account uses its own session (no token); otherwise try a token kept
+  // from earlier in this tab straight away.
   useEffect(() => {
+    if (isAdmin) {
+      void unlock('')
+      return
+    }
     const saved = loadToken()
     if (saved) void unlock(saved)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on open
