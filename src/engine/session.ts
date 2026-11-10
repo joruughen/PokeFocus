@@ -56,6 +56,7 @@ import {
 } from './stats'
 import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from './time'
 import { toManualWave } from './damage'
+import { rollEventDrops } from './spawn'
 import { blockIndexAt, damageFromHits, fullBlocks, hpFractionAfter, rollWaveSize, rollWild, waveCount } from './waves'
 
 // ---------------------------------------------------------------------------
@@ -463,6 +464,8 @@ export interface SessionResult {
   totalPoints: number
   dust: number
   pokeBalls: number
+  /** Items dropped by the live events of the session's content (`rollEventDrops`); absent = none. */
+  eventItems?: Record<string, number>
   /** Catch energy per type for each 25-min block (= wave). */
   energyByBlock: Partial<Record<TypeSlug, number>>[]
   waves: Wave[]
@@ -1110,6 +1113,7 @@ export function completeSession(
   const waveSizes: number[] = []
   let roamingAfter = state.roaming
   const appeared = new Set<string>()
+  const spawnEnv = { localHour: local.hour, weather }
   if (rewarded && nWaves > 0) {
     for (let i = 0; i < nWaves; i++) {
       const blockEnd = (i + 1) * cfg.session.waveMinutes * 60
@@ -1124,11 +1128,11 @@ export function completeSession(
           if (wilds.length >= size) break
           if (chance(rng, cfg.encounters.roamingChance)) {
             appeared.add(r.speciesSlug)
-            wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, hits: [], forceSpecies: r.speciesSlug, isRoaming: true }, ctx))
+            wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, hits: [], forceSpecies: r.speciesSlug, isRoaming: true, env: spawnEnv }, ctx))
           }
         }
       }
-      while (wilds.length < size) wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, hits: [] }, ctx))
+      while (wilds.length < size) wilds.push(rollWild(rng, { waveIndex: i, gen, activeConditionTypes: activeTypes, contributions, hits: [], env: spawnEnv }, ctx))
       // Damage (GDD §11.3): each action of the block hits one wild of this wave.
       const weights = cfg.capture.hitTargeting === 'maxHp' ? wilds.map((w) => w.maxHp) : wilds.map(() => 1)
       const hits = assignHits(blockActions[i] as BlockAction[], weights, rng, effFloorsOf)
@@ -1150,6 +1154,9 @@ export function completeSession(
       .map((r) => ({ ...r, sessionsLeft: r.sessionsLeft - 1 }))
       .filter((r) => r.sessionsLeft > 0)
   }
+
+  // Event drops (live events): derived RNG per event, the main one is never touched.
+  const eventItems = rollEventDrops(session.id, waves.length, ctx)
 
   const energyByBlock = contrib.map((m) => {
     const out: Partial<Record<TypeSlug, number>> = {}
@@ -1181,6 +1188,7 @@ export function completeSession(
     dust: rewarded ? Math.round(cfg.rewards.dustPerMinute * minutes * focus * rewardFactor) : 0,
     // Per-session Poké Balls are for completed sessions: a cancelled one would double them with cancel + restart (GDD §3.4).
     pokeBalls: rewarded && !cancelled ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
+    ...(Object.keys(eventItems).length > 0 ? { eventItems } : {}),
     energyByBlock,
     waves,
     charges: rewarded ? charges : [],
@@ -1264,7 +1272,8 @@ export function applySessionResult(
     }
   }
   const converted = result.waves.filter((w) => w.studyBall === 'converted').length
-  const inventory = { ...s.inventory, 'poke-ball': (s.inventory['poke-ball'] ?? 0) + result.pokeBalls + converted }
+  const inventory: Record<string, number> = { ...s.inventory, 'poke-ball': (s.inventory['poke-ball'] ?? 0) + result.pokeBalls + converted }
+  for (const [item, n] of Object.entries(result.eventItems ?? {})) inventory[item] = (inventory[item] ?? 0) + n
 
   // League
   const prevWeek = s.league.weeklyPoints[result.weekKey] ?? 0

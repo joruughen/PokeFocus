@@ -3,50 +3,19 @@
  * wild-level band, the non-legendary pool must keep at least
  * `MIN_SPAWN_SPECIES` species with weight > 0.
  *
- * `spawnRuleMult` mirrors the rule E7 will wire into `waves.ts`
- * (`spawnMultiplier` in src/engine/spawn.ts): 0 when the species is disabled,
- * outside its hours/weather, or below its trainer level; else `weightMult`.
- * A weather-restricted species does not appear when the weather is unknown.
- * When E7 lands, this should import the engine helper instead.
+ * The spawn rule is the engine's (`spawnRuleMult` in src/engine/spawn.ts, the
+ * one `waves.ts` applies): 0 when the species is disabled, outside its
+ * hours/weather (unknown weather included), or below its trainer level; else
+ * `weightMult`. Re-exported here for the validator and its tests.
  */
 import type { EngineContext } from '../../engine/context'
 import { isLegendarySpecies } from '../../engine/individual'
 import { minWildLevel } from '../../engine/waves'
-import type { ResolvedSpawn, SpawnWeather } from '../../engine/content'
-import type { WeatherInput } from '../../engine/state'
+import type { SpawnWeather } from '../../engine/content'
+import { spawnRuleMult, type SpawnEnv } from '../../engine/spawn'
 import { MIN_SPAWN_SPECIES } from './limits'
 
-export interface SpawnEnv {
-  /** Local hour 0–23. */
-  hour: number
-  /** null = unknown weather. */
-  weather: SpawnWeather | null
-  trainerLevel: number
-}
-
-/** The weather tag of a session ('clear' = known and neither rain, sun nor snow). */
-export function spawnWeatherOf(w: WeatherInput | null): SpawnWeather | null {
-  if (!w) return null
-  if (w.rain) return 'rain'
-  if (w.snow) return 'snow'
-  if (w.sun) return 'sun'
-  return 'clear'
-}
-
-/** Is `hour` inside `[from, to)` (wrapping midnight when from > to)? */
-export function hourInWindow(hour: number, [from, to]: readonly [number, number]): boolean {
-  return from < to ? hour >= from && hour < to : hour >= from || hour < to
-}
-
-/** Spawn weight multiplier of a rule (undefined rule = 1). */
-export function spawnRuleMult(rule: ResolvedSpawn | undefined, env: SpawnEnv): number {
-  if (!rule) return 1
-  if (!rule.enabled) return 0
-  if (rule.hours && !rule.hours.some((w) => hourInWindow(env.hour, w))) return 0
-  if (rule.weather && (env.weather === null || !rule.weather.includes(env.weather))) return 0
-  if (rule.minTrainerLevel !== undefined && env.trainerLevel < rule.minTrainerLevel) return 0
-  return rule.weightMult
-}
+export { hourInWindow, spawnRuleMult, spawnWeatherOf, type SpawnEnv } from '../../engine/spawn'
 
 export const COVERAGE_WEATHERS: readonly (SpawnWeather | null)[] = ['rain', 'sun', 'snow', 'clear', null]
 

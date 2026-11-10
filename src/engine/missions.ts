@@ -3,11 +3,13 @@
  * `custom-missions.json` (deterministic per player and local day/week), plus
  * Pokédex milestones. Progress is recorded by the reducers that produce the
  * events (applySessionResult, throwBall, evolvePokemon); rewards are claimed
- * with `claimMission`.
+ * with `claimMission`. Live events add their own fixed missions (group
+ * `event`, ids `e:<eventId>:<defId>`), kept until `endsAt + EVENT_MISSION_GRACE_MS`.
  */
 import { defaultContext, type EngineContext } from './context'
 import type { LocalizedText, TypeSlug } from './data-types'
 import { isLegendarySpecies } from './individual'
+import type { EventMissionDef } from './content'
 import type { MissionKind } from './mission-kinds'
 import { createRng, weightedPick, type Rng } from './rng'
 import { err, ok, type PlayerState, type Result } from './state'
@@ -17,7 +19,10 @@ import { addDays, dayKeyOf, startOfLocalDay, weekKeyOf } from './time'
 // Content (custom-missions.json)
 // ---------------------------------------------------------------------------
 
-export type MissionPeriod = 'daily' | 'weekly'
+/** `event`: the fixed missions of a live event (`EventOverlay.missions`), never drawn from the pool. */
+export type MissionPeriod = 'daily' | 'weekly' | 'event'
+/** The periods drawn from the pool. */
+export type DrawnPeriod = 'daily' | 'weekly'
 // `MissionKind` / `MISSION_KINDS` live in './mission-kinds' (a leaf module) so
 // context.ts can import them without a runtime cycle; re-exported here to keep
 // the public API unchanged.
@@ -94,11 +99,31 @@ export interface MissionSlot {
   days?: string[]
 }
 
+/** What an event mission slot keeps of its def (the event may end, or change, before it is claimed). */
+export type EventMissionInfo = Pick<MissionDef, 'kind' | 'minMinutes' | 'title' | 'description'>
+
+export interface EventMissionSlot extends MissionSlot {
+  def: EventMissionInfo
+}
+
+/** The missions of one live event (`MissionsState.event[eventId]`). */
+export interface EventMissionsGroup {
+  slug: string
+  startsAt: number
+  endsAt: number
+  slots: EventMissionSlot[]
+}
+
+/** Event missions stay visible and claimable this long after the event ends. */
+export const EVENT_MISSION_GRACE_MS = 7 * 24 * 60 * 60 * 1000
+
 export interface MissionsState {
   daily: { key: string; slots: MissionSlot[] }
   weekly: { key: string; slots: MissionSlot[] }
   /** Pokédex milestone ids already claimed. */
   pokedexClaimed: string[]
+  /** Live event missions by event id (absent = none ever). */
+  event?: Record<string, EventMissionsGroup>
 }
 
 /** Events that move mission progress (produced inside the reducers). */
@@ -153,7 +178,7 @@ function typeWeights(ctx: EngineContext): [TypeSlug, number][] {
   return [...w.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1))
 }
 
-function generateSlots(state: PlayerState, period: MissionPeriod, key: string, ctx: EngineContext): MissionSlot[] {
+function generateSlots(state: PlayerState, period: DrawnPeriod, key: string, ctx: EngineContext): MissionSlot[] {
   const content = ctx.missions
   const count = period === 'daily' ? content.dailyCount : content.weeklyCount
   const rng = createRng(`${seedOf(state)}|${period}|${key}`)
@@ -188,19 +213,73 @@ export function missionKeys(state: PlayerState, now: number): { daily: string; w
   return { daily: dayKeyOf(now, tz), weekly: weekKeyOf(now, tz) }
 }
 
+/** Slot id of an event mission. */
+export function eventMissionId(eventId: string, defId: string): string {
+  return `e:${eventId}:${defId}`
+}
+
+/** Event mission slot of `def` (catchType 'random' and random rewards drawn from a per-event RNG). */
+function eventSlot(state: PlayerState, eventId: string, def: EventMissionDef, ctx: EngineContext): EventMissionSlot {
+  const rng = createRng(`${seedOf(state)}|event|${eventId}|${def.id}`)
+  let type: TypeSlug | null = null
+  if (def.kind === 'catchType') type = def.type && def.type !== 'random' ? def.type : (weightedPick(rng, typeWeights(ctx), (e) => e[1])?.[0] ?? 'normal')
+  return {
+    id: eventMissionId(eventId, def.id),
+    defId: def.id,
+    target: def.target,
+    progress: 0,
+    type,
+    reward: resolveReward(def.rewards, state.trainer.level, type, rng),
+    claimed: false,
+    ...(def.kind === 'studyDays' ? { days: [] } : {}),
+    def: { kind: def.kind, ...(def.minMinutes !== undefined && { minMinutes: def.minMinutes }), title: def.title, description: def.description },
+  }
+}
+
+/**
+ * Event mission groups at `now`: groups past `endsAt + EVENT_MISSION_GRACE_MS`
+ * are dropped; each event of `ctx.events` (the events active when the content
+ * was resolved, so a pinned session keeps them) gets a slot for every mission
+ * the trainer level allows that it does not have yet. Same object if nothing changed.
+ */
+function refreshEventMissions(
+  state: PlayerState,
+  cur: Record<string, EventMissionsGroup> | undefined,
+  now: number,
+  ctx: EngineContext,
+): Record<string, EventMissionsGroup> | undefined {
+  let out = cur
+  const edit = (): Record<string, EventMissionsGroup> => (out === cur ? (out = { ...cur }) : (out as Record<string, EventMissionsGroup>))
+  for (const [id, g] of Object.entries(cur ?? {})) if (now >= g.endsAt + EVENT_MISSION_GRACE_MS) delete edit()[id]
+  for (const ev of ctx.events) {
+    if (now >= ev.endsAt + EVENT_MISSION_GRACE_MS) continue
+    const defs = (ev.missions ?? []).filter((d) => state.trainer.level >= (d.minTrainerLevel ?? 1))
+    const g = out?.[ev.id]
+    const missing = defs.filter((d) => !g?.slots.some((x) => x.defId === d.id))
+    if (missing.length === 0) continue
+    const slots = [...(g?.slots ?? []), ...missing.map((d) => eventSlot(state, ev.id, d, ctx))]
+    edit()[ev.id] = { slug: ev.slug, startsAt: ev.startsAt, endsAt: ev.endsAt, slots }
+  }
+  if (out !== cur && out && Object.keys(out).length === 0) return undefined
+  return out
+}
+
 /**
  * Bring the missions to `now`: draws new daily/weekly missions when the local
- * day/week changed (unclaimed missions of past periods are dropped).
+ * day/week changed (unclaimed missions of past periods are dropped) and
+ * updates the live event missions (see `refreshEventMissions`).
  * Returns the same state object if nothing changed.
  */
 export function refreshMissions(state: PlayerState, now: number, ctx: EngineContext = defaultContext()): PlayerState {
   const keys = missionKeys(state, now)
   const cur = state.missions
-  if (cur && cur.daily.key === keys.daily && cur.weekly.key === keys.weekly) return state
+  const event = refreshEventMissions(state, cur?.event, now, ctx)
+  if (cur && cur.daily.key === keys.daily && cur.weekly.key === keys.weekly && event === cur.event) return state
   const missions: MissionsState = {
     daily: cur && cur.daily.key === keys.daily ? cur.daily : { key: keys.daily, slots: generateSlots(state, 'daily', keys.daily, ctx) },
     weekly: cur && cur.weekly.key === keys.weekly ? cur.weekly : { key: keys.weekly, slots: generateSlots(state, 'weekly', keys.weekly, ctx) },
     pokedexClaimed: cur?.pokedexClaimed ?? [],
+    ...(event ? { event } : {}),
   }
   return { ...state, missions }
 }
@@ -213,7 +292,7 @@ function defOf(id: string, ctx: EngineContext): MissionDef | undefined {
   return ctx.missions.pool.find((d) => d.id === id)
 }
 
-function advance(slot: MissionSlot, def: MissionDef, e: MissionEvent): MissionSlot {
+function advance<S extends MissionSlot>(slot: S, def: EventMissionInfo, e: MissionEvent): S {
   if (slot.claimed || slot.progress >= slot.target) return slot
   let inc = 0
   let days = slot.days
@@ -268,7 +347,17 @@ export function recordMissionEvent(state: PlayerState, event: MissionEvent, at: 
       const def = defOf(slot.defId, ctx)
       return def ? advance(slot, def, event) : slot
     })
-  return { ...s, missions: { ...m, daily: { ...m.daily, slots: upd(m.daily.slots) }, weekly: { ...m.weekly, slots: upd(m.weekly.slots) } } }
+  const missions: MissionsState = { ...m, daily: { ...m.daily, slots: upd(m.daily.slots) }, weekly: { ...m.weekly, slots: upd(m.weekly.slots) } }
+  // Event missions move only while their event is in the context (active at the start of the pinned session).
+  if (m.event && ctx.events.length > 0) {
+    const groups = { ...m.event }
+    for (const ev of ctx.events) {
+      const g = groups[ev.id]
+      if (g) groups[ev.id] = { ...g, slots: g.slots.map((slot) => advance(slot, slot.def, event)) }
+    }
+    missions.event = groups
+  }
+  return { ...s, missions }
 }
 
 // ---------------------------------------------------------------------------
@@ -278,6 +367,8 @@ export function recordMissionEvent(state: PlayerState, event: MissionEvent, at: 
 export interface MissionView {
   id: string
   defId: string
+  /** Event missions: the event id. */
+  eventId?: string
   period: MissionPeriod | 'pokedex'
   kind: MissionKind | 'pokedex'
   /** Texts with {n}, {minutes} and {type} already filled in. */
@@ -296,6 +387,8 @@ export interface MissionsView {
   daily: { key: string; endsAt: number; missions: MissionView[] }
   weekly: { key: string; endsAt: number; missions: MissionView[] }
   pokedex: MissionView[]
+  /** Live event missions, one group per event (active ones and those ended less than EVENT_MISSION_GRACE_MS ago), by start. */
+  event: { eventId: string; slug: string; startsAt: number; endsAt: number; active: boolean; missions: MissionView[] }[]
   /** Completed and not yet claimed (badge). */
   claimable: number
 }
@@ -310,13 +403,14 @@ function fill(text: LocalizedText, params: MissionView['params'], ctx: EngineCon
   return { es: f(text.es, 'es'), en: f(text.en, 'en') }
 }
 
-function slotView(slot: MissionSlot, period: MissionPeriod, ctx: EngineContext): MissionView | null {
-  const def = defOf(slot.defId, ctx)
+function slotView(slot: MissionSlot, period: MissionPeriod, ctx: EngineContext, info?: EventMissionInfo, eventId?: string): MissionView | null {
+  const def = info ?? defOf(slot.defId, ctx)
   if (!def) return null
   const params = { n: slot.target, minutes: def.minMinutes ?? null, type: slot.type }
   return {
     id: slot.id,
     defId: slot.defId,
+    ...(eventId !== undefined && { eventId }),
     period,
     kind: def.kind,
     title: fill(def.title, params, ctx),
@@ -363,11 +457,22 @@ export function missionsView(state: PlayerState, now: number, ctx: EngineContext
   const daily = m.daily.slots.map((x) => slotView(x, 'daily', ctx)).filter((x): x is MissionView => x !== null)
   const weekly = m.weekly.slots.map((x) => slotView(x, 'weekly', ctx)).filter((x): x is MissionView => x !== null)
   const pokedex = pokedexView(s, m.pokedexClaimed, ctx)
-  const claimable = [...daily, ...weekly, ...pokedex].filter((x) => x.completed && !x.claimed).length
+  const event = Object.entries(m.event ?? {})
+    .sort(([a, x], [b, y]) => x.startsAt - y.startsAt || (a < b ? -1 : a > b ? 1 : 0))
+    .map(([eventId, g]) => ({
+      eventId,
+      slug: g.slug,
+      startsAt: g.startsAt,
+      endsAt: g.endsAt,
+      active: now >= g.startsAt && now < g.endsAt,
+      missions: g.slots.map((x) => slotView(x, 'event', ctx, x.def, eventId)).filter((x): x is MissionView => x !== null),
+    }))
+  const claimable = [...daily, ...weekly, ...pokedex, ...event.flatMap((g) => g.missions)].filter((x) => x.completed && !x.claimed).length
   return {
     daily: { key: m.daily.key, endsAt: startOfLocalDay(addDays(m.daily.key, 1), tz), missions: daily },
     weekly: { key: m.weekly.key, endsAt: startOfLocalDay(addDays(m.weekly.key, 7), tz), missions: weekly },
     pokedex,
+    event,
     claimable,
   }
 }
@@ -384,8 +489,9 @@ export function grantReward(state: PlayerState, r: MissionReward): PlayerState {
 }
 
 /**
- * Claim a completed mission of the current day/week, or a reached Pokédex
- * milestone. Missions of past periods are gone ('unknown_mission').
+ * Claim a completed mission of the current day/week, a reached Pokédex
+ * milestone, or a completed event mission (`e:<eventId>:<defId>`, until
+ * `endsAt + EVENT_MISSION_GRACE_MS`). Missions of past periods are gone ('unknown_mission').
  */
 export function claimMission(
   state: PlayerState,
@@ -412,6 +518,17 @@ export function claimMission(
     const next = { ...s, missions: { ...m, [period]: { ...group, slots } } }
     return ok({ state: grantReward(next, slot.reward), reward: slot.reward })
   }
+  if (missionId.startsWith('e:') && m.event) {
+    for (const [eventId, g] of Object.entries(m.event)) {
+      const slot = g.slots.find((x) => x.id === missionId)
+      if (!slot) continue
+      if (slot.claimed) return err('already_claimed')
+      if (slot.progress < slot.target) return err('not_completed')
+      const slots = g.slots.map((x) => (x.id === missionId ? { ...x, claimed: true } : x))
+      const next = { ...s, missions: { ...m, event: { ...m.event, [eventId]: { ...g, slots } } } }
+      return ok({ state: grantReward(next, slot.reward), reward: slot.reward })
+    }
+  }
   return err('unknown_mission')
 }
 
@@ -420,7 +537,7 @@ export function claimAllMissions(state: PlayerState, now: number, ctx: EngineCon
   let s = state
   const rewards: { id: string; reward: MissionReward }[] = []
   const v = missionsView(s, now, ctx)
-  for (const x of [...v.daily.missions, ...v.weekly.missions, ...v.pokedex]) {
+  for (const x of [...v.daily.missions, ...v.weekly.missions, ...v.event.flatMap((g) => g.missions), ...v.pokedex]) {
     if (!x.completed || x.claimed) continue
     const r = claimMission(s, x.id, now, ctx)
     if (r.ok) {
