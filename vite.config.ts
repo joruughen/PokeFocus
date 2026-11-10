@@ -30,6 +30,9 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Server tests each load PGlite: with vitest's default (cores - 1 workers) a few
+    // parallel runs exhaust RAM on a 16 GB laptop. Override with VITEST_MAX_WORKERS.
+    maxWorkers: Number(process.env.VITEST_MAX_WORKERS) || 4,
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts', 'server/**/*.test.ts'],
   },
 })

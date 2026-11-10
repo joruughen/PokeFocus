@@ -71,6 +71,21 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 
 **Limpieza pendiente:** los 14 worktrees `.claude/worktrees/agent-*` y `integration-v0.9`, con sus ramas, están fusionados en `main` y sin cambios sin commit. Se pueden borrar con `git worktree remove -f -f …` y `git branch -d …`.
 
+**Tanda en curso (lanzada 2026-11-10, retomada tras un cierre de VS Code).** Cada una está en `.claude/worktrees/agent-<id>` (rama `worktree-agent-<id>`). Al retomar: si tiene commit, revisar y fusionar; si no, ver `git status` en su worktree y continuar.
+
+| id | Tarea | Modelo |
+|---|---|---|
+| `a5c7fc8a9dbfabd02` | **B** globos de Daño/Pasiva/Activable con números + desglose de puntos | Sonnet |
+| `a850ea1a7e778e7a9` | **C** sesiones largas cancelables | Opus |
+| `a208b3cc9b55ab947` | **E1** validación de contenido | Opus |
+| `a55e74fc50a0967ec` | **E3** ContentService y fijado por sesión (migración 0006) | Opus |
+| `ae4d595abe87ddd39` | **E4** cliente en vivo | Sonnet |
+| `a6927b050f4598dcb` | **E11** soporte de jugadores | Sonnet |
+| `a657a34123877188c` | **E12** métricas (`session_log`, migración propia) | Sonnet |
+| `aee0afdc87d389e52` | **QA** visual de v0.9.0 a 390/1280 px (capturas en el scratchpad) | Sonnet |
+
+Al fusionar: E3 y E12 generan migraciones con el mismo número → regenerarlas en serie (`drizzle-kit generate`) desde `schema.ts`. C, E3 y E12 tocan el claim en `server/routes/game.ts`.
+
 **Por revisar de v0.9.0:**
 - **Navegador a 390 px:** sin probar la ventana «¿Qué hay de nuevo?», las oleadas con la Energía del equipo, los motes, los equipos guardados ni la ventana de comparación.
 - **Parálisis:** dormido **o** paralizado = sin contraataque, siempre. El agente quitó `capture.counter.paralysisSkipChance`, que era un 25 %. Confirmar que esa es la regla.
