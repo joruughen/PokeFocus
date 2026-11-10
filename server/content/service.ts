@@ -33,16 +33,21 @@ import type { EventBus } from '../events'
 /** sha256 of the shipped data (src/data/game/meta.json, written by `npm run build:data`). */
 export const BASE_HASH: string = meta.baseHash
 
-/** A published live event as the service sees it (E8 loads them from `live_events`). */
+/** A published live event as the service sees it (loaded from `live_events` by server/content/events.ts). */
 export interface PublishedEvent {
   overlay: EventOverlay
   /** +1 on every published edit (part of the memo key). */
   revision: number
+  /** Archived: never active again, but its items keep their names in the inventory. */
+  retired?: boolean
 }
 
-/** Source of published events (default: none until live_events exists). */
-/** E8: when it reads the DB, it must take the executor too (PGlite: no queries on `db` inside a transaction). */
-export type EventSource = () => Promise<PublishedEvent[]>
+/**
+ * Source of the published (and archived) events. It receives the executor the service is
+ * loading with: inside a transaction it must query through that handle, never `db`
+ * (PGlite has a single connection and would deadlock).
+ */
+export type EventSource = (ex: Db | Tx) => Promise<PublishedEvent[]>
 
 /** A resolved content: what a context was built from, its hash and the context. */
 export interface ResolvedContent extends ResolvedContentInput {
@@ -194,7 +199,7 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
       .from(contentVersions)
       .where(and(eq(contentVersions.status, 'published'), isNotNull(contentVersions.effectiveAt)))
     versions = rows.map((r) => ({ id: r.id, effectiveAt: r.effectiveAt!.getTime() })).sort((a, b) => a.effectiveAt - b.effectiveAt || a.id - b.id)
-    events = await eventSource()
+    events = await eventSource(ex)
     const items: Record<string, ContentItem> = {}
     // Items of every published event (past ones too), so the inventory keeps their names.
     for (const e of [...events].sort((a, b) => a.overlay.startsAt - b.overlay.startsAt || (a.overlay.id < b.overlay.id ? -1 : 1))) Object.assign(items, e.overlay.items ?? {})
@@ -226,7 +231,7 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
     await ensureLoaded(ex)
     let version: VersionMeta | null = null
     for (const v of versions) if (v.effectiveAt <= now) version = v
-    const active = events.filter((e) => e.overlay.startsAt <= now && now < e.overlay.endsAt)
+    const active = events.filter((e) => !e.retired && e.overlay.startsAt <= now && now < e.overlay.endsAt)
     if (!version && active.length === 0 && Object.keys(eventItems).length === 0) return base
     const eventRevs = Object.fromEntries(active.map((e) => [e.overlay.id, e.revision]))
     const key = `${version?.id ?? '-'}|${Object.entries(eventRevs).map(([id, rev]) => `${id}@${rev}`).sort().join(',')}`

@@ -9,6 +9,8 @@
  *   DELETE /admin/maintenance/:id  → 204                                            (audited)
  *   /admin/players/*               player support (server/routes/admin/players.ts)
  *   /admin/content/*               live content: drafts, validation, publish, rollback (server/routes/admin/content.ts)
+ *   /admin/events/*                live events: drafts, publish, archive (server/routes/admin/events.ts)
+ *   /admin/uploads                 event images, re-encoded by sharp (server/routes/admin/uploads.ts)
  *
  * `me` / `reauth`: session cookie → role support or admin (403 forbidden otherwise) →
  * per-user rate limit. Maintenance accepts a signed-in admin (cookie) OR, when an
@@ -33,6 +35,8 @@ import { adminMetricsHandler } from './admin/metrics'
 import { maintenanceCreateBody } from '../validation'
 import { activeMaintenance, toMaintenanceItem } from './announcements'
 import { contentAdminRoutes } from './admin/content'
+import { eventsAdminRoutes } from './admin/events'
+import { uploadsAdminRoutes } from './admin/uploads'
 import { playersRoutes } from './admin/players'
 
 /** Sudo mode lifetime after POST /admin/reauth. */
@@ -166,6 +170,8 @@ export function adminRoutes(deps: Deps) {
 
   app.route('/players', playersRoutes(deps, staff, limit))
   app.route('/content', contentAdminRoutes(deps, staff, limit))
+  app.route('/events', eventsAdminRoutes(deps, staff, limit))
+  app.route('/uploads', uploadsAdminRoutes(deps, staff, limit))
 
   return app
 }

@@ -799,3 +799,129 @@ export interface AdminSpawnPreview {
   /** Species with a spawn rule in this content (admin or events), enabled or not. */
   rules: { slug: string; enabled: boolean; weightMult: number; hours?: [number, number][]; weather?: string[]; minTrainerLevel?: number }[]
 }
+
+// ---------------------------------------------------------------------------
+// Live events (docs/admin-plan.md §3, §4, §6; delivery E8)
+// ---------------------------------------------------------------------------
+
+/**
+ *   GET    /api/live-events?before=<endsAt ms>      → LiveEventsResponse   (public; published events only, never drafts or archived)
+ *
+ *   GET    /api/admin/events?status=                → AdminEventsResponse  (admin)
+ *   POST   /api/admin/events {slug, name, description, startsAt, endsAt, imageId?, overlay} → 201 AdminEventResponse (admin; a draft)
+ *   GET    /api/admin/events/:id                    → AdminEventResponse   (admin)
+ *   PUT    /api/admin/events/:id {slug?, name?, description?, startsAt?, endsAt?, imageId?, overlay?, confirm?}
+ *                                                   → AdminEventResponse   (admin; a published event also needs sudo, bumps `revision`)
+ *   DELETE /api/admin/events/:id                    → 204                  (admin; drafts only)
+ *   POST   /api/admin/events/:id/publish {confirm?, note?}  → AdminEventResponse (admin + sudo; a future `startsAt` = scheduled)
+ *   POST   /api/admin/events/:id/archive {note?}            → AdminEventResponse (admin + sudo; a published event only)
+ *
+ *   GET    /api/admin/uploads                       → AdminUploadsResponse (admin)
+ *   POST   /api/admin/uploads  (raw body, Content-Type image/png|jpeg|webp, at most 3 MB) → 201 | 200 AdminUploadResponse (admin; re-encoded)
+ *   DELETE /api/admin/uploads/:id                   → 204                  (admin; only images no event references)
+ *   GET    /media/events/<sha256>.webp | <sha256>-480.webp   the sanitized images (immutable, nosniff)
+ *
+ * Every mutation is audited in its own transaction (`event.create|update|delete|publish|archive`,
+ * `upload.create|delete`). Errors: 400 invalid_body / invalid_query / invalid_dates, 403 forbidden / elevation_required,
+ * 404 not_found, 409 (`not_draft`, `not_published`, `not_editable`, `slug_taken`, `slug_locked`, `too_many_drafts`,
+ * `confirm_required`, `in_use`, `uploads_full`), 413 body_too_large, 415 unsupported_type, 422 (`validation_failed`
+ * { errors, warnings, requiresConfirm }, `invalid_image`, `image_too_small`, `image_too_large`, `animated_image`), 429 rate_limited.
+ */
+export type AdminEventStatus = 'draft' | 'published' | 'archived'
+
+/** The editable part of an event (`live_events.overlay`): an `EventOverlay` without id, slug and dates. */
+export type EventOverlayBody = Omit<EventOverlay, 'id' | 'slug' | 'startsAt' | 'endsAt'>
+
+export interface LiveEventText {
+  es: string
+  en: string
+}
+
+/** A sanitized upload as the pages reference it: 16:9 webp (`url`) and its 480 px card version (`thumbUrl`). */
+export interface LiveEventImage {
+  url: string
+  thumbUrl: string
+  width: number
+  height: number
+}
+
+/** A published event as players see it. */
+export interface LiveEventPublic extends EventOverlayBody {
+  id: string
+  slug: string
+  name: LiveEventText
+  description: LiveEventText
+  image: LiveEventImage | null
+  startsAt: number
+  endsAt: number
+}
+
+export interface LiveEventsResponse {
+  /** `startsAt <= now < endsAt`, by start. */
+  active: LiveEventPublic[]
+  /** Starting within the next 60 days, by start. */
+  upcoming: LiveEventPublic[]
+  /** Ended within the last 90 days, most recent first; `before=<nextCursor>` asks for more. */
+  past: LiveEventPublic[]
+  nextCursor: number | null
+  serverNow: number
+}
+
+export interface AdminUpload extends LiveEventImage {
+  id: string
+  sha256: string
+  /** Bytes of the main image and of the 480 px one. */
+  bytes: number
+  thumbBytes: number
+  createdAt: number
+  /** Events that reference it (drafts included). */
+  inUse: number
+}
+
+export interface AdminUploadResponse {
+  upload: AdminUpload
+  /** The same image was already stored (identical after re-encoding). */
+  reused: boolean
+}
+
+export interface AdminUploadsResponse {
+  items: AdminUpload[]
+  totalBytes: number
+  limitBytes: number
+}
+
+export interface AdminEvent {
+  id: string
+  slug: string
+  status: AdminEventStatus
+  startsAt: number
+  endsAt: number
+  name: LiveEventText
+  description: LiveEventText
+  imageId: string | null
+  image: LiveEventImage | null
+  overlay: EventOverlayBody
+  /** 1 when created; +1 on every edit of a published event. */
+  revision: number
+  /** Last saved validation (the shape is the same as the content versions'). */
+  validation: AdminContentValidation | null
+  createdBy: AdminContentAuthor | null
+  createdAt: number
+  updatedAt: number
+  publishedBy: AdminContentAuthor | null
+  publishedAt: number | null
+  /** Published and `startsAt <= now < endsAt`. */
+  active: boolean
+  /** Published and `startsAt > now`. */
+  scheduled: boolean
+}
+
+export interface AdminEventResponse {
+  event: AdminEvent
+  serverNow: number
+}
+
+export interface AdminEventsResponse {
+  items: AdminEvent[]
+  serverNow: number
+}

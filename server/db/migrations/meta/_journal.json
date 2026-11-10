@@ -57,6 +57,13 @@
       "when": 1794328293023,
       "tag": "0007_session_log",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794343627962,
+      "tag": "0008_live_events_uploads",
+      "breakpoints": true
     }
   ]
 }

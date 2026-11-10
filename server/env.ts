@@ -47,6 +47,11 @@ const schema = z.object({
   /** Built client served in production (SPA fallback). */
   STATIC_DIR: z.string().min(1).default('dist'),
   /**
+   * Where uploaded event images live (re-encoded by sharp, served at /media/events/…).
+   * Back this directory up together with PostgreSQL: the database only holds their metadata.
+   */
+  UPLOADS_DIR: z.string().min(1).default('.data/uploads'),
+  /**
    * `Secure` flag on the session cookie. auto = on in production. Set 0 only when
    * the site is served over plain HTTP inside an already-encrypted network
    * (e.g. http://<tailscale-ip>:8787); browsers drop Secure cookies over http.
@@ -132,6 +137,8 @@ export interface Env {
   devTools: boolean
   trustProxy: boolean
   staticDir: string
+  /** Directory of the uploaded event images (UPLOADS_DIR). */
+  uploadsDir: string
   cookieSecure: boolean
   /** Admin API token; undefined = admin API disabled (404 admin_disabled). */
   adminToken: string | undefined
@@ -162,6 +169,7 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     devTools: production ? false : e.DEV_TOOLS,
     trustProxy: e.TRUST_PROXY,
     staticDir: e.STATIC_DIR,
+    uploadsDir: e.UPLOADS_DIR,
     cookieSecure: e.COOKIE_SECURE === 'auto' ? production : e.COOKIE_SECURE === '1',
     adminToken: e.ADMIN_TOKEN,
     adminEmails: [...new Set(e.ADMIN_EMAILS ?? [])],
