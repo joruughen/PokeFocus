@@ -597,3 +597,65 @@ export interface PushPayload {
   /** Path to open when the notification is clicked. */
   url: string
 }
+
+// ---------------------------------------------------------------------------
+// Admin: player support (docs/admin-plan.md §4, delivery E11)
+// ---------------------------------------------------------------------------
+
+/**
+ *   GET  /api/admin/players?q=                → AdminPlayersResponse   (support+; q = 2..60 chars, at most 20 results)
+ *   GET  /api/admin/players/:id               → AdminPlayerDetail      (support+)
+ *   POST /api/admin/players/:id/grant         { items?, dust?, reason } → AdminPlayerDetail   (admin + sudo; audited)
+ *   POST /api/admin/players/:id/unlock        { field } → AdminPlayerDetail                    (support+; audited)
+ *   POST /api/admin/players/:id/cancel-session                → AdminPlayerDetail              (support+; audited)
+ *   POST /api/admin/players/:id/logout-all                    → AdminPlayerDetail              (support+; audited)
+ *
+ * Support may only change `player` accounts (403 `forbidden_target` on staff); admin may change anyone.
+ * Errors: 400 invalid_body, 403 forbidden / elevation_required / forbidden_target, 404 not_found,
+ * 409 (`no_session`, `not_locked`, `no_player`, `self_target`, grant errors of src/game/admin.ts), 429 rate_limited.
+ */
+export type AdminUnlockField = 'trainerName' | 'country' | 'timezone'
+
+export interface AdminPlayerSummary {
+  id: string
+  email: string
+  trainerName: string
+  country: string
+  friendCode: string
+  role: UserRole
+  createdAt: number
+}
+
+export interface AdminPlayersResponse {
+  items: AdminPlayerSummary[]
+  serverNow: number
+}
+
+export interface AdminPlayerDetail {
+  user: AdminPlayerSummary & {
+    anonymousRankings: boolean
+    /** Epoch ms when each 30-day lock ends; null = not locked. */
+    nameUnlockAt: number | null
+    countryUnlockAt: number | null
+  }
+  /** Null while the account has no game document (never opened the game). */
+  doc: {
+    version: number
+    updatedAt: number
+    /** False until the starter is chosen: everything below is then empty. */
+    hasPlayer: boolean
+    trainerLevel: number
+    dust: number
+    inventory: Record<string, number>
+    pokemonCount: number
+    team: { uid: string; speciesSlug: string; level: number; shiny: boolean; nickname: string | null }[]
+    timezone: string
+    timezoneUnlockAt: number | null
+    activeSession: { id: string; startedAt: number; plannedMinutes: number; endsAt: number | null; paused: boolean } | null
+    /** Last 20 claimed sessions, newest first. */
+    history: { id: string; claimedAt: number; minutes: number; points: number; focus: number; lateClaim: boolean }[]
+  } | null
+  /** Signed-in browsers (unexpired sessions). */
+  authSessions: { id: string; createdAt: number; lastSeenAt: number; userAgent: string | null }[]
+  serverNow: number
+}

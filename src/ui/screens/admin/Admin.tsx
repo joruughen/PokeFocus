@@ -9,6 +9,7 @@ import { formatWindow, fromLocalInput, toLocalInput } from '../../lib/maintenanc
 import { MaintenanceNoticeBar } from '../../MaintenanceBanner'
 import { useAnnouncements } from '../../store/announcements'
 import { useAuth } from '../../store/auth'
+import { PlayersPanel } from './players/PlayersPanel'
 
 const MetricsPanel = lazy(() => import('./metrics/MetricsPanel'))
 
@@ -108,6 +109,7 @@ export default function Admin() {
         <p className="max-w-[60ch] text-mist-300">{t('admin.intro')}</p>
       </header>
 
+      <PlayersPanel />
       {isStaff && (
         <Suspense fallback={null}>
           <MetricsPanel />

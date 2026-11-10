@@ -7,6 +7,7 @@
  *   GET    /admin/maintenance      → AdminMaintenanceResponse (windows that have not ended)
  *   POST   /admin/maintenance      { startsAt, endsAt, note? } → 201 { item }      (audited)
  *   DELETE /admin/maintenance/:id  → 204                                            (audited)
+ *   /admin/players/*               player support (server/routes/admin/players.ts)
  *
  * `me` / `reauth`: session cookie → role support or admin (403 forbidden otherwise) →
  * per-user rate limit. Maintenance accepts a signed-in admin (cookie) OR, when an
@@ -30,6 +31,7 @@ import { RULES } from '../rate-limit'
 import { adminMetricsHandler } from './admin/metrics'
 import { maintenanceCreateBody } from '../validation'
 import { activeMaintenance, toMaintenanceItem } from './announcements'
+import { playersRoutes } from './admin/players'
 
 /** Sudo mode lifetime after POST /admin/reauth. */
 export const ELEVATION_MS = 30 * 60_000
@@ -159,6 +161,8 @@ export function adminRoutes(deps: Deps) {
     })
     return c.body(null, 204)
   })
+
+  app.route('/players', playersRoutes(deps, staff, limit))
 
   return app
 }
