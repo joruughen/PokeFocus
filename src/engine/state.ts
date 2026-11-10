@@ -102,6 +102,12 @@ export interface ActiveSession {
    * then uses no weather (or `profile.weather` with DEV_TOOLS=1).
    */
   weather?: WeatherInput | null
+  /**
+   * Live content the session runs on (docs/admin-plan.md «Fijado por sesión»),
+   * fixed at start: the claim uses it even if a new version is published or an
+   * event ends meanwhile. Absent = 'base' (shipped data; older saves too).
+   */
+  contentHash?: string
 }
 
 export interface SessionSummary {
@@ -288,6 +294,8 @@ export interface EncounterState {
   env: { localHour: number; weekend: boolean; weather: WeatherInput | null; noPauses: boolean; sessionMinutes: number }
   /** Fixed at claim. Absent (older saves) = `'auto'`. */
   damageMode?: DamageMode
+  /** Live content of the claimed session (copied from `ActiveSession.contentHash`); the wave actions use it. Absent = 'base'. */
+  contentHash?: string
 }
 
 // ---------------------------------------------------------------------------

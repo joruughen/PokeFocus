@@ -10,6 +10,9 @@ import type {
   BoxError,
   CandyKind,
   ChargeError,
+  ContentItem,
+  ContentPatch,
+  EventOverlay,
   DamageError,
   MissionReward,
   NicknameError,
@@ -393,6 +396,8 @@ export type ServerEvent =
   | { type: 'logout' }
   /** Something changed in a study group I belong to or am invited to (refetch GET /api/groups). */
   | { type: 'group'; groupId: string; kind: GroupEventKind; userId: string; trainerName: string; reason?: GroupLeaveReason }
+  /** Broadcast to every connection: the active live content changed (refetch GET /api/content). */
+  | { type: 'content'; hash: string }
 
 /** Header names used only when the server runs with DEV_TOOLS=1. */
 export const DEV_NOW_HEADER = 'x-dev-now'
@@ -423,6 +428,29 @@ export const MAINTENANCE_MAX_MS = 14 * 24 * 60 * 60 * 1000
  */
 export interface ConfigResponse {
   devTools: boolean
+}
+
+/**
+ * GET /api/content — public (no session): the live content active now.
+ * `ETag: "<hash>"`, `Cache-Control: no-cache` (304 on `If-None-Match`).
+ * GET /api/content/:hash — the content a session pinned (`ActiveSession.contentHash`,
+ * `EncounterState.contentHash`); immutable (`Cache-Control: public, max-age=31536000,
+ * immutable`) except `base`; 404 `unknown_content` for an unknown hash.
+ *
+ * The client rebuilds the context with
+ * `createEngineContext(resolveContent(patch, events, eventItems, { hash }))`;
+ * `hash: 'base'` = the bundled data as is. A `baseHash` different from the
+ * bundle's `src/data/game/meta.json` means the client is stale (reload).
+ */
+export interface ContentResponse {
+  hash: string
+  baseHash: string
+  /** Active admin patch (`{}` = none). */
+  patch: ContentPatch
+  /** Live events active when resolved, in (startsAt, id) order. */
+  events: EventOverlay[]
+  /** Item names of every published event (past ones too). */
+  eventItems: Record<string, ContentItem>
 }
 
 /**

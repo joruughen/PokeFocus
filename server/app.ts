@@ -13,11 +13,13 @@ import type { Db } from './db/client'
 import { EventBus } from './events'
 import { ApiError, type AppEnv, type Deps } from './http'
 import { createPushService, type PushSender, type PushService } from './push'
+import { createContentService, type ContentService } from './content/service'
 import { RateLimiter } from './rate-limit'
 import { adminRoutes } from './routes/admin'
 import { announcementRoutes } from './routes/announcements'
 import { authRoutes } from './routes/auth'
 import { configRoutes } from './routes/config'
+import { contentRoutes } from './routes/content'
 import { eventRoutes } from './routes/events'
 import { gameRoutes } from './routes/game'
 import { groupRoutes } from './routes/groups'
@@ -41,20 +43,24 @@ export interface AppOptions {
   push?: PushService
   /** Outbound push delivery (default: web-push); a fake in tests. */
   pushSender?: PushSender
+  /** Live content service (default: built from `db` + `bus` + `clock`, no live events yet). */
+  content?: ContentService
 }
 
 export function createApp(opts: AppOptions) {
   const clock = opts.clock ?? Date.now
   const fetchFn: FetchLike = opts.fetch ?? ((url, init) => fetch(url, init))
+  const bus = opts.bus ?? new EventBus()
   const deps: Deps = {
     env: opts.env,
     db: opts.db,
-    bus: opts.bus ?? new EventBus(),
+    bus,
     limiter: opts.limiter ?? new RateLimiter(),
     clock,
     fetch: fetchFn,
     weather: opts.weather ?? createWeatherService({ fetch: fetchFn, clock }),
     push: opts.push ?? createPushService({ env: opts.env, db: opts.db, clock, sender: opts.pushSender }),
+    content: opts.content ?? createContentService({ db: opts.db, bus, clock }),
   }
   const { env } = deps
   const app = new Hono<AppEnv>()
@@ -83,6 +89,7 @@ export function createApp(opts: AppOptions) {
   api.route('/weather', weatherRoutes(deps))
   api.route('/announcements', announcementRoutes(deps))
   api.route('/config', configRoutes(deps))
+  api.route('/content', contentRoutes(deps))
   api.route('/admin', adminRoutes(deps))
   api.route('/push', pushRoutes(deps))
   api.get('/health', (c) => c.json({ ok: true }))

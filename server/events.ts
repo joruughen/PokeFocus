@@ -31,6 +31,11 @@ export class EventBus {
     for (const sub of this.byUser.get(userId) ?? []) safe(() => sub.send(event))
   }
 
+  /** Send an event to every open connection (e.g. the live content changed). */
+  broadcast(event: ServerEvent): void {
+    for (const set of this.byUser.values()) for (const sub of [...set]) safe(() => sub.send(event))
+  }
+
   /** Tell the connections of these sessions they were revoked, then close them. */
   logoutSessions(userId: string, sessionIds: Iterable<string>): void {
     const ids = new Set(sessionIds)
