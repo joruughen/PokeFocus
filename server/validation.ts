@@ -102,7 +102,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('start', { minutes: z.number().int().min(session.minMinutes).max(session.maxMinutes) }),
   act('pause', {}),
   act('resume', {}),
-  act('cancel', {}),
+  act('cancel', { soundProfile: soundProfileSchema.nullable().optional() }),
   act('markNotified', {}),
   act('claim', { devFocusLabel: z.string().max(32).nullable().optional(), soundProfile: soundProfileSchema.nullable().optional() }),
   act('dismissResults', {}),

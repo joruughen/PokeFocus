@@ -102,8 +102,14 @@ export function Results() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           {/* Scoreboard: the one big number of the loop, with its reasons right under it. */}
           <div className="max-w-xl bg-mist-50 p-5 text-ink shadow-plate" {...hintAnchor('results.points')}>
-            <h1 className="text-xl text-dusk-700">{result.valid ? t('results.title') : t('results.invalidTitle')}</h1>
-            <p className="mt-1 text-sm text-dusk-600">{result.valid ? t('results.subtitle', { count: result.minutes }) : t('results.invalid', { min: cfg.session.minMinutes })}</p>
+            <h1 className="text-xl text-dusk-700">{result.cancelled ? t('results.cancelledTitle') : result.valid ? t('results.title') : t('results.invalidTitle')}</h1>
+            <p className="mt-1 text-sm text-dusk-600">
+              {result.cancelled
+                ? t('results.cancelledSubtitle', { minutes: result.minutes, planned: result.plannedMinutes })
+                : result.valid
+                  ? t('results.subtitle', { count: result.minutes })
+                  : t('results.invalid', { min: cfg.session.minMinutes })}
+            </p>
             <div className="mt-3 flex flex-wrap items-end gap-x-4">
               <p className="font-num text-[6rem] leading-[0.78] tabular" aria-label={fmtInt(result.totalPoints, lng)}>
                 <span aria-hidden>{fmtInt(shown, lng)}</span>

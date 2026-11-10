@@ -14,6 +14,7 @@ import {
   applyStatusCharge,
   assignDamage,
   autoAssignDamage,
+  cancelKeep,
   cancelSession,
   claimAllMissions,
   claimMission,
@@ -45,13 +46,15 @@ import {
   toOwnedPokemon,
   useCandy,
   useHealItem,
+  validatedMinutes,
   type EngineContext,
   type PlayerState,
   type Rng,
+  type SessionResult,
   type TypeSlug,
   type WeatherInput,
 } from '../engine'
-import { EMPTY_DOC, type ActionResults, type GameAction, type GameActionType, type GameDoc, type SessionTimer } from './protocol'
+import { EMPTY_DOC, type ActionResults, type GameAction, type GameActionType, type GameDoc, type LastOutcome, type SessionTimer } from './protocol'
 import { resolveSessionWeather, toGeoCell } from './weather'
 
 /** Days a timezone change stays locked (prevents shifting day/week keys to farm streaks and leagues). */
@@ -188,9 +191,39 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       const d = Math.max(0, t - timer.pausedAt)
       return done({ ...doc, timer: { ...timer, pausedAt: null, pausedMs: timer.pausedMs + d, endsAt: timer.endsAt + d } })
     }
-    case 'cancel':
-      if (!p.activeSession) return fail('no_session')
-      return done({ ...doc, player: cancelSession(p), timer: null })
+    case 'cancel': {
+      // GDD §5.6: a long session keeps the minutes studied and the waves of its full blocks.
+      // Server clock only; once the timer ended it must be claimed (late rules), not cancelled.
+      const session = p.activeSession
+      const timer = timerOf(doc)
+      if (!session || !timer) return fail('no_session')
+      if (timer.pausedAt === null && t >= timer.endsAt) return fail('already_finished')
+      const endedAt = timer.pausedAt ?? t
+      const pausedSeconds = timer.pausedMs / 1000
+      const keep = cancelKeep(session.plannedMinutes, validatedMinutes(session, endedAt, pausedSeconds), ctx.config)
+      if (!keep.keeps) return done({ ...doc, player: cancelSession(p), timer: null }, { outcome: null })
+      const res = completeSession(
+        p,
+        session,
+        {
+          endedAt,
+          claimedAt: t,
+          pausedSeconds,
+          cancelled: true,
+          focusInputs: { screenshotLabels: null, missedCaptures: 0 },
+          friendOverlap: env.friendOverlap ?? null,
+          soundProfile: a.soundProfile ?? null,
+          weather: session.weather !== undefined ? session.weather : resolveSessionWeather(null, p.profile.weather, env.dev).weather,
+        },
+        rng,
+        ctx,
+      )
+      if (!res.ok) return fail(res.error)
+      const applied = applySessionResult(p, res.value, ctx)
+      if (!applied.ok) return fail(applied.error)
+      const outcome = { result: res.value, events: applied.value.events, before: beforeOf(p, res.value), seen: false }
+      return done({ ...doc, player: applied.value.state, timer: null, outcome }, { outcome })
+    }
     case 'markNotified': {
       const timer = timerOf(doc)
       if (!timer) return fail('no_session')
@@ -402,6 +435,20 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
   }
   const unknown: never = a
   return fail(`unknown_action:${(unknown as { type: string }).type}`)
+}
+
+/** Levels and EXP of the session's members (and trainer level) before applying it, for the results bars. */
+function beforeOf(p: PlayerState, result: SessionResult): LastOutcome['before'] {
+  const levels: Record<string, number> = {}
+  const exp: Record<string, number> = {}
+  for (const m of result.members) {
+    const before = p.pokemon[m.uid]
+    if (before) {
+      levels[m.uid] = before.level
+      exp[m.uid] = before.exp
+    }
+  }
+  return { levels, exp, trainerLevel: p.trainer.level }
 }
 
 function sumChains(p: PlayerState): number {

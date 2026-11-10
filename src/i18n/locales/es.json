@@ -395,11 +395,23 @@
     "cancel": "Abandonar",
     "rockNote": "Los consejos esperan a que termines. Pausar desactiva la condición de Roca de esta sesión.",
     "cancelTitle": "¿Abandonar la sesión?",
-    "cancelBody": "Llevas {{minutes}} min. Si abandonas, no recibes puntos, EXP ni oleada.",
+    "cancelBody": "Llevas {{minutes}} min. Una sesión de 25 min o menos no conserva nada al abandonarla: no recibes puntos, EXP, Polvo ni oleada.",
     "keepGoing": "Seguir estudiando",
     "cancelConfirm": "Abandonar",
     "waveOne_one": "Al terminar aparece su oleada de salvajes.",
-    "waveOne_other": "Al terminar aparece su oleada de salvajes."
+    "waveOne_other": "Al terminar aparece su oleada de salvajes.",
+    "cancelTooFew": "Llevas {{minutes}} de {{planned}} min. Hasta los {{min}} min no se conserva nada: si abandonas ahora, no recibes puntos, EXP, Polvo ni oleadas.",
+    "cancelKeepIntro": "Llevas {{minutes}} de {{planned}} min. Si abandonas ahora, conservas:",
+    "cancelKeepMinutes": "Los puntos, la EXP y el Polvo de los {{minutes}} min estudiados.",
+    "cancelKeepWaves_one": "{{count}} oleada: completaste {{count}} de {{total}} bloques de 25 min.",
+    "cancelKeepWaves_other": "{{count}} oleadas: completaste {{count}} de {{total}} bloques de 25 min.",
+    "cancelKeepNoWaves": "Ninguna oleada: aún no completas el primer bloque de 25 min (faltan {{left}} min).",
+    "cancelNextWave": "La siguiente oleada llega en {{left}} min.",
+    "cancelKeepNote": "No cuenta como sesión completada en las misiones (sus minutos sí). El servidor cuenta los minutos enteros con su reloj.",
+    "cancelConfirmKeep": "Abandonar y conservar",
+    "cancelledKept_one": "Sesión abandonada: conservas {{minutes}} min y {{count}} oleada.",
+    "cancelledKept_other": "Sesión abandonada: conservas {{minutes}} min y {{count}} oleadas.",
+    "cancelledNothing": "Sesión abandonada."
   },
   "claim": {
     "title": "¡Sesión completa!",
@@ -447,7 +459,9 @@
     "newSlot": "Ganó un hueco de técnica",
     "evolution": "{{name}} puede evolucionar a {{to}}",
     "capped": "Llegó al límite de nivel {{cap}}: captura más especies para subirlo.",
-    "pointsShort": "puntos"
+    "pointsShort": "puntos",
+    "cancelledTitle": "Sesión abandonada",
+    "cancelledSubtitle": "Estudiaste {{minutes}} de {{planned}} min: recibes lo de esos minutos y las oleadas de los bloques de 25 min completos."
   },
   "waves": {
     "title": "Oleada {{n}} de {{total}}",

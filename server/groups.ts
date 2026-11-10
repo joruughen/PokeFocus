@@ -80,14 +80,21 @@ export async function memberOfSession(q: Q, userId: string, sessionId: string): 
 /**
  * `friendOverlap` for the session being claimed: null when it was not a group
  * session, else accompanied time ÷ session length (0–1).
+ *
+ * `cancelledAt` (a long session cancelled before its end, GDD §5.6): the
+ * accompanied time up to then ÷ the time elapsed since joining (pauses
+ * included, so it never overstates the share).
  */
-export async function claimOverlap(tx: Tx, userId: string, before: GameDoc): Promise<number | null> {
+export async function claimOverlap(tx: Tx, userId: string, before: GameDoc, cancelledAt?: number): Promise<number | null> {
   const session = before.player?.activeSession
   if (!session) return null
   const me = await memberOfSession(tx, userId, session.id)
   if (!me) return null
   const members = await membersOf(tx, me.groupId)
-  return groupOverlap(members.map(toMemberSpan), userId)?.overlap ?? 0
+  if (cancelledAt === undefined) return groupOverlap(members.map(toMemberSpan), userId)?.overlap ?? 0
+  const o = groupOverlap(members.map(toMemberSpan), userId, cancelledAt)
+  if (!o) return 0
+  return Math.min(1, Math.max(0, o.accompaniedMs / Math.max(1, cancelledAt - me.joinedAt.getTime())))
 }
 
 /**

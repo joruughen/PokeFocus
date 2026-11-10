@@ -395,11 +395,23 @@
     "cancel": "Give up",
     "rockNote": "Tips wait until you finish. Pausing turns off the Rock condition for this session.",
     "cancelTitle": "Give up this session?",
-    "cancelBody": "You've done {{minutes}} min. If you give up, you get no points, EXP or wave.",
+    "cancelBody": "You've done {{minutes}} min. A session of 25 min or less keeps nothing when you give it up: no points, EXP, Dust or wave.",
     "keepGoing": "Keep studying",
     "cancelConfirm": "Give up",
     "waveOne_one": "Its wave of wild Pokémon appears at the end.",
-    "waveOne_other": "Its wave of wild Pokémon appears at the end."
+    "waveOne_other": "Its wave of wild Pokémon appears at the end.",
+    "cancelTooFew": "You've done {{minutes}} of {{planned}} min. Nothing is kept before {{min}} min: if you give up now, you get no points, EXP, Dust or waves.",
+    "cancelKeepIntro": "You've done {{minutes}} of {{planned}} min. If you give up now, you keep:",
+    "cancelKeepMinutes": "The points, EXP and Dust of the {{minutes}} min you studied.",
+    "cancelKeepWaves_one": "{{count}} wave: you completed {{count}} of {{total}} 25-min blocks.",
+    "cancelKeepWaves_other": "{{count}} waves: you completed {{count}} of {{total}} 25-min blocks.",
+    "cancelKeepNoWaves": "No wave: you haven't completed the first 25-min block yet ({{left}} min to go).",
+    "cancelNextWave": "The next wave comes in {{left}} min.",
+    "cancelKeepNote": "It doesn't count as a completed session for missions (its minutes do). The server counts whole minutes with its own clock.",
+    "cancelConfirmKeep": "Give up and keep",
+    "cancelledKept_one": "Session given up: you keep {{minutes}} min and {{count}} wave.",
+    "cancelledKept_other": "Session given up: you keep {{minutes}} min and {{count}} waves.",
+    "cancelledNothing": "Session given up."
   },
   "claim": {
     "title": "Session complete!",
@@ -447,7 +459,9 @@
     "newSlot": "Gained a technique slot",
     "evolution": "{{name}} can evolve into {{to}}",
     "capped": "Reached the level cap ({{cap}}): catch more species to raise it.",
-    "pointsShort": "points"
+    "pointsShort": "points",
+    "cancelledTitle": "Session given up",
+    "cancelledSubtitle": "You studied {{minutes}} of {{planned}} min: you get what those minutes earned and the waves of the full 25-min blocks."
   },
   "waves": {
     "title": "Wave {{n}} of {{total}}",

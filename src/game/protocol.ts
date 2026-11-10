@@ -87,7 +87,11 @@ export type GameAction =
   | { type: 'start'; minutes: number }
   | { type: 'pause' }
   | { type: 'resume' }
-  | { type: 'cancel' }
+  /**
+   * Long sessions (GDD §5.6) keep the minutes studied and the waves of the full
+   * 25-min blocks, decided with the server clock. `soundProfile` as in `claim`.
+   */
+  | { type: 'cancel'; soundProfile?: SoundProfile | null }
   | { type: 'markNotified' }
   /**
    * `devFocusLabel` is honored only when the server runs with DEV_TOOLS=1.
@@ -148,7 +152,8 @@ export interface ActionResults {
   start: null
   pause: null
   resume: null
-  cancel: null
+  /** `outcome` when the cancelled session kept something (it is also `doc.outcome`), null when nothing was kept. */
+  cancel: { outcome: LastOutcome | null }
   markNotified: null
   claim: { outcome: LastOutcome }
   dismissResults: null
