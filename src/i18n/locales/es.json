@@ -315,6 +315,7 @@
       "tired_other": "{{names}} podrían agotarse antes del final.",
       "allExhausted": "Todo tu equipo está agotado, así que esta sesión no sumará puntos. Usa pociones o Revivir en la ficha de cada Pokémon, o espera a que se recargue la Energía.",
       "startNote": "Puedes pausar. El equipo no se puede cambiar hasta terminar.",
+      "startInGroup": "Tienes una sala de estudio en grupo abierta: empieza desde la sala, o ciérrala para estudiar solo.",
       "start": "Empezar",
       "startMinutes": "{{count}} min"
     }
@@ -603,6 +604,7 @@
     "advanced": "Avanzado",
     "dev": "Herramientas de desarrollo",
     "devNote": "Tiempo acelerado, semilla fija y atajos para probar.",
+    "devOffNote": "Este servidor tiene las herramientas de desarrollo apagadas (DEV_TOOLS=0): el panel solo muestra sus controles locales.",
     "reset": "Borrar todo",
     "resetNote": "Borra la partida de esta cuenta en el servidor (solo con herramientas de desarrollo).",
     "resetButton": "Borrar progreso",
@@ -632,7 +634,9 @@
       "background": "Seguir sonando en otra pestaña",
       "backgroundNote": "La música de estudio sigue aunque cambies de pestaña.",
       "hiss": "Ruido de vinilo",
-      "hissNote": "Un crujido suave de fondo en la música de estudio."
+      "hissNote": "Un crujido suave de fondo en la música de estudio.",
+      "break": "Música durante los descansos",
+      "breakNote": "La música de la pantalla de inicio mientras descansas. En los menús no cambia nada."
     },
     "about": {
       "title": "Acerca de",
@@ -652,6 +656,7 @@
     "invalid_duration": "La duración debe estar entre 15 y 120 minutos.",
     "empty_team": "Tu equipo está vacío.",
     "claimFailed": "No se pudo reclamar. Vuelve a intentarlo.",
+    "notFinishedDevClock": "El servidor dice que la sesión aún no termina. Tu reloj de desarrollo va adelantado, pero este servidor no le hace caso (tiene las herramientas de desarrollo apagadas). Vuelve a la hora real.",
     "throw": {
       "no_encounter": "No hay oleada activa.",
       "wave_not_current": "Esa oleada ya pasó.",
@@ -763,6 +768,8 @@
     "title": "Desarrollo",
     "open": "Abrir panel de desarrollo",
     "close": "Cerrar panel",
+    "serverOffTitle": "Este servidor tiene las herramientas de desarrollo apagadas",
+    "serverOffBody": "El reloj, terminar la sesión, los objetos, el clima y la semilla fija solo cambian este navegador y el servidor los ignora. Arráncalo con DEV_TOOLS=1 para usarlos. Abajo solo quedan los controles locales.",
     "clock": "Reloj del juego",
     "gameTime": "Hora del juego: {{time}}",
     "shifted": "(adelantada)",
@@ -1325,6 +1332,7 @@
     "mythical": "Mítico"
   },
   "break": {
+    "muteMusicHint": "Activa o silencia solo la música del descanso. Los sonidos y el aviso de fin siguen sonando.",
     "offerTitle": "¿Un descanso?",
     "offerBody": "Levántate, toma agua y estira. Si completas el descanso, tu equipo recupera {{pct}} de su Energía.",
     "length": "Duración del descanso",

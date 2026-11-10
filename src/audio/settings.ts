@@ -16,6 +16,8 @@ export interface AudioSettings {
   sfx: number
   /** Play the `focus` track during sessions (some people prefer silence). */
   musicDuringFocus: boolean
+  /** Play the `home` track while a break runs (it is the same track as in the menus, which this option never touches). */
+  musicDuringBreak: boolean
   /** Extra level for the focus track relative to `music` (0–1). "On but low" by default. */
   focusMusicLevel: number
   /** Keep focus music playing while the tab is hidden. Other tracks always pause when hidden. */
@@ -33,6 +35,7 @@ export const DEFAULT_AUDIO_SETTINGS: Readonly<AudioSettings> = Object.freeze({
   music: 0.35,
   sfx: 0.6,
   musicDuringFocus: true,
+  musicDuringBreak: true,
   focusMusicLevel: 0.6,
   backgroundMusic: true,
   ducking: true,
@@ -53,6 +56,7 @@ export function sanitizeAudioSettings(input: unknown, base: AudioSettings = DEFA
     music: clamp01(p.music, base.music),
     sfx: clamp01(p.sfx, base.sfx),
     musicDuringFocus: bool(p.musicDuringFocus, base.musicDuringFocus),
+    musicDuringBreak: bool(p.musicDuringBreak, base.musicDuringBreak),
     focusMusicLevel: clamp01(p.focusMusicLevel, base.focusMusicLevel),
     backgroundMusic: bool(p.backgroundMusic, base.backgroundMusic),
     ducking: bool(p.ducking, base.ducking),
@@ -84,5 +88,32 @@ export function focusMusicPatch(s: AudioSettings, audible: boolean): Partial<Aud
     master: s.master > 0 ? s.master : d.master,
     music: s.music > 0 ? s.music : d.music,
     focusMusicLevel: s.focusMusicLevel > 0 ? s.focusMusicLevel : d.focusMusicLevel,
+  }
+}
+
+/**
+ * Can the music be heard during a break? The break plays the `home` track at the
+ * plain `music` volume (no focus level), so only the master switch, the mute, a
+ * zero volume and the "music during breaks" option silence it.
+ */
+export function breakMusicAudible(s: AudioSettings): boolean {
+  return s.enabled && !s.muted && s.master > 0 && s.music > 0 && s.musicDuringBreak
+}
+
+/**
+ * Settings patch for the break screen's mute button: the same idea as
+ * `focusMusicPatch`. Muting only turns off "music during breaks" (volumes, sound
+ * effects and the menus' music are untouched); unmuting also lifts a global mute
+ * or a zero volume so the button never does nothing.
+ */
+export function breakMusicPatch(s: AudioSettings, audible: boolean): Partial<AudioSettings> {
+  if (!audible) return { musicDuringBreak: false }
+  const d = DEFAULT_AUDIO_SETTINGS
+  return {
+    enabled: true,
+    muted: false,
+    musicDuringBreak: true,
+    master: s.master > 0 ? s.master : d.master,
+    music: s.music > 0 ? s.music : d.music,
   }
 }

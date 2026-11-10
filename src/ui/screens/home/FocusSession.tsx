@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, MINUTE_MS, waveCount } from '../../../engine'
-import { Button, Dialog, DialogClose, Platform, ProgressBar, Sprite, Stage, toast } from '../../components'
+import { Button, Dialog, DialogClose, ProgressBar, Stage, StageTeam, toast } from '../../components'
 import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
@@ -62,27 +62,18 @@ export function FocusSession() {
   return (
     <div className="flex flex-col gap-8">
       <Stage time={scene.time} weather={scene.weather} variant="focus" className="h-72">
-        <div className="flex h-full items-end justify-center gap-6 px-6 pb-6">
-          {session.teamUids.map((uid, i) => {
+        <StageTeam
+          className="h-full"
+          night={scene.time === 'night'}
+          bob={!paused}
+          dim
+          members={session.teamUids.flatMap((uid) => {
             const p = player.pokemon[uid]
-            if (!p) return null
-            return (
-              <div key={uid} className="relative flex w-28 flex-col items-center">
-                <Platform width={104} night={scene.time === 'night'} className="absolute bottom-0 brightness-75" />
-                <Sprite
-                  kind="showdown"
-                  slug={p.speciesSlug}
-                  shiny={p.isShiny}
-                  scale={2}
-                  flip
-                  alt={names.species(p.speciesSlug)}
-                  className={cx('relative mb-3', !paused && 'motion-safe:animate-bob', session.asleepUids.includes(uid) && 'opacity-60')}
-                  style={{ animationDelay: `${i * 0.27}s` }}
-                />
-              </div>
-            )
+            return p
+              ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.species(p.speciesSlug), faded: session.asleepUids.includes(uid) }]
+              : []
           })}
-        </div>
+        />
       </Stage>
 
       <section aria-labelledby="timer-title" className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">

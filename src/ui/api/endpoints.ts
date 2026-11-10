@@ -22,7 +22,7 @@ import {
   type PushSubscribeRequest,
 } from '../../game/protocol'
 import type { WeatherResponse } from '../../game/weather'
-import { now, usePrefs } from '../store/prefs'
+import { now, serverHasDevTools, usePrefs } from '../store/prefs'
 import { api } from './client'
 
 export interface RegisterInput {
@@ -51,6 +51,8 @@ export const authApi = {
  */
 export function devHeaders(): Record<string, string> {
   const h: Record<string, string> = {}
+  // A server without DEV_TOOLS ignores them (and answers as if the clock were real): do not pretend.
+  if (!serverHasDevTools()) return h
   const prefs = usePrefs.getState()
   if (prefs.dev.anchor) h[DEV_NOW_HEADER] = String(Math.round(now()))
   const seed = prefs.nextSeed()

@@ -9,7 +9,7 @@ import { requestErrorText } from '../../lib/errors'
 import { checkPassword, checkTrainerName, PASSWORD_MAX, PASSWORD_MIN, TRAINER_MAX } from '../../lib/validation'
 import { isAccountLockError, useAuth } from '../../store/auth'
 import { devEnabled } from '../../store/prefs'
-import { lockState, profileChange, type ProfileChange } from './accountLocks'
+import { lockState, profileChange, serverUnlockAt, type ProfileChange } from './accountLocks'
 
 /**
  * Settings → Account: email, trainer name and country (PATCH /auth/me; each
@@ -96,14 +96,15 @@ function ProfileForm() {
   const lockedMeanwhile = (err: ApiError) => {
     const fresh = useAuth.getState().user
     const isName = err.code === 'name_locked'
-    const lock = isName ? lockState(fresh?.nameChangedAt ?? null, NAME_LOCK_DAYS, Date.now(), false) : lockState(fresh?.countryChangedAt ?? null, COUNTRY_LOCK_DAYS, Date.now(), false)
+    // The server's own `unlockAt` first; the refreshed user (changedAt + lock days) is the fallback.
+    const computed = isName ? lockState(fresh?.nameChangedAt ?? null, NAME_LOCK_DAYS, Date.now(), false) : lockState(fresh?.countryChangedAt ?? null, COUNTRY_LOCK_DAYS, Date.now(), false)
+    const lock = { unlockAt: serverUnlockAt(err.body) ?? computed.unlockAt }
     if (fresh) {
       if (isName) setName(fresh.trainerName)
       else setCountry(fresh.country)
     }
     toast.add({
       title: t(isName ? 'account.nameStillLocked' : 'account.countryStillLocked'),
-      // unlockAt comes from the refreshed user (changedAt + lock days, as the server computes it).
       description: lock.unlockAt !== null && lock.unlockAt > Date.now() ? t('account.lockedUntil', { date: dateOf(lock.unlockAt) }) : requestErrorText(err),
       type: 'danger',
     })

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { defaultContext, MINUTE_MS } from '../../../engine'
-import { Button, Panel, Platform, ProgressBar, Segmented, Sprite, Stage, toast } from '../../components'
+import { Button, Panel, ProgressBar, Segmented, Sprite, Stage, StageTeam, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
@@ -11,6 +11,7 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { useState } from 'react'
+import { MuteMusicButton } from './MuteMusicButton'
 import { SoundUnlockChip } from './SoundUnlockChip'
 
 const cfg = defaultContext().config
@@ -100,15 +101,14 @@ export function Break() {
 
   return (
     <div className="flex flex-col gap-8">
-      <Stage time={scene.time} weather={scene.weather} variant="focus" className="h-64">
-        <div className="flex h-full items-end justify-center gap-6 px-6 pb-6">
-          {views.map((v) => (
-            <div key={v.pokemon.uid} className="relative flex w-28 flex-col items-center">
-              <Platform width={104} night={scene.time === 'night'} className="absolute bottom-0 brightness-75" />
-              <Sprite kind="showdown" slug={v.pokemon.speciesSlug} shiny={v.pokemon.isShiny} scale={2} flip alt={names.species(v.pokemon.speciesSlug)} className="relative mb-3 brightness-90" />
-            </div>
-          ))}
-        </div>
+      <Stage time={scene.time} weather={scene.weather} variant="focus">
+        <StageTeam
+          className="min-h-64"
+          night={scene.time === 'night'}
+          bob={false}
+          dim
+          members={views.map((v) => ({ uid: v.pokemon.uid, slug: v.pokemon.speciesSlug, shiny: v.pokemon.isShiny, name: names.species(v.pokemon.speciesSlug) }))}
+        />
       </Stage>
 
       <section className="mx-auto flex w-full max-w-3xl flex-col items-center text-center" {...hintAnchor('break.timer')}>
@@ -148,6 +148,7 @@ export function Break() {
               {t('break.early')}
             </Button>
           )}
+          <MuteMusicButton phase="break" />
         </div>
         {!done && <p className="mt-3 max-w-[52ch] text-sm text-mist-400">{t('break.earlyNote')}</p>}
       </section>

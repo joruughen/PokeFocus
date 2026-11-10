@@ -315,6 +315,7 @@
       "tired_other": "{{names}} may run out of Energy before the end.",
       "allExhausted": "Your whole team is out of Energy, so this session won't earn points. Use potions or Revive on each Pokémon's page, or wait for Energy to refill.",
       "startNote": "You can pause. The team can't change until you finish.",
+      "startInGroup": "You have a study group room open: start from the room, or close it to study alone.",
       "start": "Start",
       "startMinutes": "{{count}} min"
     }
@@ -603,6 +604,7 @@
     "advanced": "Advanced",
     "dev": "Developer tools",
     "devNote": "Fast time, fixed seed and shortcuts for testing.",
+    "devOffNote": "This server has developer tools off (DEV_TOOLS=0): the panel only shows its local controls.",
     "reset": "Erase everything",
     "resetNote": "Deletes this account's game on the server (developer tools only).",
     "resetButton": "Erase progress",
@@ -632,7 +634,9 @@
       "background": "Keep playing in another tab",
       "backgroundNote": "Study music keeps going when you switch tabs.",
       "hiss": "Vinyl crackle",
-      "hissNote": "A soft crackle under the study music."
+      "hissNote": "A soft crackle under the study music.",
+      "break": "Music during breaks",
+      "breakNote": "The home screen music while you rest. Menus are not affected."
     },
     "about": {
       "title": "About",
@@ -652,6 +656,7 @@
     "invalid_duration": "The duration must be between 15 and 120 minutes.",
     "empty_team": "Your team is empty.",
     "claimFailed": "Couldn't claim. Try again.",
+    "notFinishedDevClock": "The server says the session hasn't ended yet. Your developer clock is ahead, but this server ignores it (developer tools are off). Go back to real time.",
     "throw": {
       "no_encounter": "There's no active wave.",
       "wave_not_current": "That wave has passed.",
@@ -763,6 +768,8 @@
     "title": "Developer",
     "open": "Open developer panel",
     "close": "Close panel",
+    "serverOffTitle": "This server has developer tools off",
+    "serverOffBody": "The clock, finishing a session, items, weather and the fixed seed only change this browser, and the server ignores them. Run it with DEV_TOOLS=1 to use them. Only the local controls are left below.",
     "clock": "Game clock",
     "gameTime": "Game time: {{time}}",
     "shifted": "(ahead)",
@@ -1325,6 +1332,7 @@
     "mythical": "Mythical"
   },
   "break": {
+    "muteMusicHint": "Turns only the break music on or off. Sounds and the end chime keep playing.",
     "offerTitle": "Take a break?",
     "offerBody": "Get up, drink some water and stretch. If you finish the break, your team recovers {{pct}} of its Energy.",
     "length": "Break length",

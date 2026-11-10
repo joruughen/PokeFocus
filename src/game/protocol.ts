@@ -384,6 +384,16 @@ export const MAINTENANCE_NOTE_MAX = 280
 export const MAINTENANCE_MAX_MS = 14 * 24 * 60 * 60 * 1000
 
 /**
+ * GET /api/config — public (no session), `Cache-Control: no-store`.
+ * `devTools` is the server's DEV_TOOLS (always false in production): only then
+ * does it honor `x-dev-now` / `x-dev-seed` and the `dev*` / `setWeather` actions.
+ * The client's developer panel (`?dev`) checks it and locks its server-side controls.
+ */
+export interface ConfigResponse {
+  devTools: boolean
+}
+
+/**
  * GET /api/announcements — public (no session), `Cache-Control: no-store`.
  * Windows that have not ended yet (upcoming or running), oldest start first.
  * `serverNow` lets the client correct its clock skew.

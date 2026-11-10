@@ -13,7 +13,7 @@ import type { AudioSettings } from './settings'
 
 export { AudioEngine, soundLocked } from './engine'
 export type { AudioSnapshot, MusicControls, SfxOptions } from './engine'
-export { DEFAULT_AUDIO_SETTINGS, focusMusicAudible, focusMusicPatch, sanitizeAudioSettings } from './settings'
+export { DEFAULT_AUDIO_SETTINGS, breakMusicAudible, breakMusicPatch, focusMusicAudible, focusMusicPatch, sanitizeAudioSettings } from './settings'
 export type { AudioSettings } from './settings'
 export { SFX, SFX_NAMES } from './presets'
 export type { SfxName } from './presets'

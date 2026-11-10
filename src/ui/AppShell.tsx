@@ -230,9 +230,9 @@ function TrainerCard() {
           </Tooltip>
         ))}
         <Tooltip content={t('items.dustTip')}>
-          <li tabIndex={0} className="flex items-center gap-1">
+          <li tabIndex={0} className="flex items-center gap-1 max-xl:flex-col max-xl:gap-0">
             <PixelIcon name="dust" size={20} className="text-exp-400" />
-            <span className="font-num text-lg leading-none">{fmtInt(player.dust, i18n.language)}</span>
+            <span className={cx('font-num text-lg leading-none max-xl:text-base', player.dust >= 10000 && 'max-xl:text-sm')}>{fmtInt(player.dust, i18n.language)}</span>
           </li>
         </Tooltip>
       </ul>

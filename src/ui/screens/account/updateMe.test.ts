@@ -10,7 +10,7 @@ import { isApiError } from '../../api/client'
 import { requestErrorText } from '../../lib/errors'
 import { installFakeServer } from '../../test/fakeServer'
 import { useAuth } from '../../store/auth'
-import { lockState } from './accountLocks'
+import { lockState, serverUnlockAt } from './accountLocks'
 
 const DAY = 86_400_000
 const server = installFakeServer({ trainerName: 'Ash' })
@@ -61,6 +61,17 @@ describe('useAuth.updateMe', () => {
     expect(isApiError(err) && err.code === 'country_locked').toBe(true)
     expect(useAuth.getState().user!.country).toBe('PE')
     expect(useAuth.getState().user!.countryChangedAt).toBe(server.user.countryChangedAt)
+  })
+
+  it('the thrown ApiError carries the server unlockAt (name and country) for the UI', async () => {
+    const nameAt = Date.now() - DAY
+    const countryAt = Date.now() - 2 * DAY
+    server.user = { ...server.user, nameChangedAt: nameAt, countryChangedAt: countryAt }
+    const nameErr = await useAuth.getState().updateMe({ trainerName: 'Misty' }).catch((e: unknown) => e)
+    expect(isApiError(nameErr) && nameErr.body).toEqual({ error: 'name_locked', unlockAt: nameAt + NAME_LOCK_DAYS * DAY })
+    expect(serverUnlockAt(isApiError(nameErr) ? nameErr.body : null)).toBe(nameAt + NAME_LOCK_DAYS * DAY)
+    const countryErr = await useAuth.getState().updateMe({ country: 'ES' }).catch((e: unknown) => e)
+    expect(serverUnlockAt(isApiError(countryErr) ? countryErr.body : null)).toBe(countryAt + COUNTRY_LOCK_DAYS * DAY)
   })
 
   it('does not refresh for other errors', async () => {

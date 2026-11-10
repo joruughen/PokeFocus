@@ -1,8 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { lockState, profileChange } from './accountLocks'
+import { lockState, profileChange, serverUnlockAt } from './accountLocks'
 
 const DAY = 86_400_000
 const T0 = Date.UTC(2026, 10, 6, 12)
+
+describe('serverUnlockAt', () => {
+  it('takes the epoch ms the server sent', () => {
+    expect(serverUnlockAt({ error: 'name_locked', unlockAt: T0 + 20 * DAY })).toBe(T0 + 20 * DAY)
+  })
+
+  it('is null when it is missing or unusable, so the caller falls back to lockState', () => {
+    expect(serverUnlockAt(null)).toBeNull()
+    expect(serverUnlockAt(undefined)).toBeNull()
+    expect(serverUnlockAt({ error: 'name_locked' })).toBeNull()
+    expect(serverUnlockAt({ unlockAt: '1800000000000' })).toBeNull()
+    expect(serverUnlockAt({ unlockAt: Number.NaN })).toBeNull()
+    expect(serverUnlockAt({ unlockAt: 0 })).toBeNull()
+  })
+})
 
 describe('lockState', () => {
   it('a field that was never changed is free', () => {

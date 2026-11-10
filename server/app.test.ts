@@ -339,6 +339,19 @@ describe('game', () => {
     expect((devDust.json as unknown as GameSnapshot).doc.player?.dust).toBeGreaterThanOrEqual(100)
   })
 
+  it('GET /api/config announces the developer tools (public, no-store; never on in production)', async () => {
+    const off = await call('GET', '/api/config')
+    expect(off.status).toBe(200)
+    expect(off.json).toEqual({ devTools: false })
+    expect(off.res.headers.get('cache-control')).toBe('no-store')
+    // No session needed: it answers on the sign-in screen too, and the dev app says yes.
+    const on = await call('GET', '/api/config', { app: dev })
+    expect(on.json).toEqual({ devTools: true })
+    // DEV_TOOLS=1 is forced off in production.
+    const production = createApp({ env: loadEnv({ NODE_ENV: 'production', DEV_TOOLS: '1', APP_ORIGIN: ORIGIN, TRUST_PROXY: '1' }), db: database.db, clock })
+    expect((await call('GET', '/api/config', { app: production })).json).toEqual({ devTools: false })
+  })
+
   it('publishes a game event to the user on every write', async () => {
     const bus = new EventBus()
     const app = createApp({ env: loadEnv({ NODE_ENV: 'test', APP_ORIGIN: ORIGIN, TRUST_PROXY: '1' }), db: database.db, clock, bus })
