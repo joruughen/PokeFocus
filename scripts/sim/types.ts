@@ -56,6 +56,8 @@ export interface SessionRec {
   startedEmpty: number
   /** Mean (energy end / max) of awake members. */
   endEnergyFrac: number
+  /** Mean (Energy spent by actions / max) of awake members. */
+  spentFrac: number
   /** typeConditionMult for each of the 18 types at the start (index = ALL_TYPES order). */
   condMult: number[]
   /** Was the engine's active-condition list identical to ours? (consistency check) */
@@ -135,6 +137,16 @@ export interface Tally {
   counterHits: number
   counterEnergyLost: number
   counterOnLeader: number
+  /** Counterattacks that left their target at 0 Energy (exhausted between sessions). */
+  counterExhausted: number
+  /** Counterattacks drawn by attacks (assigning damage tokens), the Energy they took and how many exhausted the attacker. */
+  attackCounterHits: number
+  attackCounterEnergyLost: number
+  attackCounterExhausted: number
+  /** Σ (counterattack damage ÷ the attacker's max Energy). */
+  attackCounterFrac: number
+  /** Attacks with no counterattack because the wild was asleep or paralyzed. */
+  attackCounterSkipped: number
   restSessions: number
   sleepingStuckEnd: number
   // sessions
@@ -249,6 +261,12 @@ export function emptyTally(): Tally {
     counterHits: 0,
     counterEnergyLost: 0,
     counterOnLeader: 0,
+    counterExhausted: 0,
+    attackCounterHits: 0,
+    attackCounterEnergyLost: 0,
+    attackCounterExhausted: 0,
+    attackCounterFrac: 0,
+    attackCounterSkipped: 0,
     restSessions: 0,
     sleepingStuckEnd: 0,
     sessionsTotal: 0,

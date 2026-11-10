@@ -262,8 +262,8 @@ M = Condición_de_tipo (1.0–1.5) × Vínculo (1.0–1.2) × Foco_efectivo × E
 
 Los PS son la **energía del Pokémon a lo largo del día**. Se gastan al actuar y se recuperan cada día.
 
-- **Gasto:** cada acción cuesta `0.5 + Nivel / 25` de energía **[calibrar]**. Como el costo es por acción, los Pokémon rápidos se cansan antes. La Velocidad y los PS se equilibran entre sí: Jolteon actúa mucho y se agota pronto; Snorlax actúa poco y aguanta todo el día.
-- **Objetivo de diseño:** un Pokémon promedio aguanta unas **5 sesiones de 25 min al día** **[calibrar]**. Los de PS alto (Snorlax, Chansey, Lapras) son los aliados de los maratones de estudio.
+- **Gasto:** cada acción cuesta `0.4 + Nivel / 45` de energía (`energy.costBase`, `energy.costLevelDivisor`) **[calibrar]**. Como el costo es por acción, los Pokémon rápidos se cansan antes. La Velocidad y los PS se equilibran entre sí: Jolteon actúa mucho y se agota pronto; Snorlax actúa poco y aguanta todo el día.
+- **Objetivo de diseño:** un Pokémon que hace **todas** las sesiones de 25 min seguidas, sin descansos ni pociones, se agota en **~4–6 sesiones**, contando el gasto de sus acciones y el contraataque de cada salvaje al que ataca (§11.4). Simulador: mediana 4.3–4.5 sesiones en los niveles 10–50 (p10–p90: 3.6–5.2), docs/balance-report.md §11. Los de PS alto (Snorlax, Chansey, Lapras) son los aliados de los maratones de estudio.
 - **Agotado (0 PS):** deja de actuar (no genera puntos, Energía de captura ni técnicas), pero **sigue ganando la EXP de la sesión**. Estudiar siempre compensa; rotar el equipo es lo que mantiene los puntos.
 - **Reinicio diario:** todos los Pokémon recuperan el 100% de su energía a las **05:00** de la zona horaria del perfil.
 - **Recuperación durante el día:**
@@ -276,7 +276,7 @@ Los PS son la **energía del Pokémon a lo largo del día**. Se gastan al actuar
 | Habilidades (§6.3) | Regeneración, Cura Natural |
 | Objetos | Poción (+20 PS), Superpoción (+50), Hiperpoción (+120), Revivir (de 0 al 50%) desde misiones y Recogida |
 
-- La interfaz muestra la barra de PS de cada miembro del equipo en la pantalla previa a la sesión y avisa cuando alguno no va a llegar al final.
+- La interfaz muestra la barra de PS de cada miembro del equipo en la pantalla previa a la sesión, durante la sesión y en las oleadas, y avisa cuando alguno no va a llegar al final.
 
 ---
 
@@ -585,7 +585,7 @@ Si un legendario o mítico **se escapa**, durante tus **3 sesiones siguientes** 
 - Las capturas aseguradas de shiny solo funcionan con la Ball **correspondiente o superior**.
 - La **Ball de Estudio no es acumulable**: no entra en el inventario y solo puede usarse en la oleada que la generó. Si pasas a la siguiente oleada sin usarla, se pierde.
 - Si la oleada no tiene ningún Pokémon elegible para la Ball de Estudio, esta se convierte en una Poké Ball (que sí va al inventario).
-- Cada lanzamiento fallido provoca un **contraataque** del salvaje (§11.4). Tras `max_fallos_captura` lanzamientos fallidos (por defecto **3** **[calibrar]**), el salvaje **escapa**.
+- Cada lanzamiento fallido provoca un **contraataque** del salvaje contra el líder (§11.4); atacar a un salvaje también provoca el suyo contra el atacante. Tras `max_fallos_captura` lanzamientos fallidos (por defecto **3** **[calibrar]**), el salvaje **escapa**.
 
 ### 11.2 Fórmula de captura
 
@@ -616,20 +616,29 @@ Daño = Σ_tipo  Energía[tipo] · Efectividad(tipo, tipos_del_salvaje)
 
 ### 11.4 Contraataque del salvaje
 
-Si un lanzamiento falla, el salvaje **contraataca** a uno de tus Pokémon y le quita energía (PS, §5.3).
+Un salvaje quita energía (PS, §5.3) a tus Pokémon en dos momentos:
 
-- **A quién ataca:** al **líder** del equipo (hueco 1). Si el líder está agotado (0 PS), al siguiente del equipo con PS. Elegir líder es una decisión: conviene uno con mucha Energía y Aguante, y con tipos que resistan a lo que esperas encontrar.
+1. **Cuando lo atacas.** Mandar la ficha de daño de un Pokémon a un salvaje (§10, reparto del daño) **es un ataque y es definitivo**: no se puede deshacer ni cambiar de salvaje. El salvaje responde al momento con su mejor ataque **contra ese Pokémon**.
+   - **Auto** (botón o preferencia) también ataca de forma definitiva: cada Pokémon que falta ataca con el reparto automático y recibe el contraataque del salvaje al que más daño hace. Con la preferencia Auto activada, el ataque ocurre al lanzar la primera Ball de la oleada; la primera Ball también hace atacar a quien no lo haya hecho en el modo manual. Así cada Pokémon que actuó recibe **un** contraataque por oleada.
+   - **Un Pokémon agotado (0 PS) no puede atacar** (§5.3: no actúa): su ficha no se puede asignar y Auto o la primera Ball lo dejan fuera, así que su daño de esa oleada se pierde. Es lo coherente con "agotado = deja de actuar" y evita que un Pokémon a 0 sirva de escudo gratis.
+   - **Estados del salvaje.** Si una técnica de estado ha funcionado (Somnífero, Hipnosis, Onda Trueno…: el salvaje está **dormido** o **paralizado**), el salvaje **no contraataca** a quien le ataque. Da igual quién le puso el estado. No existe congelación en PokeFocus; si se añade, contaría igual. Por eso conviene usar las cargas de estado **antes** de atacar.
+2. **Cuando falla una Ball.** El contraataque va **siempre al líder** (hueco 1); si está agotado, al siguiente del equipo con PS. Aquí el estado del salvaje no cuenta. Elegir líder es una decisión: conviene uno con mucha Energía y Aguante, y con tipos que resistan a lo que esperas encontrar.
+
 - **Daño** **[calibrar]**:
 
 ```
-daño_contraataque = PS_máx_líder · 0.08 · (Nivel_salvaje / Nivel_líder)^0.5 · Efectividad(tipo_salvaje, tipos_líder) · (1 − min(0.5, Def_líder / 400))
+daño_contraataque = PS_máx_objetivo · 0.08 · (Nivel_salvaje / Nivel_objetivo)^0.5 · Efectividad(tipo_salvaje, tipos_objetivo) · (1 − min(0.5, Def_objetivo / 400)) · 1.5
 ```
 
-  - El tipo del ataque es uno de los tipos del salvaje, el más efectivo contra el líder.
+  - **objetivo** = el atacante (1) o el líder (2).
+  - El tipo del ataque es uno de los tipos del salvaje, el más efectivo contra el objetivo.
   - La **Defensa** (en pantalla, Aguante) reduce el daño recibido, hasta un 50%.
   - Los legendarios y míticos hacen ×2.
-- Si el líder llega a 0 PS queda **agotado** (§5.3) y deja de actuar hasta que se recupere.
+  - **×1.5** = `capture.counter.damageMult`, el daño de los salvajes. Con él y el nuevo coste por acción (§5.3), un Pokémon que estudia sesiones de 25 min seguidas, sin descanso ni pociones, se agota en **~4–5 sesiones** (objetivo §5.3: 4–6; docs/balance-report.md §11).
+- Las habilidades de contraataque (Velo Arena, Manto Níveo, Espejo Mágico, Cuerpo Maldito, Robustez, Absorbe Agua…) son **de quien recibe el golpe**: el atacante o el líder. Las de equipo (Despiste, Compiescolta) protegen a todos; Nerviosismo (sin contraataque en el primer fallo) solo afecta a las Balls (docs/effects.md).
+- Si el objetivo llega a 0 PS queda **agotado** (§5.3) y deja de actuar hasta que se recupere.
 - Tras `max_fallos_captura` fallos, el salvaje escapa (§11.1).
+- **Interfaz:** en la sesión y en las oleadas se ve la Energía de **todo el equipo**. Al atacar se ve el contraataque en la fila de ese Pokémon y en su ficha de daño; el panel de lanzamiento dice quién recibirá el de la Ball (el líder).
 
 ---
 

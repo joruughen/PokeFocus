@@ -4,17 +4,17 @@
  */
 import type { BallSlug, GameConfig, WildStatus } from './config'
 import { defaultContext, getSpecies, type EngineContext } from './context'
-import { evaluateWhen, type WhenContext } from './conditions'
-import { effectiveHits, lockWaveDamage } from './damage'
-import type { TypeSlug } from './data-types'
-import { ofKind, passiveEffects, selfStatMult, teamCaptureMods, type TeamCaptureMods } from './effects'
+import { encounterModifiers, resolveCounter } from './counter'
+import { effectiveHits, lockWaveAttacks } from './damage'
 import { toOwnedPokemon } from './individual'
 import { recordMissionEvent } from './missions'
 import { trainerLevelFromExp } from './progression'
 import { chance, type Rng } from './rng'
-import { err, ok, type OwnedPokemon, type PlayerState, type Result, type WildPokemon, type EncounterState } from './state'
-import { computeStats } from './stats'
-import { ballCovers, hpFractionAfter, rollWild, typeEffectiveness } from './waves'
+import { err, ok, type CounterResult, type PlayerState, type Result, type WildPokemon, type EncounterState } from './state'
+import { ballCovers, rollWild } from './waves'
+
+export { ballCounterTarget, counterDamage, encounterModifiers, resolveCounter, resolveCounterOn, wildCanStrikeBack } from './counter'
+export type { CounterResult } from './state'
 
 export type ThrowBall = BallSlug | 'study-ball'
 
@@ -37,31 +37,6 @@ export function captureChance(
   return Math.min(1, (1 - (2 * h) / 3) * (R / 255) * ballMult * statusMult * extraMult)
 }
 
-function teamMembers(state: PlayerState): OwnedPokemon[] {
-  return state.team.map((u) => state.pokemon[u]).filter((p): p is OwnedPokemon => Boolean(p))
-}
-
-function counterWc(enc: EncounterState | null, p: OwnedPokemon, isLeader: boolean, ctx: EngineContext): WhenContext {
-  const max = computeStats(p, ctx).hp
-  return {
-    sessionMinutes: enc?.env.sessionMinutes,
-    localHour: enc?.env.localHour,
-    weather: enc?.env.weather ?? null,
-    weekend: enc?.env.weekend,
-    noPauses: enc?.env.noPauses,
-    isLeader,
-    energyFraction: max > 0 ? p.energy.current / max : 0,
-    targetLegendary: false,
-  }
-}
-
-/** Team capture modifiers from the current team (ballMult, extra throws, counterNoFirst, revealWildIvs). */
-export function encounterModifiers(state: PlayerState, ctx: EngineContext = defaultContext()): TeamCaptureMods & { maxFailedThrows: number } {
-  const team = teamMembers(state)
-  const mods = teamCaptureMods(team, (p) => counterWc(state.encounter, p, state.team[0] === p.uid, ctx), ctx)
-  return { ...mods, maxFailedThrows: ctx.config.capture.maxFailedThrows + mods.extraFailedThrows }
-}
-
 /** Catch chance of a wild with a ball given the current team (0..1; 1 when guaranteed). */
 export function wildCatchChance(state: PlayerState, wild: WildPokemon, ball: ThrowBall, ctx: EngineContext = defaultContext()): number {
   if (ball === 'study-ball') return wild.studyBallEligible ? 1 : 0
@@ -69,23 +44,6 @@ export function wildCatchChance(state: PlayerState, wild: WildPokemon, ball: Thr
   const sp = getSpecies(wild.speciesSlug, ctx)
   const mods = encounterModifiers(state, ctx)
   return captureChance(sp.captureRate, wild.isLegendary, wild.hpFraction, ctx.config.capture.balls[ball].mult * mods.ballMult, wild.status, ctx.config, wild.nextThrowBonus)
-}
-
-export interface CounterResult {
-  targetUid: string
-  attackType: TypeSlug
-  effectiveness: number
-  /** Energy removed (0 if missed, healed or immune). */
-  damage: number
-  missed: boolean
-  /** Energy healed by counterImmuneType (0 otherwise). */
-  healed: number
-  /** Wild HP fraction removed by counterReflect. */
-  reflected: number
-  statusInflicted: WildStatus | null
-  /** counterMinHp1 kept it at 1. */
-  survivedWith1: boolean
-  energyAfter: number
 }
 
 export type ThrowOutcome =
@@ -117,114 +75,6 @@ function replaceWild(enc: EncounterState, ref: WildRef, wild: WildPokemon, patch
   }
 }
 
-/** Counterattack damage before target effects (GDD §11.4). */
-export function counterDamage(
-  targetMaxHp: number,
-  targetLevel: number,
-  targetDefense: number,
-  wildLevel: number,
-  effectiveness: number,
-  legendary: boolean,
-  cfg: GameConfig,
-): number {
-  const c = cfg.capture.counter
-  return (
-    targetMaxHp *
-    c.basePct *
-    Math.pow(wildLevel / Math.max(1, targetLevel), c.levelExponent) *
-    effectiveness *
-    (1 - Math.min(c.defenseMaxReduction, targetDefense / c.defenseDivisor)) *
-    (legendary ? c.legendaryMult : 1)
-  )
-}
-
-/** Resolve a counterattack against the team. Pure: returns the updated team member and wild. */
-export function resolveCounter(
-  state: PlayerState,
-  wild: WildPokemon,
-  rng: Rng,
-  ctx: EngineContext = defaultContext(),
-): { counter: CounterResult; target: OwnedPokemon; wild: WildPokemon } | null {
-  const cfg = ctx.config
-  const team = teamMembers(state)
-  const target = team.find((p) => p.energy.current > 0)
-  if (!target) return null
-  const isLeader = state.team[0] === target.uid
-  const stats = computeStats(target, ctx)
-  const targetTypes = getSpecies(target.speciesSlug, ctx).types
-  const wildTypes = getSpecies(wild.speciesSlug, ctx).types
-  let attackType = wildTypes[0] as TypeSlug
-  let eff = -1
-  for (const t of wildTypes) {
-    const e = typeEffectiveness(t, targetTypes, ctx.chart)
-    if (e > eff) {
-      eff = e
-      attackType = t
-    }
-  }
-  const effects = passiveEffects(target, ctx)
-  const wc = counterWc(state.encounter, target, isLeader, ctx)
-  const active = effects.filter((e) => evaluateWhen(e.effect.when, wc, cfg))
-  const counter: CounterResult = {
-    targetUid: target.uid,
-    attackType,
-    effectiveness: eff,
-    damage: 0,
-    missed: false,
-    healed: 0,
-    reflected: 0,
-    statusInflicted: null,
-    survivedWith1: false,
-    energyAfter: target.energy.current,
-  }
-  // Miss chance: the target's own counterMiss or the best team-scope one on the team (strongest, never summed).
-  // `chance(rng, 0)` draws nothing, so a team without any counterMiss consumes the same random numbers as before.
-  const mods = encounterModifiers(state, ctx)
-  let missChance = mods.teamCounterMiss
-  for (const { effect: e } of ofKind(active, 'counterMiss')) if (e.scope !== 'team') missChance = Math.max(missChance, e.chance)
-  let nextWild = wild
-  let current = target.energy.current
-  if (chance(rng, missChance)) {
-    counter.missed = true
-  } else {
-    if (ofKind(active, 'counterImmuneType').some((e) => e.effect.type === attackType)) {
-      const healed = Math.min(stats.hp - current, stats.hp * cfg.capture.counter.immuneHealPct)
-      counter.healed = Math.max(0, healed)
-      current += counter.healed
-    } else {
-      const teamMult = mods.teamCounterDamageMult
-      const selfMult = selfStatMult(active, 'counterDamageTaken', wc, cfg)
-      let dmg = counterDamage(stats.hp, target.level, stats.defense, wild.level, eff, wild.isLegendary, cfg) * selfMult * teamMult
-      dmg = Math.min(dmg, current)
-      if (current - dmg <= 0 && active.some((e) => e.effect.kind === 'counterMinHp1') && current >= 1) {
-        dmg = current - 1
-        counter.survivedWith1 = true
-      }
-      counter.damage = Math.max(0, dmg)
-      current -= counter.damage
-    }
-    let reflect = 0
-    for (const { effect: e } of ofKind(active, 'counterReflect')) reflect = Math.max(reflect, e.wildHpPct)
-    if (reflect > 0) {
-      const before = nextWild.hpFraction
-      const hp = hpFractionAfter((1 - before + reflect) * nextWild.maxHp, nextWild.maxHp, cfg)
-      counter.reflected = before - hp
-      nextWild = { ...nextWild, hpFraction: hp }
-    }
-    for (const { effect: e } of ofKind(active, 'counterStatus')) {
-      if (nextWild.status === null && chance(rng, e.chance)) {
-        nextWild = { ...nextWild, status: e.status }
-        counter.statusInflicted = e.status
-      }
-    }
-    let bonus = 1
-    for (const { effect: e } of ofKind(active, 'nextThrowBonus')) bonus = Math.max(bonus, e.mult)
-    if (bonus > 1) nextWild = { ...nextWild, nextThrowBonus: Math.max(nextWild.nextThrowBonus, bonus) }
-  }
-  counter.energyAfter = current
-  return { counter, target: { ...target, energy: { ...target.energy, current } }, wild: nextWild }
-}
-
 /**
  * Throw a ball at a wild of the current wave. Consumes the ball (Study Ball:
  * one per wave, only on eligible wilds, never in the inventory). On a fail the
@@ -247,11 +97,12 @@ export function throwBall(
   const rawWave = enc.waves[ref.waveIndex]
   if (!rawWave?.wilds[ref.wildIndex]) return err('unknown_wild')
   if (rawWave.wilds[ref.wildIndex]?.outcome !== 'pending') return err('wild_resolved')
-  // Manual damage split: the first ball locks the wave (unassigned tokens take the automatic split).
-  const wave = lockWaveDamage(rawWave, ctx)
+  // The first ball locks the wave: every member that has not attacked yet (and has Energy) attacks
+  // with the automatic split, and each attacked wild strikes back at its attacker (GDD §11.4).
+  let s: PlayerState = lockWaveAttacks(state, ref.waveIndex, rng, ctx)
+  let encounter: EncounterState = s.encounter as EncounterState
+  const wave = encounter.waves[ref.waveIndex] as EncounterState['waves'][number]
   const wild = wave.wilds[ref.wildIndex] as WildPokemon
-  let encounter: EncounterState = wave === rawWave ? enc : { ...enc, waves: enc.waves.map((w) => (w.index === wave.index ? wave : w)) }
-  let s: PlayerState = encounter === enc ? state : { ...state, encounter }
   let guaranteed: 'study' | 'shiny' | null = null
   let p: number
   if (ball === 'study-ball') {

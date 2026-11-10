@@ -100,7 +100,7 @@ export type GameAction =
   | { type: 'applyStatus'; chargeId: string; ref: WildRef }
   | { type: 'reroll'; chargeId: string; ref: WildRef }
   /** Manual damage split: send a member's damage token of a wave to a wild (`null` = take it back). */
-  | { type: 'assignDamage'; waveIndex: number; uid: string; wildIndex: number | null }
+  | { type: 'assignDamage'; waveIndex: number; uid: string; wildIndex: number }
   /** Unassigned tokens of the wave take the automatic split. */
   | { type: 'autoAssignDamage'; waveIndex: number }
   /** Preference copied into the next claimed encounter (`EncounterState.damageMode`). */

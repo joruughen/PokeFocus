@@ -194,11 +194,11 @@
   "team": {
     "title": "Your team",
     "leader": "Leader",
-    "leaderTip": "The leader takes the counterattacks when a catch fails.",
+    "leaderTip": "The leader takes the counterattacks when a Ball fails.",
     "emptySlotHow": "Catch Pokémon in the waves and add them to the team between sessions.",
     "emptySlots_one": "{{count}} free slot",
     "emptySlots_other": "{{count}} free slots",
-    "subtitle": "Up to 6 Pokémon study with you. The first is the leader: it takes the counterattacks when a catch fails.",
+    "subtitle": "Up to 6 Pokémon study with you. The first is the leader: it takes the counterattacks when a Ball fails. The rest only take those of the wild Pokémon they attack.",
     "locked": "Your team is studying. You can change it when the session ends.",
     "slotFree": "Slot {{n}} free",
     "order": "Team order",
@@ -217,9 +217,9 @@
     "warnAsleep": "Asleep: it won't act next session.",
     "warnExhausted": "Exhausted: it won't act until it recovers Energy.",
     "warnTired": "May run out of Energy in a {{minutes}}-min session.",
-    "leaderRow": "Takes the counterattacks. Grit {{grit}}.",
+    "leaderRow": "Takes the counterattacks of failed Balls. Grit {{grit}}.",
     "leaderTitle": "The leader",
-    "leaderWhy": "When a Ball fails, the wild Pokémon counterattacks the leader. If it's exhausted, the next one.",
+    "leaderWhy": "When a Ball fails, the wild Pokémon counterattacks the leader (if exhausted, the next one). When one of your Pokémon attacks a wild Pokémon, it strikes back at that one.",
     "gritNote": "Reduces the damage of each counterattack.",
     "energyNote": "Its health: at 0 it stops acting.",
     "weakTo": "Takes more damage from:",
@@ -256,7 +256,7 @@
       "doneLeader": "{{in}} takes {{out}}'s place and is the new leader"
     },
     "memberTitle": "Your Pokémon",
-    "memberWhy": "In slot {{n}}: it only takes counterattacks if the ones ahead run out of Energy.",
+    "memberWhy": "In slot {{n}}: it takes the counterattack of each wild Pokémon it attacks, and those of failed Balls only if the ones ahead are exhausted.",
     "seeSheet": "See full sheet",
     "selectOf": "Show details for {{name}}"
   },
@@ -476,7 +476,7 @@
       "lost": "Study Ball lost",
       "converted": "None eligible: you got a Poké Ball"
     },
-    "counterTarget": "Takes the counterattacks",
+    "counterTarget": "If the Ball fails, it hits",
     "missed": "Missed!",
     "counterMissed": "The counterattack missed.",
     "counterHealed": "It absorbed the {{type}} attack and recovered {{amount}} Energy.",
@@ -514,7 +514,10 @@
     },
     "tries": "Tries",
     "studyEligibleTip": "Guaranteed catch with this wave's Study Ball.",
-    "hitBy": "Hit by"
+    "hitBy": "Hit by",
+    "counterTook": "Took the counterattack",
+    "counterWhyLeader": "The leader always pays for failed Balls.",
+    "counterWhyNext": "The leader is exhausted: the next one with Energy takes it."
   },
   "firstRun": {
     "you": "trainer",
@@ -892,7 +895,7 @@
       },
       "counter": {
         "title": "Counterattack",
-        "body": "{{name}} lost {{damage}} Energy. Counterattacks hit the leader first and, if it's exhausted, the next one. A leader with high Grit takes them better."
+        "body": "{{name}} lost {{damage}} Energy. Failed Balls are paid by the leader (if exhausted, the next one). Each attack, instead, is paid by the attacker."
       },
       "fled": {
         "title": "It got away",
@@ -919,8 +922,12 @@
         "body": "A technique in your team reveals the quality (IVs) of wild Pokémon. Go for the ones with more stars."
       },
       "damage": {
-        "title": "Split the damage",
-        "body": "Each token is the damage one of your Pokémon dealt in this block. Tap one, then a wild, to send it all there. You can change it until you throw the first ball. In a hurry? Press Auto."
+        "title": "Attack the wild Pokémon",
+        "body": "Each token is the damage one of your Pokémon dealt in this block. Tap one, then a wild Pokémon: it attacks with everything and the wild one strikes back. It is final. Put it to sleep or paralyze it first and it cannot answer. In a hurry? Press Auto."
+      },
+      "teamEnergy": {
+        "title": "Every attack gets an answer",
+        "body": "When one of your Pokémon attacks a wild Pokémon, the wild one strikes back at it. Here you see the whole team's Energy. Tip: put the wild Pokémon to sleep or paralyze it first and it can't answer."
       }
     },
     "box": {
@@ -994,7 +1001,7 @@
       },
       "order": {
         "title": "Order matters",
-        "body": "The first one is the leader. If it's exhausted, counterattacks go to the next. The rest of the order doesn't change points."
+        "body": "The first one is the leader: it pays for failed Balls. If it's exhausted, they go to the next. Also, each Pokémon takes the counterattack of the wild Pokémon it attacks, so everyone's Grit counts."
       },
       "tired": {
         "title": "Someone is tired",
@@ -1379,7 +1386,7 @@
     },
     "team": {
       "title": "Add a second team member",
-      "how": "In Team, pick someone from your Box."
+      "how": "In Team, pick someone from your Box. Each one attacks and takes its own counterattack: with more members, the Energy cost is shared."
     },
     "equip": {
       "title": "Equip a technique",
@@ -1907,12 +1914,12 @@
   },
   "damage": {
     "title": "Your team's damage",
-    "howTo": "Tap a token, then a wild: all of that Pokémon's damage goes to it.",
-    "lockNote": "The first ball you throw locks the damage; unassigned tokens are split automatically.",
-    "locked": "Damage locked: you already threw a ball in this wave.",
-    "pickWild": "Now tap a wild to send it {{name}}'s damage.",
+    "howTo": "Tap a token, then a wild Pokémon: that Pokémon attacks it with all its damage and the wild Pokémon strikes back. It can't be undone.",
+    "lockNote": "Put the wild Pokémon to sleep or paralyze it first and it can't strike back. When you throw the first Ball, whoever hasn't attacked attacks on its own.",
+    "locked": "Attacks closed: you already threw a Ball this wave.",
+    "pickWild": "Now tap the wild Pokémon {{name}} will attack. It's final.",
     "auto": "Auto",
-    "autoTip": "Split the unassigned tokens like automatic mode does: at random, leaning toward the wilds with more HP.",
+    "autoTip": "Everyone left attacks with the automatic split (random, more toward wild Pokémon with more HP). Each takes the counterattack of the wild Pokémon it hurts most. It's final.",
     "unassigned_one": "{{count}} unassigned",
     "unassigned_other": "{{count}} unassigned",
     "allAssigned": "All assigned",
@@ -1932,22 +1939,31 @@
     "overkill": "Too much damage",
     "overkillTip": "HP never drops below {{pct}}: the extra damage is wasted. Send a token to another wild.",
     "preview": "With this token: {{pct}}",
-    "assignHere": "Send here",
-    "unassignHere": "Take back",
-    "throwLocks": "Throwing locks the damage.",
+    "assignHere": "Attack here",
+    "throwLocks": "When you throw, whoever hasn't attacked attacks on its own.",
     "errors": {
       "damage_locked": "This wave's damage is already locked.",
       "damage_auto": "This wave splits its damage automatically.",
       "unknown_token": "That Pokémon did no damage in this wave.",
-      "unknown_wave": "That wave doesn't exist."
+      "unknown_wave": "That wave doesn't exist.",
+      "already_attacked": "That Pokémon already attacked this wave.",
+      "attacker_exhausted": "It's exhausted: it can't attack."
     },
     "toggle": {
       "label": "Automatic damage split",
-      "on": "Your team splits its damage among the wilds on its own.",
-      "off": "You choose which wild gets each Pokémon's damage.",
-      "tip": "Without Auto, in every wave you decide which wild each Pokémon sends its damage to. With Auto, it is split at random, leaning toward the wilds with more HP. It applies when you claim the session.",
+      "on": "Your team attacks on its own when you throw each wave's first Ball.",
+      "off": "You choose which wild Pokémon each of yours attacks.",
+      "tip": "Without Auto, in each wave you decide which wild Pokémon each of yours attacks (and who takes each counterattack). With Auto, when you throw the first Ball everyone attacks on its own, at random and more toward wild Pokémon with more HP. Applied when you claim the session.",
       "fixed": "Applies when you claim."
-    }
+    },
+    "exhausted": "Exhausted",
+    "struckBack": "counterattack {{what}}",
+    "skipped": {
+      "asleep": "asleep",
+      "paralyzed": "paralyzed"
+    },
+    "noCounterAsleep": "The wild Pokémon was asleep: it couldn't strike back.",
+    "noCounterParalyzed": "Paralysis kept it from striking back."
   },
   "mic": {
     "toggle": "Sound profile (microphone)",
@@ -2244,5 +2260,13 @@
     "takesSlot": "{{name}} will take slot {{n}} in the order.",
     "sure": "Are you sure you want to make the swap?",
     "confirm": "Yes, swap"
+  },
+  "teamEnergy": {
+    "label": "Team Energy",
+    "title": "Team Energy",
+    "out": "Exhausted",
+    "nextTarget": "Takes the next counterattack",
+    "wavesNote": "Attacking a wild Pokémon is final, and it strikes back at its attacker (unless it is asleep or paralyzed). If a Ball fails, the counterattack goes to the leader (outlined).",
+    "sessionNote": "Energy at the start of the session. Each action spends a little, and in the waves each Pokémon takes the counterattack of the wild Pokémon it attacks."
   }
 }

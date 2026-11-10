@@ -168,6 +168,11 @@ export interface GameConfig {
       defenseDivisor: number
       defenseMaxReduction: number
       legendaryMult: number
+      /**
+       * Global multiplier on every counterattack (the wilds' damage). Counters are spread over the
+       * attackers instead of always hitting the leader, so this tunes the team-wide pressure.
+       */
+      damageMult: number
       /** `counterImmuneType`: heals this share of max Energy (effects.md: 25%). */
       immuneHealPct: number
     }
@@ -231,7 +236,7 @@ export const ENGINE_DEFAULTS = {
     },
     nonLevelEvolutionLevelGap: 15,
   },
-  capture: { counter: { immuneHealPct: 0.25 } },
+  capture: { counter: { immuneHealPct: 0.25, damageMult: 1 } },
   progression: { maxLevel: 100 },
   trainer: { expCoef: 100, expExponent: 1.5, expPerMinute: 1, expPerNewSpecies: 60, maxLevel: 50 },
   historyLimit: 1000,

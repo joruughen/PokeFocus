@@ -109,7 +109,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('throwBall', { ref, ball }),
   act('applyStatus', { chargeId: id, ref }),
   act('reroll', { chargeId: id, ref }),
-  act('assignDamage', { waveIndex: ref.shape.waveIndex, uid: id, wildIndex: ref.shape.wildIndex.nullable() }),
+  act('assignDamage', { waveIndex: ref.shape.waveIndex, uid: id, wildIndex: ref.shape.wildIndex }),
   act('autoAssignDamage', { waveIndex: ref.shape.waveIndex }),
   act('setAutoDamage', { value: z.boolean() }),
   act('nextWave', {}),

@@ -7,6 +7,7 @@ import {
   applyStatusCharge,
   assignDamage,
   autoAssignDamage,
+  computeStats,
   damageTokens,
   estimateTokenDamage,
   isManualWave,
@@ -115,16 +116,45 @@ export function playEncounter(state: PlayerState, c: CaptureCtx): PlayerState {
     const enc = s.encounter
     const wi = enc.currentWave
     const last = wi === enc.waves.length - 1
+    if (wi === 0) {
+      c.tally.statusCharges += enc.charges.filter((x) => x.kind === 'status').length
+      c.tally.rerollCharges += enc.charges.filter((x) => x.kind === 'reroll').length
+    }
+    // Attacks draw counterattacks unless the wild is asleep or paralyzed (GDD §11.4): with the plain split, use the
+    // reroll and status charges first, then attack. Concentrating policies need the target first.
+    const statusFirst = !STATUS_SMART.has(c.damagePolicy ?? 'auto')
+    if (statusFirst) {
+      s = useRerolls(s, wi, c)
+      s = useStatuses(s, wi, last, c, -1)
+    }
     const alloc = allocateDamage(s, wi, c)
     s = alloc.state
     registerWave(s, wi, c)
-    s = useRerolls(s, wi, c)
-    s = useStatuses(s, wi, last, c, alloc.target)
+    if (!statusFirst) {
+      s = useRerolls(s, wi, c)
+      s = useStatuses(s, wi, last, c, alloc.target)
+    }
     s = throwStudyBall(s, wi, c)
     s = throwRest(s, wi, c)
+    tallyAttacks(s, wi, c)
     s = advanceWave(s, c.ctx)
   }
   return s
+}
+
+/** Counterattacks drawn by the wave's attacks (GDD §11.4), once the wave is done. */
+function tallyAttacks(s: PlayerState, wi: number, c: CaptureCtx): void {
+  const t = c.tally
+  for (const a of Object.values(s.encounter?.waves[wi]?.attacks ?? {})) {
+    if (a.skipped) t.attackCounterSkipped++
+    if (!a.counter || a.counter.damage <= 0) continue
+    t.attackCounterHits++
+    t.attackCounterEnergyLost += a.counter.damage
+    const target = s.pokemon[a.counter.targetUid]
+    const max = target ? computeStats(target, c.ctx).hp : 0
+    if (max > 0) t.attackCounterFrac += a.counter.damage / max
+    if (a.counter.energyAfter <= 0) t.attackCounterExhausted++
+  }
 }
 
 /** A legendary, a shiny without a guarantee or a species not caught yet: worth concentrating on. */
@@ -166,7 +196,7 @@ function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): { state:
   let target = -1
   const assignAll = (to: number) => {
     for (const tk of damageTokens(wave)) {
-      const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: to }, c.ctx)
+      const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: to }, c.rng, c.ctx)
       if (r.ok) s = r.value
     }
   }
@@ -190,7 +220,7 @@ function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): { state:
             best = i
           }
         }
-        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: best }, c.ctx)
+        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: best }, c.rng, c.ctx)
         if (r.ok) s = r.value
       }
     } else if (policy === 'best-ev') {
@@ -218,7 +248,7 @@ function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): { state:
           }
         }
         dmg.set(best, (dmg.get(best) as number) + (est.get(best) as number))
-        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: best }, c.ctx)
+        const r = assignDamage(s, { waveIndex: wi, uid: tk.uid, wildIndex: best }, c.rng, c.ctx)
         if (r.ok) s = r.value
       }
       // Status target: the most valuable wild that is not guaranteed.
@@ -234,7 +264,7 @@ function allocateDamage(state: PlayerState, wi: number, c: CaptureCtx): { state:
     }
   }
   // Anything left (and the whole wave under `auto`) takes the automatic split.
-  const r = autoAssignDamage(s, wi, c.ctx)
+  const r = autoAssignDamage(s, wi, c.rng, c.ctx)
   return { state: r.ok ? r.value : s, target: STATUS_SMART.has(policy) ? target : -1 }
 }
 
@@ -267,10 +297,6 @@ function registerWave(s: PlayerState, wi: number, c: CaptureCtx): void {
   if (!enc || !wave) return
   const t = c.tally
   t.wavesSeen++
-  if (wi === 0) {
-    t.statusCharges += enc.charges.filter((x) => x.kind === 'status').length
-    t.rerollCharges += enc.charges.filter((x) => x.kind === 'reroll').length
-  }
   const floor = c.ctx.config.capture.minHpFraction
   for (const w of wave.wilds) {
     t.wildsSeen++
@@ -426,6 +452,7 @@ function recordThrow(s: PlayerState, ball: ThrowBall, w: WildPokemon, outcome: T
     t.counterHits++
     t.counterEnergyLost += outcome.counter.damage
     if (outcome.counter.targetUid === leaderBefore) t.counterOnLeader++
+    if (outcome.counter.energyAfter <= 0) t.counterExhausted++
   }
   if (outcome.kind === 'fled') {
     t.fled++

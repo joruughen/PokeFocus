@@ -192,6 +192,8 @@ export interface WildPokemon extends IndividualCore {
   failedThrows: number
   /** Multiplier for the next throw (nextThrowBonus), 1 if none. */
   nextThrowBonus: number
+  /** HP fraction removed by counterReflect (kept when the wave's damage is recomputed); absent = 0. */
+  extraHpLoss?: number
   outcome: 'pending' | 'caught' | 'fled'
   caughtUid: string | null
 }
@@ -211,10 +213,44 @@ export interface Wave {
    * no damage yet. Absent = automatic mode (or an older save): `hits` apply as rolled.
    */
   assignments?: Record<string, DamageAssignment>
-  /** The first ball of the wave was thrown: assignments are frozen (unassigned members went to `'auto'`). */
+  /** The first ball of the wave was thrown: no more attacks (unassigned members with Energy went to `'auto'`). */
   damageLocked?: boolean
+  /**
+   * Attacks already made (GDD §11.4): member uid → the wild that struck back and
+   * its counterattack. Assigning is an attack and is irreversible.
+   */
+  attacks?: Record<string, WaveAttack>
   /** Types whose condition counted as active for species weighting. */
   activeConditionTypes: TypeSlug[]
+}
+
+/** Counterattack of a wild against one team member (a failed ball, or an attack). */
+export interface CounterResult {
+  /** Who took it. */
+  targetUid: string
+  attackType: TypeSlug
+  effectiveness: number
+  /** Energy removed (0 if missed, healed or immune). */
+  damage: number
+  missed: boolean
+  /** Energy healed by counterImmuneType (0 otherwise). */
+  healed: number
+  /** Wild HP fraction removed by counterReflect. */
+  reflected: number
+  statusInflicted: WildStatus | null
+  /** counterMinHp1 kept it at 1. */
+  survivedWith1: boolean
+  energyAfter: number
+}
+
+/** One member's attack of a wave and the counterattack it drew. */
+export interface WaveAttack {
+  /** Wild that struck back: the assigned slot, or (automatic split) the one that took most of its damage; null = none pending. */
+  wildIndex: number | null
+  /** null when the wild could not strike back (`skipped`) or there was no wild. */
+  counter: CounterResult | null
+  /** Why there was no counterattack: the wild was asleep, or paralysis stopped it. */
+  skipped: 'asleep' | 'paralyzed' | null
 }
 
 /** Where a damage token goes: a wild slot, or the automatic split. */

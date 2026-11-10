@@ -71,6 +71,10 @@ Todas las claves presentes deben cumplirse (AND). Sin `when`, el efecto siempre 
 | `nextThrowBonus` | `mult`, `when?` | Tras recibir un contraataque, el siguiente lanzamiento multiplica su probabilidad |
 | `noSleepFromRest` | `when?` | Descanso no le marca `asleepNextSession` |
 
+### Quién recibe el contraataque
+
+Las primitivas `counter*`, `nextThrowBonus` y los `statMod` de `counterDamageTaken` con `scope: "self"` se evalúan sobre **el Pokémon que recibe el contraataque**. Ese Pokémon es **el líder** (o el siguiente con Energía) cuando falla una Ball, y **el atacante** cuando el contraataque responde a un ataque (asignar su ficha de daño, GDD §11.4); si el salvaje está dormido o paralizado no responde a los ataques. Así, Velo Arena, Manto Níveo, Espejo Mágico, Cuerpo Maldito, Polvo Escudo, Muro Mágico o Robustez protegen a quien las lleva cuando ataca, y al líder también en las Balls falladas. Las de equipo (Despiste, Compiescolta) protegen a todos; Nerviosismo (sin contraataque en el primer fallo) solo afecta a las Balls. Las que piden `isLeader: true` (Sacapecho, Impasible) solo actúan cuando el líder recibe el golpe.
+
 ## Técnicas y movimientos no definidos
 
 - Un movimiento **de daño** (potencia > 0) que no esté en `custom-techniques.json` es una técnica de daño genérica: produce Energía de captura de su tipo, con su potencia y su categoría.

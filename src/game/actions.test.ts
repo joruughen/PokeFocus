@@ -203,17 +203,23 @@ describe('damage split', () => {
   }
   const t = T0 + 32 * MINUTE_MS
 
-  it('defaults to manual; assign, auto and the lock at the first ball', () => {
+  it('defaults to manual; an assignment is a persistent, irreversible attack with its counterattack', () => {
     let doc = claimWith(null)
     const enc = doc.player!.encounter!
     expect(enc.damageMode).toBe('manual')
     expect(enc.waves[0]!.wilds.every((w) => w.hpFraction === 1)).toBe(true)
+    const energy = doc.player!.pokemon.p1!.energy.current
     doc = must(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))
-    expect(doc.player!.encounter!.waves[0]!.assignments).toEqual({ p1: 0 })
-    expect(doc.player!.encounter!.waves[0]!.wilds[0]!.hpFraction).toBeLessThan(1)
-    doc = must(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: null }, env(t))
+    const w = doc.player!.encounter!.waves[0]!
+    expect(w.assignments).toEqual({ p1: 0 })
+    expect(w.wilds[0]!.hpFraction).toBeLessThan(1)
+    expect(w.attacks?.p1?.wildIndex).toBe(0)
+    const c = w.attacks!.p1!.counter
+    if (c) expect(doc.player!.pokemon.p1!.energy.current).toBeCloseTo(energy - c.damage + c.healed)
+    // No reassigning, no Auto over an attack already made.
+    expect(applyAction(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 1 }, env(t))).toEqual({ ok: false, error: 'already_attacked' })
     doc = must(doc, { type: 'autoAssignDamage', waveIndex: 0 }, env(t))
-    expect(doc.player!.encounter!.waves[0]!.assignments).toEqual({ p1: 'auto' })
+    expect(doc.player!.encounter!.waves[0]!.assignments).toEqual({ p1: 0 })
     doc = must(doc, { type: 'throwBall', ref: { waveIndex: 0, wildIndex: 0 }, ball: 'poke-ball' }, env(t))
     expect(doc.player!.encounter!.waves[0]!.damageLocked).toBe(true)
     expect(applyAction(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))).toEqual({ ok: false, error: 'damage_locked' })

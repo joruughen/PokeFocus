@@ -14,6 +14,7 @@ import {
   thresholdsOf,
   type Thresholds,
 } from './analysis.ts'
+import { sessionsToExhaust } from './exhaustion.ts'
 import { GRINDER_LIMIT, type Results } from './pipeline.ts'
 import { PROFILE_DESC, PROFILE_IDS, type ProfileId } from './profiles.ts'
 import { GROUP_LABEL, LEGEND_MAX_RATIO, OUTLIER_BAND } from './species-analysis.ts'
@@ -391,7 +392,7 @@ ${mdTable(['Perfil', 'Estado/sesión', 'Usadas', 'Sustituir/sesión', 'Usadas'],
 }
 
 function sec5(c: Ctx): string {
-  const { base, profs } = c
+  const { base, profs, cfg } = c
   const rows = profs.map((p) => {
     const ss = rewardedSessions(base[p] as ProfileAgg)
     const memberSessions = sum(ss.map((s) => s.active))
@@ -406,6 +407,40 @@ function sec5(c: Ctx): string {
       pct(mean(ss.map((s) => s.asleep / Math.max(1, s.teamSize)))),
     ]
   })
+  const counterRows = profs.map((p) => {
+    const a = base[p] as ProfileAgg
+    const t = a.tallyMean
+    const ss = rewardedSessions(a)
+    const sessions = ss.length / Math.max(1, a.runs.length)
+    // Per 25-min block (a wave): long sessions count as several.
+    const memberWaves = sum(ss.map((s) => s.active * Math.max(1, s.waves))) / Math.max(1, a.runs.length)
+    const spent = mean(ss.map((s) => s.spentFrac / Math.max(1, s.minutes / 25)))
+    const counterFrac = t.attackCounterFrac / Math.max(1, memberWaves)
+    return [
+      PN[p],
+      n2(t.counterHits / Math.max(1, sessions)),
+      n1(t.counterEnergyLost / Math.max(1, t.counterHits)),
+      n2(t.attackCounterHits / Math.max(1, sessions)),
+      n1(t.attackCounterEnergyLost / Math.max(1, t.attackCounterHits)),
+      pct(t.attackCounterSkipped / Math.max(1, t.attackCounterHits + t.attackCounterSkipped)),
+      n2((t.counterExhausted + t.attackCounterExhausted) / Math.max(1, sessions)),
+      pct(spent),
+      pct(counterFrac),
+      n1(1 / Math.max(1e-9, spent + counterFrac)),
+    ]
+  })
+  const exh = sessionsToExhaust(c.r.ctx)
+  const exhRows = exh.map((x) => [
+    String(x.level),
+    `${n1(x.median)} (${n1(x.p10)}–${n1(x.p90)})`,
+    n1(x.medianNoCounter),
+    n1(x.actions),
+    n1(x.sessionCost),
+    n1(x.counter),
+    n0(x.maxEnergy),
+    n1(x.breakSessions),
+    `${n1(x.potionSessions)} / ${n1(x.superPotionSessions)}`,
+  ])
   const ord = ['constant', 'marathoner', 'night-owl'].filter((p) => base[p as ProfileId]).map((p) => {
     const ss = rewardedSessions(base[p as ProfileAgg['profile']] as ProfileAgg)
     const cells = [0, 1, 2, 3].map((i) => {
@@ -423,6 +458,14 @@ ${mdTable(['Perfil', 'Sesiones', '% con algún agotado', 'Agotados/sesión', '% 
 Sesiones con algún agotado según el orden dentro del día:
 
 ${mdTable(['Perfil', '1.ª', '2.ª', '3.ª', '4.ª o más'], ord)}
+
+**Contraataques** (GDD §11.4, ×${n2(cfg.capture.counter.damageMult ?? 1)} \`capture.counter.damageMult\`; por sesión recompensada). "Ball" = lanzamientos fallidos, siempre al líder. "Ataque" = cada miembro que ataca recibe el contraataque del salvaje atacado; "sin respuesta" = el salvaje estaba dormido o paralizado. "Gasto/25 min" = Energía de las acciones ÷ máxima (media de los miembros despiertos, por bloque de 25 min); "contraataque/25 min" = Σ daño de los contraataques de ataque ÷ máxima, por miembro y oleada; "Sesiones de 25 min hasta agotarse" = 1 ÷ (gasto + contraataque), sin descansos, Caja ni pociones.
+
+${mdTable(['Perfil', 'Ball/sesión', 'Daño por Ball', 'Ataque/sesión', 'Daño por ataque', 'Sin respuesta', 'Agotan/sesión', 'Gasto/25 min', 'Contraataque/25 min', 'Sesiones de 25 min hasta agotarse'], counterRows)}
+
+**Sesiones hasta agotarse, un Pokémon solo** (objetivo GDD §5.3: 4–6). Sesiones de 25 min seguidas, sin descanso, Caja ni pociones; cada sesión gasta sus acciones (sesión real del motor) y recibe un contraataque de un salvaje de su nivel con eficacia neutra. Todas las especies no legendarias; IVs 15, naturaleza neutra. "Descanso" y "Poción / Superpoción" = cuántas sesiones devuelven.
+
+${mdTable(['Nivel', 'Sesiones (p10–p90)', 'Sin contraataque', 'Acciones/sesión', 'Gasto/sesión', 'Contraataque', 'Energía máx.', 'Descanso', 'Poción / Superpoción'], exhRows)}
 `
 }
 
@@ -576,7 +619,7 @@ function marginNote(r: Results, baseK: Kpi[], propK: Kpi[]): string {
   const v = Number.parseFloat(propK[i]?.value ?? '')
   const b = Number.parseFloat(baseK[i]?.value ?? '')
   if (Number.isNaN(v) || v <= 60 || v <= b) return ''
-  return `\nEfecto secundario: subir la EXP y abrir antes los topes sube el nivel del equipo y con él el coste de Energía por acción (\`0.5 + nivel/25\`) más rápido que los PS, así que el maratonista rota más (${b.toFixed(0)} % → ${v.toFixed(0)} % de sesiones con algún agotado). Si se quiere mantenerlo en 30–60 %, subir \`energy.costLevelDivisor\` (p. ej. de ${r.cfg.energy.costLevelDivisor} a ${Math.round(r.cfg.energy.costLevelDivisor * 1.15)}) o dar PS a los maratonistas.\n`
+  return `\nEfecto secundario: subir la EXP y abrir antes los topes sube el nivel del equipo y con él el coste de Energía por acción (\`${r.cfg.energy.costBase} + nivel/${r.cfg.energy.costLevelDivisor}\`) más rápido que los PS, así que el maratonista rota más (${b.toFixed(0)} % → ${v.toFixed(0)} % de sesiones con algún agotado). Si se quiere mantenerlo en 30–60 %, subir \`energy.costLevelDivisor\` (p. ej. de ${r.cfg.energy.costLevelDivisor} a ${Math.round(r.cfg.energy.costLevelDivisor * 1.15)}) o dar PS a los maratonistas.\n`
 }
 
 function engineNotes(c: Ctx): string {

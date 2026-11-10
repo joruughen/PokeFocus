@@ -747,3 +747,55 @@ grinder: 936 encuentros
 | concentrate-status | 16% ± 1 pp | 16% | 86% | 2.0 |
 | smart | 17% ± 1 pp | 16% | 86% | 2.1 |
 | best-ev | 14% ± 1 pp | 48% | 86% | 2.3 |
+
+## 11. Combate y Energía: Ball fallida al líder, ataques irreversibles, agotado en 4–6 sesiones, 2026-11-10
+
+> Regla final (GDD §11.4): **una Ball fallida** hace que el salvaje contraataque **al líder** (o al siguiente con Energía). **Asignar** la ficha de daño de un Pokémon a un salvaje es un **ataque irreversible** y ese salvaje contraataca **a ese Pokémon** al momento; Auto y la primera Ball hacen atacar a quien falte. Si una técnica de estado ha funcionado (salvaje **dormido o paralizado**), no hay contraataque. Daño de los salvajes ×1.5 (`capture.counter.damageMult`). Coste de Energía por acción `0.5 + nivel/28` → **`0.4 + nivel/45`** (`energy.costBase`, `energy.costLevelDivisor`) para que un Pokémon que estudia todas las sesiones seguidas se agote en **~4–6 sesiones** (GDD §5.3).
+>
+> Órdenes: `npx tsx scripts/sim/exhaustion.ts [config.json]` (tabla de sesiones hasta agotarse) y `npm run simulate -- --no-propose --no-species` sobre tres motores: **v0.8.0** (`main`, contraataque al líder, sin ataques), **nuevo** (esta regla y este coste) y **nuevo con el coste anterior** (`{"energy":{"costBase":0.5,"costLevelDivisor":28}}`). 20 semillas × 12 semanas × 6 perfiles, mismos calendarios, política de daño `auto`.
+
+**Sesiones de 25 min hasta agotarse, un Pokémon solo** (sin descansos, Caja ni pociones; cada sesión = acciones reales del motor + un contraataque de un salvaje de su nivel, eficacia neutra, ×1.5; todas las especies no legendarias, IVs 15, naturaleza neutra):
+
+| Nivel | Coste anterior (0.5 + nv/28) | **Coste nuevo (0.4 + nv/45)** | Nuevo, sin contraataque | Gasto/sesión (nuevo) | Contraataque | Energía máx. | Poción / Superpoción (sesiones) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 10 | 3.6 (3.4–4.0) | **4.3 (4.1–4.7)** | 8.6 | 3.7 | 3.8 | 33 | 2.7 / 6.7 |
+| 20 | 3.7 (3.3–4.2) | **4.5 (4.1–5.1)** | 9.1 | 5.9 | 6.3 | 57 | 1.6 / 4.1 |
+| 30 | 3.6 (3.0–4.2) | **4.5 (3.9–5.2)** | 8.6 | 9.6 | 8.6 | 81 | 1.1 / 2.8 |
+| 50 | 3.3 (2.7–4.0) | **4.3 (3.6–5.1)** | 7.4 | 16.6 | 12.5 | 129 | 0.7 / 1.7 |
+
+Mediana (p10–p90) sobre las especies. Con el coste anterior, sumar el contraataque de cada ataque dejaba al Pokémon en 3.3–3.7 sesiones (por debajo del objetivo, y peor a nivel alto). Con el nuevo, **4.3–4.5 sesiones en todos los niveles**: el coste sube más despacio con el nivel, así que el número ya no cae al subir. Un descanso completado devuelve ~0.4 sesiones.
+
+**En partida (equipo completo, por perfil).** "Gasto" y "contraataque" = fracción de la Energía máxima por miembro y bloque de 25 min; "sesiones" = 1 ÷ (gasto + contraataque). "Sin respuesta" = ataques a un salvaje dormido o paralizado.
+
+| Perfil | Ball/sesión | Ataques/sesión | Daño por ataque | Sin respuesta | Gasto/25 min | Contraataque/25 min | Sesiones hasta agotarse (coste anterior) | **Sesiones (nuevo)** |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| casual | 1.05 | 4.85 | 4.5 | 14% | 13% | 7% | 3.9 | **4.9** |
+| constante | 0.94 | 2.72 | 6.9 | 53% | 14% | 4% | 3.9 | **5.5** |
+| maratonista | 2.13 | 15.63 | 8.2 | 17% | 14% | 5% | 4.1 | **5.3** |
+| noctámbulo | 1.56 | 6.82 | 7.9 | 34% | 15% | 5% | 3.8 | **5.1** |
+| irregular | 1.08 | 4.23 | 5.2 | 26% | 13% | 6% | 3.9 | **5.0** |
+| grinder | 1.39 | 6.66 | 11.3 | 22% | 15% | 5% | 3.8 | **5.0** |
+
+En partida sale algo más alto (4.9–5.5) que el Pokémon solo porque no todos los miembros atacan en cada oleada (los de pocas acciones a veces no tienen ficha) y parte de los ataques no tienen respuesta. Ambos quedan dentro de 4–6.
+
+**Puntos semanales** (estado estable, semanas 4–12, mediana p50 y p10–p90):
+
+| Perfil | v0.8.0 | Nuevo | Δ p50 | Nuevo con coste anterior | Δ p50 |
+|---|---:|---:|---:|---:|---:|
+| casual | 5.9k (4.2k–8.2k) | 6.0k (4.1k–8.5k) | +2% | 6.0k | +2% |
+| constante | 73.4k (49.5k–100k) | 70.3k (48.9k–95.3k) | −4% | 70.5k | −4% |
+| maratonista | 168k (112k–211k) | 176k (116k–230k) | +5% | 162k | −4% |
+| noctámbulo | 124k (85.3k–159k) | 141k (93.5k–174k) | +14% | 109k | −12% |
+| irregular | 9.9k (4.2k–18.2k) | 10.0k (4.1k–18.5k) | +1% | 10.3k | +4% |
+| grinder | 744k (431k–846k) | 764k (450k–859k) | +3% | 702k | −6% |
+
+**Ligas** (semanas estables que alcanzan Maestra): constante 14% → 11%, maratonista 96% → 98%, noctámbulo 83% → 88%; Super y Ultra sin cambios de más de 3 puntos.
+
+**Agotados** (% de sesiones con algún miembro a 0): constante 1% → 2%, maratonista 41% → 42%, noctámbulo 35% → 25%, grinder 61% → 59%. Con el coste anterior: constante 9%, maratonista 29% pero con 3.67 contraataques que agotan por sesión (frente a 0.85).
+
+Lectura:
+
+- **Objetivo cumplido:** 4.3–4.5 sesiones (Pokémon solo) y 4.9–5.5 (en partida). El contraataque pesa casi lo mismo que el gasto de las acciones (≈ 5 % frente a ≈ 14 % de la Energía por bloque en partida; 3.8–12.5 frente a 3.7–16.6 en la tabla del Pokémon solo), así que dormir o paralizar antes de atacar se nota.
+- **Puntos casi iguales para los perfiles normales** (casual, constante, irregular: −4 % a +2 %, dentro del ruido de 20 semillas). Los perfiles de muchas horas suben algo (+3 % a +14 %) porque el coste por acción a nivel alto baja ~30 % y rotan menos; el contraataque por ataque lo compensa solo en parte. Con el coste anterior perdían puntos (−4 % a −12 %) y se agotaban antes de la 4.ª sesión.
+- **Riesgo:** el noctámbulo +14 % es el cambio mayor. La palanca es `energy.costBase`: con 0.45 el Pokémon solo baja a 4.2–4.4 sesiones (medido con `exhaustion.ts`; su efecto en los puntos no está simulado).
+- Capturas y Pokédex no cambian de forma apreciable (tasas por rareza y especies por semana dentro de ±3 puntos/±1.5 especies, ruido de muestra): el contraataque no toca la probabilidad de captura salvo por Espejo Mágico, Cuerpo Maldito e Impasible.
