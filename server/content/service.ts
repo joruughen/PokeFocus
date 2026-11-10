@@ -180,7 +180,8 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
 
   const build = (input: ResolvedContentInput, hash: string, versionId: number | null, eventRevs: Record<string, number>): ResolvedContent => {
     const cached = lru.get(hash)
-    if (cached) return cached
+    // Same content from another version (e.g. a rollback copy): share the context, report the version that applies now.
+    if (cached) return cached.versionId === versionId ? cached : { ...cached, versionId, eventRevs }
     const ctx = createEngineContext(resolveContent(input.patch, input.events, input.eventItems, { hash }))
     const r: ResolvedContent = { ...input, hash, baseHash: BASE_HASH, versionId, eventRevs, ctx }
     remember(r)
