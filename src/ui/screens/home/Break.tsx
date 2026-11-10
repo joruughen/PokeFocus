@@ -11,6 +11,7 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { useState } from 'react'
+import { MuteMusicButton } from './MuteMusicButton'
 import { SoundUnlockChip } from './SoundUnlockChip'
 
 const cfg = defaultContext().config
@@ -147,6 +148,7 @@ export function Break() {
               {t('break.early')}
             </Button>
           )}
+          <MuteMusicButton phase="break" />
         </div>
         {!done && <p className="mt-3 max-w-[52ch] text-sm text-mist-400">{t('break.earlyNote')}</p>}
       </section>

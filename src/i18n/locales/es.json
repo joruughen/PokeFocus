@@ -629,7 +629,9 @@
       "background": "Seguir sonando en otra pestaña",
       "backgroundNote": "La música de estudio sigue aunque cambies de pestaña.",
       "hiss": "Ruido de vinilo",
-      "hissNote": "Un crujido suave de fondo en la música de estudio."
+      "hissNote": "Un crujido suave de fondo en la música de estudio.",
+      "break": "Música durante los descansos",
+      "breakNote": "La música de la pantalla de inicio mientras descansas. En los menús no cambia nada."
     },
     "about": {
       "title": "Acerca de",
@@ -1318,6 +1320,7 @@
     "mythical": "Mítico"
   },
   "break": {
+    "muteMusicHint": "Activa o silencia solo la música del descanso. Los sonidos y el aviso de fin siguen sonando.",
     "offerTitle": "¿Un descanso?",
     "offerBody": "Levántate, toma agua y estira. Si completas el descanso, tu equipo recupera {{pct}} de su Energía.",
     "length": "Duración del descanso",
