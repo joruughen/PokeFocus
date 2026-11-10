@@ -1,4 +1,4 @@
-# Pendientes — 2026-11-06
+# Pendientes — 2026-11-09
 
 El prototipo F1 está **completo y jugable** y la **F2 (servidor propio, cuentas, amigos y rankings) está implementada** (ver `docs/F2-plan.md` y `docs/server.md`). Este archivo resume el estado y lo que queda, para que un agente nuevo pueda continuar sin contexto previo.
 
@@ -62,6 +62,83 @@ Balance a vigilar:
 - Los objetos Teralito y MT ya se ganan en misiones, pero todavía no sirven para nada (la Teracristalización y las MT llegan en F4).
 
 Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
+
+## ▶ Para continuar (estado al 2026-11-10)
+
+Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
+
+**`main` = v0.9.0** (`9743f70`, sin push). Incluye A (combate y energía), D (motes, equipos guardados, cambio desde la ficha), F («¿Qué hay de nuevo?»), E0 (contenido en vivo en el motor) y E2 (roles `player`/`support`/`admin`, auditoría, migración 0005). Typecheck limpio y 916 tests.
+
+**Limpieza pendiente:** los 14 worktrees `.claude/worktrees/agent-*` y `integration-v0.9`, con sus ramas, están fusionados en `main` y sin cambios sin commit. Se pueden borrar con `git worktree remove -f -f …` y `git branch -d …`.
+
+**Por revisar de v0.9.0:**
+- **Navegador a 390 px:** sin probar la ventana «¿Qué hay de nuevo?», las oleadas con la Energía del equipo, los motes, los equipos guardados ni la ventana de comparación.
+- **Parálisis:** dormido **o** paralizado = sin contraataque, siempre. El agente quitó `capture.counter.paralysisSkipChance`, que era un 25 %. Confirmar que esa es la regla.
+- **Noctámbulo +14 % de puntos semanales** con la nueva Energía; el resto de perfiles van de −4 % a +5 % (`docs/balance-report.md` §11). La palanca es `energy.costBase`: con 0,45 el Pokémon se agota en 4,2–4,4 sesiones, sin simular el efecto en los puntos.
+- **Oleadas guardadas con la regla anterior,** a mitad de una oleada: sus asignaciones cuentan como ataques sin contraataque.
+- **Motes:** no se ven en los rankings ni en las pantallas sociales, a propósito. 12 emojis pueden verse anchos a 390 px.
+- **`ADMIN_EMAILS`** en el servidor desplegado para promover tu cuenta. `ADMIN_TOKEN` sigue aceptándose para el mantenimiento (queda en la auditoría como `token`); quitarlo en la versión siguiente.
+- **Copias de seguridad:** cuando lleguen las imágenes de eventos, incluir `.data/uploads` junto con PostgreSQL.
+
+**Lo siguiente, en este orden:**
+- **B** («que se entienda») y **C** (sesiones largas cancelables): A ya está en `main`, se pueden empezar.
+- **Fase E, tanda 2:**
+  - E1 validación (Opus)
+  - E3 servicio de contenido y fijado por sesión (Opus, después de A y D)
+  - E4 cliente en vivo (Sonnet)
+  - E11 soporte de jugadores (Sonnet)
+  - E12 métricas (Sonnet)
+- Tandas siguientes de E: según `docs/admin-plan.md` §7.
+
+**Decisiones tomadas el 2026-11-09:**
+- Energía: agotado en ~4–6 sesiones seguidas.
+- Al cancelar una sesión larga se conservan los bloques de 25 min y los minutos estudiados.
+- Motes de 12 caracteres como máximo.
+- Admin en vivo desde la base de datos, con versiones.
+- Imágenes de eventos con `sharp`, guardadas en disco (`UPLOADS_DIR`, por defecto `.data/uploads`, con un volumen de Docker). **Hay que incluir esa carpeta en las copias de seguridad** junto con PostgreSQL. Alternativa que se habló: guardarlas en PostgreSQL.
+- Roles `player`/`support`/`admin`, con tu cuenta promovida mediante `ADMIN_EMAILS`. `ADMIN_TOKEN` desaparece en la versión siguiente.
+
+**Decisiones de balance aún abiertas** (ver más abajo):
+- reescalado ×0,85 del Foco;
+- `legendaryChance`;
+- Ultra Balls para el maratonista;
+- suelo de Foco Interno.
+
+## Hecho: v0.8.0 (2026-11-09)
+
+- Botón «Música» en el descanso y `musicDuringBreak` en Ajustes → Sonido (la pista `home` lleva la marca `rest` solo en el descanso).
+- `GET /api/config` → `{ devTools }`: el panel `?dev` se desactiva contra un servidor sin herramientas; texto propio para `not_finished`; `ApiError.body` y `unlockAt` directo.
+- R-03 arreglado (Web Lock `pokefocus-end-bell:<sessionId>`). Pendiente: probar en navegador real. Fallo aparte conocido: pausar o cancelar desde la pestaña A no cancela la campana programada en B.
+- `StageTeam` (equipo en filas a 390 px) en la sesión, al reclamar, el descanso y los resultados; Polvo a 1024 px; la Ball de Estudio se cambia sola si no sirve; «Empezar» desactivado con una sala de grupo abierta. R-04 (animación del contraataque tras recargar) documentado, sin arreglar.
+
+## Hoja de ruta (decidida 2026-11-09)
+
+Orden por dependencias. Decisiones del usuario entre paréntesis.
+
+**A. Combate y energía** (rama `worktree-agent-a68709049b34a75ad`, a rehacer):
+- Si falla la Ball, el contraataque va al **líder**.
+- Asignar un Pokémon a un salvaje es un ataque **irreversible**; el salvaje contraataca a **ese** Pokémon. Si una técnica de estado (Somnífero…) funciona, no hay contraataque.
+- Daño del salvaje ×1,5 (`capture.counter.damageMult`).
+- Energía: un Pokémon que hace todas las sesiones de 25 min seguidas, sin descansos ni pociones, se agota en **~4–6 sesiones**. Calibrar con el simulador.
+- Vida de todo el equipo en la sesión y las oleadas, tutorial y docs.
+
+**B. Que se entienda** (después de A): al pasar el ratón por las etiquetas Daño, Pasiva y Activable, cuándo se activan y con qué probabilidad, con los números del Pokémon (en las de daño, para qué sirve acumular Energía); desglose de cómo se calculan los puntos de la sesión.
+
+**C. Sesiones largas cancelables** (después de A): cancelar conserva las oleadas de los bloques de 25 min cumplidos **y** los puntos, EXP y Polvo de los minutos estudiados. El servidor decide.
+
+**D. Gestión del equipo:**
+- Equipos guardados con nombre y cambio rápido.
+- **Motes** (nombre propio, máximo 12 caracteres).
+- Desde la ficha: poner en el equipo o cambiar por otro, con ventana de comparación y confirmación.
+
+**E. Administración y eventos** (cambios **en vivo desde la base de datos**, con versiones; diseño en `docs/admin-plan.md`):
+- Contenido: aparición por especie, técnicas, habilidades, captura, shiny, legendarios, multiplicadores, economía, ligas.
+- Misiones diarias, semanales y de evento, con sus recompensas.
+- Eventos: nombre, descripción, imagen, inicio y fin, especies destacadas, *drops*, shiny del evento.
+- Versiones con auditoría y vuelta atrás; simular antes de publicar; soporte de jugadores; métricas; rol de administrador.
+- Página de Eventos para los jugadores.
+
+**F. «¿Qué hay de nuevo?»:** ventana una vez por versión, con enlace a `#/changelog`.
 
 ## Hecho: estudiar con otras pestañas, y pendientes de UX y código (2026-11-06)
 
