@@ -6,6 +6,7 @@ import { createRng } from './rng'
 import {
   activationChance,
   applySessionResult,
+  cancelKeep,
   captureValue,
   completeSession,
   dailyRewardFactor,
@@ -376,5 +377,40 @@ describe('effect primitives in sessions (docs/effects.md)', () => {
     const pk = makeMon('pikachu', 10, { uid: 'p', equippedMoves: ['thunder-shock'], learnedMoves: ['thunder-shock'] })
     const fast = { ...pk, equippedMoves: ['thunder-shock', 'agility'], learnedMoves: ['thunder-shock', 'agility'] }
     expect(runSession(makePlayer([fast]), 50).result.members[0]!.actions).toBeGreaterThan(runSession(makePlayer([pk]), 50).result.members[0]!.actions)
+  })
+})
+
+describe('cancelling a long session (GDD §5.6)', () => {
+  it('cancelKeep: long sessions keep the minutes from 15 min on, and one wave per full block', () => {
+    expect(cancelKeep(25, 20, cfg)).toEqual({ keeps: false, reason: 'short_session', minutes: 20, waves: 0 })
+    expect(cancelKeep(50, 14.99, cfg)).toEqual({ keeps: false, reason: 'too_few_minutes', minutes: 14, waves: 0 })
+    expect(cancelKeep(50, 15, cfg)).toEqual({ keeps: true, reason: null, minutes: 15, waves: 0 })
+    expect(cancelKeep(50, 24.9, cfg)).toMatchObject({ keeps: true, minutes: 24, waves: 0 })
+    expect(cancelKeep(50, 25, cfg)).toMatchObject({ keeps: true, minutes: 25, waves: 1 })
+    expect(cancelKeep(100, 99.5, cfg)).toMatchObject({ keeps: true, minutes: 99, waves: 3 })
+  })
+
+  it('no wave, no Poké Balls and no roaming tick before the first block; energy is still spent', () => {
+    const s = { ...makePlayer([makeMon('charmander', 20, { uid: 'a' })]), roaming: [{ speciesSlug: 'mewtwo', sessionsLeft: 2 }] }
+    const { result } = runSession(s, 50, 3, { endedAt: T0 + 20 * MIN, claimedAt: T0 + 20 * MIN, cancelled: true })
+    expect(result).toMatchObject({ cancelled: true, minutes: 20, pokeBalls: 0, lateClaim: false })
+    expect(result.waves).toHaveLength(0)
+    expect(result.energyByBlock).toHaveLength(0)
+    expect(result.roamingAfter).toEqual([{ speciesSlug: 'mewtwo', sessionsLeft: 2 }])
+    expect(result.totalPoints).toBeGreaterThan(0)
+    expect(result.members[0]!.energySpent).toBeGreaterThan(0)
+  })
+
+  it('same as a completed session of the same length, except the waves (and nothing is ever late)', () => {
+    const s = makePlayer([makeMon('charmander', 20, { uid: 'a' })])
+    const done60 = runSession(s, 60, 5).result
+    const cancel60 = runSession(s, 100, 5, { endedAt: T0 + 60 * MIN, claimedAt: T0 + 60 * MIN, cancelled: true }).result
+    expect(cancel60.waves).toHaveLength(2)
+    expect(cancel60.totalPoints).toBe(done60.totalPoints)
+    expect(cancel60.dust).toBe(done60.dust)
+    expect(cancel60.members[0]!.exp).toBe(done60.members[0]!.exp)
+    // Cancelled long after the stop it reports (paused): never a late claim.
+    const paused = runSession(s, 100, 5, { endedAt: T0 + 60 * MIN, claimedAt: T0 + 300 * MIN, cancelled: true }).result
+    expect(paused).toMatchObject({ lateClaim: false, focus: 1 })
   })
 })
