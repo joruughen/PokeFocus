@@ -2341,6 +2341,485 @@
       "remove": "Remove the notice for {{when}}",
       "removed": "Notice removed"
     },
+    "tabs": {
+      "label": "Admin sections",
+      "content": "Content",
+      "events": "Events",
+      "players": "Players",
+      "metrics": "Metrics",
+      "maintenance": "Maintenance"
+    },
+    "content": {
+      "intro": "Change the game's numbers without a release. Work on a draft (it saves as you type), check it, compare it with what is live, then publish it now or schedule it. Nothing reaches players until you publish.",
+      "introReadonly": "What is live, the version history and what each draft changes. Only admins can edit and publish.",
+      "retry": "Retry",
+      "yes": "Yes",
+      "no": "No",
+      "actions": "Actions",
+      "base": "Base: {{value}}",
+      "baseRows": "Base: {{count}} rows",
+      "bigChange": "×{{factor}} CHANGE",
+      "reset": "Back to the base value: {{name}}",
+      "addRow": "Add",
+      "removeRow": "Remove row {{n}}",
+      "number": {
+        "empty": "Enter a number.",
+        "invalid": "That is not a number.",
+        "integer": "It must be a whole number.",
+        "range": "Between {{min}} and {{max}}.",
+        "limits": "Allowed: {{min}} to {{max}}"
+      },
+      "impact": {
+        "leagueWeek": "League week",
+        "owned": "Owned Pokémon"
+      },
+      "kind": {
+        "active": "Live",
+        "scheduled": "Scheduled",
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
+      "groups": {
+        "encounters": "Encounters",
+        "capture": "Capture",
+        "energy": "Energy",
+        "actions": "Actions",
+        "economy": "Economy",
+        "leagues": "Leagues",
+        "conditions": "Conditions"
+      },
+      "sections": {
+        "label": "Draft sections",
+        "params": "Parameters",
+        "species": "Species",
+        "moves": "Moves",
+        "advanced": "Advanced",
+        "review": "Review",
+        "preview": "Spawn preview",
+        "techniques": "Techniques",
+        "abilities": "Abilities",
+        "missions": "Missions"
+      },
+      "columns": {
+        "trainerLevel": "Trainer level",
+        "min": "Min",
+        "max": "Max",
+        "species": "Species caught",
+        "cap": "Level cap"
+      },
+      "fields": {
+        "captureRate": "Capture rate",
+        "enabled": "Can appear",
+        "weightMult": "Weight ×",
+        "minTrainerLevel": "Min trainer level",
+        "weather": "Weather",
+        "hours": "Hours",
+        "power": "Power",
+        "accuracy": "Accuracy",
+        "spawn": "Spawn rule"
+      },
+      "weather": {
+        "clear": "Clear",
+        "sun": "Sun",
+        "rain": "Rain",
+        "snow": "Snow",
+        "unknown": "Unknown"
+      },
+      "live": {
+        "title": "Live now",
+        "reload": "Reload",
+        "active": "In force",
+        "scheduled": "Scheduled",
+        "events": "Active events",
+        "version": "Version",
+        "effective": "Since",
+        "hash": "Hash",
+        "by": "By",
+        "noneActive": "No published version: players run on the base content.",
+        "noneScheduled": "Nothing scheduled.",
+        "noEvents": "No event is running.",
+        "hashLine": "Content hash {{hash}} · base {{base}}",
+        "isBase": "players have the base content"
+      },
+      "versions": {
+        "title": "Versions",
+        "filter": "Filter versions",
+        "all": "All",
+        "draft": "Drafts",
+        "published": "Published",
+        "archived": "Archived",
+        "empty": "No versions yet.",
+        "createdBy": "Created by {{who}} · {{when}}",
+        "effectiveBy": "{{when}} · by {{who}}",
+        "notValidated": "Not validated yet",
+        "validation": "{{errors}} errors · {{warnings}} warnings",
+        "edit": "Edit",
+        "view": "View",
+        "copy": "Copy to a new draft",
+        "rollback": "Republish this",
+        "delete": "Delete draft {{name}}",
+        "deleteTitle": "Delete this draft?",
+        "deleteBody": "{{name}} will be removed for good. Published versions are never deleted.",
+        "deleteConfirm": "Delete",
+        "deleted": "Draft deleted",
+        "newFromLive": "New draft from live",
+        "newEmpty": "New draft from base"
+      },
+      "view": {
+        "title": "Version {{name}}",
+        "created": "Created",
+        "parent": "Copied from",
+        "isActive": "This is the version in force: there is nothing to compare.",
+        "diffHint": "Changes compared with the version in force now."
+      },
+      "editor": {
+        "title": "Draft {{name}}",
+        "back": "Back to versions",
+        "name": "Name",
+        "note": "Note",
+        "noteHint": "Why this change (shown in the history).",
+        "baseNote": "A draft is a full set of overrides over the shipped base: a value you set back to its base value is removed from the draft.",
+        "saved": "Saved",
+        "saving": "Saving…",
+        "unsaved": "Unsaved changes…",
+        "saveError": "Could not save ({{code}}).",
+        "retry": "Retry",
+        "changes_one": "{{count}} change vs live",
+        "changes_other": "{{count}} changes vs live",
+        "bar": "Draft actions",
+        "blocked_one": "{{count}} error blocks publishing",
+        "blocked_other": "{{count}} errors block publishing",
+        "publish": "Publish…"
+      },
+      "params": {
+        "groups": "Parameter groups",
+        "search": "Find a parameter",
+        "searchPlaceholder": "e.g. shiny, energy, Ultra Ball",
+        "onlyChanged": "Only changed",
+        "noMatches": "No parameter matches."
+      },
+      "species": {
+        "intro": "Capture rate and spawn rules per species. A rule that is not set means no restriction. At least 5 species must stay available at every hour, weather and level band.",
+        "name": "Species",
+        "type": "Type",
+        "allTypes": "All types",
+        "stage": "Evolution stage",
+        "anyStage": "Any",
+        "more": "Rules",
+        "less": "Close",
+        "weatherHint": "None ticked = any weather.",
+        "hoursHint": "Local hour windows [from, to). From above to wraps midnight. None = all day.",
+        "from": "from",
+        "to": "to",
+        "resetAll": "Remove every override of {{name}}"
+      },
+      "moves": {
+        "intro": "Power and accuracy of existing moves. A damage move cannot become a status move.",
+        "name": "Move"
+      },
+      "table": {
+        "search": "Search by name or number",
+        "count_one": "{{count}} row",
+        "count_other": "{{count}} rows",
+        "pages": "Pages",
+        "prev": "Previous page",
+        "next": "Next page"
+      },
+      "advanced": {
+        "intro": "Techniques, abilities and missions are replaced whole, so they are edited as JSON. The shape is checked as you apply it and again on the server. Start from the shipped definition with «Copy from base».",
+        "apply": "Apply",
+        "clear": "Remove all overrides",
+        "baseSlug": "Shipped definition",
+        "copyBase": "Copy from base",
+        "unapplied": "You have text that is not applied yet.",
+        "syntax": "That is not valid JSON.",
+        "object": "It must be a JSON object."
+      },
+      "review": {
+        "title": "Validation",
+        "validate": "Validate",
+        "hint": "While you type only the quick checks run. «Validate» also runs the engine smoke test on a few hundred synthetic sessions.",
+        "notValidated": "Not validated with the full check yet.",
+        "okSmoke": "Valid (smoke test passed)",
+        "okLive": "Valid (quick checks)",
+        "failed_one": "{{count}} error",
+        "failed_other": "{{count}} errors",
+        "at": "at {{time}}",
+        "stale": "edited since"
+      },
+      "diff": {
+        "title": "Changes vs live",
+        "empty": "This draft does not change anything against what is live.",
+        "what": "Setting",
+        "before": "Live",
+        "after": "Draft",
+        "unset": "—"
+      },
+      "issues": {
+        "error": "Error",
+        "warning": "Warning",
+        "goto": "Go to field",
+        "wholePatch": "The draft",
+        "big_change": "More than ×{{factor}} away from the base ({{base}} → {{value}}). It needs your confirmation to publish.",
+        "out_of_range": "Out of the allowed range.",
+        "invalid": "Not a valid value.",
+        "unknown_key": "Unknown or non-editable setting.",
+        "unknown_species": "Unknown species.",
+        "unknown_move": "Unknown move.",
+        "unknown_technique": "Unknown technique (new ones are not supported yet).",
+        "unknown_ability": "Unknown ability (new ones are not supported yet).",
+        "unknown_item": "Unknown item: {{item}}.",
+        "move_power_kind": "A damage move cannot become a status move, or the other way round.",
+        "spawn_coverage": "Trainer level {{trainerLevel}} (wild level {{wildLevel}}): fewer than 5 species in {{slotCount}} hour and weather slots.",
+        "smoke_failed": "The engine smoke test failed (session {{session}}).",
+        "live_owned": "Applies at once to Pokémon players already own.",
+        "live_league_week": "Applies to the league week in progress. Consider scheduling it for Monday 00:00.",
+        "wave_size_range": "The wave size is below the minimum wave size.",
+        "min_above_max": "The minimum wild level is above the maximum (row {{row}}).",
+        "table_not_sorted": "Rows must be sorted (row {{row}}).",
+        "table_first_row": "The first row must start at the lowest value.",
+        "thresholds_not_increasing": "Each league threshold must be higher than the one below ({{league}}).",
+        "balls_order": "Better balls should not have a lower multiplier.",
+        "wild_levels_decrease": "Wild levels go down as the trainer level goes up (row {{row}}).",
+        "starter_disabled": "A starter will not appear in the wild.",
+        "spawn_unreachable": "Above the maximum trainer level: it will never appear.",
+        "mission_pool_short": "Not enough missions can be drawn at trainer level 1 for {{period}} ({{drawable}} of {{count}}).",
+        "duplicate_id": "Duplicate id: {{id}}."
+      },
+      "publish": {
+        "title": "Publish this draft",
+        "body_one": "{{count}} change will reach players.",
+        "body_other": "{{count}} changes will reach players.",
+        "when": "When",
+        "optNow": "Now",
+        "optLater": "Schedule",
+        "now": "Publish now",
+        "schedule": "Schedule",
+        "at": "Date and time",
+        "zone": "Your time zone: {{zone}}",
+        "utc": "UTC: {{utc}}",
+        "problem": {
+          "invalid": "Enter a date and time.",
+          "past": "Pick a time at least a minute from now.",
+          "tooFar": "At most 60 days ahead."
+        },
+        "liveImpact": "Takes effect for everybody at once",
+        "impact": {
+          "live_owned": "Changes Pokémon players already own (candies, techniques, level caps).",
+          "live_league_week": "Changes the league week in progress; Monday 00:00 is the clean moment."
+        },
+        "note": "Note for the history",
+        "noteHint": "Optional. Saved with the version and the audit log.",
+        "done": "Version #{{id}} is live",
+        "scheduledDone": "Version #{{id}} is scheduled"
+      },
+      "rollback": {
+        "title": "Republish an old version",
+        "body": "{{name}} becomes a NEW published version, effective now. A version scheduled for later still overrides it when its time comes.",
+        "confirm": "Republish",
+        "done": "Version #{{id}} is live"
+      },
+      "action": {
+        "password": "Your password",
+        "passwordHint": "Sensitive actions need your password again. It is kept for 30 minutes.",
+        "wrongPassword": "Wrong password.",
+        "elevation": "Enter your password to continue.",
+        "saveFailed": "The draft could not be saved. Try again.",
+        "confirmNeeded": "Some changes are large. Tick the confirmation to continue.",
+        "bigChanges_one": "{{count}} change is large.",
+        "bigChanges_other": "{{count}} changes are large.",
+        "confirmTick": "I have checked these changes ({{factors}} away from the base) and want them live.",
+        "invalid_one": "The server found {{count}} error.",
+        "invalid_other": "The server found {{count}} errors.",
+        "rateLimited_one": "Too many requests. Wait {{count}} minute.",
+        "rateLimited_other": "Too many requests. Wait {{count}} minutes."
+      },
+      "errors": {
+        "forbidden": "Your role cannot do that.",
+        "not_found": "That version does not exist.",
+        "not_draft": "Only drafts can be edited or published.",
+        "not_published": "Only a version that has already been live can be republished.",
+        "too_many_drafts": "There are too many open drafts. Delete one first.",
+        "invalid_body": "The server rejected the request.",
+        "invalid_effective_at": "Pick a time between now and 60 days ahead."
+      },
+      "preview": {
+        "title": "Species the wild pool offers",
+        "intro": "Which species appear for an hour, weather and trainer level, with the live content and with this draft side by side. The first wave, with no condition bonuses.",
+        "hour": "Hour (0–23)",
+        "level": "Trainer level",
+        "weather": "Weather",
+        "event": "With event",
+        "noEvent": "No event",
+        "live": "Live",
+        "draft": "Draft",
+        "delta": "Change (pts)",
+        "failed": "Could not load the preview.",
+        "summary": "Wild levels {{min}}–{{max}} · {{live}} species live · legendary chance {{legendary}}",
+        "compare": "{{draft}} in the draft · {{appear}} appear · {{vanish}} disappear",
+        "all": "Show all {{count}}",
+        "less": "Show fewer"
+      }
+    },
+    "config": {
+      "encounters": {
+        "legendaryChance": "Legendary chance per wave",
+        "shinyChance": "Shiny chance",
+        "conditionTypeWeight": "Weight of the condition type",
+        "soundProfileWeight": "Weight of the sound profile type",
+        "teamTypeWeight": "Weight of the team types",
+        "baseWaveSize": "Base wave size",
+        "waveSizeJitter": "Wave size jitter",
+        "minWaveSize": "Minimum wave size",
+        "lowFocusThreshold": "Low Focus threshold",
+        "roamingSessions": "Sessions a roaming Pokémon stays",
+        "roamingChance": "Roaming Pokémon chance",
+        "studyBallMaxLevel": "Study Ball: max level",
+        "studyBallLevelMargin": "Study Ball: level margin",
+        "legendaryMinLevel": "Legendary minimum level",
+        "nonLevelEvolutionLevelGap": "Level gap for non-level evolutions",
+        "longSessionLegendaryMult": "Long session: legendary multiplier (per tier)",
+        "longSessionRareBoost": "Long session: rare Pokémon boost (per tier)",
+        "wildLevelByTrainerLevel": "Wild levels by trainer level",
+        "leagueMaxWaveSize": {
+          "base": "Max wave size: Base League",
+          "super": "Max wave size: Super League",
+          "ultra": "Max wave size: Ultra League",
+          "master": "Max wave size: Master League"
+        },
+        "leagueWaveBonus": {
+          "base": "Wave size bonus: Base League",
+          "super": "Wave size bonus: Super League",
+          "ultra": "Wave size bonus: Ultra League",
+          "master": "Wave size bonus: Master League"
+        }
+      },
+      "capture": {
+        "statusMult": {
+          "sleep": "Sleep catch multiplier",
+          "paralysis": "Paralysis catch multiplier"
+        },
+        "captureDamageScale": "Capture damage scale",
+        "legendaryMinCaptureRate": "Legendary minimum capture rate",
+        "minHpFraction": "Minimum HP fraction",
+        "maxFailedThrows": "Failed throws before it flees",
+        "damageReferenceSpeed": "Damage reference speed",
+        "levelSync": {
+          "ratio": "Level sync ratio",
+          "gap": "Level sync gap"
+        },
+        "counter": {
+          "basePct": "Counterattack base %",
+          "levelExponent": "Counterattack level exponent",
+          "defenseDivisor": "Counterattack defense divisor",
+          "defenseMaxReduction": "Counterattack max defense reduction",
+          "legendaryMult": "Counterattack legendary multiplier",
+          "damageMult": "Counterattack damage multiplier",
+          "immuneHealPct": "Heal % when immune"
+        },
+        "balls": {
+          "poke-ball": {
+            "mult": "Poké Ball: catch multiplier",
+            "shinyGuarantee": {
+              "maxStage": "Poké Ball: shiny guarantee, max evolution stage",
+              "maxLevel": "Poké Ball: shiny guarantee, max level"
+            }
+          },
+          "great-ball": {
+            "mult": "Great Ball: catch multiplier",
+            "shinyGuarantee": {
+              "maxStage": "Great Ball: shiny guarantee, max evolution stage",
+              "maxLevel": "Great Ball: shiny guarantee, max level"
+            }
+          },
+          "ultra-ball": {
+            "mult": "Ultra Ball: catch multiplier",
+            "shinyGuarantee": {
+              "maxStage": "Ultra Ball: shiny guarantee, max evolution stage",
+              "maxLevel": "Ultra Ball: shiny guarantee, max level"
+            }
+          }
+        }
+      },
+      "energy": {
+        "costBase": "Energy cost: base",
+        "costLevelDivisor": "Energy cost: level divisor",
+        "breakRecoverPct": "Recovery per break",
+        "boxRecoverPctPerHour": "Recovery per hour in the box",
+        "revivePct": "Revive energy",
+        "potions": {
+          "potion": "Potion: energy restored",
+          "super-potion": "Super Potion: energy restored",
+          "hyper-potion": "Hyper Potion: energy restored"
+        }
+      },
+      "actions": {
+        "intervalBaseSeconds": "Action interval: base",
+        "intervalSpeedOffset": "Action interval: speed offset",
+        "pointsBase": "Points: base",
+        "pointsSpAtkDivisor": "Points: Sp. Atk divisor",
+        "energyAtkDivisor": "Energy: Atk divisor",
+        "energyPowerDivisor": "Energy: move power divisor",
+        "noDamageMoveEnergyFactor": "Energy factor of non-damaging moves",
+        "techMultBase": "Technique multiplier: base",
+        "techMultSpDefDivisor": "Technique multiplier: Sp. Def divisor",
+        "techMultMax": "Technique multiplier: maximum",
+        "maxActivationChance": "Maximum activation chance",
+        "defenseFocusMaxBonus": "Defense Focus: max bonus",
+        "defenseFocusCap": "Defense Focus: cap"
+      },
+      "rewards": {
+        "expPerMinute": "Pokémon EXP per minute",
+        "dustPerMinute": "Dust per minute",
+        "pokeBallsPerSession": "Poké Balls per session"
+      },
+      "trainer": {
+        "expPerMinute": "Trainer EXP per minute",
+        "expPerNewSpecies": "Trainer EXP per new species"
+      },
+      "bond": {
+        "maxBonus": "Maximum bond bonus"
+      },
+      "progression": {
+        "candyExp": "EXP per Candy",
+        "typeCandyExp": "EXP per type Candy",
+        "candyDustBase": "Candy Dust cost: base",
+        "candyDustPerLevel": "Candy Dust cost: per level",
+        "candiesOnCatch": "Candies per catch",
+        "hiddenAbilityChance": "Hidden ability chance",
+        "levelCaps": "Level caps by species"
+      },
+      "leagues": {
+        "weeklyThresholds": {
+          "super": "Weekly threshold: Super League",
+          "ultra": "Weekly threshold: Ultra League",
+          "master": "Weekly threshold: Master League"
+        },
+        "monthlyMultiplier": "Monthly multiplier"
+      },
+      "conditions": {
+        "poisonPerSession": "Poison: bonus per session",
+        "poisonMax": "Poison: maximum multiplier",
+        "bugPerBug": "Bug: bonus per Bug Pokémon",
+        "normal": "Normal condition multiplier",
+        "fire": "Fire condition multiplier",
+        "water": "Water condition multiplier",
+        "grass": "Grass condition multiplier",
+        "electric": "Electric condition multiplier",
+        "ice": "Ice condition multiplier",
+        "fighting": "Fighting condition multiplier",
+        "ground": "Ground condition multiplier",
+        "flying": "Flying condition multiplier",
+        "psychic": "Psychic condition multiplier",
+        "rock": "Rock condition multiplier",
+        "ghost": "Ghost condition multiplier",
+        "dragon": "Dragon condition multiplier",
+        "dark": "Dark condition multiplier",
+        "steel": "Steel condition multiplier",
+        "fairy": "Fairy condition multiplier"
+      }
+    },
     "errors": {
       "admin_disabled": "Admin is not enabled on this server. Set ADMIN_TOKEN (at least 24 characters) and restart it.",
       "unauthorized": "Wrong token.",
