@@ -413,9 +413,10 @@ export function Waves() {
         </Panel>
       )}
 
-      {/* Throw dock */}
-      <div className="sticky bottom-4 z-20">
-        <Panel padded={false} className="grid grid-cols-1 items-center gap-5 p-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_auto]">
+      {/* Throw dock: sticky from `sm` up. On phones it would cover most of the screen (≈490 of 844 px)
+          and hide the wild cards, so there it stays in the page flow, below the wave (QA v0.10). */}
+      <div className="z-20 sm:sticky sm:bottom-4">
+        <Panel padded={false} className="grid grid-cols-1 items-center gap-3 p-3 sm:gap-5 sm:p-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,16rem)]">
           <div {...hintAnchor('waves.leader')}>
             <p className="mb-1.5 flex items-center gap-2 text-sm text-mist-300">
               {t(counterFx && !anim ? 'waves.counterTook' : 'waves.counterTarget')}
