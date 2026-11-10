@@ -26,6 +26,16 @@ export function lockState(changedAt: number | null, days: number, now: number, d
   return { locked: unlockAt > now && !dev, unlockAt }
 }
 
+/**
+ * `unlockAt` of a 409 `name_locked` / `country_locked` answer (`ApiError.body`), or
+ * null when it is missing or not a usable epoch ms: the caller then falls back to
+ * `lockState` on the refreshed user. The server's value wins when present.
+ */
+export function serverUnlockAt(body: Record<string, unknown> | null | undefined): number | null {
+  const v = body?.unlockAt
+  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null
+}
+
 /** The fields of PATCH /auth/me that really change (and so start a lock). */
 export interface ProfileChange {
   trainerName?: string

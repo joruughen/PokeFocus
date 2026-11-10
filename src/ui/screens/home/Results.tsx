@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, pokemonView, type MemberResult, type ProgressEvent, type TypeSlug } from '../../../engine'
-import { BallIcon, Button, Panel, PixelIcon, Platform, ProgressBar, Sprite, Stage, toast, Tooltip, TypeBadge } from '../../components'
+import { BallIcon, Button, Panel, PixelIcon, ProgressBar, Sprite, Stage, StageTeam, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
@@ -117,23 +117,14 @@ export function Results() {
             <GroupFairyNote result={result} />
             <StudyStyleLine result={result} />
           </div>
-          <div className="flex items-end gap-4 pb-1">
-            {result.members.map((m, i) => (
-              <div key={m.uid} className="relative flex w-28 flex-col items-center">
-                <Platform width={104} night={scene.time === 'night'} className="absolute bottom-0" />
-                <Sprite
-                  kind="showdown"
-                  slug={player.pokemon[m.uid]?.speciesSlug ?? m.speciesSlug}
-                  shiny={player.pokemon[m.uid]?.isShiny}
-                  scale={2}
-                  flip
-                  alt={names.pokemonFull(player.pokemon[m.uid], m.speciesSlug)}
-                  className="relative mb-3 motion-safe:animate-bob"
-                  style={{ animationDelay: `${i * 0.2}s` }}
-                />
-              </div>
-            ))}
-          </div>
+          <StageTeam
+            className="max-w-full justify-start px-0 pb-1 sm:gap-x-4 sm:px-0"
+            night={scene.time === 'night'}
+            members={result.members.map((m) => {
+              const slug = player.pokemon[m.uid]?.speciesSlug ?? m.speciesSlug
+              return { uid: m.uid, slug, shiny: player.pokemon[m.uid]?.isShiny, name: names.pokemonFull(player.pokemon[m.uid], slug) }
+            })}
+          />
         </div>
       </Stage>
 

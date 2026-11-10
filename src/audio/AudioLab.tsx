@@ -23,6 +23,7 @@ const TOGGLES: Array<[keyof AudioSettings, string]> = [
   ['enabled', 'Audio enabled'],
   ['muted', 'Muted'],
   ['musicDuringFocus', 'Music during focus'],
+  ['musicDuringBreak', 'Music during breaks'],
   ['backgroundMusic', 'Focus music in background tab'],
   ['ducking', 'Duck music under fanfares'],
   ['vinylHiss', 'Vinyl hiss (focus)'],

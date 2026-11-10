@@ -42,8 +42,12 @@ export interface AudioSnapshot {
 }
 
 export interface MusicControls {
-  /** Request a track; crossfades (~1.5 s) from whatever is playing. Works before `init` (starts once unlocked). */
-  play(track: TrackId): void
+  /**
+   * Request a track; crossfades (~1.5 s) from whatever is playing. Works before `init` (starts once unlocked).
+   * `rest: true` says the track is for a break: the "music during breaks" option can then silence it,
+   * while the same track in the menus is unaffected. Changing only `rest` never restarts the track.
+   */
+  play(track: TrackId, opts?: { rest?: boolean }): void
   /** Fade out and stop (default 1500 ms). */
   stop(fadeMs?: number): void
   /** Requested track (null when stopped). */
@@ -93,6 +97,8 @@ export class AudioEngine {
   private buses: Buses | null = null
   private settings: AudioSettings = { ...DEFAULT_AUDIO_SETTINGS }
   private wanted: TrackId | null = null
+  /** The requested track is the break's music (see `MusicControls.play`). */
+  private wantedRest = false
   private player: TrackPlayer | null = null
   private hidden = false
   private manualDuck = false
@@ -111,13 +117,15 @@ export class AudioEngine {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const engine = this
     this.music = {
-      play(track) {
+      play(track, opts) {
         engine.wanted = track
+        engine.wantedRest = opts?.rest === true
         engine.reconcile()
         engine.emit()
       },
       stop(fadeMs = CROSSFADE_S * 1000) {
         engine.wanted = null
+        engine.wantedRest = false
         engine.reconcile(Math.max(0, fadeMs) / 1000)
         engine.emit()
       },
@@ -356,6 +364,7 @@ export class AudioEngine {
     if (!w || !this.ctx || this.ctx.state !== 'running') return null
     if (!this.audible() || this.settings.music <= 0) return null
     if (w === 'focus' && !this.settings.musicDuringFocus) return null
+    if (this.wantedRest && !this.settings.musicDuringBreak) return null
     if (this.hidden && !(w === 'focus' && this.settings.backgroundMusic)) return null
     return w
   }

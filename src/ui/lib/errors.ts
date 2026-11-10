@@ -36,3 +36,14 @@ export function requestErrorText(e: unknown, family: ErrorFamily = 'auth'): stri
   if (e.status === 400) return i18n.t('errors.auth.bad_request')
   return errorText(e.code, family)
 }
+
+/**
+ * Text for a refused claim. `not_finished` says the server's clock decided: with a
+ * shifted developer clock that means the server ignores it (no DEV_TOOLS), which
+ * is worth saying; otherwise it is the plain "not ended yet". No session → generic.
+ */
+export function claimErrorText(code: string | null, devClockShifted: boolean): string {
+  if (code === 'not_finished') return i18n.t(devClockShifted ? 'errors.notFinishedDevClock' : 'errors.not_finished')
+  if (!code || code === 'no_session') return i18n.t('errors.claimFailed')
+  return errorText(code)
+}

@@ -10,6 +10,7 @@ import { DEFAULT_AUDIO_SETTINGS, sanitizeAudioSettings, type AudioSettings } fro
 import type { FocusLabel } from '../../engine'
 import i18n, { detectLocale, type Locale } from '../../i18n'
 import { jsonStorage, STORAGE_KEYS } from './persistence'
+import { useServerConfig } from './serverConfig'
 
 /** Virtual clock anchor: `virtual + (realNow - real) * rate`. */
 export interface ClockAnchor {
@@ -181,8 +182,27 @@ export function now(): number {
   return virtualFrom(usePrefs.getState().dev.anchor, Date.now())
 }
 
-/** True when `?dev` is in the URL or the panel was opened from Settings. */
-export function devEnabled(): boolean {
+/** True when `?dev` is in the URL or the panel was opened from Settings (whatever the server supports). */
+export function devRequested(): boolean {
   if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('dev')) return true
   return usePrefs.getState().dev.panelOpen
 }
+
+/** The server has developer tools (DEV_TOOLS=1). Unknown (not loaded yet) counts as yes: the server still decides. */
+export function serverHasDevTools(): boolean {
+  return useServerConfig.getState().devTools !== false
+}
+
+/**
+ * Developer mode is really on: asked for (`?dev` / Settings) AND the server
+ * honors it. Against a server without DEV_TOOLS it is off, so nothing (lock
+ * bypasses, simulated Focus, the reset button) acts on tools the server ignores.
+ */
+export function devEnabled(): boolean {
+  return devRequested() && serverHasDevTools()
+}
+
+// A server without DEV_TOOLS ignores the virtual clock: drop a shifted clock saved from an earlier visit.
+useServerConfig.subscribe((s) => {
+  if (s.devTools === false && usePrefs.getState().dev.anchor) usePrefs.getState().resetClock()
+})

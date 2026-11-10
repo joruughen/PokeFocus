@@ -11,7 +11,8 @@ import { fmtClock } from '../lib/format'
 const AudioLab = lazy(() => import('../../audio/AudioLab').then((m) => ({ default: m.AudioLab })))
 import { useNow } from '../store/clock'
 import { useGame } from '../store/game'
-import { devEnabled, usePrefs } from '../store/prefs'
+import { devRequested, usePrefs } from '../store/prefs'
+import { useServerConfig } from '../store/serverConfig'
 
 // Open/closed state of the panel, shared with the wrench button that lives in the side rail.
 let panelOpen = false
@@ -39,7 +40,7 @@ export function DevToggle() {
   const { t } = useTranslation()
   usePrefs((s) => s.dev.panelOpen) // `?dev` or Settings → Developer tools
   const open = usePanelOpen()
-  if (!devEnabled() || open) return null
+  if (!devRequested() || open) return null
   return (
     <div className="max-sm:fixed max-sm:top-2 max-sm:right-2 max-sm:z-[55] sm:p-4 sm:pt-0">
       <IconButton icon="wrench" label={t('dev.open')} onClick={() => setPanelOpen(true)} />
@@ -67,6 +68,8 @@ export function DevPanel() {
   const player = useGame((s) => s.player)
   const game = useGame()
   const busy = game.pending > 0
+  // The server ignores x-dev-now / x-dev-seed and refuses dev* actions without DEV_TOOLS=1: lock those controls.
+  const serverTools = useServerConfig((s) => s.devTools !== false)
   /** Dev actions run on the server (DEV_TOOLS=1 only): say why when it refuses. */
   const run = async (p: Promise<string | null>) => {
     const err = await p
@@ -87,6 +90,15 @@ export function DevPanel() {
         <IconButton icon="close" size="sm" variant="ghost" label={t('dev.close')} onClick={() => setOpen(false)} />
       </header>
 
+      {!serverTools && (
+        <p role="status" className="mb-3 border-l-4 border-amber-400 bg-dusk-900 p-3 text-mist-100">
+          <strong className="block text-amber-400">{t('dev.serverOffTitle')}</strong>
+          {t('dev.serverOffBody')}
+        </p>
+      )}
+
+      {serverTools && (
+        <>
       <Section title={t('dev.clock')}>
         <p className="mb-2 text-mist-300">
           {t('dev.gameTime', { time: fmtClock(now, tz, i18n.language) })}
@@ -200,6 +212,9 @@ export function DevPanel() {
         </form>
         <p className={cx('mt-1 text-xs', dev.seed ? 'text-leaf-400' : 'text-mist-400')}>{dev.seed ? t('dev.seedOn', { seed: dev.seed, n: dev.rngCounter }) : t('dev.seedRandom')}</p>
       </Section>
+
+        </>
+      )}
 
       <Section title={t('dev.audio')}>
         <details className="text-mist-100">

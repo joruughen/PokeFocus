@@ -29,6 +29,48 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.8.0',
+    date: '2026-11-09',
+    title: { es: 'Música en los descansos y arreglos', en: 'Break music and fixes' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Música de los descansos: ahora puedes silenciarla con el botón «Música» de la pantalla de descanso, sin salir de ella, y desde Ajustes → Sonido. Los efectos y el aviso de fin siguen sonando.',
+          en: 'Break music: you can now mute it with the “Music” button on the break screen without leaving it, and from Settings → Sound. Sound effects and the end chime keep playing.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Si eliges un salvaje donde la Ball de Estudio no sirve, se cambia sola a una Ball válida. Con una sala de estudio en grupo abierta, el botón Empezar individual se desactiva y explica por qué.',
+          en: 'If you pick a wild Pokémon the Study Ball can’t be used on, the ball switches to a valid one. With a study group room open, the solo Start button is disabled and says why.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Reclamar antes de tiempo ahora explica por qué no se puede, y los avisos de nombre o país bloqueados muestran la fecha exacta en que se desbloquean.',
+          en: 'Claiming too early now explains why it can’t be done, and the locked name or country messages show the exact unlock date.',
+        },
+      },
+      {
+        kind: 'fixed',
+        text: {
+          es: 'Con dos pestañas abiertas, el sonido de fin de sesión suena una sola vez, aunque empezaras la sesión en la pestaña que no es la principal.',
+          en: 'With two tabs open, the end-of-session sound now plays only once, even if you started the session in the tab that is not the main one.',
+        },
+      },
+      {
+        kind: 'fixed',
+        text: {
+          es: 'En el móvil (390 px) ya no se recortan los Pokémon de los extremos del equipo en la sesión, al reclamar, en el descanso ni en los resultados. El Polvo cabe en su tarjeta del menú lateral.',
+          en: 'On phones (390 px) the outer team Pokémon are no longer cropped during the session, when claiming, on break or on the results screen. Dust now fits its card in the side rail.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.7.0',
     date: '2026-11-06',
     title: { es: 'Foco más claro, estadísticas y equipo', en: 'Clearer Focus, stats and team' },

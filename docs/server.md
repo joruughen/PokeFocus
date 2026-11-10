@@ -23,6 +23,7 @@ server/
   groups.ts           study-group helpers (membership hooks, overlap at claim, views, events)
   routes/weather.ts   /api/weather
   routes/announcements.ts  /api/announcements (public: scheduled maintenance windows)
+  routes/config.ts    /api/config (public: { devTools } so the client can lock the dev panel)
   routes/admin.ts     /api/admin/maintenance (Bearer ADMIN_TOKEN)
   routes/push.ts      /api/push/* (Web Push subscriptions, test push)
   push.ts             Web Push service: subscription guard, sending (web-push), runDue() scheduler body
@@ -82,7 +83,7 @@ All endpoints are under `/api`, JSON in and out, cookie `pf_session`. Errors are
 | 401 | `unauthorized` (no/expired/revoked session, or a wrong admin token), `invalid_credentials` (login: wrong password **or** unknown email) |
 | 403 | `bad_origin`, `dev_disabled` (dev action without DEV_TOOLS), `wrong_password` (POST /auth/password) |
 | 404 | `not_found`, `unknown_friend_code`, `admin_disabled` (no `ADMIN_TOKEN` on the server) |
-| 409 | game rule errors (see below), `email_taken`, `cannot_add_self`, `already_friends`, `already_requested`, `too_many_friends`, `too_many` (maintenance windows), `name_locked` / `country_locked` (PATCH /auth/me, with `unlockAt`) |
+| 409 | game rule errors (see below), `email_taken`, `cannot_add_self`, `already_friends`, `already_requested`, `too_many_friends`, `too_many` (maintenance windows), `name_locked` / `country_locked` (PATCH /auth/me, with `unlockAt`; the client keeps it in `ApiError.body`) |
 | 413 | `body_too_large` (> 64 KB) |
 | 415 | `json_required` |
 | 429 | `rate_limited` (+ `retryAfter` seconds; also the `Retry-After` header) |
@@ -109,6 +110,8 @@ Game: `GET /game` → `GameSnapshot`; `POST /game/action` with a `GameAction` �
 - **`updateProfile.patch.location`** `{ lat, lon } | null` (lat −90…90, lon −180…180, else 400): only the rounded cell is stored; null clears it. No cooldown for location or city.
 - **`setWeather`** (manual weather) is a dev action: 403 `dev_disabled` without DEV_TOOLS=1. With DEV_TOOLS=1 `profile.weather` overrides the detected weather; without it, it is ignored everywhere (also in old saves that still carry one, including `claim` of a legacy session without `activeSession.weather`).
 - Week keys are the engine's (`weekKeyOf`: the local Monday, e.g. `2026-11-02`), month keys `2026-11`.
+
+Config: `GET /config` → `ConfigResponse { devTools: boolean }` (public: no session, `Cache-Control: no-store`; `src/game/protocol.ts`). `devTools` is the server's effective `DEV_TOOLS` (always `false` in production, Docker, `npm start`): only then are `x-dev-now` / `x-dev-seed` honored and the `dev*` / `setWeather` actions accepted. The client reads it at boot; when it is `false`, the developer panel (`?dev`, Settings → Developer tools) shows a notice and hides its server-side controls (clock, finish session, items, weather, seed), drops a shifted dev clock, stops sending the dev headers and ignores the lock bypasses. If the request fails the client treats it as unknown and behaves as before (the server still refuses: `409 not_finished` on a claim with a shifted clock, `403 dev_disabled` on dev actions).
 
 Friends: `GET /friends` → `{ friends: FriendSummary[] }` (accepted + incoming + outgoing, oldest first); `POST /friends/request { friendCode }` → 201 `{ userId, status: 'outgoing' | 'friend' }` (code is case-insensitive, spaces/dashes ignored; an inverse pending request is accepted directly); `POST /friends/:userId/accept` → 204 (only the addressee); `DELETE /friends/:userId` → 204 (reject, cancel or unfriend).
 

@@ -319,3 +319,47 @@ describe('autoplay policy', () => {
     expect(ctor).not.toHaveBeenCalled() // no "AudioContext was not allowed to start" warnings
   })
 })
+
+describe('music during breaks (engine gating)', () => {
+  /** An engine that believes its context is running, so `desiredTrack` can be asked directly. */
+  function running() {
+    const engine = new AudioEngine()
+    const internals = engine as unknown as { ctx: unknown; desiredTrack(): string | null }
+    internals.ctx = { state: 'running' }
+    return { engine, desired: () => internals.desiredTrack() }
+  }
+
+  it('switching it off silences only the break flavour of the home track', () => {
+    const { engine, desired } = running()
+    engine.applySettings({ musicDuringBreak: false })
+    engine.music.play('home', { rest: true })
+    expect(desired()).toBeNull()
+    engine.music.play('home') // the same track in the menus
+    expect(desired()).toBe('home')
+    engine.music.play('results')
+    expect(desired()).toBe('results')
+    engine.music.play('encounter')
+    expect(desired()).toBe('encounter')
+    engine.music.play('focus')
+    expect(desired()).toBe('focus')
+  })
+
+  it('plays the break music while it is on, and it does not depend on music during focus', () => {
+    const { engine, desired } = running()
+    engine.music.play('home', { rest: true })
+    expect(desired()).toBe('home')
+    engine.applySettings({ musicDuringFocus: false })
+    expect(desired()).toBe('home')
+    engine.applySettings({ musicDuringBreak: false })
+    expect(desired()).toBeNull()
+  })
+
+  it('stop clears the break flag', () => {
+    const { engine, desired } = running()
+    engine.applySettings({ musicDuringBreak: false })
+    engine.music.play('home', { rest: true })
+    engine.music.stop(0)
+    engine.music.play('home')
+    expect(desired()).toBe('home')
+  })
+})

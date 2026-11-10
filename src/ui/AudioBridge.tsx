@@ -41,8 +41,10 @@ export function MusicDirector() {
   else if (route === 'home' && (phase === 'claim' || phase === 'late' || phase === 'results')) track = 'results'
   else if (route === 'home' && phase === 'waves') track = 'encounter'
   else if (!hasPlayer) track = 'home'
+  // A break plays the `home` track; flagging it lets "music during breaks" silence it there only.
+  const rest = phase === 'break' && track === 'home'
   useEffect(() => {
-    audio.music.play(track)
-  }, [track])
+    audio.music.play(track, { rest })
+  }, [track, rest])
   return null
 }

@@ -37,6 +37,7 @@ const h = audio.sfxAt('sessionEnd', secondsLeft) // schedule on the audio clock 
 h?.stop()                       // cancel (e.g. session aborted)
 
 audio.music.play('focus')       // 'focus' | 'home' | 'encounter' | 'results'; crossfades ~1.5 s
+audio.music.play('home', { rest: true }) // same track, flagged as the break's: `musicDuringBreak` can silence it
 audio.music.stop(fadeMs?)       // default 1500 ms
 audio.music.current             // requested track or null
 
@@ -61,6 +62,7 @@ unlock just records the request; music starts as soon as the context runs.
 | `music` | `0.35` | Music bus 0–1 |
 | `sfx` | `0.6` | SFX bus 0–1 |
 | `musicDuringFocus` | `true` | Play the `focus` track during sessions |
+| `musicDuringBreak` | `true` | Play the break's music (the `home` track, flagged `rest`) during breaks |
 | `focusMusicLevel` | `0.6` | Focus track level relative to `music` ("on but low") |
 | `backgroundMusic` | `true` | Keep focus music playing in a hidden tab |
 | `ducking` | `true` | Auto-duck music under fanfares/jingles |
@@ -71,6 +73,21 @@ unlock just records the request; music starts as soon as the context runs.
 button. Muting only sets `musicDuringFocus: false`, so volumes stay and sound
 effects (the end-of-session chime) keep playing; unmuting also lifts a global
 mute or a zero volume, so the button never does nothing.
+
+**Break music.** A break (`phase === 'break'`) has no track of its own: the
+`MusicDirector` plays `home`, the same track as in the menus. So that
+`musicDuringBreak` silences it only there, the director calls
+`audio.music.play('home', { rest: true })` during a break; the engine's
+`desiredTrack()` returns `null` when the requested track is flagged `rest` and
+the option is off. The same `home` track in Settings, Box, etc. is not flagged and
+keeps playing, and `focus`, `results` and `encounter` never look at it. Changing
+only the flag (break starts or ends while on `home`) re-requests the same track,
+so it does not restart. `breakMusicAudible(settings)` / `breakMusicPatch(settings,
+audible)` mirror the focus pair for the break screen's button
+(`MuteMusicButton phase="break"`, same label and `aria-pressed` toggle); they
+use the plain `music` volume (no `focusMusicLevel`), mute only sets
+`musicDuringBreak: false`, so volumes, sound effects and the end-of-break `heal`
+keep playing. Settings → Sound has its own switch for it.
 
 Volumes are linear gains. Store the object in the persisted prefs and push it
 with `applyAudioSettings(settings)` (or `<AudioProvider settings={...}>`). The
@@ -99,7 +116,8 @@ const locked = useSoundLocked() // sound on, but the context is not running yet
   Rendered peaks of every sfx and track (Chromium OfflineAudioContext, before
   bus volumes) are ≤ 0.42.
 - **Visibility**: when the tab is hidden, music fades out unless the requested
-  track is `focus` and both `musicDuringFocus` and `backgroundMusic` are on. It
+  track is `focus` and both `musicDuringFocus` and `backgroundMusic` are on (a break's
+  `home` is not exempt). It
   restarts (new random variation) when the tab is visible again. The context
   itself is never suspended on hide, so sfx (e.g. `sessionEnd`) still play.
 - **Background timing**: the scheduler wakes from a tiny inline Web Worker
@@ -117,6 +135,14 @@ const locked = useSoundLocked() // sound on, but the context is not running yet
   `SessionWatcher` then calls `syncSessionEndToAudio()` (re-times a bell
   scheduled on a frozen clock, or the leader tab schedules it). `init()` also
   resumes Safari's `interrupted` state.
+- **One end sound across tabs** (QA R-03): the tab that has the end bell on a
+  *running* audio clock holds a Web Lock `pokefocus-end-bell:<sessionId>`
+  (`scheduleSessionEnd`; released on cancel, when the context stops running, or
+  when the tab closes). The leader tab, at the end, calls
+  `chimeUnlessOtherTabRings`: it stays silent if it has its own bell or the lock
+  is held by another tab, otherwise it chimes. A bell on a suspended context never
+  claims, so the unlocked tab is the one that sounds. Without Web Locks the leader
+  chimes as before.
 - **Microphone in a hidden tab** (`src/ui/lib/mic/monitor.ts`, its own
   AudioContext, never connected to the speakers): frames are read every 100 ms
   from the same Worker tick source (`workerTickSource`), so a 2 s window still
