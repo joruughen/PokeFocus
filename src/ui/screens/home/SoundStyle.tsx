@@ -9,7 +9,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, dominantSound, type SessionResult, type SoundProfile } from '../../../engine'
+import { dominantSound, type SessionResult, type SoundProfile } from '../../../engine'
 import { Button, PixelIcon, Switch, Tooltip } from '../../components'
 import { cx } from '../../lib/cx'
 import { fmtPct } from '../../lib/format'
@@ -20,8 +20,7 @@ import { useNames } from '../../lib/names'
 import { usePrefs } from '../../store/prefs'
 import { usePhase } from '../../store/selectors'
 import { MicCalibrationDialog, useCalibrationLine } from '../MicSettings'
-
-const cfg = defaultContext().config
+import { useContent } from '../../store/content'
 
 /** "45 s" / "3 min" of analysed time. */
 function useAnalysed() {
@@ -156,6 +155,7 @@ export function MicIndicator() {
  * analizaron 7 s (mínimo 30 s)", "permiso denegado"…).
  */
 export function StudyStyleLine({ result }: { result: Pick<SessionResult, 'soundProfile' | 'sessionId'> }) {
+  const cfg = useContent().config
   const { t, i18n } = useTranslation()
   const names = useNames()
   const outcome = useMicResult((s) => (s.last?.sessionId === result.sessionId ? s.last : null))

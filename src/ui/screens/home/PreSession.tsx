@@ -36,11 +36,11 @@ import { TypesGuide } from './TypesGuide'
 import { MicToggle } from './SoundStyle'
 import { WeatherPicker } from './WeatherPicker'
 import { useSessionWeather } from '../../lib/weather'
-
-const cfg = defaultContext().config
-const PRESETS = cfg.session.presets.map(String)
+import { useContent } from '../../store/content'
 
 export function PreSession() {
+  const cfg = useContent().config
+  const PRESETS = cfg.session.presets.map(String)
   useHintScreen('home')
   const { t, i18n } = useTranslation()
   const names = useNames()

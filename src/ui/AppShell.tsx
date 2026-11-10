@@ -6,6 +6,7 @@ import { DevToggle } from './dev/DevPanel'
 import { StageBadge } from './changelog/StageBadge'
 import { WhatsNewDialog } from './changelog/WhatsNewDialog'
 import { GroupInviteNotice } from './GroupInviteNotice'
+import { ContentNotice } from './ContentNotice'
 import { MaintenanceBanner } from './MaintenanceBanner'
 import { BallIcon, IconButton, Logo, PixelIcon, Tooltip } from './components'
 import { hintAnchor, useHintEvent } from './hints'
@@ -45,6 +46,7 @@ export function AppShell() {
       <WhatsNewDialog />
       <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
+          <ContentNotice className="mb-6" />
           <MaintenanceBanner className="mb-6" />
           <Suspense fallback={<ScreenLoading />}>
             <Screen />

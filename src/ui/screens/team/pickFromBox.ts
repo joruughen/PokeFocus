@@ -22,8 +22,6 @@ import {
 } from '../../../engine'
 import { filteredMons } from '../box/filters'
 
-const ctx = defaultContext()
-
 /** `now` = best condition multiplier if it studied now; the others are plain fields. */
 export type PickSort = 'now' | 'level' | 'energy' | 'recent'
 /** `exhausted` = 0 Energy, `asleep` = Rest sleep still on. Both can be added but never act. */
@@ -73,6 +71,7 @@ export interface PickRow {
  * condition (`bugCount + 1`), the way it would once it is in the team.
  */
 export function pickRows(player: PlayerState, mons: readonly OwnedPokemon[], at: number, env: ConditionEnv): PickRow[] {
+  const ctx = defaultContext()
   const cfg = ctx.config
   const bugEnv: ConditionEnv = { ...env, bugCount: env.bugCount + 1 }
   const rows: PickRow[] = []

@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { conditionTypes, defaultContext, MINUTE_MS, type SessionResult } from '../../../engine'
+import { conditionTypes, MINUTE_MS, type SessionResult } from '../../../engine'
 import { fairyMultiplier, groupOverlap } from '../../../game/group'
 import type { StudyGroupMember, StudyGroupView } from '../../../game/protocol'
 import { Button, Panel, PixelIcon, toast, TypeBadge } from '../../components'
@@ -20,10 +20,7 @@ import { useNow } from '../../store/clock'
 import { groupErrorText, useGroups } from '../../store/group'
 import { useFriends } from '../../store/social'
 import { usePlayer } from '../../store/selectors'
-
-const ctx = defaultContext()
-const FAIRY = ctx.config.conditions.fairy
-const fairyPct = Math.round((FAIRY - 1) * 100)
+import { useContent } from '../../store/content'
 
 const fail = (code: string | null) => {
   if (code) toast.add({ title: groupErrorText(code), type: 'danger' })
@@ -32,6 +29,7 @@ const fail = (code: string | null) => {
 
 /** Does the current team have a Fairy-type member (incl. Tera)? */
 function useTeamHasFairy(at: number): boolean {
+  const ctx = useContent()
   const player = usePlayer()
   return player.team.some((uid) => {
     const p = player.pokemon[uid]
@@ -60,6 +58,7 @@ export function GroupStudyPanel({ minutes }: { minutes: number }) {
 }
 
 function CreateGroup({ minutes }: { minutes: number }) {
+  const fairyPct = Math.round((useContent().config.conditions.fairy - 1) * 100)
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const create = useGroups((s) => s.create)
@@ -263,6 +262,7 @@ function memberState(m: StudyGroupMember, now: number): 'in' | 'left' | 'done' {
 }
 
 export function GroupSessionStatus() {
+  const FAIRY = useContent().config.conditions.fairy
   const { t, i18n: inst } = useTranslation()
   const now = useNow()
   const player = usePlayer()
@@ -331,6 +331,7 @@ export function GroupSessionStatus() {
 // ---------------------------------------------------------------------------
 
 export function GroupFairyNote({ result }: { result: SessionResult }) {
+  const FAIRY = useContent().config.conditions.fairy
   const player = usePlayer()
   const { t, i18n: inst } = useTranslation()
   const names = useNames()

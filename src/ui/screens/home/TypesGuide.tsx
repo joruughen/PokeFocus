@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import {
   addDays,
   conditionOutlook,
-  defaultContext,
   localToTs,
   MINUTE_MS,
   toLocal,
@@ -19,8 +18,8 @@ import { useSessionWeather } from '../../lib/weather'
 import { usePlayer } from '../../store/selectors'
 import { conditionRuleValues } from './conditionCopy'
 import { activationText, whenText, type GuideTextEnv } from './typesGuideText'
+import { useContent } from '../../store/content'
 
-const cfg = defaultContext().config
 const DAYS_AHEAD = 7
 /** Types whose multiplier grows with something (sessions today, Bug team members). */
 const VARIABLE: ReadonlySet<TypeSlug> = new Set(['poison', 'bug'])
@@ -48,6 +47,7 @@ export function TypesGuide({ minutes }: { minutes: number }) {
 
 /** Mounted only while the dialog is open. */
 function GuideBody({ minutes }: { minutes: number }) {
+  const cfg = useContent().config
   const { t, i18n } = useTranslation()
   const lng = i18n.language
   const player = usePlayer()

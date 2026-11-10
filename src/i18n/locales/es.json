@@ -2211,6 +2211,10 @@
     "more_one": "y {{count}} versión más desde la última vez que entraste.",
     "more_other": "y {{count}} versiones más desde la última vez que entraste."
   },
+  "contentUpdate": {
+    "message": "Hay contenido nuevo. Recarga para verlo.",
+    "reload": "Recargar"
+  },
   "maintenance": {
     "upcomingTitle": "Mantenimiento programado",
     "activeTitle": "Mantenimiento en curso",

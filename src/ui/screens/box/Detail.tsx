@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, pokemonView } from '../../../engine'
+import { pokemonView } from '../../../engine'
 import { Button, Dialog, DialogClose, EmptyState, IconButton, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -21,12 +21,12 @@ import { roleNatureFit } from './roleNature'
 import { StatsPanel } from './StatsPanel'
 import { SwapDialog } from './SwapCompare'
 import { Techniques } from './Techniques'
-
-const ctx = defaultContext()
-const cfg = ctx.config
+import { useContent } from '../../store/content'
 
 /** Pokémon detail sheet (`#/box/<uid>`): everything about one individual, and what you can do with it. */
 export function Detail({ uid }: { uid: string }) {
+  const ctx = useContent()
+  const cfg = ctx.config
   useHintScreen('detail')
   const { t, i18n } = useTranslation()
   const names = useNames()

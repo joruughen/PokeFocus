@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { activationChance, defaultContext, techniqueOutlook, type PokemonView, type TechniqueInfo } from '../../../engine'
+import { activationChance, techniqueOutlook, type PokemonView, type TechniqueInfo } from '../../../engine'
 import { Button, CategoryChip, HelpDot, Panel, PixelIcon, Stars, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -10,9 +10,7 @@ import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useGame } from '../../store/game'
 import { useBusy } from '../../store/selectors'
-
-const cfg = defaultContext().config
-const SLOT_LEVELS = cfg.progression.techniqueSlots
+import { useContent } from '../../store/content'
 
 /**
  * Technique slots (1–4 by level, GDD §7): equip/unequip from the moves it
@@ -20,6 +18,8 @@ const SLOT_LEVELS = cfg.progression.techniqueSlots
  * Equipping when the slots are full enters a "replace" mode: pick which slot.
  */
 export function Techniques({ view, locked }: { view: PokemonView; locked: string | null }) {
+  const cfg = useContent().config
+  const SLOT_LEVELS = cfg.progression.techniqueSlots
   const { t, i18n } = useTranslation()
   const names = useNames()
   const equip = useGame((s) => s.equip)
@@ -150,6 +150,7 @@ export function Techniques({ view, locked }: { view: PokemonView; locked: string
 
 /** One technique: name, category, type, its numbers, Mastery and what it does. */
 function TechCard({ info, view, lng, dim }: { info: TechniqueInfo; view: PokemonView; lng: string; dim?: boolean }) {
+  const cfg = useContent().config
   const { t } = useTranslation()
   const names = useNames()
   const m = view.mastery[info.slug]

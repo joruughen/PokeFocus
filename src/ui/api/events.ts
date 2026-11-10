@@ -36,7 +36,7 @@ function open() {
     attempt = 0
   }
   es.onmessage = (m) => dispatch(m.data as string)
-  for (const name of ['game', 'friends', 'logout'] as const) {
+  for (const name of ['game', 'friends', 'logout', 'content'] as const) {
     es.addEventListener(name, (m) => {
       const data = (m as MessageEvent).data as string
       // Named events may carry just the payload; make sure `type` is set.

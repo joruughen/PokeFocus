@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cancelKeep, defaultContext, MINUTE_MS, validatedMinutes, waveCount } from '../../../engine'
+import { cancelKeep, MINUTE_MS, validatedMinutes, waveCount } from '../../../engine'
 import { Button, Dialog, DialogClose, ProgressBar, Stage, StageTeam, toast } from '../../components'
 import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -17,8 +17,7 @@ import { MuteMusicButton } from './MuteMusicButton'
 import { MicIndicator } from './SoundStyle'
 import { SoundUnlockChip } from './SoundUnlockChip'
 import { TeamEnergy } from './TeamEnergy'
-
-const cfg = defaultContext().config
+import { useContent } from '../../store/content'
 
 /**
  * Active focus session: one calm number. Remaining time is always
@@ -26,6 +25,7 @@ const cfg = defaultContext().config
  * No hints here (the hint engine is suppressed while focusing).
  */
 export function FocusSession() {
+  const cfg = useContent().config
   useHintScreen('session')
   const { t, i18n } = useTranslation()
   const names = useNames()

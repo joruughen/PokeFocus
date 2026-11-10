@@ -7,8 +7,6 @@ import { PixelIcon } from './PixelIcon'
 import { Sprite } from './Sprite'
 import { TYPE_BG } from './TypeBadge'
 
-const ctx = defaultContext()
-
 export interface MonTileProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   mon: OwnedPokemon
   /** Team slot (0 = leader) or null when in the box. */
@@ -26,7 +24,7 @@ export interface MonTileProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonTile({ mon, teamSlot: slot, energy, selected, className, ...rest }, ref) {
   const { t } = useTranslation()
   const names = useNames()
-  const sp = ctx.speciesBySlug.get(mon.speciesSlug)
+  const sp = defaultContext().speciesBySlug.get(mon.speciesSlug)
   const name = names.pokemon(mon)
   const types = sp?.types ?? []
   const label = [

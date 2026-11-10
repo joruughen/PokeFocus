@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, type ActionPace, type PassiveOutlook, type TechniqueKind, type TechniqueOutlook } from '../../engine'
+import { type ActionPace, type PassiveOutlook, type TechniqueKind, type TechniqueOutlook } from '../../engine'
 import { fmtPct } from '../lib/format'
 import { useNames } from '../lib/names'
 import { whenText } from '../lib/whenText'
-
-const cfg = defaultContext().config
+import { useContent } from '../store/content'
 
 const num = (n: number, lng: string, digits = 1) => n.toLocaleString(lng, { maximumFractionDigits: digits })
 /** Percent with one decimal below 10 % ("3,5 %"), whole above ("18 %"). */
@@ -21,6 +20,7 @@ export function KindTip({ kind, outlook, pokemonName }: { kind: TechniqueKind; o
   const { t, i18n } = useTranslation()
   const lng = i18n.language
   const names = useNames()
+  const cfg = useContent().config
   const lines: ReactNode[] = []
   const pace = (p: ActionPace) => (
     <>
