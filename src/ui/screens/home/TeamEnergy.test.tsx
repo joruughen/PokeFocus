@@ -37,6 +37,19 @@ describe('TeamEnergy', () => {
   }
 })
 
+describe('TeamEnergy nicknames', () => {
+  it('shows the nickname (not only the species) and keeps the species in the tooltip', async () => {
+    await i18n.changeLanguage('en')
+    const team = [makeMon('charmander', 20, { uid: 'L', nickname: 'Brasita' }), makeMon('bulbasaur', 20, { uid: 'A' })]
+    const player = makePlayer(team)
+    const vs = team.map((p) => pokemonView(player, p.uid, T0)!)
+    const html = renderToStaticMarkup(<TeamEnergy views={vs} leaderUid="L" />)
+    expect(html).toContain('Brasita')
+    expect(html).toContain('title="Brasita (Charmander)"')
+    expect(html).toContain('Bulbasaur')
+  })
+})
+
 describe('HittersRow', () => {
   it('lists every hitter and wraps instead of cutting at two', async () => {
     await i18n.changeLanguage('es')

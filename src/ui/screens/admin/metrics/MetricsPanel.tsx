@@ -49,18 +49,17 @@ export default function MetricsPanel() {
   }, [range, load])
 
   return (
-    <Panel
-      title={t('admin.metrics.title')}
-      actions={
-        <Segmented
-          label={t('admin.metrics.range.label')}
-          value={range}
-          onChange={setRange}
-          options={(Object.keys(RANGES) as RangeId[]).map((id) => ({ value: id, label: t(`admin.metrics.range.${id}`) }))}
-        />
-      }
-    >
+    <Panel title={t('admin.metrics.title')}>
       <div className="flex flex-col gap-4" aria-busy={loading}>
+        {/* Below the title, not beside it: three buttons next to "Metrics" cut the title to "Met…" on a phone. */}
+        <div className="self-start">
+          <Segmented
+            label={t('admin.metrics.range.label')}
+            value={range}
+            onChange={setRange}
+            options={(Object.keys(RANGES) as RangeId[]).map((id) => ({ value: id, label: t(`admin.metrics.range.${id}`) }))}
+          />
+        </div>
         <p className="max-w-[60ch] text-mist-300">{t('admin.metrics.intro')}</p>
         {error ? (
           <div className="flex flex-col items-start gap-2" role="alert">

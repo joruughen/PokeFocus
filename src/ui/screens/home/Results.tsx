@@ -297,7 +297,7 @@ function MemberRow({ m, events, before, now }: { m: MemberResult; events: Progre
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-mist-300">
           <span>{t('results.actions', { count: m.actions })}</span>
           <span>{t('results.energySpent', { spent: Math.round(m.energySpent), max: Math.round(m.energyMax) })}</span>
-          {m.exhaustedAtMinute !== null && <span className="text-amber-400">{t('results.exhausted', { minute: m.exhaustedAtMinute })}</span>}
+          {m.exhaustedAtMinute !== null && <span className="text-amber-400">{t('results.exhausted', { minute: Math.round(m.exhaustedAtMinute) })}</span>}
         </div>
         {(newMoves.length > 0 || slots || evo || capped) && (
           <ul className="mt-2 flex flex-col gap-1 text-sm">

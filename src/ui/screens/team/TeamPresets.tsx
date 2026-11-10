@@ -39,7 +39,7 @@ function Members({ row, size = 'md' }: { row: PresetRow; size?: 'sm' | 'md' }) {
   return (
     <ol className="flex flex-wrap items-center gap-0.5" aria-label={row.members.map((m) => names.pokemon(m)).join(', ')}>
       {row.members.map((m, i) => (
-        <li key={m.uid} className={cx('relative grid place-items-center bg-dusk-900 inset-shadow-well', size === 'sm' ? 'size-9' : 'h-11 w-12')} title={names.pokemonFull(m)}>
+        <li key={m.uid} className={cx('relative grid place-items-center bg-dusk-900 inset-shadow-well', size === 'sm' ? 'size-9' : 'h-11 w-12 max-sm:w-11')} title={names.pokemonFull(m)}>
           <Sprite kind="icon" slug={m.speciesSlug} alt="" />
           {i === 0 && <PixelIcon name="crown" size={10} className="absolute top-0 left-0 bg-volt-400 p-px text-ink" />}
         </li>

@@ -45,6 +45,11 @@ function Grid({ top, format, height }: { top: number; format: (v: number) => str
   )
 }
 
+/** Space between columns: 6% of the width, shrinking with many columns so the gaps never add up to more than ~30%. */
+export function barGap(columns: number): string {
+  return columns > 1 ? `${Math.min(6, 30 / (columns - 1))}%` : '0%'
+}
+
 /**
  * Single-series column chart in the pixel style (hand-built, no chart lib):
  * square columns anchored to an ink baseline, two recessive dashed gridlines,
@@ -58,7 +63,7 @@ export function BarChart({ data, label, format, height = 160, max, className, em
     <figure className={cx('pl-12', className)} aria-label={label} role="img">
       <div className="relative" style={{ height }}>
         <Grid top={top} format={format} height={height} />
-        <div className="absolute inset-0 flex items-end gap-[6%] border-b-2 border-ink px-[3%]">
+        <div className="absolute inset-0 flex items-end border-b-2 border-ink px-[3%]" style={{ gap: barGap(data.length) }}>
           {data.map((d, i) => {
             const h = Math.round((Math.min(d.value, top) / top) * height)
             return (
@@ -76,14 +81,21 @@ export function BarChart({ data, label, format, height = 160, max, className, em
           })}
         </div>
       </div>
-      <div className="mt-1.5 flex gap-[6%] px-[3%]" aria-hidden>
-        {data.map((d, i) => (
-          <span key={i} className={cx('flex-1 text-center text-xs whitespace-nowrap', d.highlight ? 'font-bold text-mist-50' : 'text-mist-400')}>
-            {/* Many columns: label only the ends (and the highlighted one) so text never collides. */}
-            {data.length <= 8 || i === 0 || i === data.length - 1 ? d.label : ''}
-          </span>
-        ))}
-      </div>
+      {data.length <= 8 ? (
+        <div className="mt-1.5 flex gap-[6%] px-[3%]" aria-hidden>
+          {data.map((d, i) => (
+            <span key={i} className={cx('flex-1 text-center text-xs whitespace-nowrap', d.highlight ? 'font-bold text-mist-50' : 'text-mist-400')}>
+              {d.label}
+            </span>
+          ))}
+        </div>
+      ) : (
+        // Many columns: label only the two ends, pinned to the edges, so text never collides or pushes the page wider.
+        <div className="mt-1.5 flex justify-between px-[3%] text-xs whitespace-nowrap text-mist-400" aria-hidden>
+          <span>{data[0]?.label}</span>
+          <span>{data[data.length - 1]?.label}</span>
+        </div>
+      )}
     </figure>
   )
 }

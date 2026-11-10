@@ -55,7 +55,9 @@ export function TeamEnergy({
       <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
         {views.map((v) => {
           const uid = v.pokemon.uid
-          const name = names.species(v.pokemon.speciesSlug)
+          // Nickname when it has one (same as the Box and the Team); the full "Nickname (Species)" is the tooltip.
+          const name = names.pokemon(v.pokemon)
+          const fullName = names.pokemonFull(v.pokemon)
           const e = energyOverride?.[uid] ?? v.energy
           const out = e <= 0
           const isHit = hit?.uid === uid
@@ -74,7 +76,9 @@ export function TeamEnergy({
                 <span className="flex items-baseline justify-between gap-1">
                   <span className="flex min-w-0 items-center gap-1">
                     {uid === leaderUid && <PixelIcon name="crown" size={10} className="shrink-0 text-volt-300" label={t('team.leader')} />}
-                    <span className={cx('truncate font-display text-sm leading-tight', out ? 'text-mist-400' : 'text-mist-50')}>{name}</span>
+                    <span title={v.pokemon.nickname ? fullName : undefined} className={cx('truncate font-display text-sm leading-tight', out ? 'text-mist-400' : 'text-mist-50')}>
+                      {name}
+                    </span>
                   </span>
                   <span className="shrink-0 font-num text-base leading-none tabular text-mist-100">
                     {out ? t('teamEnergy.out') : `${Math.round(e)}/${Math.round(v.maxEnergy)}`}
@@ -87,7 +91,7 @@ export function TeamEnergy({
                   value={e}
                   from={isHit ? hit.from : undefined}
                   max={v.maxEnergy}
-                  label={t('pokemon.energyOf', { name })}
+                  label={t('pokemon.energyOf', { name: fullName })}
                   ariaValueText={`${Math.round(e)}/${Math.round(v.maxEnergy)}`}
                 />
               </span>
