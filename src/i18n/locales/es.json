@@ -2278,6 +2278,484 @@
       "remove": "Quitar el aviso de {{when}}",
       "removed": "Aviso quitado"
     },
+    "tabs": {
+      "label": "Secciones de administración",
+      "content": "Contenido",
+      "players": "Jugadores",
+      "metrics": "Métricas",
+      "maintenance": "Mantenimiento"
+    },
+    "content": {
+      "intro": "Cambia los números del juego sin publicar una versión. Trabaja en un borrador (se guarda mientras escribes), compruébalo, compáralo con lo que está en vivo y publícalo ya o prográmalo. Nada llega a los jugadores hasta que publiques.",
+      "introReadonly": "Lo que está en vivo, el historial de versiones y lo que cambia cada borrador. Solo los administradores pueden editar y publicar.",
+      "retry": "Reintentar",
+      "yes": "Sí",
+      "no": "No",
+      "actions": "Acciones",
+      "base": "Base: {{value}}",
+      "baseRows": "Base: {{count}} filas",
+      "bigChange": "CAMBIO ×{{factor}}",
+      "reset": "Volver al valor base: {{name}}",
+      "addRow": "Añadir",
+      "removeRow": "Quitar la fila {{n}}",
+      "number": {
+        "empty": "Escribe un número.",
+        "invalid": "Eso no es un número.",
+        "integer": "Tiene que ser un número entero.",
+        "range": "Entre {{min}} y {{max}}.",
+        "limits": "Permitido: de {{min}} a {{max}}"
+      },
+      "impact": {
+        "leagueWeek": "Semana de liga",
+        "owned": "Pokémon ya capturados"
+      },
+      "kind": {
+        "active": "En vivo",
+        "scheduled": "Programada",
+        "published": "Publicada",
+        "draft": "Borrador",
+        "archived": "Archivada"
+      },
+      "groups": {
+        "encounters": "Encuentros",
+        "capture": "Captura",
+        "energy": "Energía",
+        "actions": "Acciones",
+        "economy": "Economía",
+        "leagues": "Ligas",
+        "conditions": "Condiciones"
+      },
+      "sections": {
+        "label": "Secciones del borrador",
+        "params": "Parámetros",
+        "species": "Especies",
+        "moves": "Movimientos",
+        "advanced": "Avanzado",
+        "review": "Revisión",
+        "preview": "Vista previa de apariciones",
+        "techniques": "Técnicas",
+        "abilities": "Habilidades",
+        "missions": "Misiones"
+      },
+      "columns": {
+        "trainerLevel": "Nivel de entrenador",
+        "min": "Mín.",
+        "max": "Máx.",
+        "species": "Especies capturadas",
+        "cap": "Tope de nivel"
+      },
+      "fields": {
+        "captureRate": "Tasa de captura",
+        "enabled": "Puede aparecer",
+        "weightMult": "Peso ×",
+        "minTrainerLevel": "Nivel mín. de entrenador",
+        "weather": "Clima",
+        "hours": "Horas",
+        "power": "Potencia",
+        "accuracy": "Precisión",
+        "spawn": "Regla de aparición"
+      },
+      "weather": {
+        "clear": "Despejado",
+        "sun": "Sol",
+        "rain": "Lluvia",
+        "snow": "Nieve",
+        "unknown": "Desconocido"
+      },
+      "live": {
+        "title": "En vivo ahora",
+        "reload": "Recargar",
+        "active": "En vigor",
+        "scheduled": "Programada",
+        "events": "Eventos activos",
+        "version": "Versión",
+        "effective": "Desde",
+        "hash": "Hash",
+        "by": "Por",
+        "noneActive": "No hay ninguna versión publicada: los jugadores usan el contenido base.",
+        "noneScheduled": "No hay nada programado.",
+        "noEvents": "No hay ningún evento en curso.",
+        "hashLine": "Hash del contenido {{hash}} · base {{base}}",
+        "isBase": "los jugadores tienen el contenido base"
+      },
+      "versions": {
+        "title": "Versiones",
+        "filter": "Filtrar versiones",
+        "all": "Todas",
+        "draft": "Borradores",
+        "published": "Publicadas",
+        "archived": "Archivadas",
+        "empty": "Todavía no hay versiones.",
+        "createdBy": "Creada por {{who}} · {{when}}",
+        "effectiveBy": "{{when}} · por {{who}}",
+        "notValidated": "Sin validar todavía",
+        "validation": "{{errors}} errores · {{warnings}} avisos",
+        "edit": "Editar",
+        "view": "Ver",
+        "copy": "Copiar a un borrador nuevo",
+        "rollback": "Republicar esta",
+        "delete": "Borrar el borrador {{name}}",
+        "deleteTitle": "¿Borrar este borrador?",
+        "deleteBody": "{{name}} se eliminará para siempre. Las versiones publicadas nunca se borran.",
+        "deleteConfirm": "Borrar",
+        "deleted": "Borrador borrado",
+        "newFromLive": "Borrador nuevo desde lo vivo",
+        "newEmpty": "Borrador nuevo desde la base"
+      },
+      "view": {
+        "title": "Versión {{name}}",
+        "created": "Creada",
+        "parent": "Copiada de",
+        "isActive": "Esta es la versión en vigor: no hay nada que comparar.",
+        "diffHint": "Cambios respecto a la versión en vigor ahora."
+      },
+      "editor": {
+        "title": "Borrador {{name}}",
+        "back": "Volver a las versiones",
+        "name": "Nombre",
+        "note": "Nota",
+        "noteHint": "Por qué este cambio (aparece en el historial).",
+        "baseNote": "Un borrador es un conjunto completo de cambios sobre la base que viene con el juego: un valor que vuelves a poner en su valor base se quita del borrador.",
+        "saved": "Guardado",
+        "saving": "Guardando…",
+        "unsaved": "Cambios sin guardar…",
+        "saveError": "No se pudo guardar ({{code}}).",
+        "retry": "Reintentar",
+        "changes_one": "{{count}} cambio respecto a lo vivo",
+        "changes_other": "{{count}} cambios respecto a lo vivo",
+        "bar": "Acciones del borrador",
+        "blocked_one": "{{count}} error impide publicar",
+        "blocked_other": "{{count}} errores impiden publicar",
+        "publish": "Publicar…"
+      },
+      "params": {
+        "groups": "Grupos de parámetros",
+        "search": "Buscar un parámetro",
+        "searchPlaceholder": "p. ej. shiny, energía, Ultra Ball",
+        "onlyChanged": "Solo los cambiados",
+        "noMatches": "Ningún parámetro coincide."
+      },
+      "species": {
+        "intro": "Tasa de captura y reglas de aparición por especie. Una regla sin definir significa sin restricción. Deben quedar al menos 5 especies disponibles en cada hora, clima y tramo de nivel.",
+        "name": "Especie",
+        "type": "Tipo",
+        "allTypes": "Todos los tipos",
+        "stage": "Etapa de evolución",
+        "anyStage": "Cualquiera",
+        "more": "Reglas",
+        "less": "Cerrar",
+        "weatherHint": "Sin marcar = cualquier clima.",
+        "hoursHint": "Ventanas de hora local [desde, hasta). Si «desde» es mayor, cruza la medianoche. Sin ventanas = todo el día.",
+        "from": "desde",
+        "to": "hasta",
+        "resetAll": "Quitar todos los cambios de {{name}}"
+      },
+      "moves": {
+        "intro": "Potencia y precisión de los movimientos existentes. Un movimiento de daño no puede pasar a ser de estado.",
+        "name": "Movimiento"
+      },
+      "table": {
+        "search": "Buscar por nombre o número",
+        "count_one": "{{count}} fila",
+        "count_other": "{{count}} filas",
+        "pages": "Páginas",
+        "prev": "Página anterior",
+        "next": "Página siguiente"
+      },
+      "advanced": {
+        "intro": "Las técnicas, las habilidades y las misiones se sustituyen enteras, así que se editan como JSON. La forma se comprueba al aplicar y otra vez en el servidor. Parte de la definición original con «Copiar de la base».",
+        "apply": "Aplicar",
+        "clear": "Quitar todos los cambios",
+        "baseSlug": "Definición original",
+        "copyBase": "Copiar de la base",
+        "unapplied": "Tienes texto que aún no se ha aplicado.",
+        "syntax": "Eso no es JSON válido.",
+        "object": "Tiene que ser un objeto JSON."
+      },
+      "review": {
+        "title": "Validación",
+        "validate": "Validar",
+        "hint": "Mientras escribes solo corren las comprobaciones rápidas. «Validar» también ejecuta la prueba de humo del motor con unos cientos de sesiones sintéticas.",
+        "notValidated": "Aún no se ha validado con la comprobación completa.",
+        "okSmoke": "Válido (prueba de humo superada)",
+        "okLive": "Válido (comprobaciones rápidas)",
+        "failed_one": "{{count}} error",
+        "failed_other": "{{count}} errores",
+        "at": "a las {{time}}",
+        "stale": "editado desde entonces"
+      },
+      "diff": {
+        "title": "Cambios respecto a lo vivo",
+        "empty": "Este borrador no cambia nada respecto a lo que está en vivo.",
+        "what": "Ajuste",
+        "before": "En vivo",
+        "after": "Borrador",
+        "unset": "—"
+      },
+      "issues": {
+        "error": "Error",
+        "warning": "Aviso",
+        "goto": "Ir al campo",
+        "wholePatch": "El borrador",
+        "big_change": "Se aleja más de ×{{factor}} de la base ({{base}} → {{value}}). Necesita tu confirmación para publicar.",
+        "out_of_range": "Fuera del rango permitido.",
+        "invalid": "Valor no válido.",
+        "unknown_key": "Ajuste desconocido o no editable.",
+        "unknown_species": "Especie desconocida.",
+        "unknown_move": "Movimiento desconocido.",
+        "unknown_technique": "Técnica desconocida (aún no se pueden crear nuevas).",
+        "unknown_ability": "Habilidad desconocida (aún no se pueden crear nuevas).",
+        "unknown_item": "Objeto desconocido: {{item}}.",
+        "move_power_kind": "Un movimiento de daño no puede pasar a ser de estado, ni al revés.",
+        "spawn_coverage": "Nivel de entrenador {{trainerLevel}} (nivel salvaje {{wildLevel}}): menos de 5 especies en {{slotCount}} combinaciones de hora y clima.",
+        "smoke_failed": "La prueba de humo del motor ha fallado (sesión {{session}}).",
+        "live_owned": "Se aplica al instante a los Pokémon que los jugadores ya tienen.",
+        "live_league_week": "Se aplica a la semana de liga en curso. Plantéate programarlo para el lunes a las 00:00.",
+        "wave_size_range": "El tamaño de la oleada está por debajo del mínimo.",
+        "min_above_max": "El nivel salvaje mínimo supera al máximo (fila {{row}}).",
+        "table_not_sorted": "Las filas deben estar ordenadas (fila {{row}}).",
+        "table_first_row": "La primera fila debe empezar por el valor más bajo.",
+        "thresholds_not_increasing": "Cada umbral de liga debe ser mayor que el anterior ({{league}}).",
+        "balls_order": "Las bolas mejores no deberían tener un multiplicador menor.",
+        "wild_levels_decrease": "Los niveles salvajes bajan al subir el nivel de entrenador (fila {{row}}).",
+        "starter_disabled": "Un inicial no aparecerá en la naturaleza.",
+        "spawn_unreachable": "Por encima del nivel máximo de entrenador: nunca aparecerá.",
+        "mission_pool_short": "No hay misiones suficientes para sortear con nivel de entrenador 1 en {{period}} ({{drawable}} de {{count}}).",
+        "duplicate_id": "Id duplicado: {{id}}."
+      },
+      "publish": {
+        "title": "Publicar este borrador",
+        "body_one": "{{count}} cambio llegará a los jugadores.",
+        "body_other": "{{count}} cambios llegarán a los jugadores.",
+        "when": "Cuándo",
+        "optNow": "Ahora",
+        "optLater": "Programar",
+        "now": "Publicar ya",
+        "schedule": "Programar",
+        "at": "Fecha y hora",
+        "zone": "Tu zona horaria: {{zone}}",
+        "utc": "UTC: {{utc}}",
+        "problem": {
+          "invalid": "Escribe una fecha y una hora.",
+          "past": "Elige una hora al menos un minuto en el futuro.",
+          "tooFar": "Como máximo 60 días por delante."
+        },
+        "liveImpact": "Se aplica a todos a la vez",
+        "impact": {
+          "live_owned": "Cambia Pokémon que los jugadores ya tienen (caramelos, técnicas, topes de nivel).",
+          "live_league_week": "Cambia la semana de liga en curso; el lunes a las 00:00 es el momento limpio."
+        },
+        "note": "Nota para el historial",
+        "noteHint": "Opcional. Se guarda con la versión y en el registro de auditoría.",
+        "done": "La versión #{{id}} está en vivo",
+        "scheduledDone": "La versión #{{id}} está programada"
+      },
+      "rollback": {
+        "title": "Republicar una versión anterior",
+        "body": "{{name}} pasa a ser una versión publicada NUEVA, en vigor ya. Una versión programada para más tarde la volverá a sustituir cuando llegue su hora.",
+        "confirm": "Republicar",
+        "done": "La versión #{{id}} está en vivo"
+      },
+      "action": {
+        "password": "Tu contraseña",
+        "passwordHint": "Las acciones delicadas piden tu contraseña otra vez. Se recuerda 30 minutos.",
+        "wrongPassword": "Contraseña incorrecta.",
+        "elevation": "Escribe tu contraseña para continuar.",
+        "saveFailed": "No se pudo guardar el borrador. Inténtalo de nuevo.",
+        "confirmNeeded": "Algunos cambios son grandes. Marca la confirmación para continuar.",
+        "bigChanges_one": "{{count}} cambio es grande.",
+        "bigChanges_other": "{{count}} cambios son grandes.",
+        "confirmTick": "He revisado estos cambios ({{factors}} respecto a la base) y quiero que estén en vivo.",
+        "invalid_one": "El servidor ha encontrado {{count}} error.",
+        "invalid_other": "El servidor ha encontrado {{count}} errores.",
+        "rateLimited_one": "Demasiadas peticiones. Espera {{count}} minuto.",
+        "rateLimited_other": "Demasiadas peticiones. Espera {{count}} minutos."
+      },
+      "errors": {
+        "forbidden": "Tu rol no puede hacer eso.",
+        "not_found": "Esa versión no existe.",
+        "not_draft": "Solo se pueden editar o publicar borradores.",
+        "not_published": "Solo se puede republicar una versión que ya estuvo en vivo.",
+        "too_many_drafts": "Hay demasiados borradores abiertos. Borra uno primero.",
+        "invalid_body": "El servidor ha rechazado la petición.",
+        "invalid_effective_at": "Elige una hora entre ahora y 60 días por delante."
+      },
+      "preview": {
+        "title": "Especies que ofrece la zona salvaje",
+        "intro": "Qué especies aparecen para una hora, un clima y un nivel de entrenador, con el contenido en vivo y con este borrador lado a lado. Primera oleada, sin bonus de condiciones.",
+        "hour": "Hora (0–23)",
+        "level": "Nivel de entrenador",
+        "weather": "Clima",
+        "event": "Con evento",
+        "noEvent": "Sin evento",
+        "live": "En vivo",
+        "draft": "Borrador",
+        "delta": "Cambio (pts)",
+        "failed": "No se pudo cargar la vista previa.",
+        "summary": "Niveles salvajes {{min}}–{{max}} · {{live}} especies en vivo · probabilidad de legendario {{legendary}}",
+        "compare": "{{draft}} en el borrador · {{appear}} aparecen · {{vanish}} desaparecen",
+        "all": "Mostrar las {{count}}",
+        "less": "Mostrar menos"
+      }
+    },
+    "config": {
+      "encounters": {
+        "legendaryChance": "Probabilidad de legendario por oleada",
+        "shinyChance": "Probabilidad de shiny",
+        "conditionTypeWeight": "Peso del tipo de la condición",
+        "soundProfileWeight": "Peso del tipo del perfil de sonido",
+        "teamTypeWeight": "Peso de los tipos del equipo",
+        "baseWaveSize": "Tamaño base de oleada",
+        "waveSizeJitter": "Variación del tamaño de oleada",
+        "minWaveSize": "Tamaño mínimo de oleada",
+        "lowFocusThreshold": "Umbral de Enfoque bajo",
+        "roamingSessions": "Sesiones que dura un Pokémon errante",
+        "roamingChance": "Probabilidad de Pokémon errante",
+        "studyBallMaxLevel": "Bola Estudio: nivel máximo",
+        "studyBallLevelMargin": "Bola Estudio: margen de nivel",
+        "legendaryMinLevel": "Nivel mínimo de legendario",
+        "nonLevelEvolutionLevelGap": "Diferencia de nivel en evoluciones no por nivel",
+        "longSessionLegendaryMult": "Sesión larga: multiplicador de legendario (por tramo)",
+        "longSessionRareBoost": "Sesión larga: refuerzo de raros (por tramo)",
+        "wildLevelByTrainerLevel": "Niveles salvajes según el nivel de entrenador",
+        "leagueMaxWaveSize": {
+          "base": "Tamaño máximo de oleada: Liga Base",
+          "super": "Tamaño máximo de oleada: Liga Super",
+          "ultra": "Tamaño máximo de oleada: Liga Ultra",
+          "master": "Tamaño máximo de oleada: Liga Master"
+        },
+        "leagueWaveBonus": {
+          "base": "Bonus de tamaño de oleada: Liga Base",
+          "super": "Bonus de tamaño de oleada: Liga Super",
+          "ultra": "Bonus de tamaño de oleada: Liga Ultra",
+          "master": "Bonus de tamaño de oleada: Liga Master"
+        }
+      },
+      "capture": {
+        "statusMult": {
+          "sleep": "Multiplicador de captura con sueño",
+          "paralysis": "Multiplicador de captura con parálisis"
+        },
+        "captureDamageScale": "Escala del daño de captura",
+        "legendaryMinCaptureRate": "Tasa de captura mínima de legendarios",
+        "minHpFraction": "Fracción mínima de PS",
+        "maxFailedThrows": "Lanzamientos fallidos antes de huir",
+        "damageReferenceSpeed": "Velocidad de referencia del daño",
+        "levelSync": {
+          "ratio": "Proporción de sincronía de nivel",
+          "gap": "Diferencia de sincronía de nivel"
+        },
+        "counter": {
+          "basePct": "% base del contraataque",
+          "levelExponent": "Exponente de nivel del contraataque",
+          "defenseDivisor": "Divisor de defensa del contraataque",
+          "defenseMaxReduction": "Reducción máxima por defensa del contraataque",
+          "legendaryMult": "Multiplicador de legendario del contraataque",
+          "damageMult": "Multiplicador de daño del contraataque",
+          "immuneHealPct": "% de curación si es inmune"
+        },
+        "balls": {
+          "poke-ball": {
+            "mult": "Poké Ball: multiplicador de captura",
+            "shinyGuarantee": {
+              "maxStage": "Poké Ball: shiny garantizado, etapa máxima",
+              "maxLevel": "Poké Ball: shiny garantizado, nivel máximo"
+            }
+          },
+          "great-ball": {
+            "mult": "Super Ball: multiplicador de captura",
+            "shinyGuarantee": {
+              "maxStage": "Super Ball: shiny garantizado, etapa máxima",
+              "maxLevel": "Super Ball: shiny garantizado, nivel máximo"
+            }
+          },
+          "ultra-ball": {
+            "mult": "Ultra Ball: multiplicador de captura",
+            "shinyGuarantee": {
+              "maxStage": "Ultra Ball: shiny garantizado, etapa máxima",
+              "maxLevel": "Ultra Ball: shiny garantizado, nivel máximo"
+            }
+          }
+        }
+      },
+      "energy": {
+        "costBase": "Coste de energía: base",
+        "costLevelDivisor": "Coste de energía: divisor de nivel",
+        "breakRecoverPct": "Recuperación por descanso",
+        "boxRecoverPctPerHour": "Recuperación por hora en la caja",
+        "revivePct": "Energía al revivir",
+        "potions": {
+          "potion": "Poción: energía que devuelve",
+          "super-potion": "Superpoción: energía que devuelve",
+          "hyper-potion": "Hiperpoción: energía que devuelve"
+        }
+      },
+      "actions": {
+        "intervalBaseSeconds": "Intervalo de acción: base",
+        "intervalSpeedOffset": "Intervalo de acción: desfase de velocidad",
+        "pointsBase": "Puntos: base",
+        "pointsSpAtkDivisor": "Puntos: divisor de Atq. Esp.",
+        "energyAtkDivisor": "Energía: divisor de Ataque",
+        "energyPowerDivisor": "Energía: divisor de potencia del movimiento",
+        "noDamageMoveEnergyFactor": "Factor de energía de movimientos sin daño",
+        "techMultBase": "Multiplicador de técnica: base",
+        "techMultSpDefDivisor": "Multiplicador de técnica: divisor de Def. Esp.",
+        "techMultMax": "Multiplicador de técnica: máximo",
+        "maxActivationChance": "Probabilidad máxima de activación",
+        "defenseFocusMaxBonus": "Enfoque de defensa: bonus máximo",
+        "defenseFocusCap": "Enfoque de defensa: tope"
+      },
+      "rewards": {
+        "expPerMinute": "EXP de Pokémon por minuto",
+        "dustPerMinute": "Polvo por minuto",
+        "pokeBallsPerSession": "Poké Balls por sesión"
+      },
+      "trainer": {
+        "expPerMinute": "EXP de entrenador por minuto",
+        "expPerNewSpecies": "EXP de entrenador por especie nueva"
+      },
+      "bond": {
+        "maxBonus": "Bonus máximo de vínculo"
+      },
+      "progression": {
+        "candyExp": "EXP por caramelo",
+        "typeCandyExp": "EXP por caramelo de tipo",
+        "candyDustBase": "Coste en Polvo del caramelo: base",
+        "candyDustPerLevel": "Coste en Polvo del caramelo: por nivel",
+        "candiesOnCatch": "Caramelos por captura",
+        "hiddenAbilityChance": "Probabilidad de habilidad oculta",
+        "levelCaps": "Topes de nivel por especie"
+      },
+      "leagues": {
+        "weeklyThresholds": {
+          "super": "Umbral semanal: Liga Super",
+          "ultra": "Umbral semanal: Liga Ultra",
+          "master": "Umbral semanal: Liga Master"
+        },
+        "monthlyMultiplier": "Multiplicador mensual"
+      },
+      "conditions": {
+        "poisonPerSession": "Veneno: bonus por sesión",
+        "poisonMax": "Veneno: multiplicador máximo",
+        "bugPerBug": "Bicho: bonus por Pokémon de tipo Bicho",
+        "normal": "Multiplicador de condición Normal",
+        "fire": "Multiplicador de condición Fuego",
+        "water": "Multiplicador de condición Agua",
+        "grass": "Multiplicador de condición Planta",
+        "electric": "Multiplicador de condición Eléctrico",
+        "ice": "Multiplicador de condición Hielo",
+        "fighting": "Multiplicador de condición Lucha",
+        "ground": "Multiplicador de condición Tierra",
+        "flying": "Multiplicador de condición Volador",
+        "psychic": "Multiplicador de condición Psíquico",
+        "rock": "Multiplicador de condición Roca",
+        "ghost": "Multiplicador de condición Fantasma",
+        "dragon": "Multiplicador de condición Dragón",
+        "dark": "Multiplicador de condición Siniestro",
+        "steel": "Multiplicador de condición Acero",
+        "fairy": "Multiplicador de condición Hada"
+      }
+    },
     "errors": {
       "admin_disabled": "Este servidor no tiene la administración activada. Define ADMIN_TOKEN (mínimo 24 caracteres) y reinícialo.",
       "unauthorized": "Token incorrecto.",
