@@ -177,6 +177,19 @@ Pokédex milestones (10/25/50 species caught) are claimable once each (id `dex-1
 ## Progression (`progression.ts`)
 `expForLevel(L)` = `round(4·L^2.8)`, `levelFromExp`, `levelCap(state)` / `levelCapFor(nCaught)`, `candyDustCost(level)`, `bondBonus(minutes)`, `trainerExpForLevel`, `trainerLevelFromExp`, `gainExp(p, amount, cap)`, `applyLevel`, `evolutionOptions(state, p, now)`.
 
+## Contenido en vivo (`content.ts`, `context.ts`)
+Live admin content and events (design: `docs/admin-plan.md` §1). Layers, lowest priority first: **base** (`src/data/game/*.json`) → **admin patch** (`ContentPatch`, a full patch over the base, never a delta) → **overlays of the active events** (`EventOverlay`, applied in `(startsAt, id)` order).
+- `resolveContent(patch, events, allEventItems, { hash? }) → ContextOptions`, pure. Pass the result to `createEngineContext`.
+  - `patch.config` is deep-merged over the config; `species[slug].captureRate` and `moves[slug].power/accuracy` produce copies of the touched entries (the shipped data is never mutated); `techniques` / `abilities` replace by slug; `missions` sets `dailyCount`, `weeklyCount`, `pool`, `pokedex` and merges `placeholderItems`.
+  - `species[slug].spawn` (`SpeciesSpawn`: `enabled`, `weightMult`, `hours` `[from,to)` windows, `weather` tags `rain|sun|snow|clear`, `minTrainerLevel`) and each event's `featured` build `ctx.spawn`: `weightMult` = admin × every featured multiplier; the other fields come from the admin only (`enabled: false` wins).
+  - Events keep a closed key set (`EVENT_OVERLAY_KEYS`: `featured`, `shiny`, `legendaryChanceMult`, `drops`, `missions`, `items` plus id/slug/dates): they never change config. Shiny, legendary, drops and event missions stay on `ctx.events`; the engine does not apply them yet (E7: `spawn.ts`, waves, drops, event missions).
+  - `allEventItems` (items of every published event, past ones included) and the active events' `items` are added to `missions.placeholderItems`, so item names survive the event.
+  - Unknown slugs or keys are ignored and reported in `ctx.warnings`. The engine never hashes: `hash` comes from the server (`'base'` when nothing changes, `'unhashed'` when something does and no hash was given).
+- `EngineContext` live fields: `contentHash` (`'base'` = shipped data), `spawn: Map<slug, ResolvedSpawn>` (empty = no rules), `events: ActiveEvent[]`.
+- **Golden invariant** (tested in `content.test.ts`): `resolveContent({}, [], {})` is `{}`, so its context equals `createEngineContext()` and sessions, claims and throws are bit-identical. Live rules only apply when present (no extra RNG draws, no `×1`).
+- `setDefaultContext(ctx | null)`: `defaultContext()` returns the active context, or the memoized base one (`baseContext()`). Tests that set it reset it in `afterEach`. `baseContent()` returns the shipped data, techniques, abilities and missions.
+- `src/data/game/meta.json` = `{ baseHash }`: sha256 of the canonical JSON of the 10 game data files, written by `npm run build:data` (`scripts/lib/base-hash.ts`, Node only); `scripts/lib/base-hash.test.ts` checks it is up to date.
+
 ## Data / rules helpers
 - Stats: `computeStats(ind)` (curves → formula), `maxEnergyOf`, `effectiveBase`, `statValue`, `actionIntervalSeconds`, `basePointsPerAction`, `catchEnergyPerAction`, `techniqueMultiplier`, `defenseFocusBonus`, `effectiveFocus`, `energyCostPerAction`, `bondMultiplier`, `masteryMultiplier`, `masteryStars`.
 - Techniques: `getTechnique(slug)` → `{ kind: 'damage'|'passive'|'activable', type, power, damageClass, def } | null` (null = the move doesn't exist in PokeFocus), `isUsableMove`, `techniqueSlots(level)`, `equippableMoves(p)` (learned + unlocked extras; pass an object with `level`), `extraMoveUnlockLevel`, `unlockedExtraMoves`, `lockedExtraMoves`, `validateEquip`, `defaultEquipped` (new individuals only get unlocked moves).

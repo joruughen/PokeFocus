@@ -5,10 +5,13 @@
  *   npm run build:data
  *
  * See `scripts/lib/merge.ts` for the merge rules. Nothing is written if any override is invalid.
+ * Also writes `src/data/game/meta.json` = `{ baseHash }`, the sha256 of the canonical JSON of the
+ * game data files (`scripts/lib/base-hash.ts`); a test checks it is up to date.
  */
 import { copyFile, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { baseHashOfDir, META_FILE } from './lib/base-hash.ts'
 import { isCustomFile, mergeGameData, type Json } from './lib/merge.ts'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -63,11 +66,15 @@ async function main(): Promise<void> {
     else await writeFile(target, JSON.stringify(data, null, 2) + '\n')
   }
 
+  const baseHash = await baseHashOfDir(OUT_DIR)
+  await writeFile(path.join(OUT_DIR, META_FILE), JSON.stringify({ baseHash }, null, 2) + '\n')
+
   const merged = Object.keys(result.output).filter((n) => n in overrides && !isCustomFile(n))
   const custom = Object.keys(result.output).filter(isCustomFile)
   console.log(`Wrote ${Object.keys(result.output).length} file(s) to src/data/game/`)
   console.log(`  merged with overrides: ${merged.length ? merged.join(', ') : 'none'}`)
   console.log(`  custom (copied as-is): ${custom.length ? custom.join(', ') : 'none'}`)
+  console.log(`  ${META_FILE}: baseHash ${baseHash}`)
 }
 
 main().catch((err) => {
