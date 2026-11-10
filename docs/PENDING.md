@@ -71,9 +71,13 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 
 **Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2`. Con 8 y con 4 agentes VS Code murió por falta de RAM (OOM). `vite.config.ts` limita vitest a 4 workers (`VITEST_MAX_WORKERS`).
 
-**En curso:** QA visual de v0.10.0 (rama `worktree-agent-aee0afdc87d389e52`) y **E5** API admin de contenido (rama nueva, ver `git worktree list`).
+**Después de v0.10.0, ya en `main`:** globo de la probabilidad de captura (`catchBreakdown`), **E5** API admin de contenido (`/api/admin/content`) y **E8** backend de eventos (migración **0008** `live_events`/`uploads`; `UPLOADS_DIR`, por defecto `.data/uploads`, **va en las copias de seguridad** junto con PostgreSQL; `/media/events/*.webp`; `/api/live-events`; dependencia `sharp`).
 
-**Siguientes (tanda 3 de E, de 2 en 2):** E8 backend de eventos (subidas con sharp, migración 0008 o siguiente), E7 enganches de eventos en el motor (Opus). Luego E6 UI admin de contenido, E9 UI de eventos, E10 simulación desde admin y E13 docs.
+**Migraciones reales:** 0006 contenido, 0007 `session_log`, 0008 eventos y subidas. El plan (`docs/admin-plan.md`) usa otra numeración: E10 (`content_sim_runs`) será la 0009.
+
+**En curso:** QA visual de v0.10.0 (rama `worktree-agent-aee0afdc87d389e52`) y **E7** eventos en el motor (Opus).
+
+**Siguientes (de 2 en 2):** E6 UI admin de contenido, E9 UI de eventos (página `#/events`, banner, editor admin), E10 simulación desde admin, E13 docs. Pendientes menores de E5: `unschedule`, estado `archived` de versiones.
 
 **Decisiones a confirmar de v0.10.0:**
 - C: cancelar una sesión de 25 min o menos sigue sin dar nada; una cancelada no da las 2 Poké Balls por sesión.
