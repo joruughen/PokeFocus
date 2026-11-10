@@ -25,6 +25,7 @@ server/
   routes/announcements.ts  /api/announcements (public: scheduled maintenance windows)
   routes/config.ts    /api/config (public: { devTools } so the client can lock the dev panel)
   routes/admin.ts     /api/admin/me, /reauth, /maintenance (roles; legacy ADMIN_TOKEN for maintenance)
+  routes/admin/players.ts  /api/admin/players/* player support (search, sheet, grant, unlock, cancel session, logout-all)
   admin/audit.ts      audit(tx, c, entry): admin_audit row in the caller's transaction
   admin/roles.ts      setRoleByEmail, promoteAdminEmails (ADMIN_EMAILS, CLI)
   routes/push.ts      /api/push/* (Web Push subscriptions, test push)
@@ -176,6 +177,11 @@ Migration `0005_admin_roles_audit`: `users.role` (`player` default | `support` |
 - `POST /api/admin/reauth { password }` (support+): verifies the password with the login's scrypt hash and sets `elevated_until = now + 30 min` **on the current session only**; answers like `/me`. Wrong password: 403 `wrong_password`. Limit 5 wrong guesses / 15 min per user (cleared by a right one). Audited as `admin.reauth`.
 - **Rate limit**: every admin request of a signed-in user counts against `adminUser` (600 / 15 min per user, 429 `rate_limited`). `Cache-Control: no-store` on all `/api/admin/*`.
 - **Audit** (`server/admin/audit.ts`): `audit(tx, c, { action, targetType, targetId, before, after, note })` inserts into `admin_audit` (`actor_id` or `actor_label`, `ip`, `created_at`) using the caller's transaction, so the change and its record commit or roll back together. Actors: the user (`actor_id`), `token` (legacy token), `system` (start-up promotion), `cli`.
+- **Player support** (`server/routes/admin/players.ts`, `src/game/admin.ts`; contract in `protocol.ts` "Admin: player support"). All audited in the same transaction (`player.grant|unlock|cancel_session|logout_all`).
+  - `GET /admin/players?q=` (support+; 2..60 chars over email, trainer name, friend code; at most 20) and `GET /admin/players/:id` (profile, 30-day locks, doc summary, last 20 sessions, signed-in browsers).
+  - `POST /admin/players/:id/unlock {field: trainerName|country|timezone, reason?}`, `/cancel-session {reason?}` (same reducer and mirrors as the player's own `cancel`), `/logout-all {reason?}` (not on yourself): support+, but support only on `player` accounts (403 `forbidden_target` otherwise).
+  - `POST /admin/players/:id/grant {items?, dust?, reason}`: **admin + sudo** (403 `forbidden` / `elevation_required`). Positive amounts only; at most 10 item kinds, 50 units each and 5000 Dust per request; the reason (5..280) is the audit note. `applyAdminGrant` is not a `GameAction`.
+  - Limits: `adminPlayerWrite` 60 / 15 min per staff user for mutations, `adminGrant` 20 / 15 min for grants (429 `rate_limited`).
 - **Becoming admin** (accounts are created by normal registration; roles are never self-service):
   - `ADMIN_EMAILS=you@example.com` + restart: existing accounts with those emails become `admin` (idempotent; never demotes; audited as `user.role` by `system`). Emails without an account are skipped with a warning: **register first, then restart** (the email is not verified, so never list one that nobody trusted owns).
   - CLI: `npm run admin:role -- you@example.com admin` (roles `player|support|admin`; reads `.env`; audited as `cli`). With the embedded PGlite the directory cannot be shared with a running server: stop it first (PostgreSQL has no such limit).

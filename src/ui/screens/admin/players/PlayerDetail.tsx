@@ -58,7 +58,7 @@ export function PlayerDetailView({ detail, me, busy, onUnlock, onCancelSession, 
           <Row label={t('admin.players.role')}>{t(`admin.players.roles.${user.role}`)}</Row>
           <Row label={t('admin.players.country')}>{user.country}</Row>
           <Row label={t('admin.players.since')}>{dateTime(user.createdAt, i18n.language)}</Row>
-          <Row label={t('admin.players.anonymous')}>{t(user.anonymousRankings ? 'common.yes' : 'common.no')}</Row>
+          <Row label={t('admin.players.anonymous')}>{t(user.anonymousRankings ? 'admin.players.yes' : 'admin.players.no')}</Row>
         </dl>
       </Panel>
 

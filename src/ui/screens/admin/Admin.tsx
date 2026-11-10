@@ -9,6 +9,7 @@ import { formatWindow, fromLocalInput, toLocalInput } from '../../lib/maintenanc
 import { MaintenanceNoticeBar } from '../../MaintenanceBanner'
 import { useAnnouncements } from '../../store/announcements'
 import { useAuth } from '../../store/auth'
+import { PlayersPanel } from './players/PlayersPanel'
 
 const TOKEN_KEY = 'pokefocus:adminToken'
 const HOUR = 3_600_000
@@ -103,6 +104,8 @@ export default function Admin() {
         <h1 className="text-3xl">{t('admin.title')}</h1>
         <p className="max-w-[60ch] text-mist-300">{t('admin.intro')}</p>
       </header>
+
+      <PlayersPanel />
 
       {!unlocked ? (
         <Panel title={t('admin.access.title')}>
