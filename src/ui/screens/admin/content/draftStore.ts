@@ -86,8 +86,12 @@ export function createDraftStore(first: AdminContentVersionResponse, deps: Draft
   }
 
   const touch = (patch: Partial<DraftState>) => {
-    set({ ...patch, revision: state.revision + 1, phase: isDirty() ? 'dirty' : state.phase === 'saving' ? 'saving' : 'clean', error: null })
-    if (isDirty() && state.phase !== 'saving') schedule()
+    state = { ...state, ...patch, revision: state.revision + 1, error: null }
+    const dirty = isDirty()
+    // While a save is in flight the phase stays 'saving'; its completion re-checks and reschedules.
+    if (state.phase !== 'saving') state = { ...state, phase: dirty ? 'dirty' : 'clean' }
+    emit()
+    if (dirty && state.phase !== 'saving') schedule()
   }
 
   async function run(): Promise<void> {
