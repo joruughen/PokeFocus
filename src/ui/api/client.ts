@@ -5,8 +5,10 @@
  *   with `credentials: 'same-origin'`: the session is an HttpOnly cookie the
  *   client never sees.
  * - Bodies are JSON (the server rejects non-JSON writes as CSRF protection).
- * - Errors throw `ApiError { status, code, retryAfter? }`. `code` is the
- *   server's `{ error }` string, or 'network' / 'http_<status>' when there is none.
+ * - Errors throw `ApiError { status, code, retryAfter?, body }`. `code` is the
+ *   server's `{ error }` string, or 'network' / 'http_<status>' when there is none;
+ *   `body` is the parsed JSON object of the answer (extra fields such as `unlockAt`),
+ *   or null when it was not a JSON object.
  * - A 401 calls the handler registered with `onUnauthorized` (the auth store
  *   goes 'anon'), except for the requests that pass `allow401` (login, /me).
  */
@@ -18,13 +20,16 @@ export class ApiError extends Error {
   readonly code: string
   /** Seconds, from `Retry-After` on 429. */
   readonly retryAfter: number | null
+  /** The whole error answer (`{ error, ...extra }`, e.g. `unlockAt` of 409 name_locked); null when it was not a JSON object. */
+  readonly body: Record<string, unknown> | null
 
-  constructor(status: number, code: string, retryAfter: number | null = null) {
+  constructor(status: number, code: string, retryAfter: number | null = null, body: Record<string, unknown> | null = null) {
     super(`${status} ${code}`)
     this.name = 'ApiError'
     this.status = status
     this.code = code
     this.retryAfter = retryAfter
+    this.body = body
   }
 }
 
@@ -88,7 +93,8 @@ async function request<T>(method: string, path: string, body?: unknown, opts: Re
     const retryAfter = typeof bodyRa === 'number' ? bodyRa : ra !== null && ra !== '' && Number.isFinite(Number(ra)) ? Number(ra) : null
     // 'invalid_credentials' is a failed login, not an expired session.
     if (res.status === 401 && !opts.allow401 && code !== 'invalid_credentials') unauthorizedHandler?.()
-    throw new ApiError(res.status, code, retryAfter)
+    const errBody = data && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : null
+    throw new ApiError(res.status, code, retryAfter, errBody)
   }
   return data as T
 }

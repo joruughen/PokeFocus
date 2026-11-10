@@ -11,6 +11,7 @@ import { sfx } from '../lib/sound'
 import { hrefTo } from '../router'
 import { useGame } from '../store/game'
 import { devEnabled, usePrefs } from '../store/prefs'
+import { useServerConfig } from '../store/serverConfig'
 import { useBusy, usePlayer } from '../store/selectors'
 import { AccountPanel } from './account/AccountPanel'
 import { MicSettings } from './MicSettings'
@@ -33,6 +34,7 @@ export default function Settings() {
   const { t, i18n } = useTranslation()
   const player = usePlayer()
   const prefs = usePrefs()
+  const serverTools = useServerConfig((s) => s.devTools !== false)
   const updateProfile = useGame((s) => s.updateProfile)
   const resetAll = useGame((s) => s.resetAll)
   const busy = useBusy()
@@ -152,7 +154,7 @@ export default function Settings() {
 
       <Panel title={t('settings.advanced')}>
         <div className="flex flex-col gap-6">
-          <Row label={t('settings.dev')} note={t('settings.devNote')}>
+          <Row label={t('settings.dev')} note={serverTools ? t('settings.devNote') : t('settings.devOffNote')}>
             <Switch checked={prefs.dev.panelOpen} onChange={(v) => prefs.setDev({ panelOpen: v })} label={t('settings.dev')} />
           </Row>
           {/* Wiping the save is a dev tool on the server (DEV_TOOLS=1), so it only shows with dev mode on. */}

@@ -17,6 +17,8 @@ export interface FakeServer {
   user: PublicUser
   /** Every request seen: method, path, headers, body. */
   calls: { method: string; path: string; headers: Record<string, string>; body: unknown }[]
+  /** The server's DEV_TOOLS (GET /api/config). False: x-dev-now / x-dev-seed are ignored and dev actions answer 403, like a production server. Default true. */
+  devTools: boolean
   /** Force the next response (e.g. a 401 or a network error). */
   failNext: ((path: string) => Response | 'network' | null) | null
   reset: () => void
@@ -47,12 +49,14 @@ export function installFakeServer(opts: { trainerName?: string; skewMs?: number 
     doc: EMPTY_DOC,
     version: 0,
     user: freshUser(opts.trainerName ?? 'Test'),
+    devTools: true,
     calls: [],
     failNext: null,
     reset() {
       server.doc = EMPTY_DOC
       server.version = 0
       server.user = freshUser(opts.trainerName ?? 'Test')
+      server.devTools = true
       server.calls = []
       server.failNext = null
     },
@@ -77,11 +81,12 @@ export function installFakeServer(opts: { trainerName?: string; skewMs?: number 
       return forced
     }
 
+    if (method === 'GET' && path === '/api/config') return json(200, { devTools: server.devTools })
     if (method === 'GET' && path === '/api/game') return json(200, { doc: server.doc, version: server.version, serverNow: serverNow() })
     if (method === 'POST' && path === '/api/game/action') {
-      const now = headers[DEV_NOW_HEADER] ? Number(headers[DEV_NOW_HEADER]) : serverNow()
-      const rng = createRng(headers[DEV_SEED_HEADER] ?? `${now}-${Math.random()}`)
-      const r = applyAction(server.doc, body as GameAction, { now, rng, dev: true, trainerName: opts.trainerName ?? 'Test' })
+      const now = server.devTools && headers[DEV_NOW_HEADER] ? Number(headers[DEV_NOW_HEADER]) : serverNow()
+      const rng = createRng((server.devTools && headers[DEV_SEED_HEADER]) || `${now}-${Math.random()}`)
+      const r = applyAction(server.doc, body as GameAction, { now, rng, dev: server.devTools, trainerName: opts.trainerName ?? 'Test' })
       if (!r.ok) return json(r.error === 'dev_disabled' ? 403 : 409, { error: r.error })
       server.doc = r.doc
       server.version++
