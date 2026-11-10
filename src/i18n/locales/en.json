@@ -2399,7 +2399,8 @@
         "preview": "Spawn preview",
         "techniques": "Techniques",
         "abilities": "Abilities",
-        "missions": "Missions"
+        "missions": "Missions",
+        "sim": "Simulation"
       },
       "columns": {
         "trainerLevel": "Trainer level",
@@ -2612,7 +2613,8 @@
         "note": "Note for the history",
         "noteHint": "Optional. Saved with the version and the audit log.",
         "done": "Version #{{id}} is live",
-        "scheduledDone": "Version #{{id}} is scheduled"
+        "scheduledDone": "Version #{{id}} is scheduled",
+        "noSim": "This draft has no recent simulation of its current version. You can still publish, but simulating first is advised («Simulation» sub-tab)."
       },
       "rollback": {
         "title": "Republish an old version",
@@ -2660,6 +2662,60 @@
         "compare": "{{draft}} in the draft · {{appear}} appear · {{vanish}} disappear",
         "all": "Show all {{count}}",
         "less": "Show fewer"
+      },
+      "sim": {
+        "title": "Balance simulation",
+        "intro": "The simulator plays the same weeks with virtual players twice: on the active content and on this draft (no live events). It compares weekly points, leagues, captures, legendaries and shinies, dust and energy. It runs on the server, one simulation at a time, and is cancelled after 5 minutes.",
+        "profiles": "Player profiles",
+        "profile": {
+          "casual": "Casual",
+          "constant": "Steady",
+          "marathoner": "Marathoner",
+          "night-owl": "Night owl",
+          "irregular": "Irregular",
+          "grinder": "Grinder"
+        },
+        "seeds": "Players per profile",
+        "weeks": "Weeks",
+        "run": "Simulate",
+        "cost": "Cost: {{cost}} of {{max}} player-weeks (played twice).",
+        "busy": "Another simulation is running on the server; wait for it to finish.",
+        "history": "Simulations of this draft",
+        "none": "This draft has no simulations yet.",
+        "runLine": "Simulation #{{id}}: {{status}} · {{seeds}} players × {{weeks}} weeks · {{who}} · {{when}}",
+        "progress": "Simulation progress",
+        "outdated": "The draft changed after this simulation: simulate again before publishing.",
+        "metric": "Figure",
+        "change": "Change",
+        "new": "new",
+        "footnote": "Means per player over the whole period (points: weekly median). The simulation took {{s}} s.",
+        "status": {
+          "running": "running",
+          "done": "finished",
+          "failed": "failed",
+          "timeout": "cancelled (time limit)",
+          "interrupted": "interrupted"
+        },
+        "m": {
+          "weeklyPoints": "Weekly points (median)",
+          "super": "Weeks in Super League",
+          "ultra": "Weeks in Ultra League",
+          "master": "Weeks in Master League",
+          "catches": "Captures",
+          "speciesCaught": "Species in the Pokédex",
+          "legendaryCaught": "Legendaries caught",
+          "shinyCaught": "Shinies caught",
+          "dustEarned": "Dust earned",
+          "finalDust": "Dust at the end",
+          "exhaustedShare": "Members exhausted per session",
+          "endEnergy": "Energy at the end"
+        },
+        "error": {
+          "busy": "Another simulation is running on the server; try again when it finishes.",
+          "sim_too_big": "Too big: profiles × players × weeks at most {{max}}.",
+          "validation_failed": "The draft has errors: fix them before simulating.",
+          "not_draft": "This version is no longer a draft."
+        }
       }
     },
     "config": {

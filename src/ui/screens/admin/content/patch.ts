@@ -201,7 +201,7 @@ export function overridesByGroup(patch: ContentPatch): Map<LimitGroup, number> {
 
 // --- Section routing for «go to field» ------------------------------------------
 
-export type EditorSection = 'params' | 'species' | 'moves' | 'advanced' | 'review' | 'preview'
+export type EditorSection = 'params' | 'species' | 'moves' | 'advanced' | 'review' | 'preview' | 'sim'
 
 /** Which editor section owns the field a validation/diff path points at. */
 export function sectionOfPath(path: string): EditorSection {

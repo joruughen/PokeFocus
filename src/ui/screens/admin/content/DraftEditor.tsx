@@ -14,6 +14,7 @@ import { liveValidate, NO_ISSUES, type IssueSet } from './live'
 import { fieldId, groupOfPath, sectionOfPath, type EditorSection } from './patch'
 import { PublishDialog } from './PublishDialog'
 import { DiffList, IssueList, issuesToSet, ValidationSummary } from './ReviewPanel'
+import { SimRuns } from './SimRuns'
 import { SpawnPreview } from './SpawnPreview'
 import { versionName } from './versions'
 
@@ -148,6 +149,7 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
       ),
     },
     { value: 'preview', label: t('admin.content.sections.preview'), content: <SpawnPreview draftId={state.id} flush={store.flush} revision={state.server.hash ?? ''} events={live?.events ?? []} /> },
+    { value: 'sim', label: t('admin.content.sections.sim'), content: <SimRuns draftId={state.id} flush={store.flush} draftHash={state.server.hash} /> },
   ]
 
   return (

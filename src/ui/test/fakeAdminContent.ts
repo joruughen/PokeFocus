@@ -14,10 +14,18 @@ import type {
   AdminContentVersion,
   AdminContentVersionResponse,
   AdminContentVersionSummary,
+  AdminSimCheck,
+  AdminSimParams,
+  AdminSimProfile,
+  AdminSimProfileStats,
+  AdminSimReport,
+  AdminSimRun,
+  AdminSimRunSummary,
   AdminSpawnWeather,
   ContentIssue,
   UserRole,
 } from '../../game/protocol'
+import { ADMIN_SIM_MAX_PLAYER_WEEKS, ADMIN_SIM_RECENT_MS } from '../../game/protocol'
 
 export interface FakeRow {
   id: number
@@ -45,7 +53,48 @@ export interface FakeAdminContent {
   /** Add a published version that is in force (effective in the past). */
   seedPublished: (patch: ContentPatch, title?: string) => FakeRow
   seedDraft: (patch: ContentPatch, title?: string) => FakeRow
+  /** Simulation runs (E10), newest last. A run stays `running` until `finishSims()` (or `simAutoFinish`). */
+  sims: FakeSimRun[]
+  /** Finish a running simulation on its next GET (default true). */
+  simAutoFinish: boolean
+  /** Another simulation occupies the server: POST simulate → 409 busy. */
+  simBusy: boolean
+  finishSims: () => void
   restore: () => void
+}
+
+export interface FakeSimRun {
+  run: AdminSimRun
+  /** JSON of the patch simulated (the fake's «draft hash»). */
+  patchKey: string
+}
+
+/** Synthetic comparison: the draft gives 10 % more weekly points and 1 more shiny. */
+export function fakeSimReport(params: AdminSimParams, activeVersionId: number | null, draftId: number): AdminSimReport {
+  const stats = (k: number): AdminSimProfileStats[] =>
+    params.profiles.map((profile) => ({
+      profile,
+      n: params.seeds,
+      weeklyPoints: Array.from({ length: params.weeks }, () => ({ p25: 9000 * k, p50: 10000 * k, p75: 11000 * k, mean: 10000 * k })),
+      weeklyPointsMedian: 10000 * k,
+      leagueShare: { base: 1, super: 0.8, ultra: 0.2 * k, master: 0 },
+      sessions: 20,
+      minutesPerDay: 90,
+      catches: 60,
+      speciesCaught: 30,
+      legendarySeen: 1,
+      legendaryCaught: 0.5,
+      shinySeen: k > 1 ? 2 : 1,
+      shinyCaught: k > 1 ? 2 : 1,
+      dustEarned: 5000,
+      dustSpent: 4000,
+      finalDust: 1000,
+      exhaustedShare: 0.1,
+      startedEmptyShare: 0,
+      endEnergy: 0.6,
+      restSessions: 0,
+    }))
+  return { params, active: { hash: 'base', versionId: activeVersionId, profiles: stats(1) }, proposed: { hash: `h${draftId}`, versionId: draftId, profiles: stats(1.1) }, ms: 1200 }
 }
 
 const json = (status: number, body: unknown) => new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -79,9 +128,32 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
       fake.rows.set(id, row)
       return row
     },
+    sims: [],
+    simAutoFinish: true,
+    simBusy: false,
+    finishSims() {
+      for (const s of fake.sims)
+        if (s.run.status === 'running') {
+          s.run.status = 'done'
+          s.run.finishedAt = fake.now
+          s.run.progress = null
+          s.run.report = fakeSimReport(s.run.params, s.run.activeVersionId, s.run.versionId ?? 0)
+        }
+    },
     restore: () => {
       globalThis.fetch = previous
     },
+  }
+  const simSummary = (s: FakeSimRun): AdminSimRunSummary => {
+    const { report: _report, ...rest } = s.run
+    return rest
+  }
+  const simCheck = (r: FakeRow): AdminSimCheck => {
+    const mine = fake.sims.filter((s) => s.run.versionId === r.id)
+    const key = JSON.stringify(r.patch)
+    const recent = mine.some((s) => s.run.status === 'done' && s.patchKey === key && s.run.finishedAt !== null && fake.now - s.run.finishedAt <= ADMIN_SIM_RECENT_MS)
+    const last = mine.at(-1)
+    return { recent, last: last ? simSummary(last) : null }
   }
 
   const activeRow = (): FakeRow | null => {
@@ -111,7 +183,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
 
   const body = (r: FakeRow): AdminContentVersionResponse => {
     const version: AdminContentVersion = { ...summary(r), patch: r.patch, baseHash: 'base', validationDetail: r.validation }
-    return { version, diff: diffPatches(activeRow()?.patch ?? {}, r.patch), serverNow: fake.now }
+    return { version, diff: diffPatches(activeRow()?.patch ?? {}, r.patch), ...(r.status === 'draft' && { sim: simCheck(r) }), serverNow: fake.now }
   }
 
   const gate = (r: FakeRow, confirm: boolean | undefined): Response | null => {
@@ -211,6 +283,33 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
         fake.rows.delete(r.id)
         return new Response(null, { status: 204 })
       }
+      if (parts[2] === 'simulate' && method === 'POST') {
+        if (fake.simBusy || fake.sims.some((s) => s.run.status === 'running')) return json(409, { error: 'busy' })
+        const profiles = (data.profiles as AdminSimProfile[] | undefined) ?? ['casual', 'constant', 'marathoner']
+        const seeds = (data.seeds as number | undefined) ?? 4
+        const weeks = (data.weeks as number | undefined) ?? 4
+        if (profiles.length * seeds * weeks > ADMIN_SIM_MAX_PLAYER_WEEKS) return json(400, { error: 'sim_too_big', max: ADMIN_SIM_MAX_PLAYER_WEEKS })
+        const v = validateContentPatch(r.patch, { smoke: false })
+        if (!v.ok) return json(422, { error: 'validation_failed', errors: v.errors, warnings: v.warnings, requiresConfirm: v.requiresConfirm })
+        const active = activeRow()
+        const run: AdminSimRun = {
+          id: fake.sims.length + 1,
+          versionId: r.id,
+          draftHash: `h${r.id}`,
+          activeVersionId: active?.id ?? null,
+          activeHash: active ? `h${active.id}` : 'base',
+          status: 'running',
+          params: { profiles, seeds, weeks },
+          error: null,
+          createdBy: { id: 'u1', trainerName: 'Admin' },
+          createdAt: fake.now,
+          finishedAt: null,
+          progress: { done: 0, total: profiles.length * seeds * 2 },
+          report: null,
+        }
+        fake.sims.push({ run, patchKey: JSON.stringify(r.patch) })
+        return json(202, { run: { ...run }, serverNow: fake.now })
+      }
       if (parts[2] === 'validate' && method === 'POST') {
         r.validation = toValidation(validateContentPatch(r.patch, { smoke: { sessions: 20 } }), true, fake.now)
         return json(200, { validation: r.validation, diff: diffPatches(activeRow()?.patch ?? {}, r.patch), serverNow: fake.now })
@@ -228,6 +327,17 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
         r.validation = toValidation(validateContentPatch(r.patch, { smoke: { sessions: 20 } }), true, fake.now)
         return json(200, body(r))
       }
+    }
+    if (parts[0] === 'sim-runs' && parts.length === 1 && method === 'GET') {
+      const vid = params.get('versionId')
+      const items = fake.sims.filter((s) => !vid || s.run.versionId === Number(vid)).reverse()
+      return json(200, { items: items.map(simSummary), busy: fake.simBusy || fake.sims.some((s) => s.run.status === 'running'), serverNow: fake.now })
+    }
+    if (parts[0] === 'sim-runs' && parts.length === 2 && method === 'GET') {
+      const s = fake.sims.find((x) => x.run.id === Number(parts[1]))
+      if (!s) return json(404, { error: 'not_found' })
+      if (s.run.status === 'running' && fake.simAutoFinish) fake.finishSims()
+      return json(200, { run: { ...s.run }, serverNow: fake.now })
     }
     if (parts[0] === 'spawn-preview' && method === 'GET') {
       const denied = needAdmin()
