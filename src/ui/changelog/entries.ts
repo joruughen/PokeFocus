@@ -29,6 +29,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.10.0',
+    date: '2026-11-10',
+    title: { es: 'Sesiones largas y números claros', en: 'Long sessions and clear numbers' },
+    items: [
+      {
+        kind: 'improved',
+        text: {
+          es: 'Abandonar una sesión larga ya no lo pierde todo: si planeaste más de 25 min y llevas al menos 15, conservas los puntos, la EXP y el Polvo de los minutos estudiados y una oleada por cada bloque de 25 min completo. La confirmación te dice exactamente qué conservas.',
+          en: 'Giving up a long session no longer loses everything: if you planned more than 25 min and have studied at least 15, you keep the points, EXP and Dust of the minutes you studied and one wave per full 25-min block. The confirmation tells you exactly what you keep.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Al pasar el ratón (o tocar) por Daño, Pasiva o Activable de una técnica ves cuándo se activa y con qué probabilidad, con los números de ese Pokémon. En las de daño, también para qué sirve acumular Energía.',
+          en: 'Hover over or tap Damage, Passive or Activable on a technique to see when it triggers and how likely it is, with that Pokémon’s own numbers. Damage techniques also explain what building up Energy is for.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Resultados: un desglose de cómo se calculan tus puntos (base, condición, Vínculo, Foco, Aguante, habilidades y rendimiento diario), para el equipo y para cada Pokémon.',
+          en: 'Results: a breakdown of how your points are calculated (base, condition, Bond, Focus, Grit, abilities and daily yield), for the team and for each Pokémon.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.9.0',
     date: '2026-11-10',
     title: { es: 'Combate, Energía y gestión del equipo', en: 'Combat, Energy and team management' },
