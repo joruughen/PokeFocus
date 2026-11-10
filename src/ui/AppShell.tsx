@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { BALL_ORDER, missionsView } from '../engine'
 import { DevToggle } from './dev/DevPanel'
 import { StageBadge } from './changelog/StageBadge'
+import { WhatsNewDialog } from './changelog/WhatsNewDialog'
 import { GroupInviteNotice } from './GroupInviteNotice'
 import { MaintenanceBanner } from './MaintenanceBanner'
 import { BallIcon, IconButton, Logo, PixelIcon, Tooltip } from './components'
@@ -41,6 +42,7 @@ export function AppShell() {
     <div className="min-h-dvh xl:grid xl:grid-cols-[15rem_minmax(0,1fr)] max-xl:sm:grid max-xl:sm:grid-cols-[5rem_minmax(0,1fr)]">
       <Rail route={route} focusing={focusing} />
       <GroupInviteNotice />
+      <WhatsNewDialog />
       <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
           <MaintenanceBanner className="mb-6" />

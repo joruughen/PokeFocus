@@ -2082,6 +2082,13 @@
       "fixed": "Fixed"
     }
   },
+  "whatsNew": {
+    "title": "What's new?",
+    "seeAll": "See all the news",
+    "gotIt": "Got it",
+    "more_one": "and {{count}} more version since you were last here.",
+    "more_other": "and {{count}} more versions since you were last here."
+  },
   "maintenance": {
     "upcomingTitle": "Scheduled maintenance",
     "activeTitle": "Maintenance in progress",

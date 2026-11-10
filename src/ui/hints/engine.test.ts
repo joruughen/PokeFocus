@@ -9,6 +9,7 @@ import {
   nextInSequence,
   openHint,
   registerHints,
+  setHintsHeld,
   setHintsSuppressed,
   useHints,
 } from './engine'
@@ -28,7 +29,7 @@ const active = () => useHints.getState().active?.id ?? null
 beforeEach(() => {
   vi.useFakeTimers()
   usePrefs.setState({ seenHints: {}, tipsEnabled: true })
-  useHints.setState({ active: null, queue: [], screen: null, autoShown: 0, suppressed: false, values: {} })
+  useHints.setState({ active: null, queue: [], screen: null, autoShown: 0, suppressed: false, held: false, values: {} })
 })
 afterEach(() => {
   leaveScreen('test')
@@ -69,6 +70,16 @@ describe('hint engine', () => {
     setHintsSuppressed(true)
     expect(active()).toBeNull()
     expect(usePrefs.getState().seenHints['t.a']).toBeUndefined()
+  })
+
+  it('stays quiet while a modal holds the hints, then resumes', () => {
+    setHintsHeld(true)
+    enterScreen('test')
+    vi.advanceTimersByTime(1000)
+    expect(active()).toBeNull()
+    setHintsHeld(false)
+    vi.advanceTimersByTime(1000)
+    expect(active()).toBe('t.a')
   })
 
   it('respects "don\'t show tips", but HelpDot opens on demand', () => {
