@@ -3,6 +3,7 @@
  * See docs/server.md for the full list.
  */
 import { z } from 'zod'
+import { PEPPER_MIN, pepperSet, type PepperSet } from './auth/password'
 
 const flag = z.enum(['0', '1']).default('0').transform((v) => v === '1')
 
@@ -72,6 +73,24 @@ const schema = z.object({
       .pipe(z.array(z.string().max(254).refine((e) => /^[^\s@]+@[^\s@]+$/.test(e), { message: 'must be a comma-separated list of emails' })))
       .optional(),
   ),
+  /**
+   * Server-side secret mixed into every password hash (HMAC before scrypt). Required in
+   * production; generate it with `npm run pepper`. Never logged. Losing or changing it
+   * without PASSWORD_PEPPER_PREVIOUS locks every peppered account out.
+   */
+  PASSWORD_PEPPER: z.preprocess(
+    emptyAsUnset,
+    z.string().trim().min(PEPPER_MIN, `must be at least ${PEPPER_MIN} characters (generate one with npm run pepper)`).optional(),
+  ),
+  /** Comma-separated older peppers still accepted while rotating (hashes upgrade on login). */
+  PASSWORD_PEPPER_PREVIOUS: z.preprocess(
+    emptyAsUnset,
+    z
+      .string()
+      .transform((v) => v.split(',').map((x) => x.trim()).filter(Boolean))
+      .pipe(z.array(z.string().min(PEPPER_MIN, `each previous pepper must be at least ${PEPPER_MIN} characters`)))
+      .optional(),
+  ),
   /** Web Push (VAPID). All three or none; none = push disabled (404 push_disabled). */
   VAPID_PUBLIC_KEY: vapidKey(65, 'uncompressed P-256 public key'),
   VAPID_PRIVATE_KEY: vapidKey(32, 'P-256 private key'),
@@ -85,6 +104,12 @@ const schema = z.object({
       .optional(),
   ),
 }).superRefine((e, ctx) => {
+  if (e.NODE_ENV === 'production' && !e.PASSWORD_PEPPER) {
+    ctx.addIssue({ code: 'custom', path: ['PASSWORD_PEPPER'], message: 'required in production (generate one with npm run pepper)' })
+  }
+  if (e.PASSWORD_PEPPER && e.PASSWORD_PEPPER_PREVIOUS?.includes(e.PASSWORD_PEPPER)) {
+    ctx.addIssue({ code: 'custom', path: ['PASSWORD_PEPPER_PREVIOUS'], message: 'must not contain the current PASSWORD_PEPPER' })
+  }
   const set = [e.VAPID_PUBLIC_KEY, e.VAPID_PRIVATE_KEY, e.VAPID_SUBJECT].filter((v) => v !== undefined).length
   if (set !== 0 && set !== 3) {
     ctx.addIssue({ code: 'custom', path: ['VAPID_*'], message: 'set all three of VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT, or none' })
@@ -114,6 +139,8 @@ export interface Env {
   adminEmails: string[]
   /** Web Push keys; null = push disabled. Never logged. */
   vapid: VapidConfig | null
+  /** Password peppers (current + rotation); never logged. */
+  passwordPeppers: PepperSet
 }
 
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
@@ -142,5 +169,6 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
       e.VAPID_PUBLIC_KEY && e.VAPID_PRIVATE_KEY && e.VAPID_SUBJECT
         ? { publicKey: e.VAPID_PUBLIC_KEY, privateKey: e.VAPID_PRIVATE_KEY, subject: e.VAPID_SUBJECT }
         : null,
+    passwordPeppers: pepperSet(e.PASSWORD_PEPPER, e.PASSWORD_PEPPER_PREVIOUS),
   }
 }

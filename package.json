@@ -19,6 +19,7 @@
     "simulate:damage": "tsx scripts/simulate-damage.ts",
     "db:generate": "drizzle-kit generate",
     "vapid": "tsx scripts/generate-vapid.ts",
+    "pepper": "tsx scripts/generate-pepper.ts",
     "admin:role": "tsx scripts/admin-role.ts"
   },
   "dependencies": {

@@ -92,7 +92,7 @@ export function adminRoutes(deps: Deps) {
     const me = c.get('user')
     const now = deps.clock()
     limit(c, `admin:reauth:${me.id}`, RULES.adminReauthUser)
-    if (!(await verifyPassword(password, me.passwordHash))) throw new ApiError(403, 'wrong_password')
+    if (!(await verifyPassword(password, me.passwordHash, env.passwordPeppers))) throw new ApiError(403, 'wrong_password')
     limiter.reset(`admin:reauth:${me.id}`)
     const until = new Date(now + ELEVATION_MS)
     await db.transaction(async (tx) => {

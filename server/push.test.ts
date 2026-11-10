@@ -547,7 +547,7 @@ describe('production static: /sw.js', () => {
   })
   afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
-  const prodApp = () => makeApp({ env: { NODE_ENV: 'production', STATIC_DIR: dir } })
+  const prodApp = () => makeApp({ env: { NODE_ENV: 'production', PASSWORD_PEPPER: 'test-pepper-0123456789abcdefghijklmnop', STATIC_DIR: dir } })
 
   it('a missing /sw.js is a 404, not the SPA index', async () => {
     const r = await call(prodApp(), 'GET', '/sw.js')

@@ -117,7 +117,7 @@ describe('auth', () => {
     expect(sc).toContain(`Max-Age=${30 * 24 * 3600}`)
     expect(sc).not.toContain('Secure')
 
-    const production = createApp({ env: loadEnv({ NODE_ENV: 'production', APP_ORIGIN: ORIGIN, TRUST_PROXY: '1' }), db: database.db, clock })
+    const production = createApp({ env: loadEnv({ NODE_ENV: 'production', PASSWORD_PEPPER: 'test-pepper-0123456789abcdefghijklmnop', APP_ORIGIN: ORIGIN, TRUST_PROXY: '1' }), db: database.db, clock })
     const p = await call('POST', '/api/auth/login', { app: production, body: { email: 'flags@test.dev', password: 'password1' } })
     expect(p.status).toBe(200)
     expect(p.res.headers.get('set-cookie')).toContain('Secure')
@@ -348,7 +348,7 @@ describe('game', () => {
     const on = await call('GET', '/api/config', { app: dev })
     expect(on.json).toEqual({ devTools: true })
     // DEV_TOOLS=1 is forced off in production.
-    const production = createApp({ env: loadEnv({ NODE_ENV: 'production', DEV_TOOLS: '1', APP_ORIGIN: ORIGIN, TRUST_PROXY: '1' }), db: database.db, clock })
+    const production = createApp({ env: loadEnv({ NODE_ENV: 'production', PASSWORD_PEPPER: 'test-pepper-0123456789abcdefghijklmnop', DEV_TOOLS: '1', APP_ORIGIN: ORIGIN, TRUST_PROXY: '1' }), db: database.db, clock })
     expect((await call('GET', '/api/config', { app: production })).json).toEqual({ devTools: false })
   })
 

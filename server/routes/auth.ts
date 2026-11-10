@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { and, eq, lt, ne } from 'drizzle-orm'
 import { COUNTRY_LOCK_DAYS, EMPTY_DOC, NAME_LOCK_DAYS } from '../../src/game/protocol'
 import type { AuthSessionInfo } from '../../src/game/protocol'
-import { hashPassword, verifyDummy, verifyPassword } from '../auth/password'
+import { hashPassword, needsRehash, verifyDummy, verifyPassword } from '../auth/password'
 import { hashToken, newFriendCode, newToken, SESSION_TTL_MS } from '../auth/tokens'
 import { isUniqueViolation, type Db } from '../db/client'
 import { authSessions, playerDocs, users } from '../db/schema'
@@ -57,7 +57,7 @@ export function authRoutes(deps: Deps) {
   app.post('/register', async (c) => {
     limit(c, `register:ip:${clientIp(c, env.trustProxy)}`, RULES.registerIp)
     const body = await readBody(c, registerBody)
-    const passwordHash = await hashPassword(body.password)
+    const passwordHash = await hashPassword(body.password, env.passwordPeppers)
     const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.email, body.email)).limit(1)
     if (taken) throw new ApiError(409, 'email_taken')
     let user = null
@@ -90,9 +90,15 @@ export function authRoutes(deps: Deps) {
     const body = await readBody(c, loginBody)
     limit(c, `login:email:${body.email}`, RULES.loginEmail)
     const [user] = await db.select().from(users).where(eq(users.email, body.email)).limit(1)
-    const valid = user ? await verifyPassword(body.password, user.passwordHash) : await verifyDummy(body.password)
+    const valid = user ? await verifyPassword(body.password, user.passwordHash, env.passwordPeppers) : await verifyDummy(body.password, env.passwordPeppers)
     if (!user || !valid) throw new ApiError(401, 'invalid_credentials')
     limiter.reset(`login:email:${body.email}`)
+    // Upgrade legacy (no pepper) or old-pepper hashes now that we have the plain password.
+    // Conditional on the old hash so a concurrent password change is never overwritten.
+    if (needsRehash(user.passwordHash, env.passwordPeppers)) {
+      const passwordHash = await hashPassword(body.password, env.passwordPeppers)
+      await db.update(users).set({ passwordHash }).where(and(eq(users.id, user.id), eq(users.passwordHash, user.passwordHash)))
+    }
     await startSession(c, user.id)
     return c.json({ user: toPublicUser(user) })
   })
@@ -165,9 +171,9 @@ export function authRoutes(deps: Deps) {
     const me = c.get('user')
     const current = c.get('session')
     limit(c, `password:user:${me.id}`, RULES.passwordUser)
-    if (!(await verifyPassword(body.current, me.passwordHash))) throw new ApiError(403, 'wrong_password')
+    if (!(await verifyPassword(body.current, me.passwordHash, env.passwordPeppers))) throw new ApiError(403, 'wrong_password')
     limiter.reset(`password:user:${me.id}`)
-    const passwordHash = await hashPassword(body.next)
+    const passwordHash = await hashPassword(body.next, env.passwordPeppers)
     const gone = await db.transaction(async (tx) => {
       await tx.update(users).set({ passwordHash }).where(eq(users.id, me.id))
       return tx

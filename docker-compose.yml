@@ -33,6 +33,12 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-0}
       # 0 only for plain HTTP inside an encrypted network (e.g. http://<tailscale-ip>:8787).
       COOKIE_SECURE: ${COOKIE_SECURE:-auto}
+      # Password pepper (npm run pepper). Required: the server refuses to start without it.
+      # Back it up apart from the database; losing it locks every account out.
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER:?Set PASSWORD_PEPPER in .env (generate one with npm run pepper)}
+      PASSWORD_PEPPER_PREVIOUS: ${PASSWORD_PEPPER_PREVIOUS:-}
+      # Emails promoted to role admin at start-up (the accounts must exist).
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       # Bearer token of the admin API (maintenance notices); empty = admin API off. Min. 24 chars.
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       # Web Push keys (npm run vapid). All three or none; none = push notifications off.
