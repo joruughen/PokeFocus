@@ -23,6 +23,10 @@ export const RULES = {
   adminUser: { limit: 600, windowMs: 15 * 60_000 },
   /** Wrong-password guesses on POST /api/admin/reauth. */
   adminReauthUser: { limit: 5, windowMs: 15 * 60_000 },
+  /** Player-support mutations (unlock, cancel session, logout-all, grant) per staff user. */
+  adminPlayerWrite: { limit: 60, windowMs: 15 * 60_000 },
+  /** Grants alone per staff user (each one hands out items or Dust). */
+  adminGrant: { limit: 20, windowMs: 15 * 60_000 },
   /** Web Push subscribe + unsubscribe per user. */
   pushWriteUser: { limit: 30, windowMs: 15 * 60_000 },
   /** POST /api/push/test per user (each one sends real notifications). */
