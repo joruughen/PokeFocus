@@ -39,11 +39,85 @@ export function captureChance(
 
 /** Catch chance of a wild with a ball given the current team (0..1; 1 when guaranteed). */
 export function wildCatchChance(state: PlayerState, wild: WildPokemon, ball: ThrowBall, ctx: EngineContext = defaultContext()): number {
-  if (ball === 'study-ball') return wild.studyBallEligible ? 1 : 0
-  if (ballCovers(ball, wild.guaranteedBall)) return 1
+  return catchBreakdown(state, wild, ball, ctx).chance
+}
+
+/**
+ * Why a catch chance is what it is (the factors of `captureChance`), for the UI tooltip.
+ * `chance` is exactly `wildCatchChance`. `ifAsleep` / `ifParalyzed` / `withUltra` are the
+ * chance the same throw would have with that status or ball (null when it would not change
+ * or does not apply).
+ */
+export interface CatchBreakdown {
+  chance: number
+  /** 'study' = Study Ball on an eligible wild; 'ball' = a ball that guarantees this wild (shiny). */
+  guaranteed: 'study' | 'ball' | null
+  /** Species capture rate (0–255) actually used (legendaries get at least `legendaryMinCaptureRate`). */
+  captureRate: number
+  /** `captureRate / 255`. */
+  rateFactor: number
+  /** True when a legendary's rate was raised to the minimum. */
+  legendaryFloor: boolean
+  /** Remaining HP fraction used (never below `capture.minHpFraction`). */
+  hpFraction: number
+  /** True when the HP is already at the minimum that still counts. */
+  hpAtFloor: boolean
+  /** `1 − 2h/3`. */
+  hpFactor: number
+  /** Multiplier of the ball itself. */
+  ballMult: number
+  /** Multiplier from team abilities (1 = none). */
+  abilityMult: number
+  status: WildStatus | null
+  statusMult: number
+  /** One-off bonus on the next throw (e.g. from a counterattack effect); 1 = none. */
+  nextThrowBonus: number
+  /** True when the product exceeds 100 % and is capped. */
+  capped: boolean
+  ifAsleep: number | null
+  ifParalyzed: number | null
+  withUltra: number | null
+}
+
+export function catchBreakdown(state: PlayerState, wild: WildPokemon, ball: ThrowBall, ctx: EngineContext = defaultContext()): CatchBreakdown {
+  const cfg = ctx.config
   const sp = getSpecies(wild.speciesSlug, ctx)
+  const R = wild.isLegendary ? Math.max(sp.captureRate, cfg.capture.legendaryMinCaptureRate) : sp.captureRate
+  const h = Math.max(cfg.capture.minHpFraction, Math.min(1, wild.hpFraction))
+  const status = wild.status ?? null
+  const base = {
+    captureRate: R,
+    rateFactor: R / 255,
+    legendaryFloor: wild.isLegendary && R > sp.captureRate,
+    hpFraction: h,
+    hpAtFloor: wild.hpFraction <= cfg.capture.minHpFraction,
+    hpFactor: 1 - (2 * h) / 3,
+    status,
+    statusMult: cfg.capture.statusMult[status ?? 'none'],
+    nextThrowBonus: wild.nextThrowBonus ?? 1,
+  }
+  const study = ball === 'study-ball'
+  const guaranteed = study ? (wild.studyBallEligible ? 'study' : null) : ballCovers(ball, wild.guaranteedBall) ? 'ball' : null
+  if (study || guaranteed) {
+    return { ...base, chance: study ? (wild.studyBallEligible ? 1 : 0) : 1, guaranteed, ballMult: 1, abilityMult: 1, capped: false, ifAsleep: null, ifParalyzed: null, withUltra: null }
+  }
   const mods = encounterModifiers(state, ctx)
-  return captureChance(sp.captureRate, wild.isLegendary, wild.hpFraction, ctx.config.capture.balls[ball].mult * mods.ballMult, wild.status, ctx.config, wild.nextThrowBonus)
+  const ballMult = cfg.capture.balls[ball].mult
+  const p = (b: number, st: WildStatus | null) => captureChance(sp.captureRate, wild.isLegendary, wild.hpFraction, b * mods.ballMult, st, cfg, wild.nextThrowBonus)
+  const chance = p(ballMult, status)
+  const raw = base.hpFactor * base.rateFactor * ballMult * mods.ballMult * base.statusMult * base.nextThrowBonus
+  const alt = (v: number) => (v > chance + 1e-9 ? v : null)
+  return {
+    ...base,
+    chance,
+    guaranteed: null,
+    ballMult,
+    abilityMult: mods.ballMult,
+    capped: raw > 1,
+    ifAsleep: status === null ? alt(p(ballMult, 'sleep')) : null,
+    ifParalyzed: status === null ? alt(p(ballMult, 'paralysis')) : null,
+    withUltra: ball !== 'ultra-ball' ? alt(p(cfg.capture.balls['ultra-ball'].mult, status)) : null,
+  }
 }
 
 export type ThrowOutcome =

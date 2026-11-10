@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applySessionResult } from './session'
-import { advanceWave, applyStatusCharge, ballCounterTarget, captureChance, counterDamage, encounterModifiers, rerollWild, resolveCounter, resolveCounterOn, throwBall, wildCatchChance } from './capture'
+import { advanceWave, applyStatusCharge, ballCounterTarget, captureChance, catchBreakdown, counterDamage, encounterModifiers, rerollWild, resolveCounter, resolveCounterOn, throwBall, wildCatchChance } from './capture'
 import { createEngineContext, defaultContext, type EngineContext } from './context'
 import type { AbilityDef } from './effect-types'
 import { passiveEffects } from './effects'
@@ -238,6 +238,48 @@ describe('waves (GDD §10)', () => {
     expect(wildCatchChance(s, w, 'ultra-ball')).toBe(1)
     expect(wildCatchChance(s, w, 'great-ball')).toBe(1)
     expect(wildCatchChance(s, w, 'poke-ball')).toBeLessThan(1)
+  })
+})
+
+describe('catchBreakdown (catch chance tooltip)', () => {
+  it('a Squirtle at minimum HP with a Great Ball: ≈26 %, from its low capture rate (45), not its level or the weather', () => {
+    const s = makePlayer([makeMon('bulbasaur', 10)])
+    const w = wild('squirtle', 3, { hpFraction: 0.01 })
+    const b = catchBreakdown(s, w, 'great-ball')
+    expect(b.chance).toBe(wildCatchChance(s, w, 'great-ball'))
+    expect(b.captureRate).toBe(45)
+    expect(b.hpAtFloor).toBe(true)
+    expect(b.hpFraction).toBe(cfg.capture.minHpFraction)
+    expect(b.ballMult).toBe(1.5)
+    expect(b.abilityMult).toBe(1)
+    expect(b.chance).toBeCloseTo(0.256, 2)
+    expect(b.hpFactor * b.rateFactor * b.ballMult * b.abilityMult * b.statusMult * b.nextThrowBonus).toBeCloseTo(b.chance, 10)
+    // What would help: sleep ×2.5, paralysis ×1.5, an Ultra Ball ×2.
+    expect(b.ifAsleep).toBeCloseTo(b.chance * cfg.capture.statusMult.sleep, 10)
+    expect(b.ifParalyzed).toBeCloseTo(b.chance * cfg.capture.statusMult.paralysis, 10)
+    expect(b.withUltra).toBeCloseTo((b.chance / 1.5) * 2, 10)
+    // Level does not enter the formula.
+    expect(catchBreakdown(s, wild('squirtle', 40, { hpFraction: 0.01 }), 'great-ball').chance).toBe(b.chance)
+  })
+
+  it('status already applied: no "if asleep" hints; guaranteed throws and capped chances', () => {
+    const s = makePlayer([makeMon('bulbasaur', 10)])
+    const asleep = catchBreakdown(s, wild('squirtle', 3, { hpFraction: 0.01, status: 'sleep' }), 'poke-ball')
+    expect(asleep.ifAsleep).toBeNull()
+    expect(asleep.ifParalyzed).toBeNull()
+    expect(asleep.statusMult).toBe(cfg.capture.statusMult.sleep)
+    const shiny = catchBreakdown(s, wild('pidgeotto', 20, { isShiny: true, guaranteedBall: 'great-ball' }), 'ultra-ball')
+    expect(shiny).toMatchObject({ chance: 1, guaranteed: 'ball', withUltra: null })
+    const easy = catchBreakdown(s, wild('pidgey', 3, { hpFraction: 0.01 }), 'ultra-ball')
+    expect(easy.chance).toBe(1)
+    expect(easy.capped).toBe(true)
+    expect(easy.withUltra).toBeNull()
+    for (const ball of ['poke-ball', 'great-ball', 'ultra-ball'] as const) {
+      for (const slug of ['squirtle', 'pidgey', 'mewtwo']) {
+        const w = wild(slug, 20, { hpFraction: 0.4, isLegendary: slug === 'mewtwo' })
+        expect(catchBreakdown(s, w, ball).chance).toBe(wildCatchChance(s, w, ball))
+      }
+    }
   })
 })
 

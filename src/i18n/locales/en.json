@@ -532,7 +532,32 @@
     "hitBy": "Hit by",
     "counterTook": "Took the counterattack",
     "counterWhyLeader": "The leader always pays for failed Balls.",
-    "counterWhyNext": "The leader is exhausted: the next one with Energy takes it."
+    "counterWhyNext": "The leader is exhausted: the next one with Energy takes it.",
+    "catchTip": {
+      "title": "Catch chance: {{pct}}",
+      "species": "Species: {{name}}",
+      "rate": "Capture rate {{rate}}/255: {{word}}.",
+      "rateWord": {
+        "veryHard": "very hard to catch",
+        "hard": "hard to catch",
+        "normal": "average",
+        "easy": "easy to catch"
+      },
+      "legendaryFloor": "As a legendary, it counts at least the legendary minimum.",
+      "hp": "HP left: {{hp}}",
+      "hpFloor": "Already at the lowest HP that counts: taking more off won’t raise the chance.",
+      "hpMore": "The less HP it has left, the easier (down to 5 %).",
+      "abilities": "Team abilities",
+      "bonus": "Bonus for this throw",
+      "capped": "The result goes over 100 %, so it stays at 100 %.",
+      "raise": "To raise it:",
+      "ifAsleep": "If you put it to sleep: {{pct}}",
+      "ifParalyzed": "If you paralyze it: {{pct}}",
+      "withUltra": "With an Ultra Ball: {{pct}}",
+      "notCounted": "The wild Pokémon’s level, the weather and the time of day don’t change the catch chance.",
+      "study": "The {{ball}} catches it for sure.",
+      "shiny": "It’s shiny: the {{ball}} is a sure catch."
+    }
   },
   "firstRun": {
     "you": "trainer",

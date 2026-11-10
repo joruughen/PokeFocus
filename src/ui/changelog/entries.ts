@@ -34,6 +34,13 @@ export const CHANGELOG: ChangelogEntry[] = [
     title: { es: 'Sesiones largas y números claros', en: 'Long sessions and clear numbers' },
     items: [
       {
+        kind: 'new',
+        text: {
+          es: 'Al pasar el ratón por la probabilidad de captura (o tocarla bajo el botón Lanzar) ves de dónde sale: el ratio de captura de la especie, la vida que le queda, la Ball, el estado y las habilidades, y cuánto subiría si lo duermes, lo paralizas o usas una Ultra Ball.',
+          en: 'Hover over the catch chance (or tap it under the Throw button) to see where it comes from: the species’ capture rate, its remaining HP, the ball, its status and your abilities, and how much it would rise if you put it to sleep, paralyze it or use an Ultra Ball.',
+        },
+      },
+      {
         kind: 'improved',
         text: {
           es: 'Abandonar una sesión larga ya no lo pierde todo: si planeaste más de 25 min y llevas al menos 15, conservas los puntos, la EXP y el Polvo de los minutos estudiados y una oleada por cada bloque de 25 min completo. La confirmación te dice exactamente qué conservas.',

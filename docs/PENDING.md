@@ -63,28 +63,24 @@ Balance a vigilar:
 
 Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
 
-## ▶ Para continuar (estado al 2026-11-10)
+## ▶ Para continuar (estado al 2026-11-10, tarde)
 
 Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
 
-**`main` = v0.9.0** (`9743f70`, sin push). Incluye A (combate y energía), D (motes, equipos guardados, cambio desde la ficha), F («¿Qué hay de nuevo?»), E0 (contenido en vivo en el motor) y E2 (roles `player`/`support`/`admin`, auditoría, migración 0005). Typecheck limpio y 916 tests.
+**`main` = v0.10.0** (`2af95f8`, sin push). Sobre v0.9.0 añade: pepper de contraseñas (`PASSWORD_PEPPER`, obligatorio en producción), B (globos de técnicas y desglose de puntos), C (sesiones largas cancelables), E1 (validación de contenido), E3 (ContentService, `/api/content`, fijado por sesión, migración 0006), E4 (cliente en vivo), E11 (soporte de jugadores en `/api/admin/players`) y E12 (`session_log`, migración 0007, `/api/admin/metrics`). Typecheck limpio y 1073 tests.
 
-**Limpieza pendiente:** los 14 worktrees `.claude/worktrees/agent-*` y `integration-v0.9`, con sus ramas, están fusionados en `main` y sin cambios sin commit. Se pueden borrar con `git worktree remove -f -f …` y `git branch -d …`.
+**Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2`. Con 8 y con 4 agentes VS Code murió por falta de RAM (OOM). `vite.config.ts` limita vitest a 4 workers (`VITEST_MAX_WORKERS`).
 
-**Tanda en curso (lanzada 2026-11-10, retomada tras un cierre de VS Code).** Cada una está en `.claude/worktrees/agent-<id>` (rama `worktree-agent-<id>`). Al retomar: si tiene commit, revisar y fusionar; si no, ver `git status` en su worktree y continuar.
+**En curso:** QA visual de v0.10.0 (rama `worktree-agent-aee0afdc87d389e52`) y **E5** API admin de contenido (rama nueva, ver `git worktree list`).
 
-| id | Tarea | Modelo |
-|---|---|---|
-| `a5c7fc8a9dbfabd02` | **B** globos de Daño/Pasiva/Activable con números + desglose de puntos | Sonnet |
-| `a850ea1a7e778e7a9` | **C** sesiones largas cancelables | Opus |
-| `a208b3cc9b55ab947` | **E1** validación de contenido | Opus |
-| `a55e74fc50a0967ec` | **E3** ContentService y fijado por sesión (migración 0006) | Opus |
-| `ae4d595abe87ddd39` | **E4** cliente en vivo | Sonnet |
-| `a6927b050f4598dcb` | **E11** soporte de jugadores | Sonnet |
-| `a657a34123877188c` | **E12** métricas (`session_log`, migración propia) | Sonnet |
-| `aee0afdc87d389e52` | **QA** visual de v0.9.0 a 390/1280 px (capturas en el scratchpad) | Sonnet |
+**Siguientes (tanda 3 de E, de 2 en 2):** E8 backend de eventos (subidas con sharp, migración 0008 o siguiente), E7 enganches de eventos en el motor (Opus). Luego E6 UI admin de contenido, E9 UI de eventos, E10 simulación desde admin y E13 docs.
 
-Al fusionar: E3 y E12 generan migraciones con el mismo número → regenerarlas en serie (`drizzle-kit generate`) desde `schema.ts`. C, E3 y E12 tocan el claim en `server/routes/game.ts`.
+**Decisiones a confirmar de v0.10.0:**
+- C: cancelar una sesión de 25 min o menos sigue sin dar nada; una cancelada no da las 2 Poké Balls por sesión.
+- E11: solo admin (con reautenticación) puede conceder objetos y Polvo; support no. El plan se contradecía.
+- E11: «últimas 20 sesiones» de la ficha sale del documento; podría pasar a leer `session_log`.
+
+**Limpieza:** worktrees de agentes ya fusionados en `.claude/worktrees/` (se pueden borrar tras revisar `git branch --merged main`).
 
 **Por revisar de v0.9.0:**
 - **Navegador a 390 px:** sin probar la ventana «¿Qué hay de nuevo?», las oleadas con la Energía del equipo, los motes, los equipos guardados ni la ventana de comparación.

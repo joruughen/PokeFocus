@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import i18n from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
@@ -15,6 +15,7 @@ import {
   wastedDamage,
   studyBallMaxLevelFor,
   pokemonView,
+  catchBreakdown,
   wildCatchChance,
   type Charge,
   type CounterResult,
@@ -26,6 +27,7 @@ import {
   type WildPokemon,
   type WildRef,
 } from '../../../engine'
+import { CatchTip } from './CatchTip'
 import { usableBall } from './ballChoice'
 import { ArtIcon, BallIcon, Button, HelpDot, IvQuality, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Sprite, Stage, StudyBallIcon, toast, Tooltip, TypeBadge } from '../../components'
 import { emitHintEvent, hintAnchor, useHintEvent, useHintScreen, useHints } from '../../hints'
@@ -451,6 +453,7 @@ export function Waves() {
                   disabled={!b.usable}
                   reason={b.reason}
                   chance={selAtThrow && selAtThrow.outcome === 'pending' && b.usable ? wildCatchChance(player, selAtThrow, b.ball) : null}
+                  tip={selAtThrow && selAtThrow.outcome === 'pending' && b.usable ? <CatchTip b={catchBreakdown(player, selAtThrow, b.ball)} ball={b.ball} speciesSlug={selAtThrow.speciesSlug} /> : null}
                   onPick={() => setBall(b.ball)}
                 />
               ))}
@@ -464,7 +467,21 @@ export function Waves() {
             </Button>
             {/* When the chosen ball can't be thrown, say why in plain sight (the option's tooltip is hover-only). */}
             <p className={cx('text-right text-sm', sel && sel.outcome === 'pending' && !ballOk ? 'max-w-[28ch] text-amber-400' : 'text-mist-300')} aria-live="polite">
-              {sel && sel.outcome === 'pending' ? (ballOk ? t('waves.chance', { pct: fmtPct(chance, lng) }) : (balls.find((b) => b.ball === ball)?.reason ?? t('errors.throw.no_ball'))) : ' '}
+              {sel && sel.outcome === 'pending' ? (
+                ballOk && selAtThrow ? (
+                  <Tooltip variant="help" side="left" content={<CatchTip b={catchBreakdown(player, selAtThrow, ball)} ball={ball} speciesSlug={selAtThrow.speciesSlug} />}>
+                    <button type="button" className="cursor-help underline decoration-dotted underline-offset-4">
+                      {t('waves.chance', { pct: fmtPct(chance, lng) })}
+                    </button>
+                  </Tooltip>
+                ) : ballOk ? (
+                  t('waves.chance', { pct: fmtPct(chance, lng) })
+                ) : (
+                  (balls.find((b) => b.ball === ball)?.reason ?? t('errors.throw.no_ball'))
+                )
+              ) : (
+                ' '
+              )}
             </p>
             {editable && tokens.length > 0 && <p className="text-right text-xs text-mist-400">{t('damage.throwLocks')}</p>}
           </div>
@@ -703,6 +720,7 @@ function BallOption({
   disabled,
   reason,
   chance,
+  tip,
   onPick,
 }: {
   ball: ThrowBall
@@ -711,6 +729,8 @@ function BallOption({
   disabled: boolean
   reason?: string
   chance: number | null
+  /** Catch chance breakdown, shown on hover (the line under the Throw button also opens it on tap). */
+  tip?: ReactNode
   onPick: () => void
 }) {
   const { t, i18n } = useTranslation()
@@ -739,7 +759,7 @@ function BallOption({
       </span>
     </button>
   )
-  return reason ? <Tooltip content={reason}>{body}</Tooltip> : body
+  return reason ? <Tooltip content={reason}>{body}</Tooltip> : tip ? <Tooltip content={tip}>{body}</Tooltip> : body
 }
 
 function WildCard({

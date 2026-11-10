@@ -532,7 +532,32 @@
     "hitBy": "Golpes",
     "counterTook": "Recibió el contraataque",
     "counterWhyLeader": "Los fallos de Ball los paga siempre el líder.",
-    "counterWhyNext": "El líder está agotado: lo recibe el siguiente con Energía."
+    "counterWhyNext": "El líder está agotado: lo recibe el siguiente con Energía.",
+    "catchTip": {
+      "title": "Probabilidad de captura: {{pct}}",
+      "species": "Especie: {{name}}",
+      "rate": "Ratio de captura {{rate}}/255: {{word}}.",
+      "rateWord": {
+        "veryHard": "muy difícil de capturar",
+        "hard": "difícil de capturar",
+        "normal": "normal",
+        "easy": "fácil de capturar"
+      },
+      "legendaryFloor": "Como es legendario, cuenta al menos el mínimo de los legendarios.",
+      "hp": "Vida restante: {{hp}}",
+      "hpFloor": "Ya está al mínimo que cuenta: quitarle más vida no sube la probabilidad.",
+      "hpMore": "Cuanta menos vida le quede, más fácil (hasta el 5 %).",
+      "abilities": "Habilidades del equipo",
+      "bonus": "Bonus para este lanzamiento",
+      "capped": "El resultado pasa del 100 %, así que se queda en 100 %.",
+      "raise": "Para subirla:",
+      "ifAsleep": "Si lo duermes: {{pct}}",
+      "ifParalyzed": "Si lo paralizas: {{pct}}",
+      "withUltra": "Con una Ultra Ball: {{pct}}",
+      "notCounted": "El nivel del salvaje, el clima y la hora no cambian la probabilidad de captura.",
+      "study": "La {{ball}} lo captura seguro.",
+      "shiny": "Es shiny: con {{ball}} la captura está asegurada."
+    }
   },
   "firstRun": {
     "you": "entrenador",
