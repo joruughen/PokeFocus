@@ -41,6 +41,7 @@ export interface PublishedEvent {
 }
 
 /** Source of published events (default: none until live_events exists). */
+/** E8: when it reads the DB, it must take the executor too (PGlite: no queries on `db` inside a transaction). */
 export type EventSource = () => Promise<PublishedEvent[]>
 
 /** A resolved content: what a context was built from, its hash and the context. */
@@ -59,7 +60,7 @@ type Executor = Db | Tx
 export interface ContentService {
   readonly baseHash: string
   /** Content active at `now` (game time). Reloads from the database every `reloadMs`. */
-  current(now: number): Promise<ResolvedContent>
+  current(now: number, ex?: Executor): Promise<ResolvedContent>
   /** Content of a pinned hash; 'base' = the shipped data; null = unknown hash. */
   byHash(hash: string, db?: Executor): Promise<ResolvedContent | null>
   /** Store the snapshot of a non-base content (idempotent), in the caller's transaction. */
@@ -168,8 +169,8 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
     return r
   }
 
-  async function load(): Promise<void> {
-    const rows = await db
+  async function load(ex: Executor): Promise<void> {
+    const rows = await ex
       .select({ id: contentVersions.id, effectiveAt: contentVersions.effectiveAt })
       .from(contentVersions)
       .where(and(eq(contentVersions.status, 'published'), isNotNull(contentVersions.effectiveAt)))
@@ -183,26 +184,27 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
     loadedAt = clock()
   }
 
-  async function ensureLoaded(): Promise<void> {
+  async function ensureLoaded(ex: Executor = db): Promise<void> {
     if (clock() - loadedAt < reloadMs) return
-    loading ??= load().finally(() => {
+    loading ??= load(ex).finally(() => {
       loading = null
     })
     await loading
   }
 
-  async function patchOf(id: number): Promise<ContentPatch> {
+  async function patchOf(id: number, ex: Executor = db): Promise<ContentPatch> {
     let p = patches.get(id)
     if (!p) {
-      const [row] = await db.select({ patch: contentVersions.patch }).from(contentVersions).where(eq(contentVersions.id, id))
+      const [row] = await ex.select({ patch: contentVersions.patch }).from(contentVersions).where(eq(contentVersions.id, id))
       p = row?.patch ?? {}
       patches.set(id, p)
     }
     return p
   }
 
-  async function current(now: number): Promise<ResolvedContent> {
-    await ensureLoaded()
+  /** `ex`: pass the caller's transaction when inside one (PGlite has a single connection: querying `db` there deadlocks). */
+  async function current(now: number, ex: Executor = db): Promise<ResolvedContent> {
+    await ensureLoaded(ex)
     let version: VersionMeta | null = null
     for (const v of versions) if (v.effectiveAt <= now) version = v
     const active = events.filter((e) => e.overlay.startsAt <= now && now < e.overlay.endsAt)
@@ -212,7 +214,7 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
     const hit = byKey.get(key)
     if (hit) return hit
     const input: ResolvedContentInput = {
-      patch: version ? await patchOf(version.id) : {},
+      patch: version ? await patchOf(version.id, ex) : {},
       events: active.map((e) => e.overlay).sort((a, b) => a.startsAt - b.startsAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
       eventItems,
     }
@@ -319,7 +321,7 @@ export async function contentForAction(content: ContentService, tx: Executor, do
     if (r) return r
     console.warn(`[content] pinned content ${pinned.slice(0, 12)} not found; using the current one`)
   }
-  return content.current(now)
+  return content.current(now, tx)
 }
 
 /** Public body of GET /api/content(/:hash). */
