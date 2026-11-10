@@ -21,8 +21,8 @@ export interface ContentResponse {
   patch: ContentPatch
   /** Events active when the content was resolved (public fields only). */
   events: EventOverlay[]
-  /** Items of every published event, past ones included (so the bag keeps their names). Optional. */
-  eventItems?: Record<string, ContentItem>
+  /** Items of every published event, past ones included (so the bag keeps their names). */
+  eventItems: Record<string, ContentItem>
 }
 
 export const CONTENT_PATH = '/content'

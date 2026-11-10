@@ -10,7 +10,7 @@ import { EMPTY_DOC } from '../../game/protocol'
 import { BUNDLE_BASE_HASH, pinnedHashOf, resetContentForTests, useContentStore } from './content'
 import { useGame } from './game'
 
-const claimWindow = (h: string) => ({ hash: h, baseHash: BUNDLE_BASE_HASH, patch: { config: { session: { claimWindowMinutes: Number(h.slice(1)) } } }, events: [] }) satisfies ContentResponse
+const claimWindow = (h: string) => ({ hash: h, baseHash: BUNDLE_BASE_HASH, patch: { config: { session: { claimWindowMinutes: Number(h.slice(1)) } } }, events: [], eventItems: {} }) satisfies ContentResponse
 
 /** Fake content server: `current` is GET /api/content, `byHash` are the immutable ones. */
 const server = {
@@ -64,7 +64,7 @@ describe('content store', () => {
   })
 
   it('empty content is exactly the base context', async () => {
-    server.current = { hash: 'h-empty', baseHash: BUNDLE_BASE_HASH, patch: {}, events: [] }
+    server.current = { hash: 'h-empty', baseHash: BUNDLE_BASE_HASH, patch: {}, events: [], eventItems: {} }
     await useContentStore.getState().load()
     expect(defaultContext()).toBe(baseContext())
     expect(useContentStore.getState()).toMatchObject({ status: 'ready', hash: 'base', latestHash: 'h-empty', stale: false })
@@ -77,7 +77,7 @@ describe('content store', () => {
     expect(defaultContext().contentHash).toBe('h77')
     expect(useContentStore.getState().hash).toBe('h77')
     // The server drops the patch again: back to the base.
-    server.current = { hash: 'h-empty', baseHash: BUNDLE_BASE_HASH, patch: {}, events: [] }
+    server.current = { hash: 'h-empty', baseHash: BUNDLE_BASE_HASH, patch: {}, events: [], eventItems: {} }
     await useContentStore.getState().load()
     expect(defaultContext()).toBe(baseContext())
     expect(useContentStore.getState().hash).toBe('base')
