@@ -141,7 +141,7 @@ describe('game store: nicknames and saved teams', () => {
     expect(await g().overwritePreset('t1')).toBeNull()
     expect(await g().start(25)).toBeNull()
     expect(await g().applyPreset('t1')).toEqual({ ok: false, error: 'session_active' })
-    expect(await g().cancel()).toBeNull()
+    expect(await g().cancel()).toEqual({ ok: true, outcome: null })
     expect(await g().deletePreset('t1')).toBeNull()
     expect(g().player!.teamPresets).toEqual([])
     expect(await g().applyPreset('t1')).toEqual({ ok: false, error: 'unknown_preset' })

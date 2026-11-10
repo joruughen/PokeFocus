@@ -119,6 +119,14 @@ Al fusionar: E3 y E12 generan migraciones con el mismo número → regenerarlas 
 - Ultra Balls para el maratonista;
 - suelo de Foco Interno.
 
+## Hecho: C, sesiones largas cancelables (2026-11-10, sin versión)
+
+Regla completa en el GDD §3.4. Al abandonar una sesión de **más de 25 min** con **15 min o más** estudiados (reloj del servidor, pausas excluidas) se conservan los puntos, la EXP y el Polvo de esos minutos y **una oleada por bloque de 25 min completo**. Sesiones de 25 min o menos, o menos de 15 min estudiados: nada, como antes. Nunca es reclamo tardío, pero tras el fin del temporizador `cancel` responde 409 `already_finished` (hay que reclamar). Sin las 2 Poké Balls por sesión; no cuenta como sesión completada en las misiones (sus minutos sí). Grupo: Hada = acompañado ÷ transcurrido. Confirmación con lo que conservas y pantalla de Resultados «Sesión abandonada».
+
+- Simulador: `npx tsx scripts/simulate-cancel.ts` (opciones `cancel` y `onTimeClaims` de `runPlayer`). Los perfiles que no cancelan dan exactamente lo mismo que antes.
+- **Por decidir:** cancelar y reiniciar da lo mismo que planear dos sesiones más cortas, que ya rinden algo más que una larga para el maratonista y el noctámbulo (efecto de la duración en sí: energía y elección del equipo entre sesiones, no de cancelar). Si se quiere que una sesión larga nunca rinda menos que dos cortas, es un cambio de balance aparte.
+- Sin probar en el navegador a 390 px (el diálogo de confirmación es texto y una lista corta).
+
 ## Hecho: v0.8.0 (2026-11-09)
 
 - Botón «Música» en el descanso y `musicDuringBreak` en Ajustes → Sonido (la pista `home` lleva la marca `rest` solo en el descanso).

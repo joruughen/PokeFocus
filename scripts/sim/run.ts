@@ -28,7 +28,7 @@ import {
 } from '../../src/engine/index.ts'
 import { playEncounter } from './capture-policy.ts'
 import { applyTeam, buildEnv, evolveAll, pickTeam, releaseDuplicates, sleepersInBox, spendCandies, TZ } from './policy.ts'
-import { planProfile } from './profiles.ts'
+import { planProfile, type PlannedSession } from './profiles.ts'
 import { median } from './util.ts'
 import { emptyTally, type DayRec, type PlayerMetrics, type RunOptions, type SessionRec } from './types.ts'
 
@@ -137,7 +137,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
     while (recorded < day && recorded < plan.days) snapshot(recorded++)
   }
 
-  for (const ps of plan.sessions) {
+  for (const ps of withCancels(plan.sessions, o.cancel, cfg.session, o.onTimeClaims ?? false)) {
     const dayIdx = Math.floor(ps.startMin / 1440)
     if (dayIdx >= plan.days) continue
     const weekIdx = Math.floor(dayIdx / 7)
@@ -157,8 +157,10 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
     // --- Session -----------------------------------------------------------------------------------
     const started = startSession(state, { plannedMinutes: ps.minutes, startedAt: startTs }, ctx)
     if (!started.ok) throw new Error(`startSession: ${started.error}`)
-    const endedAt = startTs + ps.minutes * MINUTE_MS + ps.pausedSeconds * 1000
-    const claimedAt = endedAt + ps.claimDelayMin * MINUTE_MS
+    const cancelAt = ps.cancelAtMin
+    const endedAt = startTs + (cancelAt ?? ps.minutes) * MINUTE_MS + ps.pausedSeconds * 1000
+    // A cancel is decided while the clock runs: no claim delay.
+    const claimedAt = cancelAt !== undefined ? endedAt : endedAt + ps.claimDelayMin * MINUTE_MS
     const members = started.value.session.teamUids.map((u) => state.pokemon[u]).filter((p): p is NonNullable<typeof p> => Boolean(p))
     const bugCount = members.filter((p) => conditionTypes(p, startTs, ctx).includes('bug')).length
     const env = buildEnv(state, startTs, ps.minutes, weather, ps.sound, ps.pausedSeconds, bugCount)
@@ -175,6 +177,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
         focusInputs: { screenshotLabels: null, missedCaptures: 0 },
         soundProfile: ps.sound,
         weather,
+        ...(cancelAt !== undefined ? { cancelled: true } : {}),
       },
       rng,
       ctx,
@@ -239,6 +242,30 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
     return p && levelFromExp(p.exp, ctx) > p.level ? a + (p.exp - expForLevel(p.level, ctx)) : a
   }, 0)
   return m
+}
+
+/**
+ * Cancel probe: long sessions become a cancelled one (`cancelAtMin`) and, with `restart`, a new
+ * session for the rest. `onTime`: claim delay 0 everywhere. Without either the schedule is returned
+ * untouched (same objects).
+ */
+function withCancels(
+  sessions: PlannedSession[],
+  cancel: RunOptions['cancel'],
+  cfg: { waveMinutes: number; minMinutes: number },
+  onTime: boolean,
+): (PlannedSession & { cancelAtMin?: number })[] {
+  if (!cancel && !onTime) return sessions
+  return sessions.flatMap((planned) => {
+    const ps = onTime ? { ...planned, claimDelayMin: 0 } : planned
+    if (!cancel) return [ps]
+    if (ps.minutes <= cfg.waveMinutes) return [ps]
+    const at = Math.min(ps.minutes - 1, Math.max(cfg.minMinutes, Math.floor(ps.minutes * cancel.atFraction)))
+    const cut = cancel.planned ? { ...ps, minutes: at, breakAfter: false } : { ...ps, cancelAtMin: at, breakAfter: false }
+    const left = ps.minutes - at
+    if (!cancel.restart || left < cfg.minMinutes) return [cut]
+    return [cut, { ...ps, startMin: ps.startMin + at + Math.ceil(ps.pausedSeconds / 60), minutes: left }]
+  })
 }
 
 function recordSession(

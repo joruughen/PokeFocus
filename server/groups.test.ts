@@ -195,6 +195,30 @@ describe('study groups', () => {
     expect((await game(b)).doc.player?.activeSession).toBeNull()
   })
 
+  it('cancelling a long group session keeps its minutes (server clock), with the overlap so far, and leaves the group', async () => {
+    now = T0
+    const [a, b] = (await crew(2)) as [U, U]
+    const g = await create(a, [b], 100)
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+    await call('POST', `/api/groups/${g.id}/start`, a.cookie)
+    // A cancels at 40 min: together 0–40 → overlap 1; 1 full block → 1 wave.
+    now = T0 + 40 * MIN
+    const r = await act(a, { type: 'cancel' })
+    expect(r.status, JSON.stringify(r.json)).toBe(200)
+    const out = (r.json as unknown as ActionResponse<'cancel'>).result.outcome
+    expect(out?.result).toMatchObject({ cancelled: true, minutes: 40, friendOverlap: 1 })
+    expect(out?.result.waves).toHaveLength(1)
+    expect(groupEvents(b).at(-1)).toMatchObject({ kind: 'leave', reason: 'cancel', userId: a.user.id })
+    expect((await game(a)).doc.player?.history.at(-1)).toMatchObject({ cancelled: true, minutes: 40 })
+    // B cancels at 80: accompanied 40 of 80 → 0.5; 3 full blocks.
+    now = T0 + 80 * MIN
+    const rb = (await act(b, { type: 'cancel' })).json as unknown as ActionResponse<'cancel'>
+    expect(rb.result.outcome?.result.friendOverlap).toBeCloseTo(0.5)
+    expect(rb.result.outcome?.result.waves).toHaveLength(3)
+    // Nothing left to cancel; after the end a cancel is refused (claim instead).
+    expect((await act(b, { type: 'cancel' })).status).toBe(409)
+  })
+
   it('leave route: the session continues solo; late join impossible once nobody is left', async () => {
     now = T0
     const [a, b, c] = (await crew(3)) as [U, U, U]

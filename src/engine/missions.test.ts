@@ -131,6 +131,20 @@ describe('missions (GDD §13)', () => {
     expect(v2.weekly.missions.find((m) => m.defId === 'w-days')!.progress).toBe(2)
   })
 
+  it('a cancelled long session counts its minutes and length but not as a completed session (GDD §3.4)', () => {
+    const s = makePlayer([makeMon('pidgey', 20, { uid: 'a' }, mctx)], {}, mctx)
+    // Planned 100, cancelled at 50.
+    const run = runSession(s, 100, 1, { endedAt: T0 + 50 * MIN, claimedAt: T0 + 50 * MIN, cancelled: true }, mctx)
+    expect(run.result).toMatchObject({ cancelled: true, minutes: 50 })
+    const a = applySessionResult(run.state, run.result, mctx)
+    if (!a.ok) throw new Error(a.error)
+    const v = missionsView(a.value.state, T0 + 60 * MIN, mctx)
+    const by = (id: string) => [...v.daily.missions, ...v.weekly.missions].find((m) => m.defId === id)!
+    expect(by('d-sessions').progress).toBe(0)
+    expect(by('d-long').progress).toBe(1)
+    expect(by('w-days').progress).toBe(1)
+  })
+
   it('catches (type, Study Ball) progress through throwBall; evolutions through evolvePokemon', () => {
     const gen = { focus: 1, trainerLevel: 1, soundDominant: null, teamTypes: [], typeWeightMults: {}, syncNature: null }
     const w = rollWild(createRng(1), { waveIndex: 0, gen, activeConditionTypes: [], contributions: [], forceSpecies: 'pidgey' }, mctx)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, MINUTE_MS, waveCount } from '../../../engine'
+import { cancelKeep, defaultContext, MINUTE_MS, validatedMinutes, waveCount } from '../../../engine'
 import { Button, Dialog, DialogClose, ProgressBar, Stage, StageTeam, toast } from '../../components'
 import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -46,6 +46,10 @@ export function FocusSession() {
   const scene = useScene(player, session.startedAt)
   const wave = cfg.session.waveMinutes * MINUTE_MS
   const teamViews = useTeamViews(player, now, session.teamUids)
+  // Same rule the server applies with its own clock (GDD §3.4); shown in the confirmation.
+  const keep = cancelKeep(session.plannedMinutes, validatedMinutes(session, timer.pausedAt ?? now, timer.pausedMs / 1000), cfg)
+  const totalBlocks = Math.floor(session.plannedMinutes / cfg.session.waveMinutes)
+  const nextBlockIn = keep.waves < totalBlocks ? (keep.waves + 1) * cfg.session.waveMinutes - keep.minutes : null
   const ticks = Array.from({ length: Math.floor(session.plannedMinutes / cfg.session.waveMinutes) }, (_, i) => (i + 1) * wave).filter((x) => x < totalMs)
 
   useEffect(() => {
@@ -153,7 +157,13 @@ export function FocusSession() {
         open={confirm}
         onOpenChange={setConfirm}
         title={t('session.cancelTitle')}
-        description={t('session.cancelBody', { minutes: Math.floor(studied / MINUTE_MS) })}
+        description={
+          keep.reason === 'short_session'
+            ? t('session.cancelBody', { minutes: keep.minutes })
+            : keep.reason === 'too_few_minutes'
+              ? t('session.cancelTooFew', { minutes: keep.minutes, planned: session.plannedMinutes, min: cfg.session.minMinutes })
+              : t('session.cancelKeepIntro', { minutes: keep.minutes, planned: session.plannedMinutes })
+        }
         footer={
           <>
             <DialogClose render={<Button variant="secondary">{t('session.keepGoing')}</Button>} />
@@ -161,17 +171,37 @@ export function FocusSession() {
               variant="danger"
               disabled={busy}
               onClick={async () => {
-                const err = await cancel()
-                if (err) return void toast.add({ title: errorText(err), type: 'danger' })
+                const r = await cancel()
+                if (!r.ok) return void toast.add({ title: errorText(r.error), type: 'danger' })
                 cancelSessionEnd()
                 setConfirm(false)
+                const res = r.outcome?.result
+                toast.add({
+                  title: res ? t('session.cancelledKept', { minutes: res.minutes, count: res.waves.length }) : t('session.cancelledNothing'),
+                  type: res ? 'success' : 'info',
+                })
               }}
             >
-              {t('session.cancelConfirm')}
+              {keep.keeps ? t('session.cancelConfirmKeep') : t('session.cancelConfirm')}
             </Button>
           </>
         }
-      />
+      >
+        {keep.keeps && (
+          <div className="flex flex-col gap-2 text-sm">
+            <ul className="flex list-disc flex-col gap-1 pl-5">
+              <li>{t('session.cancelKeepMinutes', { minutes: keep.minutes })}</li>
+              <li>
+                {keep.waves > 0
+                  ? t('session.cancelKeepWaves', { count: keep.waves, total: totalBlocks })
+                  : t('session.cancelKeepNoWaves', { left: nextBlockIn ?? 0 })}
+              </li>
+            </ul>
+            {keep.waves > 0 && nextBlockIn !== null && <p className="text-mist-400">{t('session.cancelNextWave', { left: nextBlockIn })}</p>}
+            <p className="text-mist-400">{t('session.cancelKeepNote')}</p>
+          </div>
+        )}
+      </Dialog>
     </div>
   )
 }

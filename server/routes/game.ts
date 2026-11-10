@@ -36,7 +36,9 @@ export async function runGameAction(
 ): Promise<RunOutcome> {
   const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
   const before = row?.doc ?? EMPTY_DOC
-  const friendOverlap = action.type === 'claim' ? await claimOverlap(tx, user.id, before) : null
+  // A cancelled long session that keeps its minutes (GDD §3.4) gets the overlap accompanied so far.
+  const friendOverlap =
+    action.type === 'claim' ? await claimOverlap(tx, user.id, before) : action.type === 'cancel' ? await claimOverlap(tx, user.id, before, opts.now) : null
   // Real weather of the profile location (else city), fixed on the session at start (≤ 2 s, cached; null = no weather).
   // Also for sessions the server starts for study-group invitees, which is why the rounded location lives in the profile.
   const profile = before.player?.profile

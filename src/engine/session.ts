@@ -56,7 +56,7 @@ import {
 } from './stats'
 import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from './time'
 import { toManualWave } from './damage'
-import { blockIndexAt, damageFromHits, hpFractionAfter, rollWaveSize, rollWild, waveCount } from './waves'
+import { blockIndexAt, damageFromHits, fullBlocks, hpFractionAfter, rollWaveSize, rollWild, waveCount } from './waves'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -248,6 +248,32 @@ export function startSession(
   return ok({ state: s, session })
 }
 
+/** What cancelling a session keeps (GDD §3.4). */
+export interface CancelKeep {
+  /** Something is kept: the session is resolved like a claim with `cancelled: true`. */
+  keeps: boolean
+  /** Why nothing is kept: a session of one block or less, or fewer than `session.minMinutes` studied. */
+  reason: 'short_session' | 'too_few_minutes' | null
+  /** Whole minutes studied (pauses excluded). */
+  minutes: number
+  /** Waves kept = full 25-min blocks studied (0 before the first one). */
+  waves: number
+}
+
+/**
+ * Cancel rule (GDD §3.4, decided 2026-11-09). Only a long session (planned
+ * longer than one 25-min block) keeps anything, and only once `minMinutes`
+ * (15) have been studied: then the points, EXP and Polvo of the minutes
+ * studied, and one wave per full block. A short session, or fewer than 15 min,
+ * keeps nothing (as before). Pure: the server feeds it its own clock.
+ */
+export function cancelKeep(plannedMinutes: number, studiedMinutes: number, cfg: GameConfig): CancelKeep {
+  const minutes = Math.max(0, Math.min(plannedMinutes, Math.floor(studiedMinutes + 1e-9)))
+  if (plannedMinutes <= cfg.session.waveMinutes) return { keeps: false, reason: 'short_session', minutes, waves: 0 }
+  if (minutes < cfg.session.minMinutes) return { keeps: false, reason: 'too_few_minutes', minutes, waves: 0 }
+  return { keeps: true, reason: null, minutes, waves: fullBlocks(minutes, cfg) }
+}
+
 /** Abandon the active session without rewards. */
 export function cancelSession(state: PlayerState): PlayerState {
   return { ...state, activeSession: null }
@@ -268,6 +294,14 @@ export interface CompleteSessionInput {
   /** Defaults to `state.profile.weather`. */
   weather?: WeatherInput | null
   friendOverlap?: number | null
+  /**
+   * The player cancelled a long session before its end (GDD §3.4,
+   * `cancelSessionKeep`): `endedAt` = when it was cancelled (or the start of
+   * the pause it was cancelled in). Waves only for the 25-min blocks fully
+   * studied (0 before the first one), never a late claim, no Poké Balls and no
+   * roaming tick without a wave.
+   */
+  cancelled?: boolean
 }
 
 export interface TechniqueUse {
@@ -414,6 +448,8 @@ export interface SessionResult {
   monthKey: string
   /** False when the session was shorter than `session.minMinutes`. */
   valid: boolean
+  /** Cancelled before its end and kept (GDD §3.4): rewards of the minutes studied, waves of the full blocks. Absent = completed. */
+  cancelled?: boolean
   lateClaim: boolean
   /** Daily diminishing-returns factor (0–1). */
   rewardFactor: number
@@ -584,14 +620,17 @@ export function completeSession(
   const soundProfile = input.soundProfile ?? null
   const minutes = validatedMinutes(session, input.endedAt, input.pausedSeconds)
   const valid = minutes >= cfg.session.minMinutes
-  const lateClaim = input.claimedAt - input.endedAt > cfg.session.claimWindowMinutes * MINUTE_MS
+  const cancelled = input.cancelled === true
+  // Cancelling is not a claim: the player stops the clock while it runs (the reducer refuses it once the timer ended).
+  const lateClaim = !cancelled && input.claimedAt - input.endedAt > cfg.session.claimWindowMinutes * MINUTE_MS
   const lateMult = lateClaim ? cfg.session.lateClaimMultiplier : 1
   const today = state.days[dayKey]
   const rewardFactor = valid ? dailyRewardFactor(today?.minutes ?? 0, minutes, cfg) : 0
   const baseCapture = captureValue(input.focusInputs, cfg)
   const focus = baseCapture * lateMult
   const totalSeconds = minutes * 60
-  const nWaves = waveCount(minutes, cfg)
+  // A cancelled session only gets the waves of its full 25-min blocks (a completed one always gets at least 1).
+  const nWaves = cancelled ? fullBlocks(minutes, cfg) : waveCount(minutes, cfg)
 
   // --- Team --------------------------------------------------------------
   const members = session.teamUids.map((u) => state.pokemon[u]).filter((p): p is OwnedPokemon => Boolean(p))
@@ -868,22 +907,25 @@ export function completeSession(
         amount = noDamageMoveEnergy(s.stats.attack, cfg)
       }
       s.logMoves.set(move?.slug ?? null, (s.logMoves.get(move?.slug ?? null) ?? 0) + 1)
-      const bi = blockIndexAt(t, nWaves, cfg)
-      const block = contrib[bi] as Map<string, EnergyContribution>
-      const key = `${s.uid}:${type}`
-      const c = block.get(key) ?? { uid: s.uid, type, amount: 0, amountVsLegendary: 0, effectivenessFloors: effFloorsOf(s) }
       const capMultNormal = mult(s, 'captureEnergy', { ...wc, targetLegendary: false })
       const capMultLeg = mult(s, 'captureEnergy', { ...wc, targetLegendary: true })
       const capNormal = amount * capMultNormal
-      c.amount += capNormal
-      c.amountVsLegendary += amount * capMultLeg
-      block.set(key, c)
       s.catchEnergy += capNormal
-      // Pace-neutral damage: a faster Pokémon acts more often but each action hits proportionally softer.
-      const refSpeed = cfg.capture.damageReferenceSpeed
-      const paceFactor = refSpeed === null || refSpeed === undefined ? 1 : interval(s) / actionIntervalSeconds(refSpeed, cfg)
-      const unit = (move ? 1 : cfg.actions.noDamageMoveEnergyFactor) * paceFactor
-      ;(blockActions[bi] as BlockAction[]).push({ sim: s, move, units: unit * capMultNormal, unitsVsLegendary: unit * capMultLeg })
+      // No wave (a session cancelled before its first full block): the catch energy has nowhere to go.
+      if (nWaves > 0) {
+        const bi = blockIndexAt(t, nWaves, cfg)
+        const block = contrib[bi] as Map<string, EnergyContribution>
+        const key = `${s.uid}:${type}`
+        const c = block.get(key) ?? { uid: s.uid, type, amount: 0, amountVsLegendary: 0, effectivenessFloors: effFloorsOf(s) }
+        c.amount += capNormal
+        c.amountVsLegendary += amount * capMultLeg
+        block.set(key, c)
+        // Pace-neutral damage: a faster Pokémon acts more often but each action hits proportionally softer.
+        const refSpeed = cfg.capture.damageReferenceSpeed
+        const paceFactor = refSpeed === null || refSpeed === undefined ? 1 : interval(s) / actionIntervalSeconds(refSpeed, cfg)
+        const unit = (move ? 1 : cfg.actions.noDamageMoveEnergyFactor) * paceFactor
+        ;(blockActions[bi] as BlockAction[]).push({ sim: s, move, units: unit * capMultNormal, unitsVsLegendary: unit * capMultLeg })
+      }
       // Energy cost
       const cost = energyCostPerAction(s.p.level, cfg) * mult(s, 'energyCost', wc)
       s.spent += Math.min(cost, s.energy)
@@ -1068,7 +1110,7 @@ export function completeSession(
   const waveSizes: number[] = []
   let roamingAfter = state.roaming
   const appeared = new Set<string>()
-  if (rewarded) {
+  if (rewarded && nWaves > 0) {
     for (let i = 0; i < nWaves; i++) {
       const blockEnd = (i + 1) * cfg.session.waveMinutes * 60
       const forcedTypes = new Set([...forced].filter(([, at]) => at < blockEnd).map(([ty]) => ty))
@@ -1127,6 +1169,7 @@ export function completeSession(
     weekKey,
     monthKey,
     valid,
+    ...(cancelled ? { cancelled: true } : {}),
     lateClaim,
     rewardFactor,
     focus,
@@ -1136,7 +1179,8 @@ export function completeSession(
     members: memberResults,
     totalPoints,
     dust: rewarded ? Math.round(cfg.rewards.dustPerMinute * minutes * focus * rewardFactor) : 0,
-    pokeBalls: rewarded ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
+    // Per-session Poké Balls are for completed sessions: a cancelled one would double them with cancel + restart (GDD §3.4).
+    pokeBalls: rewarded && !cancelled ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
     energyByBlock,
     waves,
     charges: rewarded ? charges : [],
@@ -1292,6 +1336,7 @@ export function applySessionResult(
     techniqueActivations: result.members.reduce((a, m) => a + m.techniques.reduce((b, t) => b + t.count, 0), 0),
     note: result.note,
     subjectTag: result.subjectTag,
+    ...(result.cancelled ? { cancelled: true } : {}),
   }
 
   const maxCharge = result.charges.reduce((a, c) => Math.max(a, Number(c.id.slice(1)) || 0), s.counters.charge)
@@ -1327,7 +1372,12 @@ export function applySessionResult(
         : null,
   }
   if (result.valid && result.rewardFactor > 0) {
-    s = recordMissionEvent(s, { kind: 'session', minutes: result.minutes, dayKey: result.dayKey, techniques: summary.techniqueActivations }, result.claimedAt, ctx)
+    s = recordMissionEvent(
+      s,
+      { kind: 'session', minutes: result.minutes, dayKey: result.dayKey, techniques: summary.techniqueActivations, ...(result.cancelled ? { cancelled: true } : {}) },
+      result.claimedAt,
+      ctx,
+    )
   }
   return ok({ state: s, events })
 }

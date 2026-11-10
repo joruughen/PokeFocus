@@ -111,6 +111,25 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 | 360 – 600 min | 50% |
 | > 600 min | 0% (la sesión se registra en las estadísticas, pero no da recompensas) |
 
+### 3.4 Abandonar una sesión (decidido el 2026-11-09)
+
+«Abandonar» corta la sesión mientras el temporizador corre o está en pausa. **Lo decide el servidor con su reloj**, en minutos enteros estudiados (`min(planeados, transcurrido − pausas)`; en pausa cuenta hasta el inicio de la pausa).
+
+| Sesión | Qué se conserva |
+|---|---|
+| Planeada de **25 min o menos** | Nada (como siempre). |
+| Larga (**más de 25 min**), con **menos de 15 min** estudiados | Nada (es el mínimo de cualquier sesión, §3.1). |
+| Larga, con **15 min o más** estudiados | Los **puntos, la EXP y el Polvo de los minutos estudiados** (exactamente lo que daría una sesión completada de esa duración, con su Vínculo, Dominio, energía gastada y condiciones), y **una oleada por cada bloque de 25 min completo** (ninguna antes del primero). La energía de captura producida después del último bloque completo va a la última oleada, como en una sesión normal; sin bloque completo se pierde. |
+
+Además, una sesión abandonada:
+- **nunca es un reclamo tardío** (Foco 100 %), pero **solo se puede abandonar antes del fin**: con el temporizador ya terminado hay que reclamar, con la ventana de 5 min (§3.2). Así no sirve para esquivar el ×0,5;
+- **no da las 2 Poké Balls por sesión** (§5.2), ni consume un turno de los legendarios errantes si no tiene oleadas. La Ball de Estudio sí, una por oleada;
+- cuenta para la racha, los minutos del día (§3.3), la liga, las misiones de minutos, días y sesión larga (por los minutos estudiados), pero **no para «completa N sesiones»**;
+- en un grupo de estudio sale del grupo (`left_reason = cancel`) y su bonus Hada es el tiempo acompañado ÷ el tiempo transcurrido desde que entró;
+- no deja aviso: el temporizador desaparece, así que ni la campana ni el aviso push suenan.
+
+**Por qué no se puede explotar:** lo que da es lo mismo que una sesión completada de la misma duración, con menos oleadas (`floor(min/25)` en vez de `max(1, floor(min/25))`) y sin las Poké Balls por sesión. Cancelar y volver a empezar da como mucho lo que daría planear esas dos sesiones más cortas desde el principio. Simulador (`npx tsx scripts/simulate-cancel.ts`, 10 semillas × 4 semanas, reclamos a tiempo): cancelar al 40/60/90 % rinde −2 % a −97 % de puntos frente a completar; cancelar al 50 % y reiniciar, entre −2,6 % y +2,9 % (ruido: el control «2 sesiones de la mitad» va de −3,2 % a +9,9 %). Polvo y oleadas nunca suben. Los perfiles que no cancelan no cambian.
+
 ---
 
 ## 4. Foco (índice de concentración)
@@ -255,7 +274,7 @@ M = Condición_de_tipo (1.0–1.5) × Vínculo (1.0–1.2) × Foco_efectivo × E
 | Puntos de Equipo | Suma de los puntos de todas las acciones del equipo |
 | EXP (a cada miembro del equipo) | `24.65 · minutos · Foco_efectivo` (= 0.85 × 29) → ≈ 616 EXP por sesión de 25 min con Foco 1.0 y sin Aguante (lo mismo que daban 29/min con el antiguo Foco 0.85) |
 | Polvo de Estudio (del jugador) | `8.5 · minutos · Foco` (= 0.85 × 10) → ≈ 213 por sesión de 25 min a tiempo |
-| Poké Balls | 2 por sesión completada |
+| Poké Balls | 2 por sesión completada (no por una abandonada, §3.4) |
 | Ball de Estudio | 1 por oleada (cada 25 min), solo para esa oleada (no acumulable, §11.1) |
 
 ### 5.3 Energía diaria (PS)

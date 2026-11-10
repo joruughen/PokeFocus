@@ -87,7 +87,8 @@ export interface GameState extends GameDoc {
   start: (minutes: number) => Promise<StartSessionError | GameActionError | null>
   pause: () => Promise<GameActionError | null>
   resume: () => Promise<GameActionError | null>
-  cancel: () => Promise<GameActionError | null>
+  /** Give up the session. A long one keeps its minutes and full blocks (GDD §3.4): `outcome` is then the result shown next. */
+  cancel: () => Promise<{ ok: true; outcome: LastOutcome | null } | { ok: false; error: GameActionError }>
   markNotified: () => Promise<void>
   claim: () => Promise<boolean>
   dismissResults: () => Promise<GameActionError | null>
@@ -243,7 +244,17 @@ export const useGame = create<GameState>()((set, get) => {
     start: async (minutes) => errOf(await dispatch({ type: 'start', minutes })),
     pause: async () => errOf(await dispatch({ type: 'pause' })),
     resume: async () => errOf(await dispatch({ type: 'resume' })),
-    cancel: async () => errOf(await dispatch({ type: 'cancel' })),
+    cancel: async () => {
+      // Same microphone shares as a claim: a kept cancel resolves the session like one.
+      const sid = get().player?.activeSession?.id
+      const mic = sid ? micOutcomeFor(sid) : null
+      const soundProfile = mic?.profile ?? null
+      const r = await dispatch({ type: 'cancel', ...(soundProfile ? { soundProfile } : {}) })
+      if (!r.ok) return { ok: false, error: r.error }
+      if (r.result.outcome) rememberMicOutcome(mic)
+      clearMicTallies()
+      return { ok: true, outcome: r.result.outcome }
+    },
     markNotified: async () => {
       // Local flag first so the watcher (which runs 4×/s) asks only once; the server confirms it.
       const timer = timerOf(get())

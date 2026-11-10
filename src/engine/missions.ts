@@ -103,7 +103,8 @@ export interface MissionsState {
 
 /** Events that move mission progress (produced inside the reducers). */
 export type MissionEvent =
-  | { kind: 'session'; minutes: number; dayKey: string; techniques: number }
+  /** `cancelled`: a long session cancelled and kept (GDD §3.4) — its minutes count, but it is not a completed session. */
+  | { kind: 'session'; minutes: number; dayKey: string; techniques: number; cancelled?: boolean }
   | { kind: 'catch'; types: readonly TypeSlug[]; ball: string; firstThrow: boolean }
   | { kind: 'evolve' }
 
@@ -218,7 +219,7 @@ function advance(slot: MissionSlot, def: MissionDef, e: MissionEvent): MissionSl
   let days = slot.days
   switch (def.kind) {
     case 'sessions':
-      if (e.kind === 'session') inc = 1
+      if (e.kind === 'session' && !e.cancelled) inc = 1
       break
     case 'studyMinutes':
       if (e.kind === 'session') inc = e.minutes

@@ -114,6 +114,88 @@ describe('study session', () => {
     expect(applyAction(doc, { type: 'pause' }, env(T0))).toEqual({ ok: false, error: 'no_session' })
   })
 
+  it('cancel after the end is refused (claim it, with the late rules)', () => {
+    const doc = must(newPlayer(), { type: 'start', minutes: 50 }, env(T0))
+    expect(applyAction(doc, { type: 'cancel' }, env(T0 + 50 * MINUTE_MS))).toEqual({ ok: false, error: 'already_finished' })
+    expect(applyAction(doc, { type: 'cancel' }, env(T0 + 3 * 60 * MINUTE_MS))).toEqual({ ok: false, error: 'already_finished' })
+  })
+
+  it('cancelling a short session (≤ 25 min) keeps nothing', () => {
+    const doc = must(newPlayer(), { type: 'start', minutes: 25 }, env(T0))
+    const r = applyAction(doc, { type: 'cancel' }, env(T0 + 20 * MINUTE_MS))
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.result.outcome).toBeNull()
+    expect(r.doc.player?.history).toHaveLength(0)
+    expect(r.doc.player?.activeSession).toBeNull()
+  })
+
+  it('cancelling a long session before 15 min keeps nothing', () => {
+    const doc = must(newPlayer(), { type: 'start', minutes: 50 }, env(T0))
+    const r = applyAction(doc, { type: 'cancel' }, env(T0 + 14 * MINUTE_MS + 59_000))
+    expect(r.ok && r.result.outcome).toBeNull()
+    if (r.ok) expect(r.doc.player?.history).toHaveLength(0)
+  })
+
+  it('cancelling a long session keeps the minutes studied and the waves of full blocks', () => {
+    const doc = must(newPlayer(), { type: 'start', minutes: 100 }, env(T0))
+    // 20 min: rewards of 20 min, no wave, no Poké Balls.
+    const a = applyAction(doc, { type: 'cancel' }, env(T0 + 20 * MINUTE_MS + 30_000))
+    expect(a.ok).toBe(true)
+    if (!a.ok || !a.result.outcome) throw new Error('expected an outcome')
+    const ra = a.result.outcome.result
+    expect(ra).toMatchObject({ cancelled: true, minutes: 20, lateClaim: false, pokeBalls: 0, valid: true })
+    expect(ra.waves).toHaveLength(0)
+    expect(ra.totalPoints).toBeGreaterThan(0)
+    expect(ra.dust).toBeGreaterThan(0)
+    expect(a.doc.player?.encounter).toBeNull()
+    expect(a.doc.player?.history.at(-1)).toMatchObject({ cancelled: true, minutes: 20 })
+    expect(a.doc.outcome?.seen).toBe(false)
+    expect(a.doc.timer).toBeNull()
+    // 60 min: 2 full blocks → 2 waves.
+    const b = applyAction(doc, { type: 'cancel' }, env(T0 + 60 * MINUTE_MS))
+    if (!b.ok || !b.result.outcome) throw new Error('expected an outcome')
+    expect(b.result.outcome.result.minutes).toBe(60)
+    expect(b.result.outcome.result.waves).toHaveLength(2)
+    expect(b.doc.player?.encounter?.waves).toHaveLength(2)
+  })
+
+  it('cancel while paused counts the time up to the pause, never a late claim', () => {
+    let doc = must(newPlayer(), { type: 'start', minutes: 75 }, env(T0))
+    doc = must(doc, { type: 'pause' }, env(T0 + 30 * MINUTE_MS))
+    // Paused for hours (past the planned end): still 30 min, not late, 1 wave.
+    const r = applyAction(doc, { type: 'cancel' }, env(T0 + 5 * 60 * MINUTE_MS))
+    if (!r.ok || !r.result.outcome) throw new Error('expected an outcome')
+    expect(r.result.outcome.result).toMatchObject({ minutes: 30, lateClaim: false, focus: 1 })
+    expect(r.result.outcome.result.waves).toHaveLength(1)
+    // Resumed later: the paused time does not count.
+    doc = must(doc, { type: 'resume' }, env(T0 + 40 * MINUTE_MS))
+    const r2 = applyAction(doc, { type: 'cancel' }, env(T0 + 66 * MINUTE_MS))
+    if (!r2.ok || !r2.result.outcome) throw new Error('expected an outcome')
+    expect(r2.result.outcome.result.minutes).toBe(56)
+    expect(r2.result.outcome.result.waves).toHaveLength(2)
+  })
+
+  it('cancelling never yields more than completing the same session', () => {
+    const doc = must(newPlayer(), { type: 'start', minutes: 100 }, env(T0))
+    const full = applyAction(doc, { type: 'claim' }, env(T0 + 101 * MINUTE_MS, { rng: createRng('same') }))
+    if (!full.ok) throw new Error('claim')
+    const f = full.result.outcome.result
+    for (const m of [15, 24, 25, 49, 50, 75, 99]) {
+      const c = applyAction(doc, { type: 'cancel' }, env(T0 + m * MINUTE_MS, { rng: createRng('same') }))
+      if (!c.ok || !c.result.outcome) throw new Error(`cancel at ${m}`)
+      const r = c.result.outcome.result
+      expect(r.minutes).toBe(m)
+      expect(r.waves.length).toBe(Math.floor(m / 25))
+      expect(r.waves.length).toBeLessThan(f.waves.length)
+      expect(r.dust).toBeLessThan(f.dust)
+      expect(r.totalPoints).toBeLessThan(f.totalPoints)
+      expect(r.pokeBalls).toBeLessThanOrEqual(f.pokeBalls)
+      const exp = (x: typeof r) => x.members.reduce((a, mm) => a + mm.exp, 0)
+      expect(exp(r)).toBeLessThan(exp(f))
+    }
+  })
+
   it('devFocusLabel is ignored without dev tools', () => {
     const doc = must(newPlayer(), { type: 'start', minutes: 30 }, env(T0))
     const end = T0 + 31 * MINUTE_MS
