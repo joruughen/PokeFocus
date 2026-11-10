@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { defaultContext, MINUTE_MS } from '../../../engine'
+import { MINUTE_MS } from '../../../engine'
 import { Button, Panel, ProgressBar, Segmented, Sprite, Stage, StageTeam, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -13,8 +13,8 @@ import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selector
 import { useState } from 'react'
 import { MuteMusicButton } from './MuteMusicButton'
 import { SoundUnlockChip } from './SoundUnlockChip'
+import { useContent } from '../../store/content'
 
-const cfg = defaultContext().config
 export const BREAK_OPTIONS = ['5', '10', '15'] as const
 /** How long after a claim the break is still offered (minutes of game time). */
 export const BREAK_OFFER_MINUTES = 60
@@ -36,6 +36,7 @@ async function report(p: Promise<string | null>) {
 
 /** Offer on Home after a session: rest for real and the team recovers Energy (GDD §5.3). */
 export function BreakOffer() {
+  const cfg = useContent().config
   const { t, i18n } = useTranslation()
   const player = usePlayer()
   const startBreak = useGame((s) => s.startBreak)
@@ -70,6 +71,7 @@ export function BreakOffer() {
 
 /** The break itself: a calm countdown; finishing it heals the team. */
 export function Break() {
+  const cfg = useContent().config
   useHintScreen('break')
   const { t, i18n } = useTranslation()
   const names = useNames()

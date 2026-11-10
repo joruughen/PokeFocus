@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ALL_TYPES, defaultContext, energyAt, maxEnergyOf, type SpeciesRole, type TypeSlug } from '../../../engine'
+import { ALL_TYPES, energyAt, maxEnergyOf, type SpeciesRole, type TypeSlug } from '../../../engine'
 import { BallIcon, Button, EmptyState, HelpDot, MonTile, Panel, PixelIcon, Segmented, Select, Sprite, Switch, Tooltip, TYPE_TEXT } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -11,8 +11,8 @@ import { useNow } from '../../store/clock'
 import { usePlayer } from '../../store/selectors'
 import { lineRoot } from '../shared/EvoLine'
 import { filteredMons, filtersActive, useBoxFilters, type BoxSort, type BoxWhere } from './filters'
+import { useContent } from '../../store/content'
 
-const ctx = defaultContext()
 const ROLES: SpeciesRole[] = ['scholar', 'hunter', 'sprinter', 'marathoner', 'technician', 'guardian', 'support', 'allrounder']
 const HEAL_ITEMS = ['potion', 'super-potion', 'hyper-potion', 'revive']
 
@@ -147,6 +147,7 @@ export function Box() {
 
 /** What you carry: Dust, balls, candies by line and type, healing items, stones. */
 function Bag() {
+  const ctx = useContent()
   const { t, i18n } = useTranslation()
   const names = useNames()
   const player = usePlayer()

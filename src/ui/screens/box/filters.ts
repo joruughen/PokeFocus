@@ -3,8 +3,6 @@ import { create } from 'zustand'
 import { defaultContext, ivQuality, type LocaleCode, type OwnedPokemon, type PlayerState, type SpeciesRole, type TypeSlug } from '../../../engine'
 import { speciesName } from '../../lib/names'
 
-const ctx = defaultContext()
-
 export type BoxSort = 'recent' | 'level' | 'species' | 'iv'
 export type BoxWhere = 'all' | 'team' | 'box'
 
@@ -33,6 +31,7 @@ export function filtersActive(f: BoxFilters): boolean {
 
 /** The player's Pokémon after filters and sort (same order as the grid; used for prev/next in the detail). */
 export function filteredMons(player: PlayerState, f: Pick<BoxFilters, 'query' | 'type' | 'role' | 'where' | 'shinyOnly' | 'sort'>, lng: LocaleCode): OwnedPokemon[] {
+  const ctx = defaultContext()
   const q = f.query.trim().toLocaleLowerCase(lng)
   const list = Object.values(player.pokemon).filter((p) => {
     const sp = ctx.speciesBySlug.get(p.speciesSlug)

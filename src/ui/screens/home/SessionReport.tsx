@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  defaultContext,
   type ActivableLog,
   type Effect,
   type MemberResult,
@@ -18,8 +17,7 @@ import { useGame } from '../../store/game'
 import { useChargeLabel } from './ChargeChip'
 import { conditionRuleValues } from './conditionCopy'
 import { activationsOf, chargesBy, conditionLines, wildFactors, type WildFactor } from './sessionReportModel'
-
-const cfg = defaultContext().config
+import { useContent } from '../../store/content'
 
 type T = (k: string, o?: Record<string, unknown>) => string
 
@@ -57,6 +55,7 @@ export function SessionReportButton({ sessionId, className }: { sessionId: strin
 
 /** The report body: one collapsible row per team member, then why these wilds. */
 export function SessionReport({ result, player }: { result: SessionResult; player: PlayerState | null }) {
+  const cfg = useContent().config
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-6">

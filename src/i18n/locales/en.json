@@ -2128,6 +2128,10 @@
     "more_one": "and {{count}} more version since you were last here.",
     "more_other": "and {{count}} more versions since you were last here."
   },
+  "contentUpdate": {
+    "message": "There is new content. Reload to see it.",
+    "reload": "Reload"
+  },
   "maintenance": {
     "upcomingTitle": "Scheduled maintenance",
     "activeTitle": "Maintenance in progress",

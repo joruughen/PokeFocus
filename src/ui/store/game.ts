@@ -53,8 +53,6 @@ import { devEnabled, now, setServerOffset, usePrefs } from './prefs'
 
 export type { BreakTimer, LastOutcome, SessionTimer }
 
-const ctx = defaultContext()
-
 export type Phase = 'none' | 'idle' | 'focus' | 'paused' | 'claim' | 'late' | 'results' | 'waves' | 'break'
 
 /** Result of an action call: the action's extra data, or an error code. */
@@ -153,7 +151,7 @@ export function phaseOf(s: Pick<GameDoc, 'player' | 'timer' | 'outcome'> & { bre
     if (timer?.pausedAt != null) return 'paused'
     const endsAt = timer?.endsAt ?? p.activeSession.startedAt + p.activeSession.plannedMinutes * MINUTE_MS
     if (t < endsAt) return 'focus'
-    return t - endsAt > ctx.config.session.claimWindowMinutes * MINUTE_MS ? 'late' : 'claim'
+    return t - endsAt > defaultContext().config.session.claimWindowMinutes * MINUTE_MS ? 'late' : 'claim'
   }
   if (s.outcome && !s.outcome.seen) return 'results'
   if (p.encounter) return 'waves'

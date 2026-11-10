@@ -4,7 +4,6 @@ import {
   bondBonus,
   isAsleepAt,
   candyDustCost,
-  defaultContext,
   levelCap,
   levelFromExp,
   type CandyKind,
@@ -26,9 +25,7 @@ import { useGame } from '../../store/game'
 import { useBusy, usePlayer } from '../../store/selectors'
 import { lineRoot, useEvoCondition } from '../shared/EvoLine'
 import { EvolutionPreview } from './EvolutionPreview'
-
-const ctx = defaultContext()
-const cfg = ctx.config
+import { useContent } from '../../store/content'
 
 /** Announce level ups / new moves / evolutions after candies (toasts + sfx + hint event). */
 export function announceProgress(events: ProgressEvent[], name: string, t: (k: string, o?: Record<string, unknown>) => string, moveName: (s: string) => string, speciesName: (s: string) => string) {
@@ -53,6 +50,7 @@ export function announceProgress(events: ProgressEvent[], name: string, t: (k: s
 
 /** Use species or type candies (cost in Dust per candy at the current level; stops at the level cap). */
 export function Candies({ view, locked }: { view: PokemonView; locked: string | null }) {
+  const cfg = useContent().config
   const { t, i18n } = useTranslation()
   const names = useNames()
   const player = usePlayer()
@@ -160,6 +158,7 @@ function CandyRow({ label, have, exp, cost, dust, disabled, level, exp0, cap, on
 
 /** Evolution options now (engine `evolutionOptions`), with why each one is blocked. */
 export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locked: string | null; onEvolve: (to: string) => void }) {
+  const cfg = useContent().config
   const busy = useBusy()
   const { t } = useTranslation()
   const names = useNames()
@@ -216,6 +215,7 @@ export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locke
 
 /** Energy now (+ healing items) and Bond. */
 export function EnergyBond({ view, inSession }: { view: PokemonView; inSession: boolean }) {
+  const cfg = useContent().config
   const { t, i18n } = useTranslation()
   const now = useNow()
   const names = useNames()

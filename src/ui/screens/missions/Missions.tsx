@@ -13,7 +13,6 @@ import { useGame } from '../../store/game'
 import { useBusy, usePlayer } from '../../store/selectors'
 
 /** Items with a sprite (mission-only placeholders like the Tera Shard get a pixel icon). */
-const KNOWN_ITEMS = new Set(defaultContext().data.items.map((i) => i.slug))
 
 /** Missions (GDD §13): 3 daily, 3 weekly and Pokédex milestones, all from the engine's `missionsView`. */
 export default function Missions() {
@@ -147,7 +146,7 @@ function MissionRow({ m, onClaim }: { m: MissionView; onClaim: () => void }) {
           <Tooltip key={k} content={names.item(k)}>
             <span tabIndex={0} className="inline-flex items-center gap-1">
               <span className="grid size-7 place-items-center">
-                {KNOWN_ITEMS.has(k) ? <Sprite kind="item" slug={k} fit={28} alt="" /> : <PixelIcon name="sparkle" size={20} className="text-type-psychic" />}
+                {defaultContext().data.items.some((i) => i.slug === k) ? <Sprite kind="item" slug={k} fit={28} alt="" /> : <PixelIcon name="sparkle" size={20} className="text-type-psychic" />}
               </span>
               <span className="font-num text-lg leading-none">×{n}</span>
             </span>

@@ -4,11 +4,11 @@ import { defaultContext, type Evolution, type Species } from '../../../engine'
 import { PixelIcon, Sprite, Tooltip } from '../../components'
 import { cx } from '../../lib/cx'
 import { useNames } from '../../lib/names'
-
-const ctx = defaultContext()
+import { useContent } from '../../store/content'
 
 /** Root of the evolution line (inside the pack). */
 export function lineRoot(sp: Species): Species {
+  const ctx = defaultContext()
   let cur = sp
   for (let i = 0; i < 4 && cur.evolvesFrom !== null; i++) {
     const prev = ctx.speciesById.get(cur.evolvesFrom)
@@ -45,6 +45,7 @@ type Known = 'caught' | 'seen' | 'unknown'
  * Branches (Eevee) stack vertically. `known` hides species the player hasn't seen.
  */
 export function EvoLine({ slug, known, onPick, className }: { slug: string; known?: (slug: string) => Known; onPick?: (slug: string) => void; className?: string }) {
+  const ctx = useContent()
   const names = useNames()
   const { t } = useTranslation()
   const cond = useEvoCondition()

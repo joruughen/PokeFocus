@@ -4,8 +4,7 @@ import { ArtIcon, HelpDot, InfoTip, IvQuality, Panel, Stars, STAT_ICON, STAT_ORD
 import { hintAnchor } from '../../hints'
 import { useNames } from '../../lib/names'
 import { statBreakdown } from './statBreakdown'
-
-const ctx = defaultContext()
+import { useContent } from '../../store/content'
 
 export type StatsTab = 'stats' | 'ivs'
 
@@ -14,6 +13,7 @@ export type StatsTab = 'stats' | 'ivs'
  * `ivQuality` of six equal IVs is exactly that fraction of the maximum.
  */
 export function ivStatTier(iv: number): 0 | 1 | 2 | 3 | 4 {
+  const ctx = defaultContext()
   return ivQuality({ hp: iv, attack: iv, defense: iv, specialAttack: iv, specialDefense: iv, speed: iv }, ctx).tier
 }
 
@@ -49,6 +49,7 @@ export function StatsPanel({ view, initialTab = 'stats' }: { view: PokemonView; 
 }
 
 function StatsTab({ view }: { view: PokemonView }) {
+  const ctx = useContent()
   const { t, i18n } = useTranslation()
   const names = useNames()
   const p = view.pokemon
@@ -111,6 +112,7 @@ function StatsTab({ view }: { view: PokemonView }) {
 }
 
 function IvsTab({ view }: { view: PokemonView }) {
+  const ctx = useContent()
   const { t } = useTranslation()
   const ivs: BaseStats = view.pokemon.ivs
   const ivMax = ctx.config.progression.ivMax

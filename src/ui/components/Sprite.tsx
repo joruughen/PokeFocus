@@ -20,11 +20,9 @@ export interface SpriteProps {
   flip?: boolean
 }
 
-const ctx = defaultContext()
-
 export function spriteUrl(kind: SpriteKind, slug: string, shiny = false): string {
   if (kind === 'item') return `/sprites/items/${slug}.png`
-  const id = ctx.speciesBySlug.get(slug)?.id ?? 0
+  const id = defaultContext().speciesBySlug.get(slug)?.id ?? 0
   if (kind === 'icon') return `/sprites/icons/${id}.png`
   return shiny ? `/sprites/showdown-shiny/${id}.gif` : `/sprites/showdown/${id}.gif`
 }

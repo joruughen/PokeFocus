@@ -7,16 +7,16 @@ import { pick, useNames } from '../../lib/names'
 import { navigate, useRouteParams } from '../../router'
 import { usePlayer } from '../../store/selectors'
 import { EvoLine } from '../shared/EvoLine'
-import { useState } from 'react'
-
-const ctx = defaultContext()
-const ALL = [...ctx.data.species].sort((a, b) => a.id - b.id)
-const CAPS = ctx.config.progression.levelCaps
+import { useMemo, useState } from 'react'
+import { useContent } from '../../store/content'
 
 type Show = 'all' | 'caught' | 'missing'
 
 /** Pokédex: the 56 species of the pack as seen / caught / unknown, and the level-cap ladder. */
 export default function Dex() {
+  const ctx = useContent()
+  const ALL = useMemo(() => [...ctx.data.species].sort((a, b) => a.id - b.id), [ctx])
+  const CAPS = ctx.config.progression.levelCaps
   useHintScreen('dex')
   const { t } = useTranslation()
   const names = useNames()
@@ -122,6 +122,7 @@ export default function Dex() {
 }
 
 function DexEntry({ slug, state, owned, known }: { slug: string; state: 'caught' | 'seen' | 'unknown'; owned: number; known: (s: string) => 'caught' | 'seen' | 'unknown' }) {
+  const ctx = defaultContext()
   const { t } = useTranslation()
   const names = useNames()
   const sp = ctx.speciesBySlug.get(slug)!

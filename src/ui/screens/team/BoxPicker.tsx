@@ -1,6 +1,6 @@
 import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ALL_TYPES, defaultContext, type TypeSlug } from '../../../engine'
+import { ALL_TYPES, type TypeSlug } from '../../../engine'
 import { Button, Dialog, Panel, PixelIcon, ProgressBar, RoleBadge, Select, Sprite, TypeBadge } from '../../components'
 import { hintAnchor } from '../../hints'
 import { conditionEnvNow } from '../../lib/conditions'
@@ -10,9 +10,9 @@ import { useSessionWeather } from '../../lib/weather'
 import { navigate } from '../../router'
 import { usePlayer } from '../../store/selectors'
 import { boxCandidates, boxSize, pickFiltersActive, pickRows, sortPickRows, swapInTeam, usePickFilters, type PickRow, type PickSort } from './pickFromBox'
+import { useContent } from '../../store/content'
 
 /** Minutes of the hypothetical session behind the "if it studied now" multiplier (the first preset, like the team warnings). */
-const PLANNED_MIN = defaultContext().config.session.presets[0] ?? 25
 
 type Apply = (uids: string[], msg?: string) => Promise<void>
 
@@ -30,6 +30,7 @@ interface Props {
  * now. With a full team the row's button opens a chooser to swap one member.
  */
 function BoxPickerPanel({ at, disabled, onApply }: Props) {
+  const PLANNED_MIN = useContent().config.session.presets[0] ?? 25
   const { t } = useTranslation()
   const names = useNames()
   const lng = names.lng

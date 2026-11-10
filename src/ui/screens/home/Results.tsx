@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, pokemonView, type MemberResult, type ProgressEvent, type TypeSlug } from '../../../engine'
+import { pokemonView, type MemberResult, type ProgressEvent, type TypeSlug } from '../../../engine'
 import { BallIcon, Button, Panel, PixelIcon, ProgressBar, Sprite, Stage, StageTeam, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -14,11 +14,11 @@ import { useBusy, usePlayer, useScene } from '../../store/selectors'
 import { SessionReportButton } from './SessionReport'
 import { GroupFairyNote } from './GroupStudy'
 import { StudyStyleLine } from './SoundStyle'
-
-const cfg = defaultContext().config
+import { useContent } from '../../store/content'
 
 /** What the session produced, and why. */
 export function Results() {
+  const cfg = useContent().config
   useHintScreen('results')
   const { t, i18n } = useTranslation()
   const lng = i18n.language

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ALL_TYPES, defaultContext, isAsleepAt, typeEffectiveness, type PokemonView } from '../../../engine'
+import { ALL_TYPES, isAsleepAt, typeEffectiveness, type PokemonView } from '../../../engine'
 import { HelpDot, IconButton, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, RoleBadge, Sprite, Stage, toast, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -12,9 +12,7 @@ import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selector
 import { BoxPicker } from './BoxPicker'
 import { TeamPresetsPanel } from './TeamPresets'
 import { boxSize } from './pickFromBox'
-
-const ctx = defaultContext()
-const SESSION_MIN = ctx.config.session.presets[0] ?? 25
+import { useContent } from '../../store/content'
 
 /** Team editor: choose up to 6, reorder, pick the leader. Only between sessions. */
 export default function Team() {
@@ -141,6 +139,7 @@ export default function Team() {
 }
 
 function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp, onDown, onLeader, onRemove }: { view: PokemonView; asleep: boolean; index: number; count: number; selected: boolean; onSelect: () => void; locked: boolean; onUp: () => void; onDown: () => void; onLeader: () => void; onRemove: () => void }) {
+  const SESSION_MIN = useContent().config.session.presets[0] ?? 25
   const { t } = useTranslation()
   const names = useNames()
   const p = view.pokemon
@@ -209,6 +208,7 @@ function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp,
 
 /** The selected team member: the leader by default (it takes the counterattacks, GDD §11.4). Grit, Energy and type weaknesses. */
 function MemberPanel({ view, index }: { view: PokemonView; index: number }) {
+  const ctx = useContent()
   const { t } = useTranslation()
   const names = useNames()
   const weak = ALL_TYPES.filter((a) => typeEffectiveness(a, view.types, ctx.chart) > 1)

@@ -11,15 +11,14 @@ import { errorText } from '../lib/errors'
 import { useAuth } from '../store/auth'
 import { useGame } from '../store/game'
 import { usePrefs } from '../store/prefs'
-
-const ctx = defaultContext()
-const STARTERS = ctx.config.starters
+import { useContent } from '../store/content'
 
 /**
  * First run: language and time zone → your first partner → how it works (3 steps).
  * The trainer name and country come from the account (chosen at registration).
  */
 export function FirstRun() {
+  const STARTERS = useContent().config.starters
   const { t } = useTranslation()
   const names = useNames()
   const locale = usePrefs((s) => s.locale)
@@ -188,6 +187,7 @@ function LoopStep({ n, title, body, icon }: { n: number; title: string; body: st
  * Clicking the role row still picks the card.
  */
 export function StarterCard({ slug, checked, tabbable, onPick }: { slug: string; checked: boolean; tabbable: boolean; onPick: () => void }) {
+  const ctx = defaultContext()
   const { t } = useTranslation()
   const names = useNames()
   const sp = ctx.speciesBySlug.get(slug)!

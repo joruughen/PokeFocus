@@ -19,8 +19,6 @@ import {
   type WeatherInput,
 } from '../../engine'
 
-const ctx = defaultContext()
-
 /** `weather`: what the session would use (`useSessionWeather().effective`; pass it — the engine default `profile.weather` is a dev-only override). */
 export function conditionEnvNow(state: PlayerState, now: number, plannedMinutes: number, weather?: WeatherInput | null): ConditionEnv {
   return conditionEnvAt(state, now, plannedMinutes, weather !== undefined ? { weather } : {})
@@ -42,6 +40,7 @@ export function conditionsNow(
   weather?: WeatherInput | null,
 ): { env: ConditionEnv; rows: ConditionRow[]; member: Record<string, { mult: number; type: TypeSlug | null }> } {
   const env = conditionEnvNow(state, now, plannedMinutes, weather)
+  const ctx = defaultContext()
   const cfg = ctx.config
   const member: Record<string, { mult: number; type: TypeSlug | null }> = {}
   const teamTypes = new Set<TypeSlug>()
@@ -68,6 +67,7 @@ export function conditionsNow(
 
 /** Types the team plays for conditions at `at` (a Tera type replaces the species types while it lasts). */
 export function teamConditionTypes(state: PlayerState, at: number): Set<TypeSlug> {
+  const ctx = defaultContext()
   const out = new Set<TypeSlug>()
   for (const uid of state.team) {
     const p = state.pokemon[uid]
@@ -80,6 +80,7 @@ export type TimeOfDay = 'morning' | 'day' | 'evening' | 'night'
 
 /** Sky phase for the route band, aligned with the condition windows. */
 export function timeOfDay(hour: number): TimeOfDay {
+  const ctx = defaultContext()
   const c = ctx.config.conditions
   if (hour >= c.dayWindow[0] && hour < c.dayWindow[1]) return 'morning'
   if (hour >= c.afternoonWindow[0] && hour < c.afternoonWindow[1]) return 'day'
@@ -97,6 +98,7 @@ export const WEATHER_PRESETS: Record<WeatherKind, WeatherInput> = {
 }
 
 export function weatherKind(w: WeatherInput | null): WeatherKind {
+  const ctx = defaultContext()
   const cfg = ctx.config
   if (!w) return 'clear'
   if (isRainy(w)) return 'rain'

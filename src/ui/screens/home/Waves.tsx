@@ -6,7 +6,6 @@ import {
   ballCounterTarget,
   canAttack,
   damageTokens,
-  defaultContext,
   effectiveHits,
   encounterModifiers,
   estimateTokenDamage,
@@ -41,8 +40,7 @@ import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selector
 import { ChargeChip } from './ChargeChip'
 import { SessionReportButton } from './SessionReport'
 import { TeamEnergy } from './TeamEnergy'
-
-const ctx = defaultContext()
+import { useContent } from '../../store/content'
 
 type Anim = {
   ref: WildRef
@@ -57,6 +55,7 @@ const reduceMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(pre
 
 /** Waves after a claimed session: lower HP shows what your team did; catch with balls. */
 export function Waves() {
+  const ctx = useContent()
   useHintScreen('waves')
   const { t, i18n } = useTranslation()
   const lng = i18n.language
@@ -782,6 +781,7 @@ function WildCard({
   onSelect: () => void
 }) {
   const { t, i18n } = useTranslation()
+  const ctx = useContent()
   const names = useNames()
   const sp = ctx.speciesBySlug.get(wild.speciesSlug)!
   const name = names.species(wild.speciesSlug)

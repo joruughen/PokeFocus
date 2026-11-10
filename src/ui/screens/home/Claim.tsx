@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, MINUTE_MS } from '../../../engine'
+import { MINUTE_MS } from '../../../engine'
 import { Button, ProgressBar, Stage, StageTeam, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { claimErrorText } from '../../lib/errors'
@@ -12,11 +12,11 @@ import { AutoDamageToggle } from './AutoDamageToggle'
 import { timerOf, useGame } from '../../store/game'
 import { usePrefs } from '../../store/prefs'
 import { usePlayer, useScene } from '../../store/selectors'
-
-const cfg = defaultContext().config
+import { useContent } from '../../store/content'
 
 /** Timer done: claim within the window for full rewards (GDD §3.2). */
 export function Claim({ late }: { late: boolean }) {
+  const cfg = useContent().config
   useHintScreen('claim')
   const { t, i18n } = useTranslation()
   const names = useNames()

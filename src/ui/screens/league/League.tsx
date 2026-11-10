@@ -3,7 +3,6 @@ import {
   addDays,
   currentLeague,
   currentMaxWaveSize,
-  defaultContext,
   leagueForPoints,
   monthlyPoints,
   nextLeagueProgress,
@@ -20,9 +19,7 @@ import { navigate } from '../../router'
 import { Leaderboards } from './Leaderboards'
 import { useNow } from '../../store/clock'
 import { usePlayer } from '../../store/selectors'
-
-const cfg = defaultContext().config
-const ORDER = cfg.leagues.order as LeagueId[]
+import { useContent } from '../../store/content'
 
 export const LEAGUE_STYLE: Record<LeagueId, string> = {
   base: 'bg-dusk-600 text-mist-100',
@@ -33,6 +30,8 @@ export const LEAGUE_STYLE: Record<LeagueId, string> = {
 
 /** League of the week (thresholds, wave-size cap, weekly reset) and study stats. */
 export default function League() {
+  const cfg = useContent().config
+  const ORDER = cfg.leagues.order as LeagueId[]
   useHintScreen('league')
   const { t, i18n } = useTranslation()
   const lng = i18n.language
