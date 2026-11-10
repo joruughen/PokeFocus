@@ -4,20 +4,9 @@ import type { Locale } from '../../i18n'
 import { Panel } from '../components'
 import { cx } from '../lib/cx'
 import { usePrefs } from '../store/prefs'
-import { CHANGELOG, type ChangeKind } from './entries'
+import { CHANGELOG } from './entries'
+import { fmtEntryDate, KIND_STYLE } from './entryView'
 import { APP_VERSION, RELEASE_STAGE } from './release'
-
-const KIND_STYLE: Record<ChangeKind, string> = {
-  new: 'bg-volt-400 text-ink',
-  improved: 'bg-exp-400 text-ink',
-  fixed: 'bg-leaf-400 text-ink',
-}
-
-/** "6 de noviembre de 2026": entries carry a calendar date, so format it in UTC to avoid shifting a day. */
-function fmtEntryDate(iso: string, lng: string): string {
-  const [y, m, d] = iso.split('-').map(Number) as [number, number, number]
-  return new Intl.DateTimeFormat(lng, { dateStyle: 'long', timeZone: 'UTC' }).format(Date.UTC(y, m - 1, d))
-}
 
 /** News (`#/changelog`): where the game stands (alpha/beta), what is coming, and what changed in each version. */
 export default function Changelog() {

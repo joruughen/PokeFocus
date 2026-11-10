@@ -76,6 +76,8 @@ interface HintRuntime {
   autoShown: number
   /** True during a focus session: no automatic hints. */
   suppressed: boolean
+  /** True while a modal ("What's new?") is open: no automatic hints appear over it. */
+  held: boolean
   values: Record<string, Record<string, string | number>>
 }
 
@@ -85,6 +87,7 @@ export const useHints = create<HintRuntime>(() => ({
   screen: null,
   autoShown: 0,
   suppressed: false,
+  held: false,
   values: {},
 }))
 
@@ -105,7 +108,7 @@ function pump(delay = 450): void {
   pumpTimer = setTimeout(() => {
     pumpTimer = null
     const s = useHints.getState()
-    if (s.active || s.suppressed || !tipsOn()) return
+    if (s.active || s.suppressed || s.held || !tipsOn()) return
     if (s.autoShown >= MAX_AUTO_PER_SCREEN) return
     const queue = s.queue.filter((id) => !seen(id))
     const id = queue.shift()
@@ -226,5 +229,16 @@ export function setHintsSuppressed(on: boolean): void {
   const s = useHints.getState()
   if (s.suppressed === on) return
   useHints.setState({ suppressed: on, active: on && s.active && !s.active.manual ? null : s.active })
+  if (!on) pump()
+}
+
+/**
+ * A modal dialog calls this with true while it is open: no automatic hint pops
+ * up over it (queued ones wait). Unlike `setHintsSuppressed` it leaves a hint
+ * that is already open alone (callers wait for it before opening the modal).
+ */
+export function setHintsHeld(on: boolean): void {
+  if (useHints.getState().held === on) return
+  useHints.setState({ held: on })
   if (!on) pump()
 }

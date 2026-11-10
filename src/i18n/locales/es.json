@@ -2090,6 +2090,13 @@
       "fixed": "Corregido"
     }
   },
+  "whatsNew": {
+    "title": "¿Qué hay de nuevo?",
+    "seeAll": "Ver todas las novedades",
+    "gotIt": "Entendido",
+    "more_one": "y {{count}} versión más desde la última vez que entraste.",
+    "more_other": "y {{count}} versiones más desde la última vez que entraste."
+  },
   "maintenance": {
     "upcomingTitle": "Mantenimiento programado",
     "activeTitle": "Mantenimiento en curso",

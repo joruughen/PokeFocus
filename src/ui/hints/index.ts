@@ -4,6 +4,6 @@
  */
 import './registry'
 
-export { emitHintEvent, openHint, registerHints, setHintsSuppressed, useHints, MAX_AUTO_PER_SCREEN, type HintDef, type HintTrigger } from './engine'
+export { emitHintEvent, openHint, registerHints, setHintsHeld, setHintsSuppressed, useHints, MAX_AUTO_PER_SCREEN, type HintDef, type HintTrigger } from './engine'
 export { hintAnchor, useHintEvent, useHintScreen } from './hooks'
 export { HintLayer } from './HintLayer'
