@@ -27,7 +27,7 @@ const isStaff = ({ role }: AdminTabContext): boolean => role === 'support' || ro
 
 export const ADMIN_TABS: readonly AdminTabDef[] = [
   { id: 'content', labelKey: 'admin.tabs.content', visible: isStaff, component: lazy(() => import('./content/ContentPanel')) },
-  // Events (E9): { id: 'events', labelKey: 'admin.tabs.events', visible: ({ role }) => role === 'admin', component: lazy(() => import('./events/EventsPanel')) },
+  { id: 'events', labelKey: 'admin.tabs.events', visible: ({ role }) => role === 'admin', component: lazy(() => import('./events/EventsAdminPanel')) },
   { id: 'players', labelKey: 'admin.tabs.players', visible: isStaff, component: lazy(() => import('./players/PlayersPanel').then((m) => ({ default: m.PlayersPanel }))) },
   { id: 'metrics', labelKey: 'admin.tabs.metrics', visible: isStaff, component: lazy(() => import('./metrics/MetricsPanel')) },
   // Maintenance: admin accounts, or anybody holding the deprecated ADMIN_TOKEN; support has no use for it.

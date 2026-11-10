@@ -47,6 +47,8 @@ export interface RequestOptions {
   /** Do not report a 401 to the auth store (bootstrap / login probes). */
   allow401?: boolean
   signal?: AbortSignal
+  /** Send this file as the raw body (its own Content-Type) instead of JSON: image uploads only. */
+  raw?: Blob
 }
 
 let unauthorizedHandler: (() => void) | null = null
@@ -60,7 +62,7 @@ async function request<T>(method: string, path: string, body?: unknown, opts: Re
   const headers: Record<string, string> = { Accept: 'application/json', ...opts.headers }
   // The server requires JSON on every write (CSRF guard), even with no payload (logout, DELETE, accept).
   if (method !== 'GET') {
-    headers['Content-Type'] = 'application/json'
+    headers['Content-Type'] = opts.raw ? opts.raw.type : 'application/json'
     body ??= {}
   }
   let res: Response
@@ -69,7 +71,7 @@ async function request<T>(method: string, path: string, body?: unknown, opts: Re
       method,
       headers,
       credentials: 'same-origin',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: opts.raw ?? (body === undefined ? undefined : JSON.stringify(body)),
       signal: opts.signal,
     })
   } catch (e) {
@@ -104,5 +106,7 @@ export const api = {
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('POST', path, body ?? {}, opts),
   patch: <T>(path: string, body: unknown, opts?: RequestOptions) => request<T>('PATCH', path, body, opts),
   put: <T>(path: string, body: unknown, opts?: RequestOptions) => request<T>('PUT', path, body, opts),
+  /** Raw image upload (`POST /admin/uploads`): the body is the file itself. */
+  upload: <T>(path: string, file: Blob, opts?: RequestOptions) => request<T>('POST', path, undefined, { ...opts, raw: file }),
   delete: <T = void>(path: string, opts?: RequestOptions) => request<T>('DELETE', path, undefined, opts),
 }

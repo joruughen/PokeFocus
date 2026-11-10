@@ -3,7 +3,7 @@
  * real validation and diff): create a draft, edit it through the draft store, validate, publish (sudo, ×3 / ×5
  * confirmation, scheduling), roll back and preview spawns.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { ContentPatch } from '../../../../engine/content'
 import { ApiError } from '../../../api'
 import { installFakeServer, type FakeServer } from '../../../test/fakeServer'
@@ -127,13 +127,13 @@ describe('publishing', () => {
 
   it('a change beyond ×3 needs the confirmation; ×5 for probabilities', async () => {
     admin.elevated = true
-    const d = await draftWith({ config: { encounters: { baseWaveSize: 12, shinyChance: 0.02 } } })
+    const d = await draftWith({ config: { rewards: { expPerMinute: 100 }, encounters: { shinyChance: 0.02 } } })
     const first = await publishDraft(d.id, {})
     expect(first.kind).toBe('confirm')
     if (first.kind !== 'confirm') return
     expect(first.warnings.map((w) => [w.path, w.params?.factor])).toEqual(
       expect.arrayContaining([
-        ['config.encounters.baseWaveSize', 3],
+        ['config.rewards.expPerMinute', 3],
         ['config.encounters.shinyChance', 5],
       ]),
     )
@@ -208,8 +208,6 @@ describe('spawn preview', () => {
 
 describe('layering', () => {
   it('other paths still reach the game fake server', async () => {
-    const spy = vi.fn()
-    spy()
     const res = await fetch('/api/config')
     expect(res.status).toBe(200)
     expect(server.calls.some((c) => c.path === '/api/config')).toBe(true)
