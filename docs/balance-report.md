@@ -747,3 +747,43 @@ grinder: 936 encuentros
 | concentrate-status | 16% ± 1 pp | 16% | 86% | 2.0 |
 | smart | 17% ± 1 pp | 16% | 86% | 2.1 |
 | best-ev | 14% ± 1 pp | 48% | 86% | 2.3 |
+
+## 11. Contraataque al atacante y daño de los salvajes, 2026-11-09
+
+> Un lanzamiento fallido hace que el salvaje contraataque **a quien más daño le hizo** (antes: siempre al líder, o al siguiente con Energía). El líder solo lo recibe si nadie dañó al salvaje o si el atacante está agotado. Nueva clave `capture.counter.damageMult` (multiplica todo contraataque). Órdenes: `npm run simulate -- --no-propose --no-species --config <m>.json` con `{"capture":{"counter":{"damageMult":m}}}` para m = 1 / 1.5 / 2, y la misma orden sobre el motor anterior (contraataque al líder) como referencia. 20 semillas × 12 semanas × 6 perfiles, mismos calendarios; política de daño `auto`. La sección 5 del simulador incluye ahora la tabla de contraataques.
+
+**Contraataques por jugador en 12 semanas** (energía perdida = Σ daño de contraataque; "agotan" = contraataques que dejan a su objetivo a 0):
+
+| Perfil | Modelo | Contraataques/sesión | Energía perdida | Por golpe | % al líder | Agotan/sesión |
+|---|---|---:|---:|---:|---:|---:|
+| constante | antes (líder) | 1.06 | 1,758 | 5.0 | 98% | 0.01 |
+| constante | atacante ×1 | 1.05 | 1,751 | 5.0 | 20% | 0.01 |
+| constante | atacante ×1.5 | 1.01 | 2,422 | 7.1 | 24% | 0.03 |
+| constante | atacante ×2 | 0.94 | 2,879 | 9.1 | 25% | 0.04 |
+| maratonista | antes (líder) | 2.12 | 2,357 | 6.6 | 80% | 0.27 |
+| maratonista | atacante ×1 | 2.05 | 2,033 | 5.9 | 25% | 0.29 |
+| maratonista | atacante ×1.5 | 2.02 | 2,750 | 8.1 | 28% | 0.47 |
+| maratonista | atacante ×2 | 2.02 | 3,450 | 10.2 | 28% | 0.54 |
+| noctámbulo | antes (líder) | 1.58 | 2,349 | 5.9 | 83% | 0.08 |
+| noctámbulo | atacante ×1.5 | 1.51 | 3,020 | 7.9 | 22% | 0.13 |
+| noctámbulo | atacante ×2 | 1.52 | 4,095 | 10.7 | 26% | 0.17 |
+| grinder | antes (líder) | 1.33 | 11,698 | 8.7 | 77% | 0.09 |
+| grinder | atacante ×1.5 | 1.27 | 15,377 | 12.0 | 23% | 0.10 |
+| grinder | atacante ×2 | 1.25 | 19,750 | 15.7 | 23% | 0.12 |
+
+**Sesiones con algún agotado, capturas y legendarios:**
+
+| Modelo | Maratonista: % sesiones con agotado | Constante: capturas en 12 sem. | Maratonista: capturas | Legendarios nuevos (constante) | 1.er encuentro |
+|---|---:|---:|---:|---:|---:|
+| antes (líder) | 41% | 951 | 899 | 2.6 | 41% |
+| atacante ×1 | 48% | 958 | 902 | 2.4 | 29% |
+| atacante ×1.5 | 46% | 961 | 898 | 2.9 | 42% |
+| atacante ×2 | 42% | 995 | 897 | 1.8 | 50% |
+
+Lectura:
+
+- **Repartir sin subir el daño (×1) deja la presión total igual** (constante 1,758 → 1,751 de Energía perdida) pero la divide: el líder pasa del 98 % de los golpes al 20–28 %. Cada miembro aguanta mucho más que el antiguo líder y el contraataque deja de importar.
+- **×1.5** sube un 38 % la Energía que pierde el equipo del constante (17 % el maratonista) y los contraataques que agotan a alguien pasan de 0.27 a 0.47 por sesión en el maratonista; el constante y el casual siguen casi a salvo (0.03 y 0.01). Las sesiones con algún agotado se quedan en la banda 30–60 % (46 %).
+- **×2** sube un 64 % la Energía perdida del constante y deja al maratonista con un agotamiento por contraataque cada dos sesiones (0.54), al noctámbulo en 0.17 y al grinder en 15.7 de Energía por golpe.
+- **Capturas y legendarios no dependen del multiplicador:** las capturas varían menos del 4 % y los legendarios (1.8–2.9 nuevos, 29–50 % en el primer encuentro) son ruido de muestra (n pequeño). El contraataque solo toca la captura a través de Espejo Mágico, Cuerpo Maldito e Impasible, que ahora dependen de quien recibe el golpe.
+- **Elegido: `capture.counter.damageMult` = 1.5** (en `data/overrides/custom-game-config.json`). Devuelve tensión al fallo de una Ball ahora que el daño se reparte entre 6, sin castigar al jugador constante; ×2 empuja a los perfiles de muchas horas a rotar por los contraataques y no por estudiar.

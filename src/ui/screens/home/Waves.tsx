@@ -3,6 +3,7 @@ import i18n from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   BALL_ORDER,
+  counterTarget,
   damageTokens,
   defaultContext,
   effectiveHits,
@@ -12,6 +13,7 @@ import {
   lockWaveDamage,
   previewAssignment,
   wastedDamage,
+  wildAttackers,
   studyBallMaxLevelFor,
   pokemonView,
   wildCatchChance,
@@ -34,9 +36,10 @@ import { useNames } from '../../lib/names'
 import { sfx, sfxLater } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
-import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { ChargeChip } from './ChargeChip'
 import { SessionReportButton } from './SessionReport'
+import { TeamEnergy } from './TeamEnergy'
 
 const ctx = defaultContext()
 
@@ -80,6 +83,8 @@ export function Waves() {
   /** While the server rolls a throw: keep showing the wild as it was (no flash of the result). */
   const [hold, setHold] = useState<{ wildIndex: number; before: WildPokemon } | null>(null)
   const [counterFx, setCounterFx] = useState<{ key: number; counter: CounterResult; energyBefore: number } | null>(null)
+  /** Team Energy as it was before the throw (kept while the ball shakes, see `frozenCard`). */
+  const [frozenEnergy, setFrozenEnergy] = useState<Record<string, number> | null>(null)
   /**
    * The counter card as it was before the throw. The server answers before the
    * animation starts and that answer already carries the counterattack, so
@@ -143,10 +148,26 @@ export function Waves() {
   const sel = wave.wilds[selected]
   /** The selected wild as the throw will see it (a manual wave locks first: unassigned tokens go automatic). */
   const selAtThrow = atThrow.wilds[selected]
-  const leaderUid = player.team.find((u) => (player.pokemon[u]?.energy.current ?? 0) > 0) ?? player.team[0]
-  const leader = leaderUid ? pokemonView(player, leaderUid, now) : null
-  const counterTarget = counterFx ? pokemonView(player, counterFx.counter.targetUid, now) : null
-  const card = frozenCard ?? counterTarget ?? leader
+  // Who the selected wild would counterattack: the member that hit it hardest (as the throw will
+  // lock it), or the leader chain when nobody did or that attacker is exhausted (GDD §11.4).
+  const nextCounter = useMemo(() => {
+    if (!sel || sel.outcome !== 'pending') return null
+    const st = atThrow === wave ? player : { ...player, encounter: { ...enc, waves: enc.waves.map((w) => (w.index === wave.index ? atThrow : w)) } }
+    return counterTarget(st, { waveIndex: enc.currentWave, wildIndex: selected })
+  }, [player, enc, wave, atThrow, sel, selected])
+  const fallbackUid = player.team.find((u) => (player.pokemon[u]?.energy.current ?? 0) > 0) ?? player.team[0]
+  const nextTargetUid = nextCounter?.targetUid ?? fallbackUid
+  const nextTarget = nextTargetUid ? pokemonView(player, nextTargetUid, now) : null
+  const lastHit = counterFx ? pokemonView(player, counterFx.counter.targetUid, now) : null
+  const card = frozenCard ?? lastHit ?? nextTarget
+  const teamViews = useTeamViews(player, now)
+  const targetWhy = !nextCounter
+    ? null
+    : nextCounter.attackerUid && nextCounter.attackerUid === nextCounter.targetUid
+      ? t('waves.counterWhyAttacker')
+      : nextCounter.attackerUid
+        ? t('waves.counterWhyExhausted', { name: names.species(player.pokemon[nextCounter.attackerUid]?.speciesSlug ?? '') })
+        : t('waves.counterWhyNobody')
 
   const balls: { ball: ThrowBall; count: number | null; usable: boolean; reason?: string }[] = [
     ...(wave.studyBall === 'available'
@@ -163,15 +184,17 @@ export function Waves() {
     const ref = { waveIndex: enc.currentWave, wildIndex: selected }
     // Show the HP the throw locks in (manual waves), not the half-assigned one.
     const before = selAtThrow ?? sel
-    const energyBefore = player.pokemon[leaderUid ?? '']?.energy.current ?? 0
+    const energyBy = Object.fromEntries(player.team.map((u) => [u, player.pokemon[u]?.energy.current ?? 0]))
     // The server rolls the throw; the animation plays once its answer is here
     // (the wild keeps showing `before` until the result lands).
     setHold({ wildIndex: selected, before })
     setFrozenCard(card)
+    setFrozenEnergy(energyBy)
     const r = await doThrow(ref, ball)
     if (!r.ok) {
       setHold(null)
       setFrozenCard(null)
+      setFrozenEnergy(null)
       toast.add({ title: errorText(r.error, 'throw', { level: studyMax }), type: 'danger' })
       return
     }
@@ -180,6 +203,7 @@ export function Waves() {
     const land = () => {
       setAnim(null)
       setFrozenCard(null)
+      setFrozenEnergy(null)
       if (outcome.kind !== 'caught' && outcome.counter) {
         const c = outcome.counter
         sfx(c.missed ? 'counterMiss' : 'counterHit')
@@ -191,11 +215,12 @@ export function Waves() {
         emitHintEvent('throw.caught')
       } else {
         if (outcome.counter) {
-          setCounterFx({ key: Date.now(), counter: outcome.counter, energyBefore })
+          setCounterFx({ key: Date.now(), counter: outcome.counter, energyBefore: energyBy[outcome.counter.targetUid] ?? 0 })
           emitHintEvent('throw.failed', {
             name: names.species(player.pokemon[outcome.counter.targetUid]?.speciesSlug ?? ''),
             damage: Math.round(outcome.counter.damage),
           })
+          if (outcome.counter.targetUid !== player.team[0]) emitHintEvent('counter.member')
         }
         if (outcome.kind === 'fled') emitHintEvent('throw.fled')
       }
@@ -305,7 +330,7 @@ export function Waves() {
                   first={i === 0}
                   maxFails={mods.maxFailedThrows}
                   revealIvs={mods.revealWildIvs}
-                  hitters={hittersOf(effHits, i)}
+                  hitters={hittersOf(effHits, i, wildAttackers(player, atThrow, i).map((a) => a.uid))}
                   anim={anim && anim.ref.wildIndex === i ? anim : null}
                   targeting={targeting}
                   assigning={pickedToken ? (pickedToken.assigned === i ? 'unassign' : 'assign') : null}
@@ -321,6 +346,26 @@ export function Waves() {
           })}
         </ul>
       </Stage>
+
+      <Panel variant="frame" title={t('teamEnergy.title')} help="waves.teamEnergy" headingLevel={3} {...hintAnchor('waves.teamEnergy')}>
+        <TeamEnergy
+          views={teamViews}
+          leaderUid={player.team[0]}
+          target={anim ? null : nextTargetUid}
+          energyOverride={frozenEnergy ?? undefined}
+          hit={
+            counterFx && !anim
+              ? {
+                  uid: counterFx.counter.targetUid,
+                  from: counterFx.energyBefore,
+                  key: counterFx.key,
+                  text: counterFx.counter.missed ? t('waves.missed') : counterFx.counter.healed > 0 ? `+${Math.round(counterFx.counter.healed)}` : `-${Math.round(counterFx.counter.damage)}`,
+                }
+              : null
+          }
+        />
+        <p className="mt-2 text-xs text-mist-400">{t('teamEnergy.wavesNote')}</p>
+      </Panel>
 
       {manual && tokens.length > 0 && (
         <DamageTray
@@ -359,7 +404,7 @@ export function Waves() {
         <Panel padded={false} className="grid grid-cols-1 items-center gap-5 p-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_auto]">
           <div {...hintAnchor('waves.leader')}>
             <p className="mb-1.5 flex items-center gap-2 text-sm text-mist-300">
-              {t('waves.counterTarget')}
+              {t(counterFx && !anim ? 'waves.counterTook' : 'waves.counterTarget')}
               <HelpDot hint="waves.counter" />
             </p>
             {card && (
@@ -373,10 +418,12 @@ export function Waves() {
                 floating={counterFx && !anim ? (counterFx.counter.missed ? t('waves.missed') : counterFx.counter.healed > 0 ? `+${Math.round(counterFx.counter.healed)}` : `-${Math.round(counterFx.counter.damage)}`) : undefined}
               />
             )}
-            {counterFx && !anim && (
+            {counterFx && !anim ? (
               <p className="mt-2 text-sm text-mist-300" aria-live="polite">
                 {counterLine(counterFx.counter, t, names)}
               </p>
+            ) : (
+              targetWhy && <p className="mt-2 text-xs text-mist-400">{targetWhy}</p>
             )}
           </div>
 
@@ -431,16 +478,24 @@ export function Waves() {
   )
 }
 
-/** Team members whose hits weakened wild `index` during the session (engine `Wave.hits`), most hits first. */
-function hittersOf(hits: Wave['hits'], index: number): { uid: string; slug: string; hits: number }[] {
+/**
+ * Team members whose hits weakened wild `index` during the session (engine `Wave.hits`). Ordered
+ * like `byDamage` (engine `wildAttackers`: hardest hitter first, the one the wild counterattacks),
+ * then by hit count.
+ */
+function hittersOf(hits: Wave['hits'], index: number, byDamage: string[] = []): { uid: string; slug: string; hits: number }[] {
   if (!hits) return []
   const player = useGame.getState().player
   const by = new Map<string, number>()
   for (const h of hits) if (h.target === index) by.set(h.uid, (by.get(h.uid) ?? 0) + Math.max(1, Math.round(h.units)))
+  const rank = (uid: string) => {
+    const i = byDamage.indexOf(uid)
+    return i < 0 ? 99 : i
+  }
   return [...by.entries()]
     .map(([uid, n]) => ({ uid, slug: player?.pokemon[uid]?.speciesSlug ?? '', hits: n }))
     .filter((h) => h.slug)
-    .sort((a, b) => b.hits - a.hits)
+    .sort((a, b) => rank(a.uid) - rank(b.uid) || b.hits - a.hits)
 }
 
 /** Rule errors of the damage actions: `damage.errors.*`, then the shared charge/wave texts. */
@@ -488,7 +543,7 @@ function DamageTray({
             </Button>
           </Tooltip>
         ) : (
-          <span className="inline-flex items-center gap-1.5 text-sm text-mist-400">
+          <span className="inline-flex max-w-[18ch] items-center gap-1.5 text-right text-sm text-mist-400 sm:max-w-none">
             <PixelIcon name="lock" size={10} />
             {t('damage.locked')}
           </span>
@@ -591,6 +646,29 @@ function counterLine(c: CounterResult, t: (k: string, o?: Record<string, unknown
   if (c.healed > 0) return t('waves.counterHealed', { type: names.type(c.attackType), amount: Math.round(c.healed) })
   const eff = c.effectiveness > 1 ? t('waves.effSuper') : c.effectiveness < 1 ? t('waves.effWeak') : ''
   return t('waves.counterHit', { type: names.type(c.attackType), damage: Math.round(c.damage), eff }) + (c.survivedWith1 ? ` ${t('waves.survived')}` : '')
+}
+
+/**
+ * "Hits" row of a wild card: every team member that hit it (up to 6). They wrap instead of
+ * overflowing the 11.5 rem card; the first one (shaded) is the one it counterattacks.
+ */
+export function HittersRow({ hitters }: { hitters: { uid: string; slug: string; hits: number }[] }) {
+  const { t } = useTranslation()
+  const names = useNames()
+  if (hitters.length === 0) return null
+  return (
+    <div className="mt-1.5 flex min-w-0 items-start gap-2">
+      <span className="w-12 shrink-0 font-display text-sm text-dusk-600">{t('waves.hitBy')}</span>
+      <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5" title={hitters.map((h) => `${names.species(h.slug)} ×${h.hits}`).join(', ')}>
+        {hitters.map((h, k) => (
+          <span key={h.uid} className={cx('inline-flex min-w-0 items-center', k === 0 && hitters.length > 1 && 'bg-cheek-500/15')}>
+            <Sprite kind="icon" slug={h.slug} alt={names.species(h.slug)} className="-my-2 -mx-2 shrink-0" />
+            <span className="font-num text-sm leading-none">×{h.hits}</span>
+          </span>
+        ))}
+      </span>
+    </div>
+  )
 }
 
 function StudyBallStatus({ status }: { status: 'available' | 'used' | 'lost' | 'converted' }) {
@@ -818,20 +896,7 @@ function WildCard({
             ))}
           </span>
         </div>
-        {hitters.length > 0 && (
-          <div className="mt-1.5 flex items-center gap-2">
-            <span className="w-12 font-display text-sm text-dusk-600">{t('waves.hitBy')}</span>
-            <span className="flex items-center gap-x-1.5" title={hitters.map((h) => `${names.species(h.slug)} ×${h.hits}`).join(', ')}>
-              {hitters.slice(0, 2).map((h) => (
-                <span key={h.uid} className="inline-flex items-center">
-                  <Sprite kind="icon" slug={h.slug} alt={names.species(h.slug)} className="-my-2 -mx-1.5" />
-                  <span className="font-num text-base leading-none">×{h.hits}</span>
-                </span>
-              ))}
-              {hitters.length > 2 && <span className="font-num text-base leading-none text-dusk-600">+{hitters.length - 2}</span>}
-            </span>
-          </div>
-        )}
+        <HittersRow hitters={hitters} />
         {revealIvs && (
           <div className="mt-2 flex items-center gap-2" {...(first ? hintAnchor('waves.iv') : {})}>
             <span className="w-12 font-display text-sm text-dusk-600">{t('iv.short')}</span>

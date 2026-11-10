@@ -11,11 +11,12 @@ import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { AutoDamageToggle } from './AutoDamageToggle'
 import { timerOf, useGame } from '../../store/game'
-import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { GroupSessionStatus } from './GroupStudy'
 import { MuteMusicButton } from './MuteMusicButton'
 import { MicIndicator } from './SoundStyle'
 import { SoundUnlockChip } from './SoundUnlockChip'
+import { TeamEnergy } from './TeamEnergy'
 
 const cfg = defaultContext().config
 
@@ -44,6 +45,7 @@ export function FocusSession() {
   const studied = Math.max(0, totalMs - remaining)
   const scene = useScene(player, session.startedAt)
   const wave = cfg.session.waveMinutes * MINUTE_MS
+  const teamViews = useTeamViews(player, now, session.teamUids)
   const ticks = Array.from({ length: Math.floor(session.plannedMinutes / cfg.session.waveMinutes) }, (_, i) => (i + 1) * wave).filter((x) => x < totalMs)
 
   useEffect(() => {
@@ -107,6 +109,11 @@ export function FocusSession() {
             <span>{t(ticks.length > 0 ? 'session.waveLegend' : 'session.waveOne', { count: waveCount(session.plannedMinutes, cfg) })}</span>
             <span>{t('session.teamWorking')}</span>
           </div>
+        </div>
+
+        <div className="mt-8 w-full text-left">
+          <TeamEnergy views={teamViews} leaderUid={session.teamUids[0]} title={t('teamEnergy.title')} />
+          <p className="mt-2 text-xs text-mist-400">{t('teamEnergy.sessionNote')}</p>
         </div>
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">

@@ -29,6 +29,8 @@ registerHints([
   { id: 'waves.throw', screen: 'waves', trigger: { kind: 'firstVisit' }, anchor: 'waves.throw', pose: 'point', side: 'top', sequence: 'firstWave', order: 3 },
   { id: 'waves.flee', screen: 'waves', trigger: { kind: 'firstVisit' }, anchor: 'waves.fails', pose: 'think', side: 'bottom', sequence: 'firstWave', order: 4 },
   { id: 'waves.counter', screen: 'waves', trigger: { kind: 'event', event: 'throw.failed' }, anchor: 'waves.leader', pose: 'think', side: 'top' },
+  // The first counterattack that lands on someone other than the leader: the whole team's Energy matters now.
+  { id: 'waves.teamEnergy', screen: 'waves', trigger: { kind: 'event', event: 'counter.member' }, anchor: 'waves.teamEnergy', pose: 'point', side: 'top' },
   { id: 'waves.fled', screen: 'waves', trigger: { kind: 'event', event: 'throw.fled' }, pose: 'think' },
   { id: 'waves.firstCatch', screen: 'waves', trigger: { kind: 'event', event: 'throw.caught' }, anchor: 'nav.box', pose: 'cheer', side: 'right' },
   { id: 'waves.charges', screen: 'waves', trigger: { kind: 'event', event: 'charges' }, anchor: 'waves.charges', pose: 'point', side: 'top' },

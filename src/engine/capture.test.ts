@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { applySessionResult } from './session'
-import { advanceWave, applyStatusCharge, captureChance, counterDamage, encounterModifiers, rerollWild, resolveCounter, throwBall, wildCatchChance } from './capture'
+import { advanceWave, applyStatusCharge, captureChance, counterDamage, counterTarget, encounterModifiers, rerollWild, resolveCounter, throwBall, wildAttackers, wildCatchChance } from './capture'
+import { assignDamage } from './damage'
 import { createEngineContext, defaultContext, type EngineContext } from './context'
 import type { AbilityDef } from './effect-types'
 import { passiveEffects } from './effects'
@@ -261,9 +262,10 @@ describe('capture formula (GDD §11.2)', () => {
 
 describe('counterattacks (GDD §11.4)', () => {
   it('damage = maxHP · 8% · √(lvW/lvL) · eff · (1 − min(0.5, Def/400)), legendaries ×2', () => {
+    const m = cfg.capture.counter.damageMult
     const d = counterDamage(100, 25, 100, 100, 2, false, cfg)
-    expect(d).toBeCloseTo(100 * 0.08 * 2 * 2 * 0.75)
-    expect(counterDamage(100, 25, 1000, 25, 1, true, cfg)).toBeCloseTo(100 * 0.08 * 0.5 * 2)
+    expect(d).toBeCloseTo(100 * 0.08 * 2 * 2 * 0.75 * m)
+    expect(counterDamage(100, 25, 1000, 25, 1, true, cfg)).toBeCloseTo(100 * 0.08 * 0.5 * 2 * m)
   })
 
   it('hits the leader with its most effective type, or the next member with energy', () => {
@@ -294,6 +296,110 @@ describe('counterattacks (GDD §11.4)', () => {
     const r3 = resolveCounter(withEncounter(makePlayer([vap]), [sq]), sq, createRng(1))!
     expect(r3.counter.damage).toBe(0)
     expect(r3.counter.healed).toBeCloseTo(computeStats(vap, ctx).hp * cfg.capture.counter.immuneHealPct)
+  })
+})
+
+describe('counterattack goes to the attacker (GDD §11.4)', () => {
+  const hit = (uid: string, target: number, attack: number, units = 10): WaveHit => ({
+    uid, target, move: 'tackle', type: 'normal', power: 40, damageClass: 'physical', level: 20, attack, stab: false, units, unitsVsLegendary: units, effectivenessFloors: [],
+  })
+  const L = makeMon('charmander', 20, { uid: 'L' })
+  const A = makeMon('bulbasaur', 20, { uid: 'A' })
+  const B = makeMon('pidgey', 20, { uid: 'B' })
+  /** Squirtle in slot 0 hit hard by A and lightly by B; pidgey in slot 1 hit by L. */
+  function setup(team = [L, A, B], hits = [hit('A', 0, 60), hit('B', 0, 20), hit('L', 1, 40)]): PlayerState {
+    const s = withEncounter(makePlayer(team), [wild('squirtle', 20), wild('pidgey', 20)])
+    const enc = s.encounter!
+    return { ...s, encounter: { ...enc, waves: enc.waves.map((w) => (w.index === 0 ? { ...w, hits } : w)) } }
+  }
+  const ref = { waveIndex: 0, wildIndex: 0 }
+
+  it('ranks the attackers by the damage they did to that wild', () => {
+    const s = setup()
+    expect(wildAttackers(s, s.encounter!.waves[0]!, 0).map((a) => a.uid)).toEqual(['A', 'B'])
+    expect(wildAttackers(s, s.encounter!.waves[0]!, 1).map((a) => a.uid)).toEqual(['L'])
+  })
+
+  it('strikes the hardest hitter, with its best type against that attacker, not the leader', () => {
+    const s = setup()
+    expect(counterTarget(s, ref)).toEqual({ attackerUid: 'A', targetUid: 'A' })
+    const w = s.encounter!.waves[0]!.wilds[0]!
+    const r = resolveCounter(s, w, createRng(1), ctx, ref)!
+    expect(r.counter.targetUid).toBe('A')
+    expect(r.counter.attackerUid).toBe('A')
+    // Squirtle (water) vs Bulbasaur (grass/poison): ×0.5, computed against A's stats.
+    expect(r.counter.effectiveness).toBe(0.5)
+    const st = computeStats(A, ctx)
+    expect(r.counter.damage).toBeCloseTo(counterDamage(st.hp, 20, st.defense, 20, 0.5, false, cfg))
+    expect(r.target.uid).toBe('A')
+  })
+
+  it('an exhausted attacker passes the hit to the leader (then the next member with Energy)', () => {
+    const tiredA = { ...A, energy: { current: 0, updatedAt: T0 } }
+    expect(counterTarget(setup([L, tiredA, B]), ref)).toEqual({ attackerUid: 'A', targetUid: 'L' })
+    const tiredL = { ...L, energy: { current: 0, updatedAt: T0 } }
+    expect(counterTarget(setup([tiredL, tiredA, B]), ref)).toEqual({ attackerUid: 'A', targetUid: 'B' })
+    const tiredB = { ...B, energy: { current: 0, updatedAt: T0 } }
+    expect(counterTarget(setup([tiredL, tiredA, tiredB]), ref).targetUid).toBeNull()
+  })
+
+  it('a wild nobody hit (or a legacy wave without hits) counterattacks the leader', () => {
+    expect(counterTarget(setup([L, A, B], [hit('L', 1, 40)]), ref)).toEqual({ attackerUid: null, targetUid: 'L' })
+    const legacy = withEncounter(makePlayer([L, A]), [wild('squirtle', 20)])
+    expect(counterTarget(legacy, ref)).toEqual({ attackerUid: null, targetUid: 'L' })
+  })
+
+  it('an attacker moved to the Box no longer counts', () => {
+    const s = setup()
+    const boxed = { ...s, team: ['L', 'B'] }
+    expect(counterTarget(boxed, ref)).toEqual({ attackerUid: 'B', targetUid: 'B' })
+  })
+
+  it('manual split: only the damage assigned to that wild counts', () => {
+    const s0 = setup()
+    const enc = s0.encounter!
+    const manual = { ...s0, encounter: { ...enc, waves: enc.waves.map((w) => (w.index === 0 ? { ...w, assignments: {}, damageLocked: false } : w)) } }
+    const r1 = assignDamage(manual, { waveIndex: 0, uid: 'A', wildIndex: 1 })
+    if (!r1.ok) throw new Error(r1.error)
+    const r2 = assignDamage(r1.value, { waveIndex: 0, uid: 'B', wildIndex: 0 })
+    if (!r2.ok) throw new Error(r2.error)
+    expect(counterTarget(r2.value, ref)).toEqual({ attackerUid: 'B', targetUid: 'B' })
+    expect(counterTarget(r2.value, { waveIndex: 0, wildIndex: 1 }).attackerUid).toBe('A')
+  })
+
+  it('target-side abilities are the attacker\'s: magic-guard / magic-bounce on the attacker, not on the leader', () => {
+    const guardLeader = makeMon('clefairy', 20, { uid: 'L', ability: 'magic-guard' })
+    const s = setup([guardLeader, A, B])
+    const w = s.encounter!.waves[0]!.wilds[0]!
+    expect(resolveCounter(s, w, createRng(1), ctx, ref)!.counter.damage).toBeGreaterThan(0)
+    const bouncer = makeMon('espeon', 20, { uid: 'A', ability: 'magic-bounce' })
+    const r = resolveCounter(setup([L, bouncer, B]), w, createRng(1), ctx, ref)!
+    expect(r.counter.targetUid).toBe('A')
+    expect(r.counter.reflected).toBeCloseTo(0.1)
+  })
+
+  it('throwBall sends the counter of a failed throw to the attacker', () => {
+    const s = setup()
+    // Find a seed whose throw fails (the catch chance is below 1).
+    let out: ReturnType<typeof throwBall> | null = null
+    for (let seed = 1; seed < 50; seed++) {
+      const r = throwBall(s, ref, 'poke-ball', createRng(seed), T0)
+      if (r.ok && r.value.outcome.kind === 'failed') {
+        out = r
+        break
+      }
+    }
+    expect(out?.ok).toBe(true)
+    if (!out?.ok || out.value.outcome.kind !== 'failed') return
+    expect(out.value.outcome.counter?.targetUid).toBe('A')
+    expect(out.value.state.pokemon.A!.energy.current).toBeLessThan(A.energy.current)
+    expect(out.value.state.pokemon.L!.energy.current).toBe(L.energy.current)
+  })
+
+  it('capture.counter.damageMult scales every counterattack', () => {
+    const x2 = createEngineContext({ config: { capture: { counter: { damageMult: 2 } } } })
+    const x1 = createEngineContext({ config: { capture: { counter: { damageMult: 1 } } } })
+    expect(counterDamage(100, 20, 100, 20, 1, false, x2.config)).toBeCloseTo(2 * counterDamage(100, 20, 100, 20, 1, false, x1.config))
   })
 })
 

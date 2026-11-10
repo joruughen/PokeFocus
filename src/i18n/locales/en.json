@@ -194,11 +194,11 @@
   "team": {
     "title": "Your team",
     "leader": "Leader",
-    "leaderTip": "The leader takes the counterattacks when a catch fails.",
+    "leaderTip": "The leader takes the counterattacks of wild Pokémon nobody hurt or whose attacker is exhausted.",
     "emptySlotHow": "Catch Pokémon in the waves and add them to the team between sessions.",
     "emptySlots_one": "{{count}} free slot",
     "emptySlots_other": "{{count}} free slots",
-    "subtitle": "Up to 6 Pokémon study with you. The first is the leader: it takes the counterattacks when a catch fails.",
+    "subtitle": "Up to 6 Pokémon study with you. When a Ball fails, the wild Pokémon counterattacks whoever hurt it most; the first one, the leader, covers for the rest.",
     "locked": "Your team is studying. You can change it when the session ends.",
     "slotFree": "Slot {{n}} free",
     "order": "Team order",
@@ -217,9 +217,9 @@
     "warnAsleep": "Asleep: it won't act next session.",
     "warnExhausted": "Exhausted: it won't act until it recovers Energy.",
     "warnTired": "May run out of Energy in a {{minutes}}-min session.",
-    "leaderRow": "Takes the counterattacks. Grit {{grit}}.",
+    "leaderRow": "Covers the counterattacks nobody else takes. Grit {{grit}}.",
     "leaderTitle": "The leader",
-    "leaderWhy": "When a Ball fails, the wild Pokémon counterattacks the leader. If it's exhausted, the next one.",
+    "leaderWhy": "When a Ball fails, the wild Pokémon counterattacks whoever hurt it most. If nobody did or that Pokémon is exhausted, the leader takes it (and if the leader is too, the next one).",
     "gritNote": "Reduces the damage of each counterattack.",
     "energyNote": "Its health: at 0 it stops acting.",
     "weakTo": "Takes more damage from:",
@@ -256,7 +256,7 @@
       "doneLeader": "{{in}} takes {{out}}'s place and is the new leader"
     },
     "memberTitle": "Your Pokémon",
-    "memberWhy": "In slot {{n}}: it only takes counterattacks if the ones ahead run out of Energy.",
+    "memberWhy": "In slot {{n}}: it takes the counterattacks of the wild Pokémon it hurt most. If it runs out of Energy, the leader covers for it.",
     "seeSheet": "See full sheet",
     "selectOf": "Show details for {{name}}"
   },
@@ -475,7 +475,7 @@
       "lost": "Study Ball lost",
       "converted": "None eligible: you got a Poké Ball"
     },
-    "counterTarget": "Takes the counterattacks",
+    "counterTarget": "Takes the counterattack",
     "missed": "Missed!",
     "counterMissed": "The counterattack missed.",
     "counterHealed": "It absorbed the {{type}} attack and recovered {{amount}} Energy.",
@@ -513,7 +513,11 @@
     },
     "tries": "Tries",
     "studyEligibleTip": "Guaranteed catch with this wave's Study Ball.",
-    "hitBy": "Hit by"
+    "hitBy": "Hit by",
+    "counterTook": "Took the counterattack",
+    "counterWhyAttacker": "It dealt the most damage to this wild Pokémon.",
+    "counterWhyExhausted": "{{name}} dealt the most damage, but it is exhausted: the leader covers for it.",
+    "counterWhyNobody": "Nobody on your team hurt it: the leader takes it."
   },
   "firstRun": {
     "you": "trainer",
@@ -865,7 +869,7 @@
       },
       "throw": {
         "title": "Throw a Ball",
-        "body": "Pick a wild Pokémon and a Ball; you'll see the chance before throwing. If it fails, the Pokémon counterattacks your leader and drains its Energy."
+        "body": "Pick a wild Pokémon and a Ball; you'll see the chance before throwing. If it fails, the wild Pokémon counterattacks whoever hurt it most and drains its Energy."
       },
       "flee": {
         "title": "Tries before it flees",
@@ -873,7 +877,7 @@
       },
       "counter": {
         "title": "Counterattack",
-        "body": "{{name}} lost {{damage}} Energy. Counterattacks hit the leader first and, if it's exhausted, the next one. A leader with high Grit takes them better."
+        "body": "{{name}} lost {{damage}} Energy. Each wild Pokémon counterattacks whoever hurt it most. If nobody did or that Pokémon is exhausted, the leader takes it (and if the leader is too, the next one with Energy)."
       },
       "fled": {
         "title": "It got away",
@@ -902,6 +906,10 @@
       "damage": {
         "title": "Split the damage",
         "body": "Each token is the damage one of your Pokémon dealt in this block. Tap one, then a wild, to send it all there. You can change it until you throw the first ball. In a hurry? Press Auto."
+      },
+      "teamEnergy": {
+        "title": "Watch everyone's Energy",
+        "body": "Counterattacks no longer always hit the leader: whoever attacked takes them. Check the whole team's Energy here; the outlined one takes the next. Spreading damage over several wild Pokémon spreads the hits too."
       }
     },
     "box": {
@@ -971,11 +979,11 @@
       },
       "leader": {
         "title": "Pick the leader well",
-        "body": "It takes the counterattacks when a Ball fails. A leader with lots of Grit and Energy holds up better; check its type weaknesses too."
+        "body": "It covers the counterattacks when the attacker is exhausted or nobody hurt the wild Pokémon. A leader with lots of Grit and Energy holds up better; check its type weaknesses too."
       },
       "order": {
         "title": "Order matters",
-        "body": "The first one is the leader. If it's exhausted, counterattacks go to the next. The rest of the order doesn't change points."
+        "body": "The first one is the leader. If it's exhausted, what it covered goes to the next. Each Pokémon takes the counterattacks for its own attacks, so everyone's Grit counts. The rest of the order doesn't change points."
       },
       "tired": {
         "title": "Someone is tired",
@@ -1356,7 +1364,7 @@
     },
     "team": {
       "title": "Add a second team member",
-      "how": "In Team, pick someone from your Box."
+      "how": "In Team, pick someone from your Box. With more members, counterattacks are spread over whoever attacks."
     },
     "equip": {
       "title": "Equip a technique",
@@ -2132,5 +2140,13 @@
       "endInPast": "The end is already in the past.",
       "tooLong": "A window can last 14 days at most."
     }
+  },
+  "teamEnergy": {
+    "label": "Team Energy",
+    "title": "Team Energy",
+    "out": "Exhausted",
+    "nextTarget": "Takes the next counterattack",
+    "wavesNote": "If a Ball fails, the wild Pokémon counterattacks whoever hurt it most (outlined). If nobody hurt it or that Pokémon is exhausted, the leader takes it.",
+    "sessionNote": "Energy at the start of the session. Each action spends a little and, in the waves, counterattacks go to whoever attacked each wild Pokémon."
   }
 }

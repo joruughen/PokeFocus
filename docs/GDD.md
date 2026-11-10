@@ -276,7 +276,7 @@ Los PS son la **energía del Pokémon a lo largo del día**. Se gastan al actuar
 | Habilidades (§6.3) | Regeneración, Cura Natural |
 | Objetos | Poción (+20 PS), Superpoción (+50), Hiperpoción (+120), Revivir (de 0 al 50%) desde misiones y Recogida |
 
-- La interfaz muestra la barra de PS de cada miembro del equipo en la pantalla previa a la sesión y avisa cuando alguno no va a llegar al final.
+- La interfaz muestra la barra de PS de cada miembro del equipo en la pantalla previa a la sesión, durante la sesión y en las oleadas, y avisa cuando alguno no va a llegar al final.
 
 ---
 
@@ -585,7 +585,7 @@ Si un legendario o mítico **se escapa**, durante tus **3 sesiones siguientes** 
 - Las capturas aseguradas de shiny solo funcionan con la Ball **correspondiente o superior**.
 - La **Ball de Estudio no es acumulable**: no entra en el inventario y solo puede usarse en la oleada que la generó. Si pasas a la siguiente oleada sin usarla, se pierde.
 - Si la oleada no tiene ningún Pokémon elegible para la Ball de Estudio, esta se convierte en una Poké Ball (que sí va al inventario).
-- Cada lanzamiento fallido provoca un **contraataque** del salvaje (§11.4). Tras `max_fallos_captura` lanzamientos fallidos (por defecto **3** **[calibrar]**), el salvaje **escapa**.
+- Cada lanzamiento fallido provoca un **contraataque** del salvaje contra el Pokémon que más daño le hizo (§11.4). Tras `max_fallos_captura` lanzamientos fallidos (por defecto **3** **[calibrar]**), el salvaje **escapa**.
 
 ### 11.2 Fórmula de captura
 
@@ -618,18 +618,25 @@ Daño = Σ_tipo  Energía[tipo] · Efectividad(tipo, tipos_del_salvaje)
 
 Si un lanzamiento falla, el salvaje **contraataca** a uno de tus Pokémon y le quita energía (PS, §5.3).
 
-- **A quién ataca:** al **líder** del equipo (hueco 1). Si el líder está agotado (0 PS), al siguiente del equipo con PS. Elegir líder es una decisión: conviene uno con mucha Energía y Aguante, y con tipos que resistan a lo que esperas encontrar.
+- **A quién ataca: al atacante.** Al Pokémon del equipo que **más daño le hizo** a ese salvaje durante la sesión (en el reparto manual, solo cuenta el daño asignado a él). El equipo es de 6 y cada uno responde de sus propios ataques: conviene que quien golpea fuerte tenga también Energía y Aguante.
+- **El líder** (hueco 1) **cubre al resto**: recibe el contraataque cuando **nadie** dañó a ese salvaje (oleadas antiguas, nada asignado) o cuando el atacante está **agotado**. Si el líder también lo está, lo recibe el siguiente del equipo con PS. Elegir líder sigue siendo una decisión: es el escudo del equipo.
+- **Atacante agotado: el golpe pasa al líder** (no se pierde). Un Pokémon agotado ya no actúa (§5.3) y no puede bajar de 0, pero si el daño se perdiera, agotar al atacante haría gratis el resto de lanzamientos contra ese salvaje. Pasarlo al líder mantiene el coste de fallar, reutiliza la regla de siempre (líder → siguiente con PS) y da sentido al líder.
+- Si el Pokémon que hizo el daño ya no está en el equipo (se pasó a la Caja entre sesiones), cuenta el siguiente que más daño le hizo; si no queda ninguno, el líder.
 - **Daño** **[calibrar]**:
 
 ```
-daño_contraataque = PS_máx_líder · 0.08 · (Nivel_salvaje / Nivel_líder)^0.5 · Efectividad(tipo_salvaje, tipos_líder) · (1 − min(0.5, Def_líder / 400))
+daño_contraataque = PS_máx_objetivo · 0.08 · (Nivel_salvaje / Nivel_objetivo)^0.5 · Efectividad(tipo_salvaje, tipos_objetivo) · (1 − min(0.5, Def_objetivo / 400)) · multiplicador_daño_salvaje
 ```
 
-  - El tipo del ataque es uno de los tipos del salvaje, el más efectivo contra el líder.
+  - **objetivo** = quien recibe el golpe (el atacante o, si cubre, el líder).
+  - El tipo del ataque es uno de los tipos del salvaje, el más efectivo contra el objetivo.
   - La **Defensa** (en pantalla, Aguante) reduce el daño recibido, hasta un 50%.
   - Los legendarios y míticos hacen ×2.
-- Si el líder llega a 0 PS queda **agotado** (§5.3) y deja de actuar hasta que se recupere.
+  - `multiplicador_daño_salvaje` = `capture.counter.damageMult` = **1.5**. Al repartirse los contraataques entre los atacantes, el líder ya no se lo come todo (antes recibía el 98 % de los golpes del perfil constante; ahora ~25 %). Con ×1.5 el equipo pierde un 38 % más de Energía por contraataques que antes (constante: 1.758 → 2.422 en 12 semanas), cada miembro bastante menos que el antiguo líder, y los contraataques que agotan a alguien pasan de 0,27 a 0,47 por sesión en el maratonista, sin tocar capturas ni legendarios. ×2 casi duplicaba los agotamientos por contraataque del maratonista (0,54/sesión) y subía un 64 % la Energía perdida del constante (simulador, 6 perfiles × 20 semillas × 12 semanas).
+- Las habilidades de contraataque (Velo Arena, Manto Níveo, Espejo Mágico, Cuerpo Maldito, Robustez, Absorbe Agua…) son **de quien recibe el golpe**; las de equipo (Despiste, Nerviosismo, Compiescolta) protegen a todos (docs/effects.md).
+- Si el objetivo llega a 0 PS queda **agotado** (§5.3) y deja de actuar hasta que se recupere.
 - Tras `max_fallos_captura` fallos, el salvaje escapa (§11.1).
+- **Interfaz:** en la sesión y en las oleadas se ve la Energía de **todo el equipo**; en las oleadas se marca quién recibirá el próximo contraataque del salvaje elegido y por qué (atacante, o el líder cubriendo).
 
 ---
 

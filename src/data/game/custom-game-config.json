@@ -257,7 +257,8 @@
       "levelExponent": 0.5,
       "defenseDivisor": 400,
       "defenseMaxReduction": 0.5,
-      "legendaryMult": 2
+      "legendaryMult": 2,
+      "damageMult": 1.5
     }
   },
   "progression": {

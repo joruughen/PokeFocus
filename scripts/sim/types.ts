@@ -135,6 +135,8 @@ export interface Tally {
   counterHits: number
   counterEnergyLost: number
   counterOnLeader: number
+  /** Counterattacks that left their target at 0 Energy (exhausted between sessions). */
+  counterExhausted: number
   restSessions: number
   sleepingStuckEnd: number
   // sessions
@@ -249,6 +251,7 @@ export function emptyTally(): Tally {
     counterHits: 0,
     counterEnergyLost: 0,
     counterOnLeader: 0,
+    counterExhausted: 0,
     restSessions: 0,
     sleepingStuckEnd: 0,
     sessionsTotal: 0,

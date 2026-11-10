@@ -113,7 +113,8 @@
   --text-3xl--line-height: 1.05;
   --text-4xl: 3rem;
   --text-4xl--line-height: 1;
-  --text-timer: 11rem;
+  /* Scales down on phones: at 390 px a fixed 11rem clipped "24:59" on the right. */
+  --text-timer: clamp(5rem, 26vw, 11rem);
   --text-timer--line-height: 0.85;
 
   /* --- Shape -------------------------------------------------------------- */

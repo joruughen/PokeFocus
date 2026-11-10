@@ -12,9 +12,9 @@ import { toOwnedPokemon } from './individual'
 import { recordMissionEvent } from './missions'
 import { trainerLevelFromExp } from './progression'
 import { chance, type Rng } from './rng'
-import { err, ok, type OwnedPokemon, type PlayerState, type Result, type WildPokemon, type EncounterState } from './state'
+import { err, ok, type OwnedPokemon, type PlayerState, type Result, type Wave, type WildPokemon, type EncounterState } from './state'
 import { computeStats } from './stats'
-import { ballCovers, hpFractionAfter, rollWild, typeEffectiveness } from './waves'
+import { ballCovers, hitDamage, hpFractionAfter, rollWild, typeEffectiveness } from './waves'
 
 export type ThrowBall = BallSlug | 'study-ball'
 
@@ -72,7 +72,14 @@ export function wildCatchChance(state: PlayerState, wild: WildPokemon, ball: Thr
 }
 
 export interface CounterResult {
+  /** Who took the counterattack: the attacker, or the leader chain when there is none / it is exhausted. */
   targetUid: string
+  /**
+   * Team member whose hits did the most damage to this wild (the one it strikes back at), or null
+   * when nobody in the current team hit it. When it is exhausted the counter goes to the leader
+   * chain instead (`targetUid` ≠ `attackerUid`).
+   */
+  attackerUid: string | null
   attackType: TypeSlug
   effectiveness: number
   /** Energy removed (0 if missed, healed or immune). */
@@ -134,20 +141,64 @@ export function counterDamage(
     Math.pow(wildLevel / Math.max(1, targetLevel), c.levelExponent) *
     effectiveness *
     (1 - Math.min(c.defenseMaxReduction, targetDefense / c.defenseDivisor)) *
-    (legendary ? c.legendaryMult : 1)
+    (legendary ? c.legendaryMult : 1) *
+    (c.damageMult ?? 1)
   )
 }
 
-/** Resolve a counterattack against the team. Pure: returns the updated team member and wild. */
+/**
+ * Damage each current team member dealt to the wild in `slot` of `wave` (effective hits:
+ * in manual mode only what was assigned there), strongest first; ties keep the team order.
+ * Members no longer in the team and members whose hits did 0 are left out.
+ */
+export function wildAttackers(state: PlayerState, wave: Pick<Wave, 'hits' | 'assignments' | 'wilds'>, slot: number, ctx: EngineContext = defaultContext()): { uid: string; damage: number }[] {
+  const wild = wave.wilds[slot]
+  if (!wild || !wave.hits) return []
+  const stats = computeStats(wild, ctx)
+  const types = getSpecies(wild.speciesSlug, ctx).types
+  const byUid = new Map<string, number>()
+  for (const h of effectiveHits(wave)) {
+    if (h.target !== slot) continue
+    byUid.set(h.uid, (byUid.get(h.uid) ?? 0) + hitDamage(h, stats, wild.level, types, wild.isLegendary, ctx))
+  }
+  return state.team
+    .map((uid) => ({ uid, damage: byUid.get(uid) ?? 0 }))
+    .filter((x) => x.damage > 0 && state.pokemon[x.uid])
+    .sort((a, b) => b.damage - a.damage)
+}
+
+/**
+ * Who a wild counterattacks after a failed ball (GDD §11.4): the team member that hit it hardest
+ * (`attackerUid`). If nobody hit it, or that attacker is exhausted (0 Energy), the counter goes to
+ * the leader, or the next member with Energy (`targetUid`); null when the whole team is exhausted.
+ */
+export function counterTarget(state: PlayerState, ref: WildRef, ctx: EngineContext = defaultContext()): { attackerUid: string | null; targetUid: string | null } {
+  const wave = state.encounter?.waves[ref.waveIndex]
+  const attackerUid = wave ? (wildAttackers(state, wave, ref.wildIndex, ctx)[0]?.uid ?? null) : null
+  const attacker = attackerUid ? state.pokemon[attackerUid] : undefined
+  if (attacker && attacker.energy.current > 0) return { attackerUid, targetUid: attackerUid }
+  const fallback = teamMembers(state).find((p) => p.energy.current > 0)
+  return { attackerUid, targetUid: fallback?.uid ?? null }
+}
+
+/**
+ * Resolve a counterattack. Pure: returns the updated team member and wild. With `ref` (the wild's
+ * place in the encounter) it strikes the wild's attacker (`counterTarget`); without it, the leader
+ * chain (first member with Energy). The attack type and every target-side effect (own counterMiss,
+ * counterDamageTaken, counterImmuneType, counterMinHp1, counterReflect, counterStatus,
+ * nextThrowBonus) use whoever takes the hit.
+ */
 export function resolveCounter(
   state: PlayerState,
   wild: WildPokemon,
   rng: Rng,
   ctx: EngineContext = defaultContext(),
+  ref?: WildRef,
 ): { counter: CounterResult; target: OwnedPokemon; wild: WildPokemon } | null {
   const cfg = ctx.config
   const team = teamMembers(state)
-  const target = team.find((p) => p.energy.current > 0)
+  const picked = ref ? counterTarget(state, ref, ctx) : { attackerUid: null, targetUid: team.find((p) => p.energy.current > 0)?.uid ?? null }
+  const target = picked.targetUid ? state.pokemon[picked.targetUid] : undefined
   if (!target) return null
   const isLeader = state.team[0] === target.uid
   const stats = computeStats(target, ctx)
@@ -167,6 +218,7 @@ export function resolveCounter(
   const active = effects.filter((e) => evaluateWhen(e.effect.when, wc, cfg))
   const counter: CounterResult = {
     targetUid: target.uid,
+    attackerUid: picked.attackerUid,
     attackType,
     effectiveness: eff,
     damage: 0,
@@ -305,7 +357,7 @@ export function throwBall(
   let nextWild: WildPokemon = { ...usedWild, failedThrows: failed }
   let counter: CounterResult | null = null
   if (!(mods.counterNoFirst && failed === 1)) {
-    const r = resolveCounter(s, nextWild, rng, ctx)
+    const r = resolveCounter(s, nextWild, rng, ctx, ref)
     if (r) {
       counter = r.counter
       nextWild = r.wild

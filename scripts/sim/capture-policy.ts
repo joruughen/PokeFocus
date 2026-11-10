@@ -426,6 +426,7 @@ function recordThrow(s: PlayerState, ball: ThrowBall, w: WildPokemon, outcome: T
     t.counterHits++
     t.counterEnergyLost += outcome.counter.damage
     if (outcome.counter.targetUid === leaderBefore) t.counterOnLeader++
+    if (outcome.counter.energyAfter <= 0) t.counterExhausted++
   }
   if (outcome.kind === 'fled') {
     t.fled++

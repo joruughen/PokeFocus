@@ -194,11 +194,11 @@
   "team": {
     "title": "Tu equipo",
     "leader": "Líder",
-    "leaderTip": "El líder recibe los contraataques cuando falla una captura.",
+    "leaderTip": "El líder recibe los contraataques de los salvajes que nadie dañó o cuyo atacante está agotado.",
     "emptySlotHow": "Captura Pokémon en las oleadas y súmalos al equipo entre sesiones.",
     "emptySlots_one": "{{count}} hueco libre",
     "emptySlots_other": "{{count}} huecos libres",
-    "subtitle": "Hasta 6 Pokémon estudian contigo. El primero es el líder: recibe los contraataques cuando falla una captura.",
+    "subtitle": "Hasta 6 Pokémon estudian contigo. Cuando una Ball falla, el salvaje contraataca a quien más daño le hizo; el primero, el líder, cubre al resto.",
     "locked": "Tu equipo está estudiando. Podrás cambiarlo al terminar la sesión.",
     "slotFree": "Hueco {{n}} libre",
     "order": "Orden del equipo",
@@ -217,9 +217,9 @@
     "warnAsleep": "Dormido: no actuará en la próxima sesión.",
     "warnExhausted": "Agotado: no actuará hasta recuperar Energía.",
     "warnTired": "Puede agotarse en una sesión de {{minutes}} min.",
-    "leaderRow": "Recibe los contraataques. Aguante {{grit}}.",
+    "leaderRow": "Cubre los contraataques que nadie más recibe. Aguante {{grit}}.",
     "leaderTitle": "El líder",
-    "leaderWhy": "Cuando una Ball falla, el salvaje contraataca al líder. Si está agotado, al siguiente.",
+    "leaderWhy": "Cuando una Ball falla, el salvaje contraataca a quien más daño le hizo. Si nadie le hizo daño o ese Pokémon está agotado, lo recibe el líder (y si también lo está, el siguiente).",
     "gritNote": "Reduce el daño de cada contraataque.",
     "energyNote": "Es su vida: a 0 deja de actuar.",
     "weakTo": "Recibe más daño de:",
@@ -256,7 +256,7 @@
       "doneLeader": "{{in}} ocupa el lugar de {{out}} y es el nuevo líder"
     },
     "memberTitle": "Tu Pokémon",
-    "memberWhy": "Va en el puesto {{n}}: solo recibe los contraataques si los que van delante se quedan sin Energía.",
+    "memberWhy": "Va en el puesto {{n}}: recibe los contraataques de los salvajes a los que más daño hizo. Si se agota, los cubre el líder.",
     "seeSheet": "Ver ficha completa",
     "selectOf": "Ver los datos de {{name}}"
   },
@@ -475,7 +475,7 @@
       "lost": "Ball de Estudio perdida",
       "converted": "Sin elegibles: ganaste una Poké Ball"
     },
-    "counterTarget": "Recibe los contraataques",
+    "counterTarget": "Recibirá el contraataque",
     "missed": "¡Falló!",
     "counterMissed": "El contraataque falló.",
     "counterHealed": "Absorbió el ataque de tipo {{type}} y recuperó {{amount}} de Energía.",
@@ -513,7 +513,11 @@
     },
     "tries": "Intentos",
     "studyEligibleTip": "Captura asegurada con la Ball de Estudio de esta oleada.",
-    "hitBy": "Golpes"
+    "hitBy": "Golpes",
+    "counterTook": "Recibió el contraataque",
+    "counterWhyAttacker": "Es quien más daño le hizo a este salvaje.",
+    "counterWhyExhausted": "{{name}} le hizo más daño, pero está agotado: lo cubre el líder.",
+    "counterWhyNobody": "Nadie de tu equipo le hizo daño: lo recibe el líder."
   },
   "firstRun": {
     "you": "entrenador",
@@ -865,7 +869,7 @@
       },
       "throw": {
         "title": "Lanza una Ball",
-        "body": "Elige un salvaje y una Ball; verás la probabilidad antes de lanzar. Si falla, el salvaje contraataca a tu líder y le quita Energía."
+        "body": "Elige un salvaje y una Ball; verás la probabilidad antes de lanzar. Si falla, el salvaje contraataca al Pokémon que más daño le hizo y le quita Energía."
       },
       "flee": {
         "title": "Intentos antes de huir",
@@ -873,7 +877,7 @@
       },
       "counter": {
         "title": "Contraataque",
-        "body": "{{name}} recibió {{damage}} de Energía. Los contraataques van primero al líder y, si está agotado, al siguiente. Un líder con mucho Aguante resiste mejor."
+        "body": "{{name}} recibió {{damage}} de Energía. Cada salvaje contraataca a quien más daño le hizo. Si nadie le hizo daño o ese Pokémon está agotado, lo recibe el líder (y si también lo está, el siguiente con Energía)."
       },
       "fled": {
         "title": "Se escapó",
@@ -902,6 +906,10 @@
       "damage": {
         "title": "Reparte el daño",
         "body": "Cada ficha es el daño que hizo un Pokémon de tu equipo en este bloque. Toca una y luego un salvaje para mandárselo todo. Puedes cambiarlo hasta lanzar la primera Ball. Si tienes prisa, pulsa Auto."
+      },
+      "teamEnergy": {
+        "title": "Cuida la Energía de todos",
+        "body": "Los contraataques ya no van siempre al líder: los recibe quien atacó. Mira aquí la Energía de todo el equipo; el marcado es quien recibirá el próximo. Repartir el daño entre varios salvajes también reparte los golpes."
       }
     },
     "box": {
@@ -971,11 +979,11 @@
       },
       "leader": {
         "title": "Elige bien al líder",
-        "body": "Recibe los contraataques cuando falla una Ball. Un líder con mucho Aguante y Energía resiste mejor; fíjate también en sus debilidades de tipo."
+        "body": "Cubre los contraataques cuando el atacante está agotado o nadie dañó al salvaje. Un líder con mucho Aguante y Energía resiste mejor; fíjate también en sus debilidades de tipo."
       },
       "order": {
         "title": "El orden importa",
-        "body": "El primero es el líder. Si se agota, los contraataques pasan al siguiente. El resto del orden no cambia los puntos."
+        "body": "El primero es el líder. Si se agota, lo que cubría pasa al siguiente. Cada Pokémon recibe los contraataques de sus propios ataques, así que el Aguante de todos cuenta. El resto del orden no cambia los puntos."
       },
       "tired": {
         "title": "Alguien está cansado",
@@ -1356,7 +1364,7 @@
     },
     "team": {
       "title": "Suma un segundo miembro al equipo",
-      "how": "En Equipo, elige a alguien de tu Caja."
+      "how": "En Equipo, elige a alguien de tu Caja. Con más miembros, los contraataques se reparten entre quienes atacan."
     },
     "equip": {
       "title": "Equipa una técnica",
@@ -2132,5 +2140,13 @@
       "endInPast": "El fin ya pasó.",
       "tooLong": "La ventana puede durar 14 días como máximo."
     }
+  },
+  "teamEnergy": {
+    "label": "Energía del equipo",
+    "title": "Energía del equipo",
+    "out": "Agotado",
+    "nextTarget": "Recibirá el próximo contraataque",
+    "wavesNote": "Si una Ball falla, el salvaje contraataca a quien más daño le hizo (marcado). Si nadie le hizo daño o ese Pokémon está agotado, lo recibe el líder.",
+    "sessionNote": "Energía al empezar la sesión. Cada acción gasta un poco y, en las oleadas, los contraataques van a quien atacó a cada salvaje."
   }
 }

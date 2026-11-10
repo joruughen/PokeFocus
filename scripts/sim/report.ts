@@ -391,7 +391,7 @@ ${mdTable(['Perfil', 'Estado/sesión', 'Usadas', 'Sustituir/sesión', 'Usadas'],
 }
 
 function sec5(c: Ctx): string {
-  const { base, profs } = c
+  const { base, profs, cfg, weeks } = c
   const rows = profs.map((p) => {
     const ss = rewardedSessions(base[p] as ProfileAgg)
     const memberSessions = sum(ss.map((s) => s.active))
@@ -404,6 +404,21 @@ function sec5(c: Ctx): string {
       pct(ss.filter((s) => s.active > 0 && s.exhausted >= s.active).length / Math.max(1, ss.length)),
       pct(mean(ss.map((s) => s.endEnergyFrac))),
       pct(mean(ss.map((s) => s.asleep / Math.max(1, s.teamSize)))),
+    ]
+  })
+  const counterRows = profs.map((p) => {
+    const a = base[p] as ProfileAgg
+    const t = a.tallyMean
+    const sessions = rewardedSessions(a).length / Math.max(1, a.runs.length)
+    return [
+      PN[p],
+      n1(t.counterHits),
+      n2(t.counterHits / Math.max(1, sessions)),
+      n0(t.counterEnergyLost),
+      n1(t.counterEnergyLost / Math.max(1, t.counterHits)),
+      pct(t.counterOnLeader / Math.max(1, t.counterHits)),
+      n1(t.counterExhausted),
+      n2(t.counterExhausted / Math.max(1, sessions)),
     ]
   })
   const ord = ['constant', 'marathoner', 'night-owl'].filter((p) => base[p as ProfileId]).map((p) => {
@@ -423,6 +438,10 @@ ${mdTable(['Perfil', 'Sesiones', '% con algún agotado', 'Agotados/sesión', '% 
 Sesiones con algún agotado según el orden dentro del día:
 
 ${mdTable(['Perfil', '1.ª', '2.ª', '3.ª', '4.ª o más'], ord)}
+
+**Contraataques** (lanzamientos fallidos, media por jugador en ${weeks} semanas; ×${n2(cfg.capture.counter.damageMult ?? 1)} \`capture.counter.damageMult\`). Cada salvaje contraataca a quien más daño le hizo; el líder solo si nadie le dañó o ese atacante está agotado. "Agotan" = contraataques que dejan a su objetivo a 0 de Energía.
+
+${mdTable(['Perfil', 'Contraataques', 'Por sesión', 'Energía perdida', 'Por golpe', '% al líder', 'Agotan', 'Agotan/sesión'], counterRows)}
 `
 }
 
