@@ -307,6 +307,7 @@ function PointsSection({ result }: { result: SessionResult }) {
 /** The steps of a points total: label (with a help tip and its multiplier), what it added, and the running total. */
 function PointsSteps({ steps, actions }: { steps: PointsStep[]; actions?: number }) {
   const { t, i18n } = useTranslation()
+  const cfg = useContent().config
   const lng = i18n.language
   const tipValues = { min: cfg.session.claimWindowMinutes, full: cfg.session.dailyFullRewardMinutes / 60, half: cfg.session.dailyHalfRewardMinutes / 60 }
   const last = steps[steps.length - 1]
