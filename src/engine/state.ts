@@ -7,6 +7,7 @@ import type { BaseStats, LocaleCode, TypeSlug } from './data-types'
 import type { BallSlug, FocusLabel, LeagueId, WildStatus } from './config'
 import type { TimeZoneSpec } from './time'
 import type { MissionsState } from './missions'
+import type { TeamPreset } from './teams'
 
 // ---------------------------------------------------------------------------
 // Inputs shared by several APIs
@@ -48,6 +49,8 @@ export interface IndividualCore {
 
 export interface OwnedPokemon extends IndividualCore {
   uid: string
+  /** Player-given name (1–12 graphemes, validated in teams.ts). Absent = none: the species name is shown. */
+  nickname?: string
   /** Total EXP (level L needs `expForLevel(L)`). */
   exp: number
   /** Minutes studied in the team (Bond, GDD §8). */
@@ -319,6 +322,8 @@ export interface PlayerState {
   counters: { pokemon: number; session: number; charge: number }
   /** Daily/weekly missions and claimed Pokédex milestones (absent in older saves; see missions.ts). */
   missions?: MissionsState
+  /** Saved teams (at most 10, see teams.ts). Absent in older saves = none. */
+  teamPresets?: TeamPreset[]
   /** Preference: split the wave damage automatically (no assignment step). Absent = false. */
   autoDamage?: boolean
 }

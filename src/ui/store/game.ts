@@ -114,6 +114,15 @@ export interface GameState extends GameDoc {
   setLeader: (uid: string) => Promise<GameActionError | null>
   evolve: (uid: string, to: string) => Promise<{ ok: true; pokemon: OwnedPokemon } | { ok: false; error: GameActionError }>
   heal: (uid: string, item: string) => Promise<GameActionError | null>
+  /** Nickname (empty text or null removes it). */
+  setNickname: (uid: string, nickname: string | null) => Promise<GameActionError | null>
+
+  /** Saved teams. `applyPreset` returns how many members were skipped because they no longer exist. */
+  savePreset: (name: string) => Promise<{ ok: true; id: string } | { ok: false; error: GameActionError }>
+  renamePreset: (id: string, name: string) => Promise<GameActionError | null>
+  overwritePreset: (id: string) => Promise<GameActionError | null>
+  deletePreset: (id: string) => Promise<GameActionError | null>
+  applyPreset: (id: string) => Promise<{ ok: true; missing: number } | { ok: false; error: GameActionError }>
 
   claimMission: (id: string) => Promise<{ ok: true; reward: MissionReward } | { ok: false; error: GameActionError }>
   /** Rewards claimed ([] on failure; see `error`). */
@@ -291,6 +300,19 @@ export const useGame = create<GameState>()((set, get) => {
       return { ok: true, pokemon: r.result.pokemon }
     },
     heal: async (uid, item) => errOf(await dispatch({ type: 'heal', uid, item })),
+    setNickname: async (uid, nickname) => errOf(await dispatch({ type: 'setNickname', uid, nickname })),
+
+    savePreset: async (name) => {
+      const r = await dispatch({ type: 'savePreset', name })
+      return r.ok ? { ok: true, id: r.result.id } : { ok: false, error: r.error }
+    },
+    renamePreset: async (id, name) => errOf(await dispatch({ type: 'renamePreset', id, name })),
+    overwritePreset: async (id) => errOf(await dispatch({ type: 'overwritePreset', id })),
+    deletePreset: async (id) => errOf(await dispatch({ type: 'deletePreset', id })),
+    applyPreset: async (id) => {
+      const r = await dispatch({ type: 'applyPreset', id })
+      return r.ok ? { ok: true, missing: r.result.missing } : { ok: false, error: r.error }
+    },
 
     claimMission: async (id) => {
       const r = await dispatch({ type: 'claimMission', id })

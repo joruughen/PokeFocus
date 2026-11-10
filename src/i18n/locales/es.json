@@ -691,7 +691,9 @@
       "wrong_time_of_day": "No es la hora del día adecuada.",
       "trade_unavailable": "Los intercambios aún no existen.",
       "unsupported": "Esa evolución aún no está disponible.",
-      "no_such_evolution": "No puede evolucionar a esa especie."
+      "no_such_evolution": "No puede evolucionar a esa especie.",
+      "nickname_too_long": "Ese mote es demasiado largo (máximo 12 caracteres).",
+      "nickname_invalid": "Ese mote tiene caracteres que no se pueden usar."
     },
     "heal": {
       "unknown_pokemon": "Ese Pokémon ya no está.",
@@ -753,7 +755,17 @@
     "already_finished": "Esa sesión ya terminó.",
     "already_claimed": "Eso ya fue reclamado.",
     "no_encounter": "No hay ninguna oleada activa.",
-    "timezone_locked": "Solo puedes cambiar la zona horaria una vez cada 30 días."
+    "timezone_locked": "Solo puedes cambiar la zona horaria una vez cada 30 días.",
+    "preset": {
+      "preset_name_empty": "Ponle un nombre al equipo.",
+      "preset_name_too_long": "El nombre es demasiado largo (máximo 20 caracteres).",
+      "preset_name_invalid": "Ese nombre tiene caracteres que no se pueden usar.",
+      "too_many_presets": "Ya tienes 10 equipos guardados. Borra uno para guardar otro.",
+      "unknown_preset": "Ese equipo guardado ya no existe.",
+      "preset_empty": "Ya no queda ninguno de los Pokémon de ese equipo.",
+      "session_active": "No puedes cambiar de equipo durante una sesión.",
+      "team_empty": "El equipo necesita al menos un Pokémon."
+    }
   },
   "dev": {
     "title": "Desarrollo",
@@ -1149,7 +1161,7 @@
     },
     "slot": "Hueco {{n}}",
     "expToNext": "faltan {{exp}} EXP",
-    "addTeam": "Sumar al equipo",
+    "addTeam": "Poner en el equipo",
     "teamFull": "Equipo lleno",
     "removeTeam": "Pasar a la Caja",
     "added": "{{name}} se sumó al equipo",
@@ -1178,7 +1190,10 @@
     "noAbility": "Su especie aún no tiene habilidades en PokeFocus.",
     "met": "Origen",
     "starter": "Tu primer compañero.",
-    "caughtWith": "Capturado al Nv {{level}} con {{ball}}, el {{date}}."
+    "caughtWith": "Capturado al Nv {{level}} con {{ball}}, el {{date}}.",
+    "swapTeam": "Cambiar por…",
+    "swapTip": "El equipo está lleno: elige a quién sustituye y compara a los dos antes de confirmar.",
+    "swapLocked": "No puedes cambiar el equipo durante una sesión."
   },
   "tech": {
     "title": "Técnicas",
@@ -2132,5 +2147,87 @@
       "endInPast": "El fin ya pasó.",
       "tooLong": "La ventana puede durar 14 días como máximo."
     }
+  },
+  "nick": {
+    "title": "Mote de {{species}}",
+    "body": "Dale un nombre propio. En la caja, el equipo y los informes verás el mote, y la especie queda como texto secundario. Los rankings y tus amigos siguen viendo solo la especie.",
+    "label": "Mote",
+    "hint": "Hasta {{max}} caracteres. Vacío = sin mote.",
+    "add": "Poner mote",
+    "change": "Cambiar mote",
+    "remove": "Quitar mote",
+    "save": "Guardar mote",
+    "saved": "{{name}} es el mote de tu {{species}}",
+    "removed": "{{name}} vuelve a llamarse por su especie",
+    "speciesLabel": "Especie: {{species}}",
+    "error": {
+      "nickname_too_long": "Máximo {{max}} caracteres.",
+      "nickname_invalid": "Ese mote tiene caracteres que no se pueden usar (saltos de línea o invisibles)."
+    }
+  },
+  "presets": {
+    "title": "Equipos guardados",
+    "intro": "Guarda el equipo que tienes ahora con un nombre y cámbiate a él con un toque, en esta pantalla o en el inicio antes de empezar. Se conservan el orden y el líder.",
+    "locked": "No puedes cambiar de equipo durante una sesión. Podrás hacerlo al terminar.",
+    "nameLabel": "Nombre del equipo",
+    "namePlaceholder": "Ej. Repaso de mates",
+    "nameHint": "{{count}}/{{max}} caracteres",
+    "save": "Guardar equipo actual",
+    "full": "Ya tienes {{max}} equipos guardados. Borra uno para guardar otro.",
+    "empty": "Aún no tienes equipos guardados. Arma tu equipo y guárdalo aquí.",
+    "active": "En uso",
+    "allGone": "Ya no queda ninguno de sus Pokémon",
+    "someGone_one": "{{count}} Pokémon ya no está",
+    "someGone_other": "{{count}} Pokémon ya no están",
+    "use": "Usar",
+    "useOf": "Usar el equipo {{name}}",
+    "overwrite": "Actualizar",
+    "overwriteOf": "Sobrescribir {{name}} con el equipo actual",
+    "renameOf": "Renombrar {{name}}",
+    "deleteOf": "Borrar {{name}}",
+    "overwriteTitle": "¿Sobrescribir «{{name}}»?",
+    "overwriteBody": "El equipo guardado pasará a ser tu equipo actual, con su orden y su líder.",
+    "overwriteConfirm": "Sobrescribir",
+    "overwritten": "«{{name}}» ahora es tu equipo actual",
+    "deleteTitle": "¿Borrar «{{name}}»?",
+    "deleteBody": "Solo se borra el equipo guardado. Tus Pokémon no se tocan.",
+    "deleteConfirm": "Borrar",
+    "deleted": "Equipo «{{name}}» borrado",
+    "renameTitle": "Renombrar equipo",
+    "renameConfirm": "Guardar nombre",
+    "renamed": "Equipo renombrado a «{{name}}»",
+    "saved": "Equipo «{{name}}» guardado",
+    "applied": "Equipo «{{name}}» en uso",
+    "appliedMissing_one": "{{count}} Pokémon del equipo guardado ya no está y se ignoró.",
+    "appliedMissing_other": "{{count}} Pokémon del equipo guardado ya no están y se ignoraron.",
+    "quickTitle": "Equipos guardados",
+    "manage": "Gestionar",
+    "error": {
+      "preset_name_empty": "Ponle un nombre al equipo.",
+      "preset_name_too_long": "Máximo {{max}} caracteres.",
+      "preset_name_invalid": "Ese nombre tiene caracteres que no se pueden usar."
+    }
+  },
+  "swapCmp": {
+    "pickTitle": "Cambiar por {{name}}",
+    "pickBody": "¿A quién sustituye {{name}}? Después verás una comparación antes de confirmar.",
+    "pickOf": "Comparar a {{in}} con {{out}}",
+    "title": "{{in}} por {{out}}",
+    "entering": "Entra",
+    "leaving": "Sale",
+    "level": "Nivel",
+    "energyNow": "Energía ahora",
+    "types": "Tipos",
+    "role": "Rol",
+    "ability": "Habilidad",
+    "techniques": "Técnicas equipadas",
+    "noTechniques": "Sin técnicas equipadas",
+    "differs": "distinto",
+    "higher": "más alto",
+    "lower": "más bajo",
+    "takesLeader": "{{name}} será el nuevo líder del equipo.",
+    "takesSlot": "{{name}} ocupará el hueco {{n}} del orden.",
+    "sure": "¿Seguro que quieres hacer el cambio?",
+    "confirm": "Sí, cambiar"
   }
 }

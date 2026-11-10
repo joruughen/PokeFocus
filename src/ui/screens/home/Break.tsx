@@ -105,7 +105,7 @@ export function Break() {
           {views.map((v) => (
             <div key={v.pokemon.uid} className="relative flex w-28 flex-col items-center">
               <Platform width={104} night={scene.time === 'night'} className="absolute bottom-0 brightness-75" />
-              <Sprite kind="showdown" slug={v.pokemon.speciesSlug} shiny={v.pokemon.isShiny} scale={2} flip alt={names.species(v.pokemon.speciesSlug)} className="relative mb-3 brightness-90" />
+              <Sprite kind="showdown" slug={v.pokemon.speciesSlug} shiny={v.pokemon.isShiny} scale={2} flip alt={names.pokemonFull(v.pokemon)} className="relative mb-3 brightness-90" />
             </div>
           ))}
         </div>
@@ -129,8 +129,8 @@ export function Break() {
               <li key={v.pokemon.uid} className="flex items-center gap-3 bg-dusk-800 p-3 shadow-frame">
                 <Sprite kind="icon" slug={v.pokemon.speciesSlug} alt="" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-display text-base">{names.species(v.pokemon.speciesSlug)}</span>
-                  <ProgressBar size="sm" variant="energy" value={after} from={v.energy} max={v.maxEnergy} label={t('pokemon.energyOf', { name: names.species(v.pokemon.speciesSlug) })} />
+                  <span className="block truncate font-display text-base">{names.pokemon(v.pokemon)}</span>
+                  <ProgressBar size="sm" variant="energy" value={after} from={v.energy} max={v.maxEnergy} label={t('pokemon.energyOf', { name: names.pokemon(v.pokemon) })} />
                 </span>
                 <span className="font-num text-lg leading-none text-leaf-400 tabular">+{Math.round(after - v.energy)}</span>
               </li>

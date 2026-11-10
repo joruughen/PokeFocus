@@ -49,7 +49,7 @@ export function Results() {
   for (const m of result.members) {
     if (m.conditionType && m.conditionMult > 1) {
       const c = condByType.get(m.conditionType) ?? { mult: m.conditionMult, who: [] }
-      c.who.push(names.species(m.speciesSlug))
+      c.who.push(names.pokemon(player.pokemon[m.uid], m.speciesSlug))
       c.mult = Math.max(c.mult, m.conditionMult)
       condByType.set(m.conditionType, c)
     }
@@ -127,7 +127,7 @@ export function Results() {
                   shiny={player.pokemon[m.uid]?.isShiny}
                   scale={2}
                   flip
-                  alt={names.species(player.pokemon[m.uid]?.speciesSlug ?? m.speciesSlug)}
+                  alt={names.pokemonFull(player.pokemon[m.uid], m.speciesSlug)}
                   className="relative mb-3 motion-safe:animate-bob"
                   style={{ animationDelay: `${i * 0.2}s` }}
                 />
@@ -255,7 +255,7 @@ function MemberRow({ m, events, before, now }: { m: MemberResult; events: Progre
   const player = usePlayer()
   const view = pokemonView(player, m.uid, now)
   if (!view) return null
-  const name = names.species(view.pokemon.speciesSlug)
+  const name = names.pokemon(view.pokemon)
   const from = before.levels[m.uid] ?? view.pokemon.level
   const up = view.pokemon.level > from
   const newMoves = events.flatMap((e) => (e.type === 'levelUp' ? e.newMoves : []))

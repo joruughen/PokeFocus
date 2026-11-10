@@ -94,7 +94,7 @@ function MemberReport({ m, result, player }: { m: MemberResult; result: SessionR
   const lng = i18n.language
   const names = useNames()
   const chargeLabel = useChargeLabel(player)
-  const name = names.species(m.speciesSlug)
+  const name = names.pokemon(player?.pokemon[m.uid], m.speciesSlug)
   const conds = conditionLines(m, result)
   const charges = chargesBy(result, m.uid)
   const ability = player?.pokemon[m.uid]?.ability ?? null
@@ -178,7 +178,7 @@ function MemberReport({ m, result, player }: { m: MemberResult; result: SessionR
                     <span>{t('report.conditionLine', { mult: fmtMult(c.mult), actions: c.actions, total: m.actions })}</span>
                     <span className="text-mist-400">
                       {c.forcedBy
-                        ? t('report.conditionForced', { move: names.move(c.forcedBy.move), who: names.species(player?.pokemon[c.forcedBy.byUid]?.speciesSlug ?? ''), minute: Math.round(c.forcedBy.atMinute) })
+                        ? t('report.conditionForced', { move: names.move(c.forcedBy.move), who: names.pokemon(player?.pokemon[c.forcedBy.byUid]), minute: Math.round(c.forcedBy.atMinute) })
                         : t(`conditions.rule.${c.type}`, conditionRuleValues(result.minutes))}
                     </span>
                   </li>
@@ -290,7 +290,7 @@ function WildFactorRow({ f, result, player }: { f: WildFactor; result: SessionRe
   const { t, i18n } = useTranslation()
   const lng = i18n.language
   const names = useNames()
-  const who = (uid: string | null) => (uid ? names.species(player?.pokemon[uid]?.speciesSlug ?? result.members.find((m) => m.uid === uid)?.speciesSlug ?? '') : '')
+  const who = (uid: string | null) => (uid ? names.pokemon(player?.pokemon[uid], result.members.find((m) => m.uid === uid)?.speciesSlug ?? '') : '')
   const src = (uid: string | null, source: string | null) => (source ? t('report.wild.by', { who: who(uid), source: uid && player?.pokemon[uid]?.ability !== source ? names.move(source) : names.ability(source) }) : '')
   let icon: 'clock' | 'star' | 'league' | 'bolt' | 'help' = 'star'
   let body: ReactNode

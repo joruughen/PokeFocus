@@ -5,7 +5,7 @@ import { Button, Dialog, Panel, PixelIcon, ProgressBar, RoleBadge, Select, Sprit
 import { hintAnchor } from '../../hints'
 import { conditionEnvNow } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
-import { speciesName, typeName, useNames } from '../../lib/names'
+import { pokemonName, typeName, useNames } from '../../lib/names'
 import { useSessionWeather } from '../../lib/weather'
 import { navigate } from '../../router'
 import { usePlayer } from '../../store/selectors'
@@ -60,7 +60,7 @@ function BoxPickerPanel({ at, disabled, onApply }: Props) {
       const mon = mons[uid]
       if (!mon) return
       if (teamUids.length >= 6) setSwap({ uid, open: true })
-      else void onApply([...teamUids, uid], t('detail.added', { name: speciesName(mon.speciesSlug, lng) }))
+      else void onApply([...teamUids, uid], t('detail.added', { name: pokemonName(mon, lng) }))
     },
     [mons, teamUids, onApply, t, lng],
   )
@@ -76,7 +76,7 @@ function BoxPickerPanel({ at, disabled, onApply }: Props) {
     const next = swapInTeam(teamUids, outUid, swap.uid)
     const out = mons[outUid]
     if (!next || !out) return
-    const params = { in: names.species(incoming.speciesSlug), out: names.species(out.speciesSlug) }
+    const params = { in: names.pokemon(incoming), out: names.pokemon(out) }
     void onApply(next, t(teamUids.indexOf(outUid) === 0 ? 'team.swap.doneLeader' : 'team.swap.done', params))
   }
 
@@ -137,12 +137,12 @@ function BoxPickerPanel({ at, disabled, onApply }: Props) {
         open={swap?.open ?? false}
         onOpenChange={(open) => !open && setSwap((s) => s && { ...s, open: false })}
         size="md"
-        title={t('team.swap.title', { name: incoming ? names.species(incoming.speciesSlug) : '' })}
-        description={t('team.swap.body', { name: incoming ? names.species(incoming.speciesSlug) : '' })}
+        title={t('team.swap.title', { name: incoming ? names.pokemon(incoming) : '' })}
+        description={t('team.swap.body', { name: incoming ? names.pokemon(incoming) : '' })}
       >
         <ol className="flex flex-col gap-2">
           {members.map((m, i) => (
-            <SwapMember key={m.mon.uid} row={m} index={i} incomingName={incoming ? names.species(incoming.speciesSlug) : ''} disabled={disabled} onPick={onSwap} />
+            <SwapMember key={m.mon.uid} row={m} index={i} incomingName={incoming ? names.pokemon(incoming) : ''} disabled={disabled} onPick={onSwap} />
           ))}
         </ol>
       </Dialog>
@@ -183,7 +183,7 @@ const PickItem = memo(function PickItem({ row, full, disabled, onAction }: { row
   const { t } = useTranslation()
   const names = useNames()
   const { mon } = row
-  const name = names.species(mon.speciesSlug)
+  const name = names.pokemon(mon)
   const dim = row.state !== 'ready'
   return (
     // content-visibility keeps hundreds of rows cheap to lay out and paint.
@@ -239,7 +239,7 @@ function SwapMember({ row, index, incomingName, disabled, onPick }: { row: PickR
   const { t } = useTranslation()
   const names = useNames()
   const { mon } = row
-  const name = names.species(mon.speciesSlug)
+  const name = names.pokemon(mon)
   const leader = index === 0
   return (
     <li>

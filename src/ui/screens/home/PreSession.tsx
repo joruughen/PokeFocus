@@ -24,6 +24,7 @@ import { AutoDamageToggle } from './AutoDamageToggle'
 import { BreakOffer, useBreakOffer } from './Break'
 import { Checklist } from './Checklist'
 import { GroupStudyPanel } from './GroupStudy'
+import { QuickTeamSwitch } from '../team/TeamPresets'
 import { useNow } from '../../store/clock'
 import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
@@ -106,6 +107,8 @@ export function PreSession() {
         </div>
       </Stage>
 
+      <QuickTeamSwitch />
+
       <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <Panel title={t('home.plan.title')} help="home.duration">
           <div className="flex flex-col gap-6">
@@ -165,7 +168,7 @@ export function PreSession() {
             ) : tired.length > 0 && (
               <p {...hintAnchor('home.energy')} className="flex items-start gap-2 bg-dusk-900 p-3 text-sm text-amber-400 inset-shadow-well">
                 <PixelIcon name="bolt" size={20} className="mt-0.5 shrink-0" />
-                <span>{t('home.plan.tired', { names: tired.map((v: PokemonView) => names.species(v.pokemon.speciesSlug)).join(', '), count: tired.length })}</span>
+                <span>{t('home.plan.tired', { names: tired.map((v: PokemonView) => names.pokemon(v.pokemon)).join(', '), count: tired.length })}</span>
               </p>
             )}
 

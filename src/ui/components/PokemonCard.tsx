@@ -40,13 +40,14 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
   const { t } = useTranslation()
   const names = useNames()
   const p = view.pokemon
-  const name = names.species(p.speciesSlug)
+  const name = names.pokemon(p)
+  const fullName = names.pokemonFull(p)
   const e = energy ?? view.energy
   const exhausted = e <= 0
   const plate = (
     <div className={cx('relative w-full bg-mist-50 px-3 pt-2 pb-2.5 text-ink shadow-raised', dim && 'opacity-70')}>
       <div className="flex items-baseline justify-between gap-2">
-        <span className={cx('min-w-0 truncate font-display leading-tight', variant === 'stage' ? 'text-base' : 'text-lg')}>
+        <span title={p.nickname ? fullName : undefined} className={cx('min-w-0 truncate font-display leading-tight', variant === 'stage' ? 'text-base' : 'text-lg')}>
           {name}
           {p.isShiny && (
             <span className="ml-1 text-volt-700" aria-label={t('pokemon.shiny')}>
@@ -108,7 +109,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
           shiny={p.isShiny}
           scale={2}
           flip
-          alt={name}
+          alt={fullName}
           className={cx('relative mb-3', exhausted && 'grayscale', dim && 'brightness-75')}
         />
         {leader && (

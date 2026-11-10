@@ -10,6 +10,7 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { BoxPicker } from './BoxPicker'
+import { TeamPresetsPanel } from './TeamPresets'
 import { boxSize } from './pickFromBox'
 
 const ctx = defaultContext()
@@ -48,7 +49,7 @@ export default function Team() {
     const j = i + d
     if (j < 0 || j >= next.length) return
     ;[next[i], next[j]] = [next[j]!, next[i]!]
-    apply(next, j === 0 || i === 0 ? t('team.newLeader', { name: names.species(player.pokemon[next[0]!]?.speciesSlug ?? '') }) : undefined)
+    apply(next, j === 0 || i === 0 ? t('team.newLeader', { name: names.pokemon(player.pokemon[next[0]!]) }) : undefined)
   }
   const leader = views[0]
   // Which team member the side panel describes (the leader by default, and again if the selected one leaves the team).
@@ -96,6 +97,7 @@ export default function Team() {
       </Stage>
 
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <div className="flex min-w-0 flex-col gap-8">
         <Panel title={t('team.order')} help="team.order" {...hintAnchor('team.slots')}>
           <ol className="flex flex-col gap-3">
             {views.map((v, i) => (
@@ -113,9 +115,9 @@ export default function Team() {
                 onLeader={async () => {
                   const err = await setLeader(v.pokemon.uid)
                   if (err) toast.add({ title: errorText(err, 'box'), type: 'danger' })
-                  else toast.add({ title: t('team.newLeader', { name: names.species(v.pokemon.speciesSlug) }), type: 'success' })
+                  else toast.add({ title: t('team.newLeader', { name: names.pokemon(v.pokemon) }), type: 'success' })
                 }}
-                onRemove={() => apply(player.team.filter((u) => u !== v.pokemon.uid), t('detail.removed', { name: names.species(v.pokemon.speciesSlug) }))}
+                onRemove={() => apply(player.team.filter((u) => u !== v.pokemon.uid), t('detail.removed', { name: names.pokemon(v.pokemon) }))}
               />
             ))}
             {views.length < 6 && (
@@ -126,6 +128,8 @@ export default function Team() {
             )}
           </ol>
         </Panel>
+        <TeamPresetsPanel />
+        </div>
 
         <div className="flex min-w-0 flex-col gap-8">
           {selected && <MemberPanel view={selected} index={selectedIndex} />}
@@ -140,7 +144,7 @@ function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp,
   const { t } = useTranslation()
   const names = useNames()
   const p = view.pokemon
-  const name = names.species(p.speciesSlug)
+  const name = names.pokemon(p)
   const leader = index === 0
   const tired = !asleep && view.energy > 0 && (SESSION_MIN * 60) / view.actionIntervalSeconds > view.actionsLeft
   const warn = asleep ? { icon: 'sleep' as const, text: t('team.warnAsleep') } : view.energy <= 0 ? { icon: 'bolt' as const, text: t('team.warnExhausted') } : tired ? { icon: 'bolt' as const, text: t('team.warnTired', { minutes: SESSION_MIN }) } : null
@@ -167,8 +171,9 @@ function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp,
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Sprite kind="icon" slug={p.speciesSlug} alt="" />
           <a href={`#/box/${p.uid}`} className="font-display text-lg leading-tight underline decoration-dusk-500 underline-offset-4 hover:text-volt-300">
-            {name}
+            <span className="[overflow-wrap:anywhere]">{name}</span>
           </a>
+          {p.nickname && <span className="text-sm text-mist-400">{names.species(p.speciesSlug)}</span>}
           <span className="font-num text-xl leading-none text-mist-300">
             {t('pokemon.levelShort')}
             {p.level}
@@ -208,7 +213,7 @@ function MemberPanel({ view, index }: { view: PokemonView; index: number }) {
   const names = useNames()
   const weak = ALL_TYPES.filter((a) => typeEffectiveness(a, view.types, ctx.chart) > 1)
   const resist = ALL_TYPES.filter((a) => typeEffectiveness(a, view.types, ctx.chart) < 1)
-  const name = names.species(view.pokemon.speciesSlug)
+  const name = names.pokemon(view.pokemon)
   const leader = index === 0
   return (
     <Panel title={leader ? t('team.leaderTitle') : t('team.memberTitle')} help={leader ? 'team.leader' : undefined} {...hintAnchor('team.leaderPanel')}>
@@ -219,8 +224,9 @@ function MemberPanel({ view, index }: { view: PokemonView; index: number }) {
         <div>
           <p className="flex items-center gap-2 font-display text-xl">
             {leader && <PixelIcon name="crown" size={20} className="text-volt-400" />}
-            {name}
+            <span className="[overflow-wrap:anywhere]">{name}</span>
           </p>
+          {view.pokemon.nickname && <p className="text-xs text-mist-400">{names.species(view.pokemon.speciesSlug)}</p>}
           <p className="text-sm text-mist-300">{leader ? t('team.leaderWhy') : t('team.memberWhy', { n: index + 1 })}</p>
           <p className="mt-1 flex flex-wrap items-center gap-2">
             <RoleBadge role={view.species.role} />

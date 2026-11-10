@@ -125,6 +125,13 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('setLeader', { uid: id }),
   act('evolve', { uid: id, to: slug }),
   act('heal', { uid: id, item: slug }),
+  // Raw text only bounded here; the reducer trims and counts graphemes (nickname 12, preset name 20).
+  act('setNickname', { uid: id, nickname: z.string().max(200).nullable() }),
+  act('savePreset', { name: z.string().max(200) }),
+  act('renamePreset', { id, name: z.string().max(200) }),
+  act('overwritePreset', { id }),
+  act('deletePreset', { id }),
+  act('applyPreset', { id }),
   act('claimMission', { id }),
   act('claimAllMissions', {}),
   act('startBreak', { minutes: z.number().int().min(1).max(60) }),

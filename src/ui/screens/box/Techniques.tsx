@@ -29,7 +29,7 @@ export function Techniques({ view, locked }: { view: PokemonView; locked: string
   const equipped = p.equippedMoves
   const free = view.slots - equipped.length
   const available = view.equippable.filter((m) => !equipped.includes(m.slug))
-  const name = names.species(p.speciesSlug)
+  const name = names.pokemon(p)
 
   const save = async (moves: string[], msg: string) => {
     if (busy) return

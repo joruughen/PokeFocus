@@ -331,6 +331,7 @@ export function GroupSessionStatus() {
 // ---------------------------------------------------------------------------
 
 export function GroupFairyNote({ result }: { result: SessionResult }) {
+  const player = usePlayer()
   const { t, i18n: inst } = useTranslation()
   const names = useNames()
   const overlap = result.friendOverlap
@@ -343,7 +344,7 @@ export function GroupFairyNote({ result }: { result: SessionResult }) {
     overlap <= 0
       ? t('group.results.none')
       : fairyMembers.length > 0
-        ? t('group.results.applied', { who: fairyMembers.map((m) => names.species(m.speciesSlug)).join(', ') })
+        ? t('group.results.applied', { who: fairyMembers.map((m) => names.pokemon(player.pokemon[m.uid], m.speciesSlug)).join(', ') })
         : t('group.results.noFairy')
   return (
     <div className="mt-4 bg-dusk-900/5 p-3 text-sm text-dusk-700 shadow-frame">

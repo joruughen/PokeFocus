@@ -73,7 +73,7 @@ export function FocusSession() {
                   shiny={p.isShiny}
                   scale={2}
                   flip
-                  alt={names.species(p.speciesSlug)}
+                  alt={names.pokemon(p)}
                   className={cx('relative mb-3', !paused && 'motion-safe:animate-bob', session.asleepUids.includes(uid) && 'opacity-60')}
                   style={{ animationDelay: `${i * 0.27}s` }}
                 />

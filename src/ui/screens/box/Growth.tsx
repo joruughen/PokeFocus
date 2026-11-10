@@ -60,7 +60,7 @@ export function Candies({ view, locked }: { view: PokemonView; locked: string | 
   const busy = useBusy()
   const lng = i18n.language
   const p = view.pokemon
-  const name = names.species(p.speciesSlug)
+  const name = names.pokemon(p)
   const cap = levelCap(player)
   const atCap = p.level >= cap
   const cost = candyDustCost(p.level)
@@ -166,7 +166,7 @@ export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locke
   const player = usePlayer()
   const cond = useEvoCondition()
   const p = view.pokemon
-  const name = names.species(p.speciesSlug)
+  const name = names.pokemon(p)
   const blocked = (o: EvolutionOption): string => {
     switch (o.blockedBy) {
       case 'level_too_low':
@@ -224,7 +224,7 @@ export function EnergyBond({ view, inSession }: { view: PokemonView; inSession: 
   const busy = useBusy()
   const lng = i18n.language
   const p = view.pokemon
-  const name = names.species(p.speciesSlug)
+  const name = names.pokemon(p)
   const inTeam = player.team.includes(p.uid)
   const healItems = Object.keys(cfg.energy.potions).concat('revive').filter((k) => (player.inventory[k] ?? 0) > 0)
   const bond = bondBonus(p.bondMinutes)

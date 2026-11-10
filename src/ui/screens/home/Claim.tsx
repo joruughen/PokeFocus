@@ -59,7 +59,7 @@ export function Claim({ late }: { late: boolean }) {
                   shiny={p.isShiny}
                   scale={2}
                   flip
-                  alt={names.species(p.speciesSlug)}
+                  alt={names.pokemonFull(p)}
                   className="relative mb-3 motion-safe:animate-bob"
                   style={{ animationDelay: `${i * 0.2}s`, animationDuration: '0.7s' }}
                 />

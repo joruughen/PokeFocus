@@ -193,7 +193,7 @@ export function Waves() {
         if (outcome.counter) {
           setCounterFx({ key: Date.now(), counter: outcome.counter, energyBefore })
           emitHintEvent('throw.failed', {
-            name: names.species(player.pokemon[outcome.counter.targetUid]?.speciesSlug ?? ''),
+            name: names.pokemon(player.pokemon[outcome.counter.targetUid]),
             damage: Math.round(outcome.counter.damage),
           })
         }
@@ -472,7 +472,7 @@ function DamageTray({
   const names = useNames()
   const player = usePlayer()
   const unassigned = tokens.filter((tk) => tk.assigned === null).length
-  const pickedName = picked ? names.species(player.pokemon[picked]?.speciesSlug ?? '') : ''
+  const pickedName = picked ? names.pokemon(player.pokemon[picked]) : ''
   return (
     <Panel
       variant="frame"
@@ -534,7 +534,7 @@ function TokenButton({
   const names = useNames()
   const player = usePlayer()
   const slug = player.pokemon[token.uid]?.speciesSlug ?? ''
-  const name = names.species(slug)
+  const name = names.pokemon(player.pokemon[token.uid] ?? { speciesSlug: slug })
   const a = token.assigned
   const target = typeof a === 'number' ? wave.wilds[a] : undefined
   const where = typeof a === 'number' ? (target ? names.species(target.speciesSlug) : '?') : a === 'auto' ? t('damage.auto') : null

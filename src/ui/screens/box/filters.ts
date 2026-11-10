@@ -43,7 +43,7 @@ export function filteredMons(player: PlayerState, f: Pick<BoxFilters, 'query' | 
     if (f.where === 'team' && !inTeam) return false
     if (f.where === 'box' && inTeam) return false
     if (f.shinyOnly && !p.isShiny) return false
-    if (q && !speciesName(p.speciesSlug, lng).toLocaleLowerCase(lng).includes(q) && !p.speciesSlug.includes(q)) return false
+    if (q && !speciesName(p.speciesSlug, lng).toLocaleLowerCase(lng).includes(q) && !p.speciesSlug.includes(q) && !(p.nickname ?? '').toLocaleLowerCase(lng).includes(q)) return false
     return true
   })
   const dex = (p: OwnedPokemon) => ctx.speciesBySlug.get(p.speciesSlug)?.id ?? 0

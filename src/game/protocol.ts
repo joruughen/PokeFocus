@@ -12,8 +12,10 @@ import type {
   ChargeError,
   DamageError,
   MissionReward,
+  NicknameError,
   OwnedPokemon,
   PlayerState,
+  PresetError,
   ProgressEvent,
   SoundProfile,
   SessionResult,
@@ -113,6 +115,14 @@ export type GameAction =
   | { type: 'setLeader'; uid: string }
   | { type: 'evolve'; uid: string; to: string }
   | { type: 'heal'; uid: string; item: string }
+  /** Nickname: up to 12 graphemes, trimmed; empty text or null removes it. Allowed at any time. */
+  | { type: 'setNickname'; uid: string; nickname: string | null }
+  // Saved teams (max 10). `applyPreset` only between sessions.
+  | { type: 'savePreset'; name: string }
+  | { type: 'renamePreset'; id: string; name: string }
+  | { type: 'overwritePreset'; id: string }
+  | { type: 'deletePreset'; id: string }
+  | { type: 'applyPreset'; id: string }
   // Missions
   | { type: 'claimMission'; id: string }
   | { type: 'claimAllMissions' }
@@ -157,6 +167,13 @@ export interface ActionResults {
   setLeader: null
   evolve: { pokemon: OwnedPokemon }
   heal: null
+  setNickname: null
+  savePreset: { id: string }
+  renamePreset: null
+  overwritePreset: null
+  deletePreset: null
+  /** `missing`: members of the preset that no longer exist (released) and were skipped. */
+  applyPreset: { missing: number }
   claimMission: { reward: MissionReward }
   claimAllMissions: { rewards: MissionReward[] }
   startBreak: null
@@ -177,6 +194,8 @@ export type GameActionError =
   | ChargeError
   | DamageError
   | BoxError
+  | NicknameError
+  | PresetError
   | 'no_player'
   | 'player_exists'
   | 'invalid_starter'

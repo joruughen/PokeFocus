@@ -16,8 +16,10 @@ import { lineRoot } from '../shared/EvoLine'
 import { EvolveMoment } from './EvolveMoment'
 import { filteredMons, useBoxFilters } from './filters'
 import { Candies, EnergyBond, Evolution } from './Growth'
+import { NicknameDialog } from './Nickname'
 import { roleNatureFit } from './roleNature'
 import { StatsPanel } from './StatsPanel'
+import { SwapDialog } from './SwapCompare'
 import { Techniques } from './Techniques'
 
 const ctx = defaultContext()
@@ -37,7 +39,9 @@ export function Detail({ uid }: { uid: string }) {
   const evolve = useGame((s) => s.evolve)
   const busy = useBusy()
   const [confirmRelease, setConfirmRelease] = useState(false)
-  const [moment, setMoment] = useState<{ from: string; to: string; shiny: boolean } | null>(null)
+  const [editNick, setEditNick] = useState(false)
+  const [swapOpen, setSwapOpen] = useState(false)
+  const [moment, setMoment] = useState<{ from: string; to: string; shiny: boolean; nickname?: string } | null>(null)
   const minute = Math.floor(now / 60_000)
   const view = useMemo(() => pokemonView(player, uid, minute * 60_000), [player, uid, minute])
   const scene = useScene(player, now)
@@ -53,7 +57,8 @@ export function Detail({ uid }: { uid: string }) {
   }
 
   const p = view.pokemon
-  const name = names.species(p.speciesSlug)
+  const name = names.pokemon(p)
+  const speciesLabel = names.species(p.speciesSlug)
   const slot = player.team.indexOf(p.uid)
   const inTeam = slot >= 0
   const inSession = Boolean(player.activeSession?.teamUids.includes(p.uid))
@@ -99,7 +104,10 @@ export function Detail({ uid }: { uid: string }) {
           </div>
           <div className="min-w-0 max-w-xl flex-1 bg-mist-50 p-5 text-ink shadow-plate">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <h1 className="text-3xl text-ink">{name}</h1>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-3xl text-ink [overflow-wrap:anywhere]">{name}</h1>
+                {p.nickname && <p className="text-sm text-dusk-700" aria-label={t('nick.speciesLabel', { species: speciesLabel })}>{speciesLabel}</p>}
+              </div>
               <span className="font-num text-4xl leading-none">
                 {t('pokemon.levelShort')}
                 {p.level}
@@ -154,10 +162,23 @@ export function Detail({ uid }: { uid: string }) {
                   </Button>
                 </>
               ) : (
-                <Button size="sm" icon="plus" disabled={Boolean(player.activeSession) || busy || player.team.length >= 6} onClick={() => void teamAction()}>
-                  {player.team.length >= 6 ? t('detail.teamFull') : t('detail.addTeam')}
-                </Button>
+                player.team.length >= 6 ? (
+                  <Tooltip content={inSession || player.activeSession ? t('detail.swapLocked') : t('detail.swapTip')}>
+                    <span tabIndex={player.activeSession ? 0 : -1}>
+                      <Button size="sm" icon="reroll" disabled={Boolean(player.activeSession) || busy} onClick={() => setSwapOpen(true)}>
+                        {t('detail.swapTeam')}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <Button size="sm" icon="plus" disabled={Boolean(player.activeSession) || busy} onClick={() => void teamAction()}>
+                    {t('detail.addTeam')}
+                  </Button>
+                )
               )}
+              <Button size="sm" variant="secondary" icon="wrench" disabled={busy} onClick={() => setEditNick(true)}>
+                {p.nickname ? t('nick.change') : t('nick.add')}
+              </Button>
               <Tooltip content={inTeam ? t('detail.releaseInTeam') : t('detail.releaseTip', { count: releaseGain })}>
                 <span tabIndex={inTeam ? 0 : -1}>
                   {/* Danger, not ghost: the nameplate is a light card, and a ghost button there is light text on a light background. */}
@@ -187,7 +208,7 @@ export function Detail({ uid }: { uid: string }) {
                   toast.add({ title: errorText(r.error, 'box'), type: 'danger' })
                   return
                 }
-                setMoment({ from, to, shiny: p.isShiny })
+                setMoment({ from, to, shiny: p.isShiny, nickname: p.nickname })
               }}
             />
           </div>
@@ -235,6 +256,9 @@ export function Detail({ uid }: { uid: string }) {
           </span>
         </div>
       </Dialog>
+
+      <NicknameDialog open={editNick} onOpenChange={setEditNick} mon={p} />
+      {player.team.length >= 6 && !inTeam && <SwapDialog open={swapOpen} onOpenChange={setSwapOpen} incoming={view} />}
 
       {moment && <EvolveMoment {...moment} onClose={() => setMoment(null)} />}
     </div>

@@ -18,7 +18,7 @@ const reduceMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(pre
  * white silhouettes, then the new form appears with a burst (evolveStart →
  * evolveDone sfx, music ducked). Reduced motion: straight to the reveal.
  */
-export function EvolveMoment({ from, to, shiny, onClose }: { from: string; to: string; shiny: boolean; onClose: () => void }) {
+export function EvolveMoment({ from, to, shiny, nickname, onClose }: { from: string; to: string; shiny: boolean; nickname?: string | null; onClose: () => void }) {
   const { t } = useTranslation()
   const names = useNames()
   const [showNew, setShowNew] = useState(false)
@@ -57,7 +57,7 @@ export function EvolveMoment({ from, to, shiny, onClose }: { from: string; to: s
         <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-ink/90" />
         <BaseDialog.Popup className="fixed inset-0 z-50 grid place-items-center p-6 outline-none">
           <div className="flex w-[min(34rem,100%)] flex-col items-center gap-6 text-center">
-            <BaseDialog.Title className="font-display text-2xl text-mist-50">{done ? t('evo.doneTitle') : t('evo.whatTitle', { name: names.species(from) })}</BaseDialog.Title>
+            <BaseDialog.Title className="font-display text-2xl text-mist-50">{done ? t('evo.doneTitle') : t('evo.whatTitle', { name: names.pokemon({ speciesSlug: from, nickname }) })}</BaseDialog.Title>
             <div className="relative flex h-64 w-full items-end justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,var(--color-dusk-700),var(--color-dusk-950)_70%)] shadow-plate">
               <Platform width={200} night className="absolute bottom-6" />
               {done && <span className="absolute inset-0 m-auto size-56 animate-burst bg-[radial-gradient(circle,var(--color-volt-200)_0_35%,transparent_36%)]" aria-hidden />}
@@ -72,7 +72,7 @@ export function EvolveMoment({ from, to, shiny, onClose }: { from: string; to: s
               />
             </div>
             <BaseDialog.Description className="min-h-14 max-w-[40ch] text-lg text-mist-100" aria-live="polite">
-              {done ? t('evo.doneBody', { from: names.species(from), to: names.species(to) }) : t('evo.whatBody')}
+              {done ? t('evo.doneBody', { from: names.pokemon({ speciesSlug: from, nickname }), to: names.species(to) }) : t('evo.whatBody')}
             </BaseDialog.Description>
             <Button size="lg" icon="check" onClick={onClose} disabled={!done} className={cx(!done && 'invisible')}>
               {t('common.continue')}
