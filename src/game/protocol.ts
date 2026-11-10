@@ -274,6 +274,44 @@ export interface AdminMeResponse {
   serverNow: number
 }
 
+/** Query of GET /api/admin/metrics: UTC range [from, to) in epoch ms (default: the last 28 days) and the bucket size. */
+export type AdminMetricsGranularity = 'day' | 'week'
+export const ADMIN_METRICS_MAX_BUCKETS = 120
+
+/** Sums over a set of claimed sessions. Focus bands: low < 0.75 (late claim), mid 0.75 to < 1, full >= 1. */
+export interface AdminMetricsCounts {
+  sessions: number
+  minutes: number
+  points: number
+  wilds: number
+  catches: number
+  shinies: number
+  legendaries: number
+  focusLow: number
+  focusMid: number
+  focusFull: number
+}
+
+export interface AdminMetricsBucket extends AdminMetricsCounts {
+  /** First UTC day of the bucket, `YYYY-MM-DD` (a Monday for weeks). */
+  start: string
+  activePlayers: number
+  /** Players active in the previous bucket. */
+  prevActive: number
+  /** Of those, how many were active again in this bucket. */
+  returned: number
+}
+
+/** GET /api/admin/metrics (support or admin). Aggregates only: no per-player data. */
+export interface AdminMetricsResponse {
+  from: number
+  to: number
+  granularity: AdminMetricsGranularity
+  serverNow: number
+  buckets: AdminMetricsBucket[]
+  totals: AdminMetricsCounts & { activePlayers: number }
+}
+
 export interface AuthSessionInfo {
   id: string
   createdAt: number

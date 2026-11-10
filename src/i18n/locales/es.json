@@ -2177,6 +2177,74 @@
       "endBeforeStart": "El fin tiene que ser después del inicio.",
       "endInPast": "El fin ya pasó.",
       "tooLong": "La ventana puede durar 14 días como máximo."
+    },
+    "metrics": {
+      "title": "Métricas",
+      "intro": "Cómo se está jugando: jugadores activos, sesiones, minutos, Foco y hallazgos raros. Solo totales; no se identifica a nadie. Los días y las semanas son en UTC.",
+      "range": {
+        "label": "Periodo",
+        "d7": "7 días",
+        "d28": "28 días",
+        "w12": "12 semanas"
+      },
+      "loading": "Cargando métricas...",
+      "retry": "Reintentar",
+      "empty": "Todavía no hay sesiones en este periodo.",
+      "errors": {
+        "forbidden": "Tu cuenta no puede ver las métricas.",
+        "range_too_large": "Ese periodo es demasiado largo.",
+        "invalid_body": "Ese periodo no es válido."
+      },
+      "unit": {
+        "day": "día",
+        "week": "semana"
+      },
+      "cards": {
+        "players": "Jugadores activos",
+        "sessions": "Sesiones",
+        "hours": "Horas de estudio",
+        "perPlayer": "Sesiones por jugador",
+        "catchesPerSession": "Capturas por sesión",
+        "shiniesPer100": "Shinies por 100 sesiones",
+        "legendariesPer100": "Legendarios por 100 sesiones"
+      },
+      "charts": {
+        "players": "Jugadores activos por {{unit}}",
+        "sessions": "Sesiones por {{unit}}",
+        "minutes": "Minutos de estudio por {{unit}}",
+        "playersLabel": "Gráfico de barras: jugadores activos por {{unit}}, del {{from}} al {{to}}",
+        "sessionsLabel": "Gráfico de barras: sesiones por {{unit}}, del {{from}} al {{to}}",
+        "minutesLabel": "Gráfico de barras: minutos de estudio por {{unit}}, del {{from}} al {{to}}",
+        "tip": "{{start}}: {{value}}"
+      },
+      "focus": {
+        "title": "Reparto de Foco",
+        "body": "Porcentaje de sesiones según el Foco que lograron.",
+        "full": "Completo (1,0 o más)",
+        "mid": "Entre 0,75 y 1",
+        "low": "Reclamada tarde (menos de 0,75)",
+        "share": "{{count}} sesiones ({{pct}})"
+      },
+      "retention": {
+        "title": "Retención",
+        "body": "De los jugadores activos en el {{unit}} anterior, cuántos volvieron a jugar en este.",
+        "none": "Todavía no hay datos suficientes.",
+        "value": "{{pct}} ({{returned}} de {{prev}})",
+        "label": "Gráfico de barras: porcentaje de jugadores que volvieron por {{unit}}, del {{from}} al {{to}}"
+      },
+      "table": {
+        "summary": "Tabla de datos",
+        "caption": "Métricas por {{unit}}",
+        "start": "Desde",
+        "players": "Jugadores",
+        "sessions": "Sesiones",
+        "minutes": "Minutos",
+        "catches": "Capturas",
+        "shinies": "Shinies",
+        "legendaries": "Legendarios",
+        "retention": "Retención"
+      },
+      "note": "Una sesión cuenta al reclamarla. Los shinies y legendarios son los que aparecieron en las oleadas de la sesión; las capturas siguen los lanzamientos de bola posteriores."
     }
   },
   "nick": {

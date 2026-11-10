@@ -3,6 +3,7 @@
  *
  *   GET    /admin/me               → AdminMeResponse (role support|admin; sudo state)
  *   POST   /admin/reauth           { password } → AdminMeResponse; sudo for 30 min
+ *   GET    /admin/metrics          → AdminMetricsResponse (support or admin; routes/admin/metrics.ts)
  *   GET    /admin/maintenance      → AdminMaintenanceResponse (windows that have not ended)
  *   POST   /admin/maintenance      { startsAt, endsAt, note? } → 201 { item }      (audited)
  *   DELETE /admin/maintenance/:id  → 204                                            (audited)
@@ -26,6 +27,7 @@ import { PASSWORD_MAX, verifyPassword } from '../auth/password'
 import { authSessions } from '../db/schema'
 import { ApiError, clientIp, readBody, requireAuth, requireRole, sessionToken, UUID_RE, type AppEnv, type Ctx, type Deps } from '../http'
 import { RULES } from '../rate-limit'
+import { adminMetricsHandler } from './admin/metrics'
 import { maintenanceCreateBody } from '../validation'
 import { activeMaintenance, toMaintenanceItem } from './announcements'
 
@@ -86,6 +88,8 @@ export function adminRoutes(deps: Deps) {
   }
 
   app.get('/me', staff('support'), (c) => c.json(meBody(c.get('user').role, c.get('session').elevatedUntil, deps.clock())))
+
+  app.get('/metrics', staff('support'), adminMetricsHandler(deps))
 
   app.post('/reauth', staff('support'), async (c) => {
     const { password } = await readBody(c, reauthBody)

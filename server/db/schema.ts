@@ -1,6 +1,6 @@
 /** Drizzle schema (PostgreSQL / PGlite). See docs/F2-plan.md § Esquema. */
 import { sql } from 'drizzle-orm'
-import { boolean, char, check, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { bigserial, boolean, char, check, doublePrecision, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import type { GameDoc } from '../../src/game/protocol'
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' })
@@ -243,6 +243,37 @@ export const adminAudit = pgTable(
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [index('admin_audit_created_idx').on(t.createdAt.desc()), index('admin_audit_target_idx').on(t.targetType, t.targetId)],
+)
+
+/**
+ * One row per claimed (valid) study session, written in the claim's transaction
+ * (server/session-log.ts) for the admin metrics. Holds no personal data besides
+ * the user id (rows go with the account). `wilds`/`shinies`/`legendaries` count what
+ * the session spawned; `catches` follows the session's later ball throws.
+ * `content_hash`: content version the session ran with ('base' = the bundled data).
+ */
+export const sessionLog = pgTable(
+  'session_log',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    sessionId: text('session_id').notNull(),
+    startedAt: ts('started_at').notNull(),
+    endedAt: ts('ended_at').notNull(),
+    claimedAt: ts('claimed_at').notNull(),
+    minutes: doublePrecision('minutes').notNull(),
+    focus: doublePrecision('focus').notNull(),
+    lateClaim: boolean('late_claim').notNull().default(false),
+    points: integer('points').notNull().default(0),
+    wilds: integer('wilds').notNull().default(0),
+    catches: integer('catches').notNull().default(0),
+    shinies: integer('shinies').notNull().default(0),
+    legendaries: integer('legendaries').notNull().default(0),
+    contentHash: text('content_hash'),
+  },
+  (t) => [uniqueIndex('session_log_user_session_idx').on(t.userId, t.sessionId), index('session_log_ended_idx').on(t.endedAt)],
 )
 
 export type UserRow = typeof users.$inferSelect
