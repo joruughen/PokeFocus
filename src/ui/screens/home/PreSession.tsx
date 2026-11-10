@@ -11,7 +11,7 @@ import {
   weeklyPoints,
   type PokemonView,
 } from '../../../engine'
-import { Button, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Segmented, Stage, toast, TypeBadge } from '../../components'
+import { Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Segmented, Stage, toast, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { conditionsNow } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
@@ -24,9 +24,11 @@ import { AutoDamageToggle } from './AutoDamageToggle'
 import { BreakOffer, useBreakOffer } from './Break'
 import { Checklist } from './Checklist'
 import { GroupStudyPanel } from './GroupStudy'
+import { StartRow } from './StartRow'
 import { useNow } from '../../store/clock'
 import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
+import { useGroups } from '../../store/group'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { conditionRuleValues } from './conditionCopy'
 import { TypesGuide } from './TypesGuide'
@@ -45,6 +47,8 @@ export function PreSession() {
   const player = usePlayer()
   const start = useGame((s) => s.start)
   const busy = useBusy()
+  // A study-group room is open (host or guest): the group's Start button is the way in, not the solo one.
+  const inGroup = useGroups((s) => s.current?.status === 'lobby')
   const trainerName = useAuth((s) => s.user?.trainerName)
   const views = useTeamViews(player, now)
   const scene = useScene(player, now)
@@ -169,13 +173,7 @@ export function PreSession() {
               </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-4">
-              <Button {...hintAnchor('home.start')} size="lg" icon="play" onClick={() => void onStart()} disabled={busy} aria-busy={busy} className="min-w-64">
-                {t('home.plan.start')}
-                <span className="font-num text-4xl leading-none">{t('home.plan.startMinutes', { count: minutes })}</span>
-              </Button>
-              <p className="max-w-[34ch] text-sm text-mist-400">{t('home.plan.startNote')}</p>
-            </div>
+            <StartRow minutes={minutes} busy={busy} inGroup={inGroup} onStart={() => void onStart()} />
           </div>
         </Panel>
 

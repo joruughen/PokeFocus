@@ -315,6 +315,7 @@
       "tired_other": "{{names}} may run out of Energy before the end.",
       "allExhausted": "Your whole team is out of Energy, so this session won't earn points. Use potions or Revive on each Pokémon's page, or wait for Energy to refill.",
       "startNote": "You can pause. The team can't change until you finish.",
+      "startInGroup": "You have a study group room open: start from the room, or close it to study alone.",
       "start": "Start",
       "startMinutes": "{{count}} min"
     }

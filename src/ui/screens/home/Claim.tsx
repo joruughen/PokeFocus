@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, MINUTE_MS } from '../../../engine'
-import { Button, Platform, ProgressBar, Sprite, Stage, toast } from '../../components'
+import { Button, ProgressBar, Stage, StageTeam, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { errorText } from '../../lib/errors'
 import { fmtCountdown, fmtPct } from '../../lib/format'
@@ -45,28 +45,15 @@ export function Claim({ late }: { late: boolean }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <Stage time={scene.time} weather={scene.weather} className="h-64">
-        <div className="flex h-full items-end justify-center gap-6 px-6 pb-6">
-          {session.teamUids.map((uid, i) => {
+      <Stage time={scene.time} weather={scene.weather}>
+        <StageTeam
+          className="min-h-64"
+          night={scene.time === 'night'}
+          members={session.teamUids.flatMap((uid) => {
             const p = player.pokemon[uid]
-            if (!p) return null
-            return (
-              <div key={uid} className="relative flex w-28 flex-col items-center">
-                <Platform width={104} night={scene.time === 'night'} className="absolute bottom-0" />
-                <Sprite
-                  kind="showdown"
-                  slug={p.speciesSlug}
-                  shiny={p.isShiny}
-                  scale={2}
-                  flip
-                  alt={names.species(p.speciesSlug)}
-                  className="relative mb-3 motion-safe:animate-bob"
-                  style={{ animationDelay: `${i * 0.2}s`, animationDuration: '0.7s' }}
-                />
-              </div>
-            )
+            return p ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.species(p.speciesSlug) }] : []
           })}
-        </div>
+        />
       </Stage>
 
       <section className="mx-auto flex w-full max-w-2xl flex-col items-center gap-5 text-center">
