@@ -2399,7 +2399,8 @@
         "preview": "Vista previa de apariciones",
         "techniques": "Técnicas",
         "abilities": "Habilidades",
-        "missions": "Misiones"
+        "missions": "Misiones",
+        "sim": "Simulación"
       },
       "columns": {
         "trainerLevel": "Nivel de entrenador",
@@ -2612,7 +2613,8 @@
         "note": "Nota para el historial",
         "noteHint": "Opcional. Se guarda con la versión y en el registro de auditoría.",
         "done": "La versión #{{id}} está en vivo",
-        "scheduledDone": "La versión #{{id}} está programada"
+        "scheduledDone": "La versión #{{id}} está programada",
+        "noSim": "Este borrador no tiene una simulación reciente de su versión actual. Puedes publicar igualmente, pero conviene simular antes (subpestaña «Simulación»)."
       },
       "rollback": {
         "title": "Republicar una versión anterior",
@@ -2660,6 +2662,60 @@
         "compare": "{{draft}} en el borrador · {{appear}} aparecen · {{vanish}} desaparecen",
         "all": "Mostrar las {{count}}",
         "less": "Mostrar menos"
+      },
+      "sim": {
+        "title": "Simulación de balance",
+        "intro": "El simulador juega las mismas semanas con jugadores virtuales dos veces: con el contenido activo y con este borrador (sin eventos en vivo). Compara puntos semanales, ligas, capturas, legendarios y shinies, polvo y energía. Corre en el servidor, una simulación a la vez, y se cancela a los 5 minutos.",
+        "profiles": "Perfiles de jugador",
+        "profile": {
+          "casual": "Casual",
+          "constant": "Constante",
+          "marathoner": "Maratonista",
+          "night-owl": "Nocturno",
+          "irregular": "Irregular",
+          "grinder": "Intensivo"
+        },
+        "seeds": "Jugadores por perfil",
+        "weeks": "Semanas",
+        "run": "Simular",
+        "cost": "Coste: {{cost}} de {{max}} jugador-semanas (se juega dos veces).",
+        "busy": "Hay otra simulación en curso en el servidor; espera a que termine.",
+        "history": "Simulaciones de este borrador",
+        "none": "Este borrador aún no tiene simulaciones.",
+        "runLine": "Simulación #{{id}}: {{status}} · {{seeds}} jugadores × {{weeks}} semanas · {{who}} · {{when}}",
+        "progress": "Progreso de la simulación",
+        "outdated": "El borrador cambió después de esta simulación: vuelve a simular antes de publicar.",
+        "metric": "Indicador",
+        "change": "Cambio",
+        "new": "nuevo",
+        "footnote": "Medias por jugador en todo el periodo (puntos: mediana semanal). La simulación tardó {{s}} s.",
+        "status": {
+          "running": "en curso",
+          "done": "terminada",
+          "failed": "fallida",
+          "timeout": "cancelada por tiempo",
+          "interrupted": "interrumpida"
+        },
+        "m": {
+          "weeklyPoints": "Puntos semanales (mediana)",
+          "super": "Semanas en Liga Super",
+          "ultra": "Semanas en Liga Ultra",
+          "master": "Semanas en Liga Master",
+          "catches": "Capturas",
+          "speciesCaught": "Especies en la Pokédex",
+          "legendaryCaught": "Legendarios capturados",
+          "shinyCaught": "Shinies capturados",
+          "dustEarned": "Polvo ganado",
+          "finalDust": "Polvo al final",
+          "exhaustedShare": "Miembros agotados por sesión",
+          "endEnergy": "Energía al terminar"
+        },
+        "error": {
+          "busy": "Hay otra simulación en curso en el servidor; inténtalo cuando termine.",
+          "sim_too_big": "Demasiado grande: perfiles × jugadores × semanas como máximo {{max}}.",
+          "validation_failed": "El borrador tiene errores: corrígelos antes de simular.",
+          "not_draft": "Esta versión ya no es un borrador."
+        }
       }
     },
     "config": {

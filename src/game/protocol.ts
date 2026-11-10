@@ -675,6 +675,7 @@ export interface AdminPlayerDetail {
  *   POST   /api/admin/content/drafts/:id/publish {effectiveAt?, confirm?, note?} → AdminContentVersionResponse (admin + sudo)
  *   POST   /api/admin/content/versions/:id/rollback {confirm?, note?}    → 201 AdminContentVersionResponse (admin + sudo)
  *   GET    /api/admin/content/spawn-preview?versionId&eventId&hour&weather&trainerLevel → AdminSpawnPreview (admin; eventId = with that live event on top, drafts too)
+ *   Simulation (E10): POST /drafts/:id/simulate, GET /sim-runs, GET /sim-runs/:id — see «Admin: balance simulation».
  *
  * Every mutation is audited in its own transaction (`content.draft.create|update|delete`, `content.publish`,
  * `content.schedule`, `content.rollback`). Drafts never reach `/api/content`: only published versions do.
@@ -750,6 +751,8 @@ export interface AdminContentVersionResponse {
   version: AdminContentVersion
   /** Against the active patch (empty when this is the active version). */
   diff: AdminContentDiffEntry[]
+  /** Drafts (and the publish result): is there a recent simulation of this patch? (delivery E10; a warning, not a block) */
+  sim?: AdminSimCheck
   serverNow: number
 }
 
@@ -798,6 +801,133 @@ export interface AdminSpawnPreview {
   legendaryChance: number
   /** Species with a spawn rule in this content (admin or events), enabled or not. */
   rules: { slug: string; enabled: boolean; weightMult: number; hours?: [number, number][]; weather?: string[]; minTrainerLevel?: number }[]
+}
+
+// ---------------------------------------------------------------------------
+// Admin: balance simulation of a draft (docs/admin-plan.md §4, delivery E10)
+// ---------------------------------------------------------------------------
+
+/**
+ *   POST   /api/admin/content/drafts/:id/simulate {profiles?, seeds?, weeks?} → 202 AdminSimRunResponse (admin)
+ *   GET    /api/admin/content/sim-runs?versionId=      → AdminSimRunsResponse (support+; newest first, at most 50, no reports)
+ *   GET    /api/admin/content/sim-runs/:id             → AdminSimRunResponse  (support+; with the report when done)
+ *
+ * The simulator (scripts/sim) plays the same profiles and seeds twice in a worker thread: on the
+ * active patch and on the draft's patch (live events left out: they are temporary and dated).
+ * One run at a time on the server (409 `busy`), cancelled after 5 min (`timeout`). Limits: seeds
+ * 1–20, weeks 1–8, profiles × seeds × weeks ≤ ADMIN_SIM_MAX_PLAYER_WEEKS. Starting one is audited
+ * (`content.simulate`). Errors: 400 invalid_body / invalid_query / sim_too_big, 404 not_found,
+ * 409 not_draft / busy, 422 validation_failed { errors, warnings, requiresConfirm }, 429 rate_limited.
+ */
+export type AdminSimProfile = 'casual' | 'constant' | 'marathoner' | 'night-owl' | 'irregular' | 'grinder'
+export const ADMIN_SIM_PROFILES: readonly AdminSimProfile[] = ['casual', 'constant', 'marathoner', 'night-owl', 'irregular', 'grinder']
+export const ADMIN_SIM_MAX_SEEDS = 20
+export const ADMIN_SIM_MAX_WEEKS = 8
+/** Cost cap: profiles × seeds × weeks (each played twice: active and draft). */
+export const ADMIN_SIM_MAX_PLAYER_WEEKS = 480
+/** A draft counts as simulated for this long after a finished run of its current patch. */
+export const ADMIN_SIM_RECENT_MS = 7 * 86_400_000
+
+export interface AdminSimParams {
+  profiles: AdminSimProfile[]
+  seeds: number
+  weeks: number
+}
+
+/** `interrupted`: the server restarted while it ran. */
+export type AdminSimStatus = 'running' | 'done' | 'failed' | 'timeout' | 'interrupted'
+
+/** Figures of one profile on one content (means over seeds unless said otherwise). */
+export interface AdminSimProfileStats {
+  profile: AdminSimProfile
+  /** Simulated players (seeds). */
+  n: number
+  /** Weekly points per week: quartiles and mean over seeds. */
+  weeklyPoints: { p25: number; p50: number; p75: number; mean: number }[]
+  /** Median weekly points over every (seed, week) pair. */
+  weeklyPointsMedian: number
+  /** Share of (seed, week) pairs that reach each league. */
+  leagueShare: Record<'base' | 'super' | 'ultra' | 'master', number>
+  sessions: number
+  minutesPerDay: number
+  catches: number
+  /** Species caught at the end (Pokédex). */
+  speciesCaught: number
+  legendarySeen: number
+  legendaryCaught: number
+  shinySeen: number
+  shinyCaught: number
+  dustEarned: number
+  dustSpent: number
+  finalDust: number
+  /** Share of awake member-sessions that ran out of Energy during the session. */
+  exhaustedShare: number
+  /** Share of awake member-sessions that started with no Energy. */
+  startedEmptyShare: number
+  /** Mean Energy left at the end (fraction of max) of awake members. */
+  endEnergy: number
+  /** Members resting (asleep) per session, total over the run. */
+  restSessions: number
+}
+
+export interface AdminSimSide {
+  /** Patch hash simulated (content_versions.hash style; 'base' = no patch). */
+  hash: string
+  versionId: number | null
+  profiles: AdminSimProfileStats[]
+}
+
+export interface AdminSimReport {
+  params: AdminSimParams
+  active: AdminSimSide
+  proposed: AdminSimSide
+  /** Wall time of the simulation in the worker. */
+  ms: number
+}
+
+export interface AdminSimRunSummary {
+  id: number
+  /** The draft simulated (null if it was deleted since). */
+  versionId: number | null
+  /** Patch hash of the draft when it was simulated: the run is stale once the draft changes. */
+  draftHash: string
+  activeVersionId: number | null
+  activeHash: string
+  status: AdminSimStatus
+  params: AdminSimParams
+  error: string | null
+  createdBy: AdminContentAuthor | null
+  createdAt: number
+  finishedAt: number | null
+  /** While running: players simulated so far / total (both contents). */
+  progress: { done: number; total: number } | null
+}
+
+export interface AdminSimRun extends AdminSimRunSummary {
+  report: AdminSimReport | null
+}
+
+export interface AdminSimRunResponse {
+  run: AdminSimRun
+  serverNow: number
+}
+
+export interface AdminSimRunsResponse {
+  items: AdminSimRunSummary[]
+  /** A run is in progress on the server (only one at a time). */
+  busy: boolean
+  serverNow: number
+}
+
+/**
+ * Simulation state of a draft (on AdminContentVersionResponse of a draft, and of the publish result):
+ * publishing without a recent simulation is allowed but the editor warns (`recent: false`).
+ */
+export interface AdminSimCheck {
+  /** A finished run of the current patch within ADMIN_SIM_RECENT_MS. */
+  recent: boolean
+  /** Latest run of this draft (any status, any patch). */
+  last: AdminSimRunSummary | null
 }
 
 // ---------------------------------------------------------------------------

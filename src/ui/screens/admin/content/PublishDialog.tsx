@@ -5,6 +5,7 @@ import { Segmented, TextField, toast } from '../../../components'
 import { browserTimeZone } from '../../../lib/format'
 import { toLocalInput } from '../../../lib/maintenance'
 import { ActionDialog } from './ActionDialog'
+import { contentApi } from './api'
 import { checkSchedule, publishDraft, publishInput, rollbackTo } from './flow'
 
 const NOTE_MAX = 400
@@ -32,11 +33,24 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
   const [note, setNote] = useState('')
   const now = Date.now()
 
+  // «Mandatory» simulation (E10) is a warning, not a block: ask the server whether the saved patch was simulated recently.
+  const [simRecent, setSimRecent] = useState<boolean | null>(null)
+
   useEffect(() => {
     if (!open) return
     setMode('now')
     setWhen(toLocalInput(Math.ceil((Date.now() + HOUR) / HOUR) * HOUR))
     setNote('')
+    setSimRecent(null)
+    let live = true
+    void flush()
+      .then(() => contentApi.version(draftId))
+      .then((r) => live && setSimRecent(r.sim ? r.sim.recent : null))
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per opening
   }, [open])
 
   const schedule = useMemo(() => (mode === 'later' ? checkSchedule(when, now) : null), [mode, when, now])
@@ -81,6 +95,11 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
           />
           {utc && <p className="text-sm text-mist-300">{t('admin.content.publish.utc', { utc })}</p>}
         </div>
+      )}
+      {simRecent === false && (
+        <p role="note" className="bg-dusk-900 p-3 text-sm text-amber-400 inset-shadow-well">
+          {t('admin.content.publish.noSim')}
+        </p>
       )}
       {liveWarnings.length > 0 && (
         <div className="bg-dusk-900 p-3 inset-shadow-well">

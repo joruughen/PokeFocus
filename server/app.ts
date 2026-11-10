@@ -15,6 +15,7 @@ import { ApiError, type AppEnv, type Deps } from './http'
 import { createPushService, type PushSender, type PushService } from './push'
 import { loadLiveEvents } from './content/events'
 import { createContentService, type ContentService } from './content/service'
+import { createSimRunner, type SimRunner } from './content/simRunner'
 import { RateLimiter } from './rate-limit'
 import { adminRoutes } from './routes/admin'
 import { announcementRoutes } from './routes/announcements'
@@ -52,6 +53,8 @@ export interface AppOptions {
   pushSender?: PushSender
   /** Live content service (default: built from `db` + `bus` + `clock`, with the published live events). */
   content?: ContentService
+  /** Admin balance simulations (default: worker threads, 5 min timeout). */
+  sim?: SimRunner
 }
 
 export function createApp(opts: AppOptions) {
@@ -68,6 +71,7 @@ export function createApp(opts: AppOptions) {
     weather: opts.weather ?? createWeatherService({ fetch: fetchFn, clock }),
     push: opts.push ?? createPushService({ env: opts.env, db: opts.db, clock, sender: opts.pushSender }),
     content: opts.content ?? createContentService({ db: opts.db, bus, clock, events: loadLiveEvents }),
+    sim: opts.sim ?? createSimRunner({ db: opts.db, clock }),
   }
   const { env } = deps
   const app = new Hono<AppEnv>()

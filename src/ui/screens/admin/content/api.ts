@@ -6,6 +6,9 @@ import type {
   AdminContentVersionResponse,
   AdminContentVersionsResponse,
   AdminMeResponse,
+  AdminSimParams,
+  AdminSimRunResponse,
+  AdminSimRunsResponse,
   AdminSpawnPreview,
   AdminSpawnWeather,
 } from '../../../../game/protocol'
@@ -63,6 +66,10 @@ export const contentApi = {
     if (q.eventId) p.set('eventId', q.eventId)
     return api.get<AdminSpawnPreview>(`${BASE}/spawn-preview?${p.toString()}`)
   },
+  /** Balance simulation of a draft vs the active content (one at a time on the server: 409 `busy`). */
+  simulate: (id: number, body: Partial<AdminSimParams> = {}) => api.post<AdminSimRunResponse>(`${draft(id)}/simulate`, body),
+  simRuns: (versionId?: number) => api.get<AdminSimRunsResponse>(`${BASE}/sim-runs${versionId !== undefined ? `?versionId=${versionId}` : ''}`),
+  simRun: (id: number) => api.get<AdminSimRunResponse>(`${BASE}/sim-runs/${id}`),
   me: () => api.get<AdminMeResponse>('/admin/me'),
   reauth: (password: string) => api.post<AdminMeResponse>('/admin/reauth', { password }),
 }
