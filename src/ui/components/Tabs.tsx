@@ -28,7 +28,7 @@ export function Tabs({ items, value, defaultValue, onValueChange, label, classNa
       onValueChange={onValueChange ? (v) => onValueChange(String(v)) : undefined}
       className={className}
     >
-      <BaseTabs.List aria-label={label} className="relative z-0 mb-4 flex gap-1 bg-dusk-900 p-1 inset-shadow-well">
+      <BaseTabs.List aria-label={label} className="relative z-0 mb-4 flex max-w-full gap-1 overflow-x-auto bg-dusk-900 p-1 inset-shadow-well">
         {items.map((it) => (
           <BaseTabs.Tab
             key={it.value}
