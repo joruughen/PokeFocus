@@ -46,7 +46,7 @@ export function FocusSession() {
   const scene = useScene(player, session.startedAt)
   const wave = cfg.session.waveMinutes * MINUTE_MS
   const teamViews = useTeamViews(player, now, session.teamUids)
-  // Same rule the server applies with its own clock (GDD §5.6); shown in the confirmation.
+  // Same rule the server applies with its own clock (GDD §3.4); shown in the confirmation.
   const keep = cancelKeep(session.plannedMinutes, validatedMinutes(session, timer.pausedAt ?? now, timer.pausedMs / 1000), cfg)
   const totalBlocks = Math.floor(session.plannedMinutes / cfg.session.waveMinutes)
   const nextBlockIn = keep.waves < totalBlocks ? (keep.waves + 1) * cfg.session.waveMinutes - keep.minutes : null

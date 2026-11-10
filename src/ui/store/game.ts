@@ -87,7 +87,7 @@ export interface GameState extends GameDoc {
   start: (minutes: number) => Promise<StartSessionError | GameActionError | null>
   pause: () => Promise<GameActionError | null>
   resume: () => Promise<GameActionError | null>
-  /** Give up the session. A long one keeps its minutes and full blocks (GDD §5.6): `outcome` is then the result shown next. */
+  /** Give up the session. A long one keeps its minutes and full blocks (GDD §3.4): `outcome` is then the result shown next. */
   cancel: () => Promise<{ ok: true; outcome: LastOutcome | null } | { ok: false; error: GameActionError }>
   markNotified: () => Promise<void>
   claim: () => Promise<boolean>

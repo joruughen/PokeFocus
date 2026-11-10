@@ -128,7 +128,7 @@ export interface SessionSummary {
   techniqueActivations: number
   note: string | null
   subjectTag: string | null
-  /** Cancelled before its end; kept the minutes studied and the waves of its full blocks (GDD §5.6). Absent = completed. */
+  /** Cancelled before its end; kept the minutes studied and the waves of its full blocks (GDD §3.4). Absent = completed. */
   cancelled?: boolean
 }
 

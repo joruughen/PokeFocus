@@ -1,5 +1,5 @@
 /**
- * Cancel probe (GDD §5.6): does cancelling a long session ever pay more than completing it?
+ * Cancel probe (GDD §3.4): does cancelling a long session ever pay more than completing it?
  *
  *   npx tsx scripts/simulate-cancel.ts [--seeds N] [--weeks N]
  *

@@ -247,7 +247,7 @@ export function startSession(
   return ok({ state: s, session })
 }
 
-/** What cancelling a session keeps (GDD §5.6). */
+/** What cancelling a session keeps (GDD §3.4). */
 export interface CancelKeep {
   /** Something is kept: the session is resolved like a claim with `cancelled: true`. */
   keeps: boolean
@@ -260,7 +260,7 @@ export interface CancelKeep {
 }
 
 /**
- * Cancel rule (GDD §5.6, decided 2026-11-09). Only a long session (planned
+ * Cancel rule (GDD §3.4, decided 2026-11-09). Only a long session (planned
  * longer than one 25-min block) keeps anything, and only once `minMinutes`
  * (15) have been studied: then the points, EXP and Polvo of the minutes
  * studied, and one wave per full block. A short session, or fewer than 15 min,
@@ -294,7 +294,7 @@ export interface CompleteSessionInput {
   weather?: WeatherInput | null
   friendOverlap?: number | null
   /**
-   * The player cancelled a long session before its end (GDD §5.6,
+   * The player cancelled a long session before its end (GDD §3.4,
    * `cancelSessionKeep`): `endedAt` = when it was cancelled (or the start of
    * the pause it was cancelled in). Waves only for the 25-min blocks fully
    * studied (0 before the first one), never a late claim, no Poké Balls and no
@@ -419,7 +419,7 @@ export interface SessionResult {
   monthKey: string
   /** False when the session was shorter than `session.minMinutes`. */
   valid: boolean
-  /** Cancelled before its end and kept (GDD §5.6): rewards of the minutes studied, waves of the full blocks. Absent = completed. */
+  /** Cancelled before its end and kept (GDD §3.4): rewards of the minutes studied, waves of the full blocks. Absent = completed. */
   cancelled?: boolean
   lateClaim: boolean
   /** Daily diminishing-returns factor (0–1). */
@@ -1115,7 +1115,7 @@ export function completeSession(
     members: memberResults,
     totalPoints,
     dust: rewarded ? Math.round(cfg.rewards.dustPerMinute * minutes * focus * rewardFactor) : 0,
-    // Per-session Poké Balls are for completed sessions: a cancelled one would double them with cancel + restart (GDD §5.6).
+    // Per-session Poké Balls are for completed sessions: a cancelled one would double them with cancel + restart (GDD §3.4).
     pokeBalls: rewarded && !cancelled ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
     energyByBlock,
     waves,

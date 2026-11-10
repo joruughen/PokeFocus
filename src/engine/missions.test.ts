@@ -131,7 +131,7 @@ describe('missions (GDD §13)', () => {
     expect(v2.weekly.missions.find((m) => m.defId === 'w-days')!.progress).toBe(2)
   })
 
-  it('a cancelled long session counts its minutes and length but not as a completed session (GDD §5.6)', () => {
+  it('a cancelled long session counts its minutes and length but not as a completed session (GDD §3.4)', () => {
     const s = makePlayer([makeMon('pidgey', 20, { uid: 'a' }, mctx)], {}, mctx)
     // Planned 100, cancelled at 50.
     const run = runSession(s, 100, 1, { endedAt: T0 + 50 * MIN, claimedAt: T0 + 50 * MIN, cancelled: true }, mctx)

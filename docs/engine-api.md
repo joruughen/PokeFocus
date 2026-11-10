@@ -57,7 +57,7 @@ Starter (`config.starters`) at `starterLevel`, 1 technique equipped, `starterPok
    startSession(state, { plannedMinutes, startedAt, note?, subjectTag? })
      : Result<{ state, session: ActiveSession }, 'session_active' | 'invalid_duration' | 'empty_team'>
    ```
-   Refreshes energy to `startedAt`, applies pending Wish heals (`session.startHeals`), snapshots team, start energy and members asleep from Rest. Only one active session (`state.activeSession`). `cancelSession(state)` abandons it.
+   Refreshes energy to `startedAt`, applies pending Wish heals (`session.startHeals`), snapshots team, start energy and members asleep from Rest. Only one active session (`state.activeSession`). `cancelSession(state)` abandons it without rewards. `cancelKeep(planned, studiedMinutes, cfg)` is the cancel rule (GDD §3.4): a session planned longer than one block keeps the minutes studied from `minMinutes` on, and `fullBlocks(minutes)` waves; then the reducer resolves it with `completeSession(..., { cancelled: true })` (never late, `floor(min/25)` waves — possibly 0 —, no per-session Poké Balls, no roaming tick without waves; `SessionResult.cancelled` / `SessionSummary.cancelled`; the mission event does not count it as a completed session).
 
 2. ```ts
    completeSession(state, session, {

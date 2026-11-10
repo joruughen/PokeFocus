@@ -192,7 +192,7 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       return done({ ...doc, timer: { ...timer, pausedAt: null, pausedMs: timer.pausedMs + d, endsAt: timer.endsAt + d } })
     }
     case 'cancel': {
-      // GDD §5.6: a long session keeps the minutes studied and the waves of its full blocks.
+      // GDD §3.4: a long session keeps the minutes studied and the waves of its full blocks.
       // Server clock only; once the timer ended it must be claimed (late rules), not cancelled.
       const session = p.activeSession
       const timer = timerOf(doc)

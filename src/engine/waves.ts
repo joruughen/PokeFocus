@@ -38,7 +38,7 @@ export function waveCount(minutes: number, cfg: GameConfig): number {
   return Math.max(1, Math.floor(minutes / cfg.session.waveMinutes))
 }
 
-/** Full 25-min blocks in `minutes` (0 before the first one): the waves a cancelled session keeps (GDD §5.6). */
+/** Full 25-min blocks in `minutes` (0 before the first one): the waves a cancelled session keeps (GDD §3.4). */
 export function fullBlocks(minutes: number, cfg: GameConfig): number {
   return Math.max(0, Math.floor(minutes / cfg.session.waveMinutes))
 }

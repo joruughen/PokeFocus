@@ -81,7 +81,7 @@ export async function memberOfSession(q: Q, userId: string, sessionId: string): 
  * `friendOverlap` for the session being claimed: null when it was not a group
  * session, else accompanied time ÷ session length (0–1).
  *
- * `cancelledAt` (a long session cancelled before its end, GDD §5.6): the
+ * `cancelledAt` (a long session cancelled before its end, GDD §3.4): the
  * accompanied time up to then ÷ the time elapsed since joining (pauses
  * included, so it never overstates the share).
  */

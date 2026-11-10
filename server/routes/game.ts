@@ -36,7 +36,7 @@ export async function runGameAction(
 ): Promise<RunOutcome> {
   const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
   const before = row?.doc ?? EMPTY_DOC
-  // A cancelled long session that keeps its minutes (GDD §5.6) gets the overlap accompanied so far.
+  // A cancelled long session that keeps its minutes (GDD §3.4) gets the overlap accompanied so far.
   const friendOverlap =
     action.type === 'claim' ? await claimOverlap(tx, user.id, before) : action.type === 'cancel' ? await claimOverlap(tx, user.id, before, opts.now) : null
   // Real weather of the profile location (else city), fixed on the session at start (≤ 2 s, cached; null = no weather).

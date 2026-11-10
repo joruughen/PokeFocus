@@ -88,7 +88,7 @@ export type GameAction =
   | { type: 'pause' }
   | { type: 'resume' }
   /**
-   * Long sessions (GDD §5.6) keep the minutes studied and the waves of the full
+   * Long sessions (GDD §3.4) keep the minutes studied and the waves of the full
    * 25-min blocks, decided with the server clock. `soundProfile` as in `claim`.
    */
   | { type: 'cancel'; soundProfile?: SoundProfile | null }

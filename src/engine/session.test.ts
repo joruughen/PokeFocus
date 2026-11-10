@@ -380,7 +380,7 @@ describe('effect primitives in sessions (docs/effects.md)', () => {
   })
 })
 
-describe('cancelling a long session (GDD §5.6)', () => {
+describe('cancelling a long session (GDD §3.4)', () => {
   it('cancelKeep: long sessions keep the minutes from 15 min on, and one wave per full block', () => {
     expect(cancelKeep(25, 20, cfg)).toEqual({ keeps: false, reason: 'short_session', minutes: 20, waves: 0 })
     expect(cancelKeep(50, 14.99, cfg)).toEqual({ keeps: false, reason: 'too_few_minutes', minutes: 14, waves: 0 })

@@ -27,7 +27,7 @@ export interface RunOptions {
   /** Damage split policy (default `auto`: the player keeps the "Auto" preference on). */
   damagePolicy?: DamagePolicy
   /**
-   * Cancel probe (GDD §5.6, `npx tsx scripts/simulate-cancel.ts`): every long session (> 25 min) is
+   * Cancel probe (GDD §3.4, `npx tsx scripts/simulate-cancel.ts`): every long session (> 25 min) is
    * cancelled at `atFraction` of its planned minutes (at least 15); with `restart`, a new session for
    * the minutes left starts right away (when they reach the 15-min minimum). Absent = never cancels.
    */
