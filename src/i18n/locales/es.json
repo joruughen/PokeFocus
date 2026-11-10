@@ -315,6 +315,7 @@
       "tired_other": "{{names}} podrían agotarse antes del final.",
       "allExhausted": "Todo tu equipo está agotado, así que esta sesión no sumará puntos. Usa pociones o Revivir en la ficha de cada Pokémon, o espera a que se recargue la Energía.",
       "startNote": "Puedes pausar. El equipo no se puede cambiar hasta terminar.",
+      "startInGroup": "Tienes una sala de estudio en grupo abierta: empieza desde la sala, o ciérrala para estudiar solo.",
       "start": "Empezar",
       "startMinutes": "{{count}} min"
     }

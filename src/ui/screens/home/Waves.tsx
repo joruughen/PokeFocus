@@ -25,6 +25,7 @@ import {
   type WildPokemon,
   type WildRef,
 } from '../../../engine'
+import { usableBall } from './ballChoice'
 import { ArtIcon, BallIcon, Button, HelpDot, IvQuality, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Sprite, Stage, StudyBallIcon, toast, Tooltip, TypeBadge } from '../../components'
 import { emitHintEvent, hintAnchor, useHintEvent, useHintScreen, useHints } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -155,6 +156,11 @@ export function Waves() {
     ...BALL_ORDER.map((b) => ({ ball: b as ThrowBall, count: player.inventory[b] ?? 0, usable: (player.inventory[b] ?? 0) > 0 })),
   ]
   const ballOk = balls.find((b) => b.ball === ball)?.usable ?? false
+  // The selected ball became unusable (Study Ball on a wild it does not fit, or the last ball spent): pick a usable one (QA R-08).
+  const fallbackBall = usableBall(ball, balls)
+  useEffect(() => {
+    if (fallbackBall !== ball) setBall(fallbackBall)
+  }, [fallbackBall, ball])
   const chance = selAtThrow && selAtThrow.outcome === 'pending' ? wildCatchChance(player, selAtThrow, ball) : 0
   const canThrow = Boolean(sel && sel.outcome === 'pending' && ballOk && !anim && !targeting && !pickedToken && !busy)
 
