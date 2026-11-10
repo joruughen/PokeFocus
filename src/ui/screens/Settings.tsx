@@ -110,6 +110,9 @@ export default function Settings() {
               </Row>
             </>
           )}
+          <Row label={t('settings.audio.break')} note={t('settings.audio.breakNote')}>
+            <Switch checked={a.musicDuringBreak} onChange={(v) => prefs.setAudio({ musicDuringBreak: v })} label={t('settings.audio.break')} />
+          </Row>
         </div>
       </Panel>
 

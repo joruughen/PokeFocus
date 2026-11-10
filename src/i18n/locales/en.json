@@ -628,7 +628,9 @@
       "background": "Keep playing in another tab",
       "backgroundNote": "Study music keeps going when you switch tabs.",
       "hiss": "Vinyl crackle",
-      "hissNote": "A soft crackle under the study music."
+      "hissNote": "A soft crackle under the study music.",
+      "break": "Music during breaks",
+      "breakNote": "The home screen music while you rest. Menus are not affected."
     },
     "about": {
       "title": "About",
@@ -1317,6 +1319,7 @@
     "mythical": "Mythical"
   },
   "break": {
+    "muteMusicHint": "Turns only the break music on or off. Sounds and the end chime keep playing.",
     "offerTitle": "Take a break?",
     "offerBody": "Get up, drink some water and stretch. If you finish the break, your team recovers {{pct}} of its Energy.",
     "length": "Break length",
