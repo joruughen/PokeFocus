@@ -2,7 +2,7 @@
 import { sql } from 'drizzle-orm'
 import { bigserial, boolean, char, check, doublePrecision, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import type { ContentPatch, ContentItem, EventOverlay } from '../../src/engine/content'
-import type { AdminContentValidation, EventOverlayBody, GameDoc, LiveEventText } from '../../src/game/protocol'
+import type { AdminContentValidation, AdminSimParams, AdminSimReport, EventOverlayBody, GameDoc, LiveEventText } from '../../src/game/protocol'
 
 /** What `resolveContent` takes (stored in content_snapshots.resolved). */
 export interface ResolvedContentInput {
@@ -302,6 +302,35 @@ export const contentSnapshots = pgTable('content_snapshots', {
   resolved: jsonb('resolved').$type<ResolvedContentInput>().notNull(),
   createdAt: ts('created_at').notNull().defaultNow(),
 })
+
+/**
+ * Admin balance simulations of a draft against the active content (docs/admin-plan.md §7, E10;
+ * server/content/simRunner.ts). One runs at a time; a row left `running` by a restart is marked
+ * `interrupted`. `draft_hash` is the draft's patch hash when simulated: publishing warns when
+ * no `done` run of the current hash is recent.
+ */
+export const contentSimRuns = pgTable(
+  'content_sim_runs',
+  {
+    id: serial('id').primaryKey(),
+    versionId: integer('version_id').references(() => contentVersions.id, { onDelete: 'set null' }),
+    draftHash: text('draft_hash').notNull(),
+    activeVersionId: integer('active_version_id'),
+    activeHash: text('active_hash').notNull(),
+    status: text('status', { enum: ['running', 'done', 'failed', 'timeout', 'interrupted'] }).notNull().default('running'),
+    params: jsonb('params').$type<AdminSimParams>().notNull(),
+    result: jsonb('result').$type<AdminSimReport>(),
+    error: text('error'),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    finishedAt: ts('finished_at'),
+  },
+  (t) => [
+    check('content_sim_runs_status_check', sql`${t.status} in ('running', 'done', 'failed', 'timeout', 'interrupted')`),
+    index('content_sim_runs_version_idx').on(t.versionId, t.createdAt.desc()),
+    index('content_sim_runs_created_idx').on(t.createdAt.desc()),
+  ],
+)
 
 /**
  * Event images (docs/admin-plan.md §3): re-encoded by sharp (webp, no metadata) and

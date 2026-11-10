@@ -11,6 +11,12 @@
  *   POST   /drafts/:id/publish         admin + sudo   { effectiveAt?, confirm?, note? }: now, or scheduled when in the future
  *   POST   /versions/:id/rollback      admin + sudo   { confirm?, note? }: a NEW version copying that patch, in force now
  *   GET    /spawn-preview              admin      ?versionId&eventId&hour&weather&trainerLevel → species the wild pool offers (eventId: with that live event resolved on top, drafts too)
+ *   POST   /drafts/:id/simulate        admin      { profiles?, seeds?, weeks? } → 202: balance simulation active vs draft in a worker (E10; one at a time, 409 busy)
+ *   GET    /sim-runs?versionId=        support+   simulation runs, newest first (no reports)
+ *   GET    /sim-runs/:id               support+   one run with its report (progress while running)
+ *
+ * Drafts (and the publish result) carry `sim: { recent, last }`: publishing without a recent
+ * simulation of the current patch is allowed (a warning in the editor, `simRunId: null` in the audit).
  *
  * Writes go through the ContentService (`publishDraft` / `publish`, in the route's transaction;
  * `refresh()` after the commit reloads it and broadcasts the new hash). Publishing and rollback
@@ -34,13 +40,20 @@ import type {
   AdminContentVersionResponse,
   AdminContentVersionsResponse,
   AdminContentVersionSummary,
+  AdminSimCheck,
+  AdminSimRun,
+  AdminSimRunResponse,
+  AdminSimRunsResponse,
+  AdminSimRunSummary,
   AdminSpawnPreview,
 } from '../../../src/game/protocol'
+import { ADMIN_SIM_MAX_PLAYER_WEEKS, ADMIN_SIM_MAX_SEEDS, ADMIN_SIM_MAX_WEEKS, ADMIN_SIM_PROFILES, ADMIN_SIM_RECENT_MS } from '../../../src/game/protocol'
 import { audit } from '../../admin/audit'
 import { patchHash, type ResolvedContent } from '../../content/service'
+import type { SimInput } from '../../content/simCompare'
 import type { Db, Tx } from '../../db/client'
 import { overlayOf } from '../../content/events'
-import { contentVersions, liveEvents, users } from '../../db/schema'
+import { contentSimRuns, contentVersions, liveEvents, users } from '../../db/schema'
 import { ApiError, readBody, requireElevated, UUID_RE, type AppEnv, type Ctx, type Deps } from '../../http'
 import { RULES } from '../../rate-limit'
 import type { Limit, Staff } from './players'
@@ -73,7 +86,22 @@ const previewQuery = z.object({
   trainerLevel: z.coerce.number().int().min(1).max(100).default(1),
 })
 
+export const SIM_RUNS_LIMIT = 50
+const simulateBody = z
+  .object({
+    profiles: z
+      .array(z.enum(ADMIN_SIM_PROFILES as [string, ...string[]]))
+      .min(1)
+      .max(ADMIN_SIM_PROFILES.length)
+      .default(['casual', 'constant', 'marathoner']),
+    seeds: z.number().int().min(1).max(ADMIN_SIM_MAX_SEEDS).default(4),
+    weeks: z.number().int().min(1).max(ADMIN_SIM_MAX_WEEKS).default(4),
+  })
+  .strict()
+const simListQuery = z.object({ versionId: z.coerce.number().int().positive().optional() })
+
 type Row = typeof contentVersions.$inferSelect
+type SimRow = typeof contentSimRuns.$inferSelect
 type Reader = Pick<Db, 'select'>
 
 export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
@@ -123,8 +151,42 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     }
   }
 
-  /** The version and its diff against the active patch. */
-  const versionBody = async (id: number, now: number): Promise<AdminContentVersionResponse> => {
+  // --- Simulation runs (E10) ------------------------------------------------------------------
+
+  const simAuthors = async (rows: SimRow[]): Promise<Map<string, AdminContentAuthor>> => {
+    const ids = [...new Set(rows.map((r) => r.createdBy).filter((x): x is string => !!x))]
+    const out = new Map<string, AdminContentAuthor>()
+    if (ids.length === 0) return out
+    for (const u of await db.select({ id: users.id, trainerName: users.trainerName }).from(users).where(inArray(users.id, ids))) out.set(u.id, u)
+    return out
+  }
+
+  const simSummary = (r: SimRow, who: Map<string, AdminContentAuthor>): AdminSimRunSummary => ({
+    id: r.id,
+    versionId: r.versionId,
+    draftHash: r.draftHash,
+    activeVersionId: r.activeVersionId,
+    activeHash: r.activeHash,
+    status: r.status,
+    params: r.params,
+    error: r.error,
+    createdBy: (r.createdBy && who.get(r.createdBy)) || null,
+    createdAt: r.createdAt.getTime(),
+    finishedAt: r.finishedAt?.getTime() ?? null,
+    progress: r.status === 'running' ? deps.sim.progress(r.id) : null,
+  })
+
+  /** Latest run of a version and whether a finished run of `hash` is recent. */
+  const simCheck = async (versionId: number, hash: string | null, now: number): Promise<AdminSimCheck & { recentId: number | null }> => {
+    await deps.sim.recover()
+    const rows = await db.select().from(contentSimRuns).where(eq(contentSimRuns.versionId, versionId)).orderBy(desc(contentSimRuns.id)).limit(20)
+    const recent = rows.find((r) => r.status === 'done' && r.draftHash === hash && r.finishedAt && now - r.finishedAt.getTime() <= ADMIN_SIM_RECENT_MS)
+    const last = rows[0]
+    return { recent: !!recent, recentId: recent?.id ?? null, last: last ? simSummary(last, await simAuthors([last])) : null }
+  }
+
+  /** The version and its diff against the active patch (a draft, or `withSim`: its simulation state). */
+  const versionBody = async (id: number, now: number, withSim = false): Promise<AdminContentVersionResponse> => {
     const [row] = await db.select().from(contentVersions).where(eq(contentVersions.id, id))
     if (!row) throw new ApiError(404, 'not_found')
     const active = await content.current(now)
@@ -135,7 +197,12 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       baseHash: row.baseHash,
       validationDetail: (row.validation as AdminContentValidation | null) ?? null,
     }
-    return { version, diff: row.id === active.versionId ? [] : diffPatches(active.patch, row.patch), serverNow: now }
+    const body: AdminContentVersionResponse = { version, diff: row.id === active.versionId ? [] : diffPatches(active.patch, row.patch), serverNow: now }
+    if (withSim || row.status === 'draft') {
+      const { recent, last } = await simCheck(row.id, row.hash, now)
+      body.sim = { recent, last }
+    }
+    return body
   }
 
   const lockRow = async (tx: Tx, id: number): Promise<Row> => {
@@ -304,6 +371,11 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     publishLimit(c)
     const now = deps.clock()
     if (body.effectiveAt !== undefined && (body.effectiveAt <= now || body.effectiveAt > now + MAX_SCHEDULE_MS)) throw new ApiError(400, 'invalid_effective_at')
+    // «Mandatory» simulation = a warning, not a block (docs/admin-plan.md, Riesgos «Balance»): the
+    // editor shows `sim.recent: false` before publishing and the audit row records it. Read before
+    // the transaction (PGlite: one connection); the hash check makes a later patch edit count as unsimulated.
+    const [pre] = await db.select({ hash: contentVersions.hash }).from(contentVersions).where(eq(contentVersions.id, id))
+    const simulated = pre ? (await simCheck(id, pre.hash, now)).recentId : null
     await db.transaction(async (tx) => {
       const row = await lockDraft(tx, id)
       const active = await content.current(now, tx)
@@ -317,12 +389,12 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
         targetType: 'content_version',
         targetId: String(id),
         before: { status: 'draft' },
-        after: { status: 'published', hash: pub.hash, effectiveAt: body.effectiveAt ?? now, changedPaths: diffPatches(active.patch, row.patch).length, warnings: validation.warnings.length, confirmed: !!body.confirm },
+        after: { status: 'published', hash: pub.hash, effectiveAt: body.effectiveAt ?? now, changedPaths: diffPatches(active.patch, row.patch).length, warnings: validation.warnings.length, confirmed: !!body.confirm, simRunId: row.hash === pre?.hash ? simulated : null },
         ...(body.note && { note: body.note }),
       })
     })
     await content.refresh()
-    return c.json(await versionBody(id, now))
+    return c.json(await versionBody(id, now, true))
   })
 
   app.post('/versions/:id/rollback', staff('admin'), requireElevated(deps), async (c) => {
@@ -353,6 +425,77 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     })
     await content.refresh()
     return c.json(await versionBody(newId, now), 201)
+  })
+
+  // --- Simulation (E10) ----------------------------------------------------------------------
+
+  app.post('/drafts/:id/simulate', staff('admin'), async (c) => {
+    const id = idParam(c)
+    const body = await readBody(c, simulateBody)
+    if (body.profiles.length * body.seeds * body.weeks > ADMIN_SIM_MAX_PLAYER_WEEKS) throw new ApiError(400, 'sim_too_big', { max: ADMIN_SIM_MAX_PLAYER_WEEKS })
+    const profiles = [...new Set(body.profiles)] as AdminSimRun['params']['profiles']
+    const params: AdminSimRun['params'] = { profiles, seeds: body.seeds, weeks: body.weeks }
+    computeLimit(c)
+    const now = deps.clock()
+    await deps.sim.recover()
+    deps.sim.reserve() // 409 busy while another run is in progress
+    let input: SimInput
+    let runId: number
+    try {
+      const [row] = await db.select().from(contentVersions).where(eq(contentVersions.id, id))
+      if (!row) throw new ApiError(404, 'not_found')
+      if (row.status !== 'draft') throw new ApiError(409, 'not_draft')
+      const active = await content.current(now)
+      const validation = validateAgainst(row.patch, active, false, now)
+      if (!validation.ok) throw new ApiError(422, 'validation_failed', { errors: validation.errors, warnings: validation.warnings, requiresConfirm: validation.requiresConfirm })
+      const draftHash = row.hash ?? patchHash(row.patch)
+      const activeHash = active.versionId === null ? 'base' : patchHash(active.patch)
+      input = {
+        params,
+        active: { patch: active.patch, hash: activeHash, versionId: active.versionId },
+        proposed: { patch: row.patch, hash: draftHash, versionId: row.id },
+        eventItems: active.eventItems,
+      }
+      runId = await db.transaction(async (tx) => {
+        const [run] = await tx
+          .insert(contentSimRuns)
+          .values({ versionId: id, draftHash, activeVersionId: active.versionId, activeHash, status: 'running', params, createdBy: c.get('user').id, createdAt: new Date(now) })
+          .returning({ id: contentSimRuns.id })
+        await audit(tx, c, { action: 'content.simulate', targetType: 'content_version', targetId: String(id), after: { simRunId: run!.id, draftHash, activeHash, ...params } })
+        return run!.id
+      })
+    } catch (e) {
+      deps.sim.release()
+      throw e
+    }
+    void deps.sim.launch(runId, input)
+    const [row] = await db.select().from(contentSimRuns).where(eq(contentSimRuns.id, runId))
+    const body2: AdminSimRunResponse = { run: { ...simSummary(row!, await simAuthors([row!])), report: null }, serverNow: now }
+    return c.json(body2, 202)
+  })
+
+  app.get('/sim-runs', staff('support'), async (c) => {
+    const q = simListQuery.safeParse(c.req.query())
+    if (!q.success) throw new ApiError(400, 'invalid_query')
+    await deps.sim.recover()
+    const rows = await db
+      .select()
+      .from(contentSimRuns)
+      .where(q.data.versionId !== undefined ? eq(contentSimRuns.versionId, q.data.versionId) : undefined)
+      .orderBy(desc(contentSimRuns.id))
+      .limit(SIM_RUNS_LIMIT)
+    const who = await simAuthors(rows)
+    const body: AdminSimRunsResponse = { items: rows.map((r) => simSummary(r, who)), busy: deps.sim.current !== null, serverNow: deps.clock() }
+    return c.json(body)
+  })
+
+  app.get('/sim-runs/:id', staff('support'), async (c) => {
+    const id = idParam(c)
+    await deps.sim.recover()
+    const [row] = await db.select().from(contentSimRuns).where(eq(contentSimRuns.id, id))
+    if (!row) throw new ApiError(404, 'not_found')
+    const body: AdminSimRunResponse = { run: { ...simSummary(row, await simAuthors([row])), report: row.result ?? null }, serverNow: deps.clock() }
+    return c.json(body)
   })
 
   // --- Spawn preview -------------------------------------------------------------------------
