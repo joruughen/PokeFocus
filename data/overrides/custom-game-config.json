@@ -77,8 +77,8 @@
     }
   },
   "energy": {
-    "costBase": 0.5,
-    "costLevelDivisor": 28,
+    "costBase": 0.4,
+    "costLevelDivisor": 45,
     "dailyResetHour": 5,
     "breakRecoverPct": 0.1,
     "boxRecoverPctPerHour": 0.1

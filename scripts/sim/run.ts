@@ -290,6 +290,7 @@ function recordSession(
     exhausted: awake.filter((x) => x.exhaustedAtMinute !== null).length,
     startedEmpty: awake.filter((x) => x.energyStart <= 1e-9).length,
     endEnergyFrac: awake.length ? awake.reduce((a, x) => a + (x.energyMax > 0 ? x.energyEnd / x.energyMax : 0), 0) / awake.length : 0,
+    spentFrac: awake.length ? awake.reduce((a, x) => a + (x.energyMax > 0 ? x.energySpent / x.energyMax : 0), 0) / awake.length : 0,
     condMult,
     condMatch,
     lateClaim: r.lateClaim,

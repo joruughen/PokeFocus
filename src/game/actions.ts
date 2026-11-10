@@ -244,11 +244,11 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       return r.ok ? withPlayer(r.value) : fail(r.error)
     }
     case 'assignDamage': {
-      const r = assignDamage(p, { waveIndex: a.waveIndex, uid: a.uid, wildIndex: a.wildIndex }, ctx)
+      const r = assignDamage(p, { waveIndex: a.waveIndex, uid: a.uid, wildIndex: a.wildIndex }, rng, ctx)
       return r.ok ? withPlayer(r.value) : fail(r.error)
     }
     case 'autoAssignDamage': {
-      const r = autoAssignDamage(p, a.waveIndex, ctx)
+      const r = autoAssignDamage(p, a.waveIndex, rng, ctx)
       return r.ok ? withPlayer(r.value) : fail(r.error)
     }
     case 'setAutoDamage':

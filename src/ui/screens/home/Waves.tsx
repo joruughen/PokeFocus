@@ -3,7 +3,8 @@ import i18n from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   BALL_ORDER,
-  counterTarget,
+  ballCounterTarget,
+  canAttack,
   damageTokens,
   defaultContext,
   effectiveHits,
@@ -13,7 +14,6 @@ import {
   lockWaveDamage,
   previewAssignment,
   wastedDamage,
-  wildAttackers,
   studyBallMaxLevelFor,
   pokemonView,
   wildCatchChance,
@@ -131,10 +131,12 @@ export function Waves() {
       .filter((tk) => player.pokemon[tk.uid])
       .sort((a, b) => order(a.uid) - order(b.uid))
   }, [wave, manual, player])
-  const atThrow = useMemo(() => (editable ? lockWaveDamage(wave) : wave), [wave, editable])
-  const pickedToken = editable ? (tokens.find((tk) => tk.uid === picked) ?? null) : null
+  // What the first ball will lock in: whoever has not attacked (and has Energy) attacks with the automatic split.
+  const atThrow = useMemo(() => lockWaveDamage(wave, ctx, (uid) => canAttack(player, uid)), [wave, player])
+  // Only a token that has not attacked yet, of a member with Energy, can be picked (attacks are irreversible).
+  const pickedToken = editable ? (tokens.find((tk) => tk.uid === picked && tk.assigned === null && canAttack(player, tk.uid)) ?? null) : null
   const previews = useMemo(
-    () => (pickedToken ? wave.wilds.map((_, i) => previewAssignment(wave, pickedToken.uid, pickedToken.assigned === i ? null : i).wilds[i] ?? null) : null),
+    () => (pickedToken ? wave.wilds.map((_, i) => previewAssignment(wave, pickedToken.uid, i).wilds[i] ?? null) : null),
     [wave, pickedToken],
   )
   const effHits = useMemo(() => effectiveHits(wave), [wave])
@@ -147,28 +149,15 @@ export function Waves() {
   }, [picked])
 
   const sel = wave.wilds[selected]
-  /** The selected wild as the throw will see it (a manual wave locks first: unassigned tokens go automatic). */
+  /** The selected wild as the throw will see it (the first ball makes whoever has not attacked attack). */
   const selAtThrow = atThrow.wilds[selected]
-  // Who the selected wild would counterattack: the member that hit it hardest (as the throw will
-  // lock it), or the leader chain when nobody did or that attacker is exhausted (GDD §11.4).
-  const nextCounter = useMemo(() => {
-    if (!sel || sel.outcome !== 'pending') return null
-    const st = atThrow === wave ? player : { ...player, encounter: { ...enc, waves: enc.waves.map((w) => (w.index === wave.index ? atThrow : w)) } }
-    return counterTarget(st, { waveIndex: enc.currentWave, wildIndex: selected })
-  }, [player, enc, wave, atThrow, sel, selected])
-  const fallbackUid = player.team.find((u) => (player.pokemon[u]?.energy.current ?? 0) > 0) ?? player.team[0]
-  const nextTargetUid = nextCounter?.targetUid ?? fallbackUid
-  const nextTarget = nextTargetUid ? pokemonView(player, nextTargetUid, now) : null
+  // A failed ball is always answered on the leader, or the next member with Energy (GDD §11.4).
+  const ballTargetUid = ballCounterTarget(player) ?? player.team[0]
+  const ballTarget = ballTargetUid ? pokemonView(player, ballTargetUid, now) : null
   const lastHit = counterFx ? pokemonView(player, counterFx.counter.targetUid, now) : null
-  const card = frozenCard ?? lastHit ?? nextTarget
+  const card = frozenCard ?? lastHit ?? ballTarget
   const teamViews = useTeamViews(player, now)
-  const targetWhy = !nextCounter
-    ? null
-    : nextCounter.attackerUid && nextCounter.attackerUid === nextCounter.targetUid
-      ? t('waves.counterWhyAttacker')
-      : nextCounter.attackerUid
-        ? t('waves.counterWhyExhausted', { name: names.species(player.pokemon[nextCounter.attackerUid]?.speciesSlug ?? '') })
-        : t('waves.counterWhyNobody')
+  const targetWhy = ballTargetUid === player.team[0] ? t('waves.counterWhyLeader') : t('waves.counterWhyNext')
 
   const balls: { ball: ThrowBall; count: number | null; usable: boolean; reason?: string }[] = [
     ...(wave.studyBall === 'available'
@@ -226,7 +215,6 @@ export function Waves() {
             name: names.species(player.pokemon[outcome.counter.targetUid]?.speciesSlug ?? ''),
             damage: Math.round(outcome.counter.damage),
           })
-          if (outcome.counter.targetUid !== player.team[0]) emitHintEvent('counter.member')
         }
         if (outcome.kind === 'fled') emitHintEvent('throw.fled')
       }
@@ -276,18 +264,37 @@ export function Waves() {
     const err = charge.kind === 'status' ? await applyStatus(charge.id, ref) : await reroll(charge.id, ref)
     if (err) toast.add({ title: errorText(err, 'charge'), type: 'danger' })
   }
+  /** Show the counterattack an attack drew (read back from the saved wave). */
+  const showAttack = (uids: string[], energyBy: Record<string, number>) => {
+    const w = useGame.getState().player?.encounter?.waves[enc.currentWave]
+    const last = [...uids].reverse().map((u) => w?.attacks?.[u]).find((a) => a?.counter)
+    if (last?.counter) {
+      const c = last.counter
+      setCounterFx({ key: Date.now(), counter: c, energyBefore: energyBy[c.targetUid] ?? 0 })
+      sfx(c.missed ? 'counterMiss' : 'counterHit')
+      if (!c.missed && c.energyAfter <= 0) sfxLater('exhausted', 450)
+    }
+    const slept = uids.map((u) => w?.attacks?.[u]).find((a) => a?.skipped)
+    if (slept && !last) toast.add({ title: t(slept.skipped === 'asleep' ? 'damage.noCounterAsleep' : 'damage.noCounterParalyzed') })
+    emitHintEvent('counter.attack')
+  }
   const onAssign = async (i: number) => {
     if (!pickedToken || busy) return
     const tk = pickedToken
     setPicked(null)
     setSelected(i)
-    const err = await assignDamage(enc.currentWave, tk.uid, tk.assigned === i ? null : i)
-    if (err) toast.add({ title: damageErrorText(err), type: 'danger' })
+    const energyBy = Object.fromEntries(player.team.map((u) => [u, player.pokemon[u]?.energy.current ?? 0]))
+    const err = await assignDamage(enc.currentWave, tk.uid, i)
+    if (err) return void toast.add({ title: damageErrorText(err), type: 'danger' })
+    showAttack([tk.uid], energyBy)
   }
   const onAutoAssign = async () => {
     setPicked(null)
+    const energyBy = Object.fromEntries(player.team.map((u) => [u, player.pokemon[u]?.energy.current ?? 0]))
+    const left = tokens.filter((tk) => tk.assigned === null).map((tk) => tk.uid)
     const err = await autoAssignDamage(enc.currentWave)
-    if (err) toast.add({ title: damageErrorText(err), type: 'danger' })
+    if (err) return void toast.add({ title: damageErrorText(err), type: 'danger' })
+    showAttack(left, energyBy)
   }
   const advance = async (fn: () => Promise<string | null>) => {
     const err = await fn()
@@ -336,10 +343,10 @@ export function Waves() {
                   first={i === 0}
                   maxFails={mods.maxFailedThrows}
                   revealIvs={mods.revealWildIvs}
-                  hitters={hittersOf(effHits, i, wildAttackers(player, atThrow, i).map((a) => a.uid))}
+                  hitters={hittersOf(effHits, i)}
                   anim={anim && anim.ref.wildIndex === i ? anim : null}
                   targeting={targeting}
-                  assigning={pickedToken ? (pickedToken.assigned === i ? 'unassign' : 'assign') : null}
+                  assigning={pickedToken ? 'assign' : null}
                   preview={previews?.[i] ?? null}
                   manual={manual}
                   busy={busy}
@@ -357,7 +364,7 @@ export function Waves() {
         <TeamEnergy
           views={teamViews}
           leaderUid={player.team[0]}
-          target={anim ? null : nextTargetUid}
+          target={anim ? null : (pickedToken?.uid ?? ballTargetUid)}
           energyOverride={frozenEnergy ?? undefined}
           hit={
             counterFx && !anim
@@ -484,24 +491,16 @@ export function Waves() {
   )
 }
 
-/**
- * Team members whose hits weakened wild `index` during the session (engine `Wave.hits`). Ordered
- * like `byDamage` (engine `wildAttackers`: hardest hitter first, the one the wild counterattacks),
- * then by hit count.
- */
-function hittersOf(hits: Wave['hits'], index: number, byDamage: string[] = []): { uid: string; slug: string; hits: number }[] {
+/** Team members whose hits weakened wild `index` (effective hits of the wave), most hits first. */
+function hittersOf(hits: Wave['hits'], index: number): { uid: string; slug: string; hits: number }[] {
   if (!hits) return []
   const player = useGame.getState().player
   const by = new Map<string, number>()
   for (const h of hits) if (h.target === index) by.set(h.uid, (by.get(h.uid) ?? 0) + Math.max(1, Math.round(h.units)))
-  const rank = (uid: string) => {
-    const i = byDamage.indexOf(uid)
-    return i < 0 ? 99 : i
-  }
   return [...by.entries()]
     .map(([uid, n]) => ({ uid, slug: player?.pokemon[uid]?.speciesSlug ?? '', hits: n }))
     .filter((h) => h.slug)
-    .sort((a, b) => rank(a.uid) - rank(b.uid) || b.hits - a.hits)
+    .sort((a, b) => b.hits - a.hits)
 }
 
 /** Rule errors of the damage actions: `damage.errors.*`, then the shared charge/wave texts. */
@@ -532,7 +531,8 @@ function DamageTray({
   const { t } = useTranslation()
   const names = useNames()
   const player = usePlayer()
-  const unassigned = tokens.filter((tk) => tk.assigned === null).length
+  // Exhausted members cannot attack: their tokens do not count as "left to send".
+  const unassigned = tokens.filter((tk) => tk.assigned === null && canAttack(player, tk.uid)).length
   const pickedName = picked ? names.species(player.pokemon[picked]?.speciesSlug ?? '') : ''
   return (
     <Panel
@@ -597,6 +597,9 @@ function TokenButton({
   const slug = player.pokemon[token.uid]?.speciesSlug ?? ''
   const name = names.species(slug)
   const a = token.assigned
+  const exhausted = a === null && !canAttack(player, token.uid)
+  const attack = wave.attacks?.[token.uid]
+  const struck = attack?.counter ? (attack.counter.missed ? t('waves.missed') : attack.counter.healed > 0 ? `+${Math.round(attack.counter.healed)}` : `−${Math.round(attack.counter.damage)}`) : attack?.skipped ? t(`damage.skipped.${attack.skipped}`) : null
   const target = typeof a === 'number' ? wave.wilds[a] : undefined
   const where = typeof a === 'number' ? (target ? names.species(target.speciesSlug) : '?') : a === 'auto' ? t('damage.auto') : null
   const est = selectedWild ? estimateTokenDamage(token, selectedWild) : null
@@ -622,26 +625,31 @@ function TokenButton({
       )}
     </div>
   )
-  const state = where ? (a === 'auto' ? t('damage.toAuto') : t('damage.to', { name: where })) : t('damage.notAssigned')
+  const state = exhausted ? t('damage.exhausted') : where ? (a === 'auto' ? t('damage.toAuto') : t('damage.to', { name: where })) : t('damage.notAssigned')
+  const pickable = editable && a === null && !exhausted
   return (
     <Tooltip variant="help" content={tip}>
       <button
         type="button"
-        aria-pressed={editable ? picked : undefined}
-        aria-disabled={!editable || disabled}
-        aria-label={`${t('damage.tokenLabel', { name, count: token.hits })}, ${state}`}
-        onClick={() => editable && !disabled && onPick()}
+        aria-pressed={pickable ? picked : undefined}
+        aria-disabled={!pickable || disabled}
+        aria-label={`${t('damage.tokenLabel', { name, count: token.hits })}, ${state}${struck ? `, ${t('damage.struckBack', { what: struck })}` : ''}`}
+        onClick={() => pickable && !disabled && onPick()}
         className={cx(
           'flex items-center gap-1 py-1 pr-2.5 pl-0.5 shadow-raised transition-[translate,background-color] duration-75',
           picked ? 'translate-y-[3px] bg-volt-400 text-ink shadow-pressed' : 'bg-dusk-700 text-mist-100 hover:bg-dusk-600',
-          editable && a === null && !picked && 'outline-2 -outline-offset-2 outline-volt-300/70 outline-dashed',
-          (!editable || disabled) && 'cursor-default',
+          pickable && !picked && 'outline-2 -outline-offset-2 outline-volt-300/70 outline-dashed',
+          (!pickable || disabled) && 'cursor-default',
+          exhausted && 'opacity-50',
         )}
       >
         <Sprite kind="icon" slug={slug} alt="" className="-my-2" />
         <span className="font-num text-lg leading-none">×{token.hits}</span>
         {/* On phones the dashed outline alone says "unassigned", so three tokens fit per row. */}
-        <span className={cx('ml-1 max-w-[9ch] truncate text-xs', picked ? 'text-dusk-800' : 'text-mist-300', !where && 'max-sm:hidden')}>{where ? `→ ${where}` : t('damage.notAssigned')}</span>
+        <span className={cx('ml-1 max-w-[9ch] truncate text-xs', picked ? 'text-dusk-800' : 'text-mist-300', !where && !exhausted && 'max-sm:hidden')}>
+          {exhausted ? t('damage.exhausted') : where ? `→ ${where}` : t('damage.notAssigned')}
+        </span>
+        {struck && <span className="ml-1 font-num text-sm leading-none text-cheek-400">{struck}</span>}
       </button>
     </Tooltip>
   )
@@ -656,7 +664,7 @@ function counterLine(c: CounterResult, t: (k: string, o?: Record<string, unknown
 
 /**
  * "Hits" row of a wild card: every team member that hit it (up to 6). They wrap instead of
- * overflowing the 11.5 rem card; the first one (shaded) is the one it counterattacks.
+ * overflowing the 11.5 rem card.
  */
 export function HittersRow({ hitters }: { hitters: { uid: string; slug: string; hits: number }[] }) {
   const { t } = useTranslation()
@@ -666,8 +674,8 @@ export function HittersRow({ hitters }: { hitters: { uid: string; slug: string; 
     <div className="mt-1.5 flex min-w-0 items-start gap-2">
       <span className="w-12 shrink-0 font-display text-sm text-dusk-600">{t('waves.hitBy')}</span>
       <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5" title={hitters.map((h) => `${names.species(h.slug)} ×${h.hits}`).join(', ')}>
-        {hitters.map((h, k) => (
-          <span key={h.uid} className={cx('inline-flex min-w-0 items-center', k === 0 && hitters.length > 1 && 'bg-cheek-500/15')}>
+        {hitters.map((h) => (
+          <span key={h.uid} className="inline-flex min-w-0 items-center">
             <Sprite kind="icon" slug={h.slug} alt={names.species(h.slug)} className="-my-2 -mx-2 shrink-0" />
             <span className="font-num text-sm leading-none">×{h.hits}</span>
           </span>
@@ -751,9 +759,9 @@ function WildCard({
   manual,
   onSelect,
 }: {
-  /** A damage token is picked: tapping this card sends it here (or takes it back). */
-  assigning: 'assign' | 'unassign' | null
-  /** This wild as it would be with the picked token assigned/unassigned (live HP preview). */
+  /** A damage token is picked: tapping this card attacks this wild with it (irreversible). */
+  assigning: 'assign' | null
+  /** This wild as it would be if the picked token attacked it (live HP preview). */
   preview: WildPokemon | null
   /** The wave uses the manual split (shows wasted damage). */
   manual: boolean
@@ -799,7 +807,7 @@ function WildCard({
         statusTaken ? t('waves.charges.hasStatus') : '',
         preview && !done ? t('damage.preview', { pct: fmtPct(preview.hpFraction, i18n.language) }) : '',
         overkill ? t('damage.overkill') : '',
-        assigning && !done ? t(assigning === 'assign' ? 'damage.assignHere' : 'damage.unassignHere') : '',
+        assigning && !done ? t('damage.assignHere') : '',
       ]
         .filter(Boolean)
         .join('. ')}
@@ -913,7 +921,7 @@ function WildCard({
           <p className="mt-1.5 text-xs text-volt-700">{t('waves.shinyGuarantee', { ball: names.item(wild.guaranteedBall) })}</p>
         )}
         {targeting && !done && <p className="mt-1.5 font-display text-sm text-exp-600">{t('waves.charges.applyHere')}</p>}
-        {assigning && !done && <p className="mt-1.5 font-display text-sm text-exp-600">{t(assigning === 'assign' ? 'damage.assignHere' : 'damage.unassignHere')}</p>}
+        {assigning && !done && <p className="mt-1.5 font-display text-sm text-exp-600">{t('damage.assignHere')}</p>}
       </div>
       <span className="sr-only">{index + 1}</span>
     </button>

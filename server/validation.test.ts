@@ -6,7 +6,8 @@ const ok = (body: unknown) => gameActionBody.safeParse(body).success
 describe('damage split actions (validation)', () => {
   it('accepts well-formed bodies', () => {
     expect(ok({ type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 2 })).toBe(true)
-    expect(ok({ type: 'assignDamage', waveIndex: 1, uid: 'p1', wildIndex: null })).toBe(true)
+    // Attacks are irreversible: there is no "take it back" (null) any more.
+    expect(ok({ type: 'assignDamage', waveIndex: 1, uid: 'p1', wildIndex: null })).toBe(false)
     expect(ok({ type: 'autoAssignDamage', waveIndex: 3 })).toBe(true)
     expect(ok({ type: 'setAutoDamage', value: true })).toBe(true)
   })

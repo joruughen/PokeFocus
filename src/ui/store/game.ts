@@ -95,8 +95,8 @@ export interface GameState extends GameDoc {
   throwBall: (ref: WildRef, ball: ThrowBall) => Promise<{ ok: true; outcome: ThrowOutcome } | { ok: false; error: GameActionError }>
   applyStatus: (chargeId: string, ref: WildRef) => Promise<GameActionError | null>
   reroll: (chargeId: string, ref: WildRef) => Promise<GameActionError | null>
-  /** Manual damage split (before the wave's first ball). */
-  assignDamage: (waveIndex: number, uid: string, wildIndex: number | null) => Promise<GameActionError | null>
+  /** Attack: send a member's damage to a wild (irreversible; the wild strikes back). */
+  assignDamage: (waveIndex: number, uid: string, wildIndex: number) => Promise<GameActionError | null>
   autoAssignDamage: (waveIndex: number) => Promise<GameActionError | null>
   setAutoDamage: (value: boolean) => Promise<GameActionError | null>
   nextWave: () => Promise<GameActionError | null>
