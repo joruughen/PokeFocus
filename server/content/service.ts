@@ -70,10 +70,27 @@ export interface ContentService {
   /** Broadcast `{type:'content', hash}` if the active hash changed since the last check. Returns the new hash or null. */
   check(now?: number): Promise<string | null>
   /**
-   * Publish a version (immutable). Until the admin API (E5) exists this is the
-   * only writer; tests use it. `effectiveAt` default = now (real clock).
+   * Publish a NEW version (immutable): used by tests and by the admin rollback.
+   * `effectiveAt` default = now (real clock). Without `ex` it reloads and
+   * checks right away; with the caller's transaction it only inserts, and the
+   * caller runs `refresh()` after the commit.
    */
-  publish(input: PublishInput): Promise<{ id: number; hash: string }>
+  publish(input: PublishInput, ex?: Executor): Promise<{ id: number; hash: string }>
+  /**
+   * Publish an existing DRAFT in the caller's transaction (admin API): it
+   * becomes `published` (scheduled when `effectiveAt` is in the future) and
+   * immutable. Null when the row is not a draft (nothing changed). Run
+   * `refresh()` after the commit.
+   */
+  publishDraft(ex: Executor, id: number, input: PublishDraftInput): Promise<{ id: number; hash: string } | null>
+  /** `reload()` + `check()`: after a publication committed, announce it at once (SSE) when it changes the active hash. */
+  refresh(): Promise<void>
+}
+
+export interface PublishDraftInput {
+  effectiveAt?: number
+  userId?: string | null
+  validation?: unknown
 }
 
 export interface PublishInput {
@@ -83,6 +100,7 @@ export interface PublishInput {
   note?: string | null
   parentId?: number | null
   userId?: string | null
+  validation?: unknown
 }
 
 export interface ContentServiceOptions {
@@ -264,10 +282,10 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
     return hash
   }
 
-  async function publish(input: PublishInput): Promise<{ id: number; hash: string }> {
+  async function publish(input: PublishInput, ex: Executor = db): Promise<{ id: number; hash: string }> {
     const t = clock()
     const hash = patchHash(input.patch)
-    const [row] = await db
+    const [row] = await ex
       .insert(contentVersions)
       .values({
         status: 'published',
@@ -278,17 +296,42 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
         title: input.title ?? null,
         note: input.note ?? null,
         effectiveAt: new Date(input.effectiveAt ?? t),
+        ...(input.validation !== undefined && { validation: input.validation }),
         createdBy: input.userId ?? null,
         publishedBy: input.userId ?? null,
         publishedAt: new Date(t),
       })
       .returning({ id: contentVersions.id })
-    await reload()
-    await check()
+    if (ex === db) await refresh()
     return { id: row!.id, hash }
   }
 
-  return { baseHash: BASE_HASH, current, byHash, persist, reload, check, publish }
+  async function publishDraft(ex: Executor, id: number, input: PublishDraftInput): Promise<{ id: number; hash: string } | null> {
+    const t = clock()
+    const [cur] = await ex.select({ patch: contentVersions.patch, status: contentVersions.status }).from(contentVersions).where(eq(contentVersions.id, id)).for('update')
+    if (!cur || cur.status !== 'draft') return null
+    const hash = patchHash(cur.patch)
+    await ex
+      .update(contentVersions)
+      .set({
+        status: 'published',
+        baseHash: BASE_HASH,
+        hash,
+        effectiveAt: new Date(input.effectiveAt ?? t),
+        ...(input.validation !== undefined && { validation: input.validation }),
+        publishedBy: input.userId ?? null,
+        publishedAt: new Date(t),
+      })
+      .where(eq(contentVersions.id, id))
+    return { id, hash }
+  }
+
+  async function refresh(): Promise<void> {
+    await reload()
+    await check()
+  }
+
+  return { baseHash: BASE_HASH, current, byHash, persist, reload, check, publish, publishDraft, refresh }
 }
 
 /** Actions that run on the content pinned by the active session. */

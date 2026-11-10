@@ -27,6 +27,12 @@ export const RULES = {
   adminPlayerWrite: { limit: 60, windowMs: 15 * 60_000 },
   /** Grants alone per staff user (each one hands out items or Dust). */
   adminGrant: { limit: 20, windowMs: 15 * 60_000 },
+  /** Live-content draft writes (create, edit, delete) per staff user. */
+  adminContentWrite: { limit: 120, windowMs: 15 * 60_000 },
+  /** Full validations with the engine smoke test (CPU: ~0.3 s each) and spawn previews per staff user. */
+  adminContentCompute: { limit: 30, windowMs: 15 * 60_000 },
+  /** Publish, schedule and rollback per staff user. */
+  adminContentPublish: { limit: 10, windowMs: 15 * 60_000 },
   /** Web Push subscribe + unsubscribe per user. */
   pushWriteUser: { limit: 30, windowMs: 15 * 60_000 },
   /** POST /api/push/test per user (each one sends real notifications). */
