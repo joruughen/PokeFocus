@@ -31,7 +31,8 @@
     "missions": "Misiones",
     "friends": "Amigos",
     "changelog": "Novedades",
-    "admin": "Administración"
+    "admin": "Administración",
+    "events": "Eventos"
   },
   "trainer": {
     "level": "Entrenador nv. {{level}}",
@@ -1576,7 +1577,11 @@
     "claimedAll_one": "Reclamaste {{count}} misión",
     "claimedAll_other": "Reclamaste {{count}} misiones",
     "badge_one": "{{count}} misión lista",
-    "badge_other": "{{count}} misiones listas"
+    "badge_other": "{{count}} misiones listas",
+    "event": {
+      "group": "Misiones de evento",
+      "claimUntil": "Terminó: reclama hasta el {{when}}"
+    }
   },
   "auth": {
     "modeLabel": "Entrar o crear cuenta",
@@ -2240,6 +2245,64 @@
     "message": "Hay contenido nuevo. Recarga para verlo.",
     "reload": "Recargar"
   },
+  "events": {
+    "title": "Eventos",
+    "subtitle": "Lo que pasa ahora en PokeFocus: especies destacadas, más probabilidad de shiny, premios y misiones que solo duran lo que dura el evento.",
+    "section": {
+      "active": "Activos",
+      "upcoming": "Próximos",
+      "past": "Pasados"
+    },
+    "empty": {
+      "active": "No hay ningún evento en marcha ahora mismo.",
+      "upcoming": "No hay eventos anunciados todavía.",
+      "past": "Aún no ha terminado ningún evento."
+    },
+    "none": {
+      "title": "Todavía no hay eventos",
+      "body": "Cuando haya uno aparecerá aquí, y verás un aviso en el inicio mientras dure."
+    },
+    "error": {
+      "title": "No pudimos cargar los eventos",
+      "body": "Revisa tu conexión e inténtalo otra vez.",
+      "retry": "Reintentar"
+    },
+    "loadMore": "Ver más eventos pasados",
+    "badge": {
+      "active": "En marcha",
+      "upcoming": "Próximo",
+      "past": "Terminado"
+    },
+    "window": "{{start}} – {{end}}",
+    "endsIn": "Termina en {{time}}",
+    "startsIn": "Empieza en {{time}}",
+    "ended": "Terminó el {{when}}",
+    "remaining": {
+      "dh": "{{d}} d {{h}} h",
+      "hm": "{{h}} h {{m}} min",
+      "m": "{{m}} min"
+    },
+    "boosts": "Mejoras del evento",
+    "shinyMult": "Shiny ×{{n}}",
+    "shinyChance": "Shiny {{pct}}",
+    "shinyScope": {
+      "all": "en todos los Pokémon",
+      "featured": "solo en los destacados"
+    },
+    "legendaryMult": "Legendarios ×{{n}}",
+    "featured": "Pokémon destacados",
+    "featuredNote": "El número es cuánto más probable es que aparezcan.",
+    "drops": "Premios por oleada",
+    "dropRule": "{{pct}} por oleada, hasta {{max}} por sesión",
+    "missions": "Misiones del evento",
+    "goMissions": "Ir a Misiones",
+    "banner": {
+      "label": "Evento en marcha",
+      "title": "Evento: {{name}}",
+      "view": "Ver",
+      "dismiss": "Cerrar el aviso de {{name}}"
+    }
+  },
   "maintenance": {
     "upcomingTitle": "Mantenimiento programado",
     "activeTitle": "Mantenimiento en curso",
@@ -2449,6 +2512,293 @@
         "too_many_items": "Demasiados objetos distintos en una petición.",
         "rate_limited_one": "Demasiadas peticiones. Espera {{count}} minuto.",
         "rate_limited_other": "Demasiadas peticiones. Espera {{count}} minutos."
+      }
+    }
+  },
+  "eventsAdmin": {
+    "unknownSpecies": "No existe esa especie",
+    "speciesHint": "Escribe el identificador (pikachu) o elige de la lista",
+    "unknownItem": "No existe ese objeto",
+    "itemHint": "Identificador del objeto (poke-ball)",
+    "remove": "Quitar la fila {{n}}",
+    "errors": {
+      "fix": "Corrige los campos marcados antes de guardar.",
+      "invalid_body": "Hay datos que el servidor no acepta. Revisa los campos.",
+      "invalid_query": "La consulta no es válida.",
+      "invalid_dates": "Las fechas no sirven: el fin debe ser posterior al inicio y futuro, y el inicio como mucho a 60 días.",
+      "forbidden": "Solo una cuenta de administración puede hacer esto.",
+      "elevation_required": "Hace falta volver a poner la contraseña para esta acción.",
+      "wrong_password": "La contraseña no es correcta.",
+      "not_found": "Ese evento o imagen ya no existe.",
+      "not_draft": "Solo se puede hacer con un borrador.",
+      "not_published": "Solo se puede hacer con un evento publicado.",
+      "not_editable": "Un evento archivado no se puede editar.",
+      "slug_taken": "Ya hay otro evento con ese identificador.",
+      "slug_locked": "Un evento publicado no puede cambiar de identificador.",
+      "too_many_drafts": "Hay demasiados borradores abiertos. Borra o publica alguno.",
+      "confirm_required": "Hay cambios grandes que debes confirmar marcando la casilla.",
+      "in_use": "La imagen está en uso por un evento.",
+      "uploads_full": "Se llegó al límite de espacio para imágenes.",
+      "body_too_large": "La imagen pesa más de 3 MB.",
+      "unsupported_type": "Solo se aceptan imágenes PNG, JPEG o WebP.",
+      "validation_failed": "El evento tiene errores: míralos en «Validación».",
+      "invalid_image": "No se pudo leer la imagen.",
+      "image_too_small": "La imagen es demasiado pequeña (mínimo 320×180).",
+      "image_too_large": "La imagen tiene demasiados píxeles.",
+      "animated_image": "No se aceptan imágenes animadas.",
+      "unknown_image": "La imagen elegida no existe.",
+      "rate_limited_one": "Demasiadas peticiones. Prueba otra vez en {{count}} minuto.",
+      "rate_limited_other": "Demasiadas peticiones. Prueba otra vez en {{count}} minutos."
+    },
+    "issues": {
+      "unknown_species": "No existe la especie en {{path}}.",
+      "unknown_item": "No existe el objeto en {{path}}.",
+      "duplicate_featured": "Una especie está destacada dos veces.",
+      "duplicate_drop": "Un objeto está dos veces en los premios.",
+      "shiny_no_featured": "El shiny «solo destacados» necesita al menos una especie destacada.",
+      "shiny_not_higher": "La probabilidad de shiny no supera la normal: no cambia nada.",
+      "big_change": "Cambio grande: pide confirmación al publicar.",
+      "featured_legendary": "Destacar un legendario no lo hace más frecuente (usa el multiplicador de legendarios).",
+      "item_shadows_base": "Ese objeto ya existe en el juego: usa otro identificador.",
+      "event_mission_id_shared": "Una misión de evento usa el mismo id que una diaria o semanal."
+    },
+    "sudo": {
+      "title": {
+        "publish": "Publicar el evento",
+        "schedule": "Programar el evento",
+        "save": "Guardar cambios en un evento publicado",
+        "archive": "Archivar el evento"
+      },
+      "body": {
+        "publish": "«{{name}}» empezará ya y se verá en la página de eventos de todos los jugadores. Se guarda en el registro de auditoría.",
+        "schedule": "«{{name}}» quedará programado: empezará solo en la fecha de inicio. Hasta entonces los jugadores lo ven como próximo.",
+        "save": "«{{name}}» ya está publicado: los cambios se aplican a los jugadores al momento y suben su revisión.",
+        "archive": "«{{name}}» dejará de estar en juego y de aparecer en la página de eventos. Sus objetos seguirán con su nombre en las mochilas."
+      },
+      "riskyTitle": "Cambios grandes que debes confirmar",
+      "confirm": "Entiendo que son cambios grandes (más de ×3, o de ×5 en probabilidades) y los confirmo.",
+      "password": "Tu contraseña",
+      "passwordHint": "Hace falta para acciones sensibles; dura 30 minutos.",
+      "note": "Nota (opcional)",
+      "noteHint": "Se guarda en el registro de auditoría.",
+      "submit": {
+        "publish": "Publicar ahora",
+        "schedule": "Programar",
+        "save": "Guardar cambios",
+        "archive": "Archivar"
+      }
+    },
+    "image": {
+      "panel": "Imagen",
+      "title": "Imagen del evento",
+      "alt": "Vista previa de la imagen del evento",
+      "none": "Sin imagen. El evento se verá sin ilustración.",
+      "hint": "PNG, JPEG o WebP de hasta 3 MB. Se recorta a 16:9 (mínimo 320×180) y se vuelve a codificar; los metadatos se borran.",
+      "upload": "Subir imagen",
+      "replace": "Cambiar imagen",
+      "uploading": "Subiendo…",
+      "gallery": "Imágenes subidas",
+      "galleryEmpty": "Aún no hay imágenes subidas.",
+      "remove": "Quitar imagen",
+      "use_one": "Usar imagen de {{size}} (en uso en {{count}} evento)",
+      "use_other": "Usar imagen de {{size}} (en uso en {{count}} eventos)"
+    },
+    "spawn": {
+      "title": "Vista previa de apariciones",
+      "body": "Compara qué salvajes aparecen con el contenido actual y con este evento encima, para una hora, un clima y un nivel de entrenador. Usa el evento guardado.",
+      "hour": "Hora local (0-23)",
+      "hourRange": "Un entero de 0 a 23.",
+      "weather": "Clima",
+      "weathers": {
+        "clear": "Despejado",
+        "sun": "Sol",
+        "rain": "Lluvia",
+        "snow": "Nieve",
+        "unknown": "Desconocido"
+      },
+      "level": "Nivel de entrenador",
+      "levelRange": "Un entero de 1 a 100.",
+      "saveFirst": "Guarda el borrador para poder ver la vista previa.",
+      "dirty": "Tienes cambios sin guardar: la vista previa usa la versión guardada.",
+      "run": "Calcular",
+      "summary": "A las {{hour}} h: {{before}} especies antes y {{after}} con el evento. Probabilidad de legendario: {{legBefore}} antes, {{legAfter}} con el evento.",
+      "caption": "Probabilidad de aparición por especie, sin y con el evento",
+      "species": "Especie",
+      "before": "Ahora",
+      "after": "Con evento",
+      "delta": "Cambio"
+    },
+    "editor": {
+      "label": "Editor de evento",
+      "newTitle": "Evento nuevo",
+      "revision": "revisión {{n}}",
+      "unsaved": "· cambios sin guardar",
+      "back": "Volver a la lista"
+    },
+    "status": {
+      "new": "Sin guardar",
+      "draft": "Borrador",
+      "published": "Publicado",
+      "archived": "Archivado"
+    },
+    "basics": {
+      "title": "Datos del evento",
+      "nameEs": "Nombre (español)",
+      "nameEn": "Nombre (inglés)",
+      "descEs": "Descripción (español)",
+      "descEn": "Descripción (inglés)",
+      "slug": "Identificador",
+      "slugHint": "Letras minúsculas, números y guiones. No se puede cambiar tras publicar.",
+      "slugLocked": "Un evento publicado conserva su identificador.",
+      "slugFromName": "Sacar del nombre"
+    },
+    "dates": {
+      "title": "Fechas",
+      "start": "Inicio",
+      "end": "Fin",
+      "zone": "Las fechas se escriben en tu zona ({{zone}}); debajo ves el mismo instante en UTC. Como mucho 62 días de duración."
+    },
+    "featured": {
+      "title": "Especies destacadas",
+      "label": "Aparecen más",
+      "empty": "Ninguna especie destacada.",
+      "add": "Añadir especie",
+      "species": "Especie",
+      "mult": "Multiplicador",
+      "multHint": "De 1 a 10 veces más probable."
+    },
+    "boosts": {
+      "title": "Shiny y legendarios",
+      "shiny": "Shiny del evento",
+      "shinyPct": "Probabilidad de shiny (%)",
+      "shinyPctHint": "Normal: {{base}}. Máximo 5 %.",
+      "scope": "Alcance",
+      "scopeFeatured": "Solo especies destacadas",
+      "scopeAll": "Todas las especies",
+      "legendary": "Más legendarios",
+      "legendaryMult": "Multiplicador de legendarios",
+      "legendaryHint": "De 1 a 10 veces la probabilidad normal."
+    },
+    "items": {
+      "title": "Objetos propios del evento",
+      "label": "Objetos nuevos",
+      "empty": "El evento no crea objetos propios.",
+      "add": "Añadir objeto",
+      "slug": "Identificador",
+      "nameEs": "Nombre (español)",
+      "nameEn": "Nombre (inglés)"
+    },
+    "drops": {
+      "title": "Premios por oleada",
+      "label": "Objetos que pueden caer",
+      "empty": "El evento no da premios extra.",
+      "add": "Añadir premio",
+      "item": "Objeto",
+      "pct": "Probabilidad por oleada (%)",
+      "pctHint": "De 0 a 100.",
+      "max": "Máximo por sesión",
+      "maxHint": "De 1 a 99."
+    },
+    "missions": {
+      "title": "Misiones del evento",
+      "label": "Lista fija de misiones",
+      "empty": "El evento no tiene misiones.",
+      "add": "Añadir misión",
+      "id": "Identificador de la misión",
+      "idHint": "No se cambia después de publicar.",
+      "kind": "Qué cuenta",
+      "kinds": {
+        "sessions": "Sesiones completadas",
+        "studyMinutes": "Minutos de estudio",
+        "longSession": "Sesión larga",
+        "studyDays": "Días de estudio",
+        "techniques": "Técnicas activadas",
+        "catch": "Capturas",
+        "catchType": "Capturas de un tipo",
+        "catchFirstThrow": "Capturas al primer lanzamiento",
+        "studyBall": "Capturas con Bola Estudio",
+        "evolve": "Evoluciones"
+      },
+      "target": "Objetivo",
+      "minMinutes": "Minutos mínimos de la sesión",
+      "type": "Tipo",
+      "typeRandom": "Al azar",
+      "minLevel": "Nivel de entrenador mínimo",
+      "minLevelHint": "Vacío = desde el nivel 1.",
+      "titleEs": "Título (español)",
+      "titleEn": "Título (inglés)",
+      "placeholders": "Puedes usar {n}, {minutes} y {type}.",
+      "descEs": "Descripción (español)",
+      "descEn": "Descripción (inglés)",
+      "reward": "Recompensa",
+      "dust": "Polvo",
+      "candies": "Caramelos del tipo",
+      "rewardItem": "Objeto",
+      "rewardCount": "Cantidad",
+      "addItem": "Añadir objeto de recompensa",
+      "keptTiers_one": "Esta misión tiene otros escalones de recompensa que no se editan aquí ({{count}}): se conservan tal cual.",
+      "keptTiers_other": "Esta misión tiene otros escalones de recompensa que no se editan aquí ({{count}}): se conservan tal cual."
+    },
+    "problem": {
+      "required": "Falta rellenar este campo.",
+      "number": "Escribe un número.",
+      "dates": "El fin debe ser posterior al inicio."
+    },
+    "validation": {
+      "title": "Validación",
+      "missing_one": "Falta rellenar o corregir {{count}} campo.",
+      "missing_other": "Faltan o hay que corregir {{count}} campos.",
+      "pending": "Completa el formulario para validarlo.",
+      "ok": "Sin errores ni avisos.",
+      "fromServer": "Respuesta del servidor.",
+      "errors_one": "{{count}} error",
+      "errors_other": "{{count}} errores",
+      "warnings_one": "{{count}} aviso",
+      "warnings_other": "{{count}} avisos",
+      "saved": "Última validación guardada: {{errors}} errores y {{warnings}} avisos ({{when}}).",
+      "note": "Esta validación es la misma que usa el servidor, sin la prueba de simulación. Al publicar, el servidor valida otra vez con simulación y puede rechazar el evento."
+    },
+    "preview": {
+      "title": "Así lo verán los jugadores",
+      "unavailable": "Completa los campos obligatorios para ver la tarjeta."
+    },
+    "actions": {
+      "saveValidate": "Guardar y validar",
+      "publish": "Publicar…",
+      "schedule": "Programar…",
+      "delete": "Borrar borrador",
+      "saveChanges": "Guardar cambios…",
+      "archive": "Archivar…",
+      "duplicate": "Duplicar como borrador",
+      "help": {
+        "new": "Guardar crea el borrador; los jugadores no lo ven hasta publicarlo.",
+        "draft": "El borrador no es visible para los jugadores. Publicar o programar pide tu contraseña.",
+        "published": "Está publicado: los cambios se aplican al momento y piden tu contraseña. El identificador no cambia.",
+        "archived": "Archivado: solo se puede consultar o duplicar."
+      }
+    },
+    "delete": {
+      "title": "Borrar el borrador",
+      "body": "«{{name}}» se borra del todo. Esto no se puede deshacer."
+    },
+    "list": {
+      "title": "Eventos",
+      "new": "Evento nuevo",
+      "intro": "Crea un borrador, valídalo y publícalo ahora o prográmalo. Los jugadores ven los publicados en la página de eventos.",
+      "retry": "Reintentar",
+      "empty": "Todavía no hay eventos. Crea el primero.",
+      "groups": {
+        "active": "En marcha",
+        "scheduled": "Programados",
+        "draft": "Borradores",
+        "past": "Pasados y archivados"
+      },
+      "badge": {
+        "active": "En marcha",
+        "scheduled": "Programado",
+        "draft": "Borrador",
+        "published": "Terminado",
+        "archived": "Archivado"
       }
     }
   },

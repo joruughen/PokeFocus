@@ -31,7 +31,8 @@
     "missions": "Missions",
     "friends": "Friends",
     "changelog": "News",
-    "admin": "Admin"
+    "admin": "Admin",
+    "events": "Events"
   },
   "trainer": {
     "level": "Trainer lv. {{level}}",
@@ -1576,7 +1577,11 @@
     "claimedAll_one": "You claimed {{count}} mission",
     "claimedAll_other": "You claimed {{count}} missions",
     "badge_one": "{{count}} mission ready",
-    "badge_other": "{{count}} missions ready"
+    "badge_other": "{{count}} missions ready",
+    "event": {
+      "group": "Event missions",
+      "claimUntil": "Ended: claim until {{when}}"
+    }
   },
   "auth": {
     "modeLabel": "Sign in or create an account",
@@ -2240,6 +2245,64 @@
     "message": "There is new content. Reload to see it.",
     "reload": "Reload"
   },
+  "events": {
+    "title": "Events",
+    "subtitle": "What is happening in PokeFocus right now: featured species, better shiny odds, prizes and missions that only last as long as the event.",
+    "section": {
+      "active": "Active",
+      "upcoming": "Upcoming",
+      "past": "Past"
+    },
+    "empty": {
+      "active": "No event is running right now.",
+      "upcoming": "No events announced yet.",
+      "past": "No event has ended yet."
+    },
+    "none": {
+      "title": "No events yet",
+      "body": "When there is one it will show up here, and you will see a notice on Home while it lasts."
+    },
+    "error": {
+      "title": "We could not load the events",
+      "body": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "loadMore": "Show more past events",
+    "badge": {
+      "active": "Live",
+      "upcoming": "Upcoming",
+      "past": "Ended"
+    },
+    "window": "{{start}} – {{end}}",
+    "endsIn": "Ends in {{time}}",
+    "startsIn": "Starts in {{time}}",
+    "ended": "Ended {{when}}",
+    "remaining": {
+      "dh": "{{d}} d {{h}} h",
+      "hm": "{{h}} h {{m}} min",
+      "m": "{{m}} min"
+    },
+    "boosts": "Event boosts",
+    "shinyMult": "Shiny ×{{n}}",
+    "shinyChance": "Shiny {{pct}}",
+    "shinyScope": {
+      "all": "on every Pokémon",
+      "featured": "on featured Pokémon only"
+    },
+    "legendaryMult": "Legendaries ×{{n}}",
+    "featured": "Featured Pokémon",
+    "featuredNote": "The number is how much more likely they are to show up.",
+    "drops": "Prizes per wave",
+    "dropRule": "{{pct}} per wave, up to {{max}} per session",
+    "missions": "Event missions",
+    "goMissions": "Go to Missions",
+    "banner": {
+      "label": "Event running",
+      "title": "Event: {{name}}",
+      "view": "View",
+      "dismiss": "Close the {{name}} notice"
+    }
+  },
   "maintenance": {
     "upcomingTitle": "Scheduled maintenance",
     "activeTitle": "Maintenance in progress",
@@ -2449,6 +2512,293 @@
         "too_many_items": "Too many different items in one request.",
         "rate_limited_one": "Too many requests. Wait {{count}} minute.",
         "rate_limited_other": "Too many requests. Wait {{count}} minutes."
+      }
+    }
+  },
+  "eventsAdmin": {
+    "unknownSpecies": "No such species",
+    "speciesHint": "Type the identifier (pikachu) or pick from the list",
+    "unknownItem": "No such item",
+    "itemHint": "Item identifier (poke-ball)",
+    "remove": "Remove row {{n}}",
+    "errors": {
+      "fix": "Fix the marked fields before saving.",
+      "invalid_body": "The server does not accept some of the data. Check the fields.",
+      "invalid_query": "The request is not valid.",
+      "invalid_dates": "The dates do not work: the end must be after the start and in the future, and the start at most 60 days away.",
+      "forbidden": "Only an admin account can do this.",
+      "elevation_required": "You need to enter your password again for this action.",
+      "wrong_password": "That password is not right.",
+      "not_found": "That event or image no longer exists.",
+      "not_draft": "This only works on a draft.",
+      "not_published": "This only works on a published event.",
+      "not_editable": "An archived event cannot be edited.",
+      "slug_taken": "Another event already has that identifier.",
+      "slug_locked": "A published event cannot change its identifier.",
+      "too_many_drafts": "Too many open drafts. Delete or publish some.",
+      "confirm_required": "There are big changes you must confirm by ticking the box.",
+      "in_use": "The image is in use by an event.",
+      "uploads_full": "The image storage limit has been reached.",
+      "body_too_large": "The image is larger than 3 MB.",
+      "unsupported_type": "Only PNG, JPEG or WebP images are accepted.",
+      "validation_failed": "The event has errors: see “Validation”.",
+      "invalid_image": "The image could not be read.",
+      "image_too_small": "The image is too small (320×180 at least).",
+      "image_too_large": "The image has too many pixels.",
+      "animated_image": "Animated images are not accepted.",
+      "unknown_image": "The chosen image does not exist.",
+      "rate_limited_one": "Too many requests. Try again in {{count}} minute.",
+      "rate_limited_other": "Too many requests. Try again in {{count}} minutes."
+    },
+    "issues": {
+      "unknown_species": "No such species at {{path}}.",
+      "unknown_item": "No such item at {{path}}.",
+      "duplicate_featured": "A species is featured twice.",
+      "duplicate_drop": "An item is listed twice in the prizes.",
+      "shiny_no_featured": "Shiny “featured only” needs at least one featured species.",
+      "shiny_not_higher": "The shiny chance is not above the normal one: it changes nothing.",
+      "big_change": "Big change: it asks for confirmation when publishing.",
+      "featured_legendary": "Featuring a legendary does not make it more frequent (use the legendary multiplier).",
+      "item_shadows_base": "That item already exists in the game: use another identifier.",
+      "event_mission_id_shared": "An event mission uses the same id as a daily or weekly one."
+    },
+    "sudo": {
+      "title": {
+        "publish": "Publish the event",
+        "schedule": "Schedule the event",
+        "save": "Save changes to a published event",
+        "archive": "Archive the event"
+      },
+      "body": {
+        "publish": "“{{name}}” starts right now and shows on every player's events page. It is recorded in the audit log.",
+        "schedule": "“{{name}}” will be scheduled: it only starts at its start date. Until then players see it as upcoming.",
+        "save": "“{{name}}” is already published: the changes reach players at once and bump its revision.",
+        "archive": "“{{name}}” leaves play and the events page. Its items keep their names in bags."
+      },
+      "riskyTitle": "Big changes you must confirm",
+      "confirm": "I understand these are big changes (more than ×3, or ×5 for probabilities) and I confirm them.",
+      "password": "Your password",
+      "passwordHint": "Needed for sensitive actions; it lasts 30 minutes.",
+      "note": "Note (optional)",
+      "noteHint": "Saved in the audit log.",
+      "submit": {
+        "publish": "Publish now",
+        "schedule": "Schedule",
+        "save": "Save changes",
+        "archive": "Archive"
+      }
+    },
+    "image": {
+      "panel": "Image",
+      "title": "Event image",
+      "alt": "Preview of the event image",
+      "none": "No image. The event shows without artwork.",
+      "hint": "PNG, JPEG or WebP up to 3 MB. It is cropped to 16:9 (320×180 at least) and re-encoded; metadata is removed.",
+      "upload": "Upload image",
+      "replace": "Change image",
+      "uploading": "Uploading…",
+      "gallery": "Uploaded images",
+      "galleryEmpty": "No images uploaded yet.",
+      "remove": "Remove image",
+      "use_one": "Use the {{size}} image (used by {{count}} event)",
+      "use_other": "Use the {{size}} image (used by {{count}} events)"
+    },
+    "spawn": {
+      "title": "Spawn preview",
+      "body": "Compare which wild Pokémon appear with the current content and with this event on top, for an hour, a weather and a trainer level. It uses the saved event.",
+      "hour": "Local hour (0-23)",
+      "hourRange": "A whole number from 0 to 23.",
+      "weather": "Weather",
+      "weathers": {
+        "clear": "Clear",
+        "sun": "Sun",
+        "rain": "Rain",
+        "snow": "Snow",
+        "unknown": "Unknown"
+      },
+      "level": "Trainer level",
+      "levelRange": "A whole number from 1 to 100.",
+      "saveFirst": "Save the draft to see the preview.",
+      "dirty": "You have unsaved changes: the preview uses the saved version.",
+      "run": "Calculate",
+      "summary": "At {{hour}}:00: {{before}} species before and {{after}} with the event. Legendary chance: {{legBefore}} before, {{legAfter}} with the event.",
+      "caption": "Spawn chance per species, without and with the event",
+      "species": "Species",
+      "before": "Now",
+      "after": "With event",
+      "delta": "Change"
+    },
+    "editor": {
+      "label": "Event editor",
+      "newTitle": "New event",
+      "revision": "revision {{n}}",
+      "unsaved": "· unsaved changes",
+      "back": "Back to the list"
+    },
+    "status": {
+      "new": "Not saved",
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "basics": {
+      "title": "Event details",
+      "nameEs": "Name (Spanish)",
+      "nameEn": "Name (English)",
+      "descEs": "Description (Spanish)",
+      "descEn": "Description (English)",
+      "slug": "Identifier",
+      "slugHint": "Lowercase letters, numbers and hyphens. It cannot change after publishing.",
+      "slugLocked": "A published event keeps its identifier.",
+      "slugFromName": "Make it from the name"
+    },
+    "dates": {
+      "title": "Dates",
+      "start": "Start",
+      "end": "End",
+      "zone": "Dates are typed in your zone ({{zone}}); below you see the same instant in UTC. At most 62 days long."
+    },
+    "featured": {
+      "title": "Featured species",
+      "label": "Show up more",
+      "empty": "No featured species.",
+      "add": "Add species",
+      "species": "Species",
+      "mult": "Multiplier",
+      "multHint": "From 1 to 10 times more likely."
+    },
+    "boosts": {
+      "title": "Shiny and legendaries",
+      "shiny": "Event shiny",
+      "shinyPct": "Shiny chance (%)",
+      "shinyPctHint": "Normal: {{base}}. At most 5%.",
+      "scope": "Scope",
+      "scopeFeatured": "Featured species only",
+      "scopeAll": "Every species",
+      "legendary": "More legendaries",
+      "legendaryMult": "Legendary multiplier",
+      "legendaryHint": "From 1 to 10 times the normal chance."
+    },
+    "items": {
+      "title": "Event's own items",
+      "label": "New items",
+      "empty": "The event creates no items of its own.",
+      "add": "Add item",
+      "slug": "Identifier",
+      "nameEs": "Name (Spanish)",
+      "nameEn": "Name (English)"
+    },
+    "drops": {
+      "title": "Prizes per wave",
+      "label": "Items that can drop",
+      "empty": "The event gives no extra prizes.",
+      "add": "Add prize",
+      "item": "Item",
+      "pct": "Chance per wave (%)",
+      "pctHint": "From 0 to 100.",
+      "max": "Maximum per session",
+      "maxHint": "From 1 to 99."
+    },
+    "missions": {
+      "title": "Event missions",
+      "label": "Fixed list of missions",
+      "empty": "The event has no missions.",
+      "add": "Add mission",
+      "id": "Mission identifier",
+      "idHint": "It cannot change after publishing.",
+      "kind": "What counts",
+      "kinds": {
+        "sessions": "Sessions completed",
+        "studyMinutes": "Study minutes",
+        "longSession": "Long session",
+        "studyDays": "Study days",
+        "techniques": "Techniques activated",
+        "catch": "Catches",
+        "catchType": "Catches of one type",
+        "catchFirstThrow": "First-throw catches",
+        "studyBall": "Study Ball catches",
+        "evolve": "Evolutions"
+      },
+      "target": "Target",
+      "minMinutes": "Minimum session minutes",
+      "type": "Type",
+      "typeRandom": "Random",
+      "minLevel": "Minimum trainer level",
+      "minLevelHint": "Empty = from level 1.",
+      "titleEs": "Title (Spanish)",
+      "titleEn": "Title (English)",
+      "placeholders": "You can use {n}, {minutes} and {type}.",
+      "descEs": "Description (Spanish)",
+      "descEn": "Description (English)",
+      "reward": "Reward",
+      "dust": "Dust",
+      "candies": "Candies of the type",
+      "rewardItem": "Item",
+      "rewardCount": "Amount",
+      "addItem": "Add reward item",
+      "keptTiers_one": "This mission has other reward tiers that are not edited here ({{count}}): they are kept as they are.",
+      "keptTiers_other": "This mission has other reward tiers that are not edited here ({{count}}): they are kept as they are."
+    },
+    "problem": {
+      "required": "This field needs a value.",
+      "number": "Type a number.",
+      "dates": "The end must be after the start."
+    },
+    "validation": {
+      "title": "Validation",
+      "missing_one": "{{count}} field is empty or wrong.",
+      "missing_other": "{{count}} fields are empty or wrong.",
+      "pending": "Fill in the form to validate it.",
+      "ok": "No errors or warnings.",
+      "fromServer": "Answer from the server.",
+      "errors_one": "{{count}} error",
+      "errors_other": "{{count}} errors",
+      "warnings_one": "{{count}} warning",
+      "warnings_other": "{{count}} warnings",
+      "saved": "Last saved validation: {{errors}} errors and {{warnings}} warnings ({{when}}).",
+      "note": "This is the same validation the server uses, without the simulation test. When publishing, the server validates again with the simulation and may reject the event."
+    },
+    "preview": {
+      "title": "What players will see",
+      "unavailable": "Fill in the required fields to see the card."
+    },
+    "actions": {
+      "saveValidate": "Save and validate",
+      "publish": "Publish…",
+      "schedule": "Schedule…",
+      "delete": "Delete draft",
+      "saveChanges": "Save changes…",
+      "archive": "Archive…",
+      "duplicate": "Duplicate as a draft",
+      "help": {
+        "new": "Saving creates the draft; players do not see it until you publish.",
+        "draft": "The draft is not visible to players. Publishing or scheduling asks for your password.",
+        "published": "It is published: changes apply at once and ask for your password. The identifier does not change.",
+        "archived": "Archived: you can only look at it or duplicate it."
+      }
+    },
+    "delete": {
+      "title": "Delete the draft",
+      "body": "“{{name}}” is deleted for good. This cannot be undone."
+    },
+    "list": {
+      "title": "Events",
+      "new": "New event",
+      "intro": "Create a draft, validate it and publish it now or schedule it. Players see the published ones on the events page.",
+      "retry": "Try again",
+      "empty": "There are no events yet. Create the first one.",
+      "groups": {
+        "active": "Running",
+        "scheduled": "Scheduled",
+        "draft": "Drafts",
+        "past": "Past and archived"
+      },
+      "badge": {
+        "active": "Live",
+        "scheduled": "Scheduled",
+        "draft": "Draft",
+        "published": "Ended",
+        "archived": "Archived"
       }
     }
   },

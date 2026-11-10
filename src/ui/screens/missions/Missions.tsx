@@ -1,15 +1,17 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, missionsView, type MissionReward, type MissionView, type TypeSlug } from '../../../engine'
+import { defaultContext, EVENT_MISSION_GRACE_MS, missionsView, type MissionReward, type MissionView, type TimeZoneSpec, type TypeSlug } from '../../../engine'
 import { Button, HelpDot, Panel, PixelIcon, ProgressBar, Sprite, toast, Tooltip, TYPE_TEXT } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
+import { formatEventWhen, remainingKey, remainingParts } from '../events/model'
 import { pick, useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
+import { useLiveEvents } from '../../store/liveEvents'
 import { useBusy, usePlayer } from '../../store/selectors'
 
 /** Items with a sprite (mission-only placeholders like the Tera Shard get a pixel icon). */
@@ -24,6 +26,7 @@ export default function Missions() {
   const claim = useGame((s) => s.claimMission)
   const claimAll = useGame((s) => s.claimAllMissions)
   const busy = useBusy()
+  const eventNames = useLiveEvents((s) => [...s.active, ...s.upcoming, ...s.past])
   const minute = Math.floor(now / 60_000)
   const view = useMemo(() => missionsView(player, minute * 60_000), [player, minute])
 
@@ -83,6 +86,14 @@ export default function Missions() {
           <MissionList list={view.weekly.missions} onClaim={onClaim} />
         </Panel>
       </div>
+      {view.event.map((g) => {
+        const named = eventNames.find((e) => e.id === g.eventId)
+        return (
+          <Panel key={g.eventId} title={named ? pick(named.name, names.lng) : g.slug} actions={<EventRenews endsAt={g.endsAt} active={g.active} now={now} tz={player.profile.timezone} />} aria-label={t('missions.event.group')}>
+            <MissionList list={g.missions} onClaim={onClaim} columns />
+          </Panel>
+        )
+      })}
       <Panel title={t('missions.pokedex')} help="missions.pokedex">
         <MissionList list={view.pokedex} onClaim={onClaim} columns />
       </Panel>
@@ -100,6 +111,18 @@ function Renews({ endsAt, now }: { endsAt: number; now: number }) {
     <span className="flex items-center gap-1.5 text-sm text-mist-300">
       <PixelIcon name="clock" size={10} />
       {d > 0 ? t('missions.renewsDays', { d, h }) : t('missions.renewsHours', { h, m })}
+    </span>
+  )
+}
+
+/** Event groups: how long the event runs, or until when the rewards can still be claimed once it has ended. */
+function EventRenews({ endsAt, active, now, tz }: { endsAt: number; active: boolean; now: number; tz: TimeZoneSpec }) {
+  const { t, i18n } = useTranslation()
+  const rem = remainingKey(remainingParts(endsAt - now))
+  return (
+    <span className="flex items-center gap-1.5 text-right text-sm text-mist-300">
+      <PixelIcon name="clock" size={10} className="shrink-0" />
+      {active ? t('events.endsIn', { time: t(`events.remaining.${rem.key}`, rem.values) }) : t('missions.event.claimUntil', { when: formatEventWhen(endsAt + EVENT_MISSION_GRACE_MS, tz, i18n.language) })}
     </span>
   )
 }

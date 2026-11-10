@@ -12,6 +12,7 @@ import { useAuth } from '../../store/auth'
 import { PlayersPanel } from './players/PlayersPanel'
 
 const MetricsPanel = lazy(() => import('./metrics/MetricsPanel'))
+const EventsAdminPanel = lazy(() => import('./events/EventsAdminPanel'))
 
 const TOKEN_KEY = 'pokefocus:adminToken'
 const HOUR = 3_600_000
@@ -113,6 +114,11 @@ export default function Admin() {
       {isStaff && (
         <Suspense fallback={null}>
           <MetricsPanel />
+        </Suspense>
+      )}
+      {isAdmin && (
+        <Suspense fallback={null}>
+          <EventsAdminPanel />
         </Suspense>
       )}
 

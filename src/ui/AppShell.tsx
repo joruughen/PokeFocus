@@ -119,7 +119,7 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
                 aria-current={active ? 'page' : undefined}
                 {...hintAnchor(`nav.${r.id}`)}
                 className={cx(
-                  'group flex items-center gap-3 px-3 py-2.5 font-display text-lg transition-colors max-xl:justify-center',
+                  'group flex items-center gap-3 px-3 py-2.5 max-sm:px-2 font-display text-lg transition-colors max-xl:justify-center',
                   active ? 'bg-volt-400 text-ink shadow-frame' : 'text-mist-300 hover:bg-dusk-800 hover:text-mist-50',
                   focusing && !active && 'opacity-60',
                 )}

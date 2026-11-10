@@ -20,6 +20,7 @@ import { clampMinutes, fmtClock, fmtInt, fmtWeekday } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { primeSignals } from '../../lib/notify'
 import { scheduleSessionEnd, sfx } from '../../lib/sound'
+import { EventBanner } from '../events/EventBanner'
 import { AutoDamageToggle } from './AutoDamageToggle'
 import { BreakOffer, useBreakOffer } from './Break'
 import { Checklist } from './Checklist'
@@ -98,6 +99,8 @@ export function PreSession() {
           </p>
         </div>
       </header>
+
+      <EventBanner className="-mt-4" />
 
       <Stage time={scene.time} weather={scene.weather} className="px-4 pt-10 pb-5" sky={null}>
         <h2 className="sr-only">{t('team.title')}</h2>
