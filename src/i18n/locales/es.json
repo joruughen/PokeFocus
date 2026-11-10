@@ -447,7 +447,8 @@
     "newSlot": "Ganó un hueco de técnica",
     "evolution": "{{name}} puede evolucionar a {{to}}",
     "capped": "Llegó al límite de nivel {{cap}}: captura más especies para subirlo.",
-    "pointsShort": "puntos"
+    "pointsShort": "puntos",
+    "howPoints": "¿Cómo se calculan?"
   },
   "waves": {
     "title": "Oleada {{n}} de {{total}}",
@@ -1088,9 +1089,45 @@
       "activable": "Activable"
     },
     "kindHelp": {
-      "damage": "Daño: en cada acción genera Energía de captura del tipo de la técnica. Esa energía debilita a los salvajes para que sea más fácil atraparlos.",
-      "passive": "Pasiva: está siempre activa mientras la tengas equipada. No depende de la suerte: su efecto (puntos, EXP, defensa…) se aplica durante toda la sesión.",
-      "activable": "Activable: en cada acción tiene una probabilidad de saltar y dar su efecto (por ejemplo, dormir a un salvaje). Algunas tienen un límite por sesión o por semana."
+      "damage": "Daño: cada acción con esta técnica suma Energía de captura de su tipo. Al acabar cada bloque de 25 min, esa Energía se convierte en daño a los salvajes de la oleada: con menos vida es más fácil capturarlos.",
+      "passive": "Pasiva: no tira dados. Mientras la tengas equipada funciona sola, siempre o cuando se cumple su condición (hora, clima, Energía…).",
+      "activable": "Activable: en cada acción tira un dado y, si sale, da su efecto (por ejemplo, dormir a un salvaje). Algunas tienen un límite por sesión o por semana."
+    },
+    "tip": {
+      "withName": "Con {{name}}:",
+      "paceMore": "Alguna habilidad suya lo acelera en ciertas sesiones.",
+      "damage": {
+        "energy": "Cada acción suma {{energy}} de Energía de captura de tipo {{type}} (según su Captura y la potencia {{power}}).",
+        "stab": "Es de su mismo tipo: hace un 50 % más de daño.",
+        "pace": "Actúa cada {{seconds}} s: unas {{actions}} acciones por oleada de 25 min.",
+        "share": "Con {{count}} técnicas de daño equipadas, usa esta en {{pct}} de sus acciones.",
+        "wave": "En una oleada suma ≈ {{energy}} de Energía con esta técnica.",
+        "why": "Para qué sirve: más Energía, más daño y menos vida al salvaje; con menos vida, la Ball tiene más probabilidad. Su vida no baja del {{min}} %, así que el daño de sobra se pierde. Si el tipo es eficaz contra el salvaje, el daño se multiplica.",
+        "counter": "En las oleadas, enviar a {{name}} contra un salvaje es un ataque definitivo: el salvaje le contraataca y le quita Energía, salvo que esté dormido o paralizado. Cada acción gasta {{cost}} de Energía (con la barra llena, ≈ {{n}} acciones). Si una Ball falla, el contraataque va al líder."
+      },
+      "activable": {
+        "chance": "Probabilidad por acción: {{pct}}.",
+        "how": "Base {{base}} × {{tech}} (Técnica) × {{mastery}} (Dominio)",
+        "howExtra": " × {{extra}} (habilidades)",
+        "cap": "Tope: {{pct}} por acción.",
+        "rolls": "Tira el dado en cada acción (cada {{seconds}} s): unas {{actions}} tiradas por oleada de 25 min.",
+        "expected": "Salta ≈ {{n}} veces por oleada y hay un {{pct}} de que salte al menos una.",
+        "inflicts": {
+          "sleep": "Si salta, ganas una carga de Sueño para usarla en un salvaje: uno dormido es mucho más fácil de capturar y no contraataca a quien le ataque.",
+          "paralysis": "Si salta, ganas una carga de Parálisis para usarla en un salvaje: uno paralizado es más fácil de capturar y no contraataca a quien le ataque."
+        },
+        "conditional": "Alguna habilidad suya la mejora en ciertas sesiones."
+      },
+      "passive": {
+        "always": "Siempre activa mientras la tengas equipada.",
+        "onlyWhen": "Solo se activa {{when}}.",
+        "alsoWhen": "Una parte siempre está activa; el resto solo {{when}}.",
+        "or": " o ",
+        "rollAction": "En cada acción tiene un {{pct}} de dar una carga de {{status}} (hasta {{limit}} por sesión): ≈ {{once}} de lograr al menos una por oleada.",
+        "rollMiss": "Cuando un salvaje le contraataca, un {{pct}} de que el golpe falle.",
+        "rollMissTeam": "Cuando un salvaje contraataca a cualquiera de tu equipo, un {{pct}} de que el golpe falle.",
+        "rollStatus": "Si el contraataque no falla, un {{pct}} de dejar al salvaje {{status}}."
+      }
     }
   },
   "iv": {
@@ -1804,6 +1841,38 @@
       "lowFocus": "Con Foco {{pct}} cada oleada trae un salvaje menos.",
       "roaming": "Apareció un legendario errante: {{names}}.",
       "longSession": "En sesiones largas ({{count}} oleadas) las últimas oleadas traen especies más raras."
+    },
+    "points": {
+      "title": "Cómo se calcularon los puntos",
+      "intro": "Cada acción de cada Pokémon suma puntos. Estos pasos van de lo básico al total: cada uno multiplica lo anterior y muestra cuánto sumó o restó.",
+      "teamTitle": "Todo el equipo",
+      "total": "Total",
+      "legacy": "Esta sesión se guardó antes del desglose.",
+      "actionsNote": "{{count}} acciones en total.",
+      "step": {
+        "base": "Puntos base",
+        "condition": "Condición de tipo",
+        "bond": "Vínculo",
+        "focus": "Foco",
+        "grit": "Aguante",
+        "focusAdj": "Habilidad de Foco",
+        "mods": "Habilidades y técnicas",
+        "burst": "Ráfagas",
+        "lastAction": "Última acción",
+        "daily": "Rendimiento diario"
+      },
+      "tip": {
+        "base": "Lo que gana cada acción según el Rendimiento del Pokémon, antes de cualquier bonus.",
+        "condition": "Bonus de los tipos con condición activa (hora, clima, racha…). Es la media de todas sus acciones.",
+        "bond": "Cuanto más tiempo estudia con vosotros, más puntos: hasta un +20 %.",
+        "focus": "100 % si reclamas a tiempo; 50 % si tardas más de {{min}} minutos.",
+        "grit": "Su Aguante sube su Foco hasta un 10 %: con Aguante 200 o más, ×1,10.",
+        "focusAdj": "Una habilidad cambió su Foco (un mínimo, o no le afecta reclamar tarde).",
+        "mods": "Efectos de habilidades y técnicas que cambian los puntos. Mira «Habilidad y pasivas» de cada Pokémon.",
+        "burst": "Técnicas activables que multiplican los puntos de varias acciones seguidas.",
+        "lastAction": "Una habilidad hace que su última acción valga más.",
+        "daily": "Después de {{full}} h de estudio en el día las recompensas bajan, y más aún desde las {{half}} h."
+      }
     }
   },
   "group": {

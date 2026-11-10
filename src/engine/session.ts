@@ -47,6 +47,7 @@ import {
   bondMultiplier,
   catchEnergyPerAction,
   computeStats,
+  defenseFocusBonus,
   effectiveFocus,
   energyCostPerAction,
   masteryMultiplier,
@@ -313,6 +314,32 @@ export interface ConditionLog {
   forced: boolean
 }
 
+/**
+ * Running totals of a member's points, in the order the multipliers apply
+ * (docs: "how the points are calculated"). Every stage is the sum over the
+ * member's actions of the product so far, so each step's value is exactly what
+ * that multiplier added. `raw` is the total before the daily reduction and
+ * rounding (`points = round(raw · rewardFactor)`).
+ */
+export interface PointsStages {
+  /** Σ (5 + SpAtk / 4) over the actions. */
+  base: number
+  afterCondition: number
+  afterBond: number
+  /** After the session Focus (100 % on time, 50 % late). */
+  afterFocus: number
+  /** After the Grit bonus (Defense, up to +10 %). */
+  afterGrit: number
+  /** After Focus effects of abilities (focus floors, late-claim immunity). */
+  afterFocusAdj: number
+  /** After the `points` effects of abilities and techniques (own, activated and team). */
+  afterMods: number
+  /** After the point bursts of activable techniques. */
+  afterBurst: number
+  /** After the "last action" bonus: the total before the daily factor. */
+  raw: number
+}
+
 export interface MemberResult {
   uid: string
   speciesSlug: string
@@ -347,6 +374,8 @@ export interface MemberResult {
   conditionLog?: ConditionLog[]
   /** conditionBonusMult in effect (1 = none). */
   conditionBonusMult?: number
+  /** How the points add up, step by step (absent in results saved before it). */
+  pointsStages?: PointsStages
 }
 
 /** Why the wilds of this session were what they were (session report). */
@@ -449,6 +478,11 @@ interface Sim {
   activables: TechniqueInfo[]
   bond: number
   focusEff: number
+  /** Session Focus and Grit multiplier, to split `focusEff` in the points breakdown (report only). */
+  focusSession: number
+  gritMult: number
+  /** Running totals for the points breakdown (report only: never read by the rules). */
+  stg: { base: number; cond: number; bond: number; focus: number; grit: number; adj: number; mods: number; burst: number }
   bonusMult: number
   lastMult: number
   nextT: number
@@ -636,6 +670,9 @@ export function completeSession(
       activables: techs.filter((t) => t.kind === 'activable'),
       bond: bondMultiplier(p.bondMinutes, cfg),
       focusEff: f,
+      focusSession: focus,
+      gritMult: 1 + defenseFocusBonus(stats.defense, cfg),
+      stg: { base: 0, cond: 0, bond: 0, focus: 0, grit: 0, adj: 0, mods: 0, burst: 0 },
       bonusMult,
       lastMult,
       nextT: 0,
@@ -800,7 +837,23 @@ export function completeSession(
           b.remaining--
         }
       }
-      const pts = basePointsPerAction(s.stats.specialAttack, cfg) * cond * s.bond * s.focusEff * mult(s, 'points', wc) * burst
+      const basePts = basePointsPerAction(s.stats.specialAttack, cfg)
+      const pointsMod = mult(s, 'points', wc)
+      const pts = basePts * cond * s.bond * s.focusEff * pointsMod * burst
+      // Breakdown (report only): the same product, stage by stage.
+      {
+        const g = s.stg
+        const afterFocus = basePts * cond * s.bond * s.focusSession
+        const afterGrit = afterFocus * s.gritMult
+        g.base += basePts
+        g.cond += basePts * cond
+        g.bond += basePts * cond * s.bond
+        g.focus += afterFocus
+        g.grit += afterGrit
+        g.adj += basePts * cond * s.bond * s.focusEff
+        g.mods += basePts * cond * s.bond * s.focusEff * pointsMod
+        g.burst += pts
+      }
       s.pointsRaw += pts
       s.lastPoints = pts
       // Catch energy
@@ -963,6 +1016,17 @@ export function completeSession(
       passives: passiveLogs(s),
       conditionLog: [...s.logCond.values()],
       conditionBonusMult: s.bonusMult,
+      pointsStages: {
+        base: s.stg.base,
+        afterCondition: s.stg.cond,
+        afterBond: s.stg.bond,
+        afterFocus: s.stg.focus,
+        afterGrit: s.stg.grit,
+        afterFocusAdj: s.stg.adj,
+        afterMods: s.stg.mods,
+        afterBurst: s.stg.burst,
+        raw: s.pointsRaw,
+      },
     }
   })
   const totalPoints = memberResults.reduce((a, m) => a + m.points, 0)

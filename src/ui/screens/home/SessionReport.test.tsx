@@ -33,5 +33,27 @@ describe('SessionReport', () => {
       expect(html).toContain(lng === 'es' ? 'por acción' : 'per action')
       expect(html).toContain(lng === 'es' ? 'Parálisis' : 'Paralysis')
     })
+
+    it(`shows how the points were calculated, adding up to the total (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const { player, result } = sample()
+      const html = renderToStaticMarkup(<SessionReport result={result} player={player} />)
+      expect(html).toContain(i18n.t('report.points.title'))
+      expect(html).toContain(i18n.t('report.points.step.base'))
+      expect(html).toContain(i18n.t('report.points.step.condition')) // 21:00 → Ghost condition
+      expect(html).toContain(i18n.t('report.points.total'))
+      expect(html).toContain(new Intl.NumberFormat(lng, { maximumFractionDigits: 0 }).format(result.totalPoints))
+      // One team table plus one per member.
+      expect(html.match(/<ol/g)?.length).toBe(1 + result.members.length)
+    })
+
+    it(`results saved before the breakdown say so instead of breaking (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const { player, result } = sample()
+      const legacy = { ...result, members: result.members.map((m) => ({ ...m, pointsStages: undefined })) }
+      const html = renderToStaticMarkup(<SessionReport result={legacy} player={player} />)
+      expect(html).toContain(i18n.t('report.points.legacy'))
+      expect(html).not.toMatch(/report\.points/)
+    })
   }
 })

@@ -2,18 +2,21 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   defaultContext,
+  pointsBreakdown,
+  sumPointsStages,
   type ActivableLog,
   type Effect,
   type MemberResult,
   type PassiveLog,
   type PlayerState,
+  type PointsStep,
   type SessionResult,
   type TypeSlug,
-  type When,
 } from '../../../engine'
-import { Button, Dialog, PixelIcon, Sprite, TypeBadge } from '../../components'
+import { Button, Dialog, InfoTip, PixelIcon, Sprite, TypeBadge } from '../../components'
 import { fmtInt, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
+import { whenText } from '../../lib/whenText'
 import { useGame } from '../../store/game'
 import { useChargeLabel } from './ChargeChip'
 import { conditionRuleValues } from './conditionCopy'
@@ -34,7 +37,7 @@ const fmtMult = (m: number) => `×${Number(m.toFixed(2))}`
  * outcome is stored (Results, or Waves of that same session). Renders nothing
  * when there is no matching outcome.
  */
-export function SessionReportButton({ sessionId, className }: { sessionId: string; className?: string }) {
+export function SessionReportButton({ sessionId, className, label }: { sessionId: string; className?: string; label?: string }) {
   const { t, i18n } = useTranslation()
   const outcome = useGame((s) => s.outcome)
   const player = useGame((s) => s.player)
@@ -46,7 +49,7 @@ export function SessionReportButton({ sessionId, className }: { sessionId: strin
       description={t('report.subtitle', { minutes: outcome.result.minutes, focus: fmtPct(outcome.result.focus, i18n.language) })}
       trigger={
         <Button variant="secondary" size="sm" icon="help" className={className}>
-          {t('report.open')}
+          {label ?? t('report.open')}
         </Button>
       }
     >
@@ -60,6 +63,7 @@ export function SessionReport({ result, player }: { result: SessionResult; playe
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-6">
+      <PointsSection result={result} />
       <section aria-labelledby="report-team">
         <h3 id="report-team" className="mb-2 text-lg">
           {t('report.teamTitle')}
@@ -122,6 +126,12 @@ function MemberReport({ m, result, player }: { m: MemberResult; result: SessionR
           <PixelIcon name="next" size={16} className="shrink-0 transition-transform group-open:rotate-90" />
         </summary>
         <div className="flex flex-col gap-3 px-3 pb-3 text-sm">
+          {m.pointsStages && (
+            <Block title={t('report.points.title')}>
+              <PointsSteps steps={pointsBreakdown(m.pointsStages, result.rewardFactor, m.points)} />
+            </Block>
+          )}
+
           {m.damageMoves && m.damageMoves.length > 0 && (
             <Block title={t('report.moves')}>
               <p>
@@ -231,21 +241,6 @@ function activableLine(a: ActivableLog, t: T, lng: string): string {
   return s
 }
 
-function whenText(w: When | undefined, t: T): string {
-  if (!w) return ''
-  const parts: string[] = []
-  if (w.energyBelow !== undefined) parts.push(t('report.when.energyBelow', { pct: Math.round(w.energyBelow * 100) }))
-  if (w.energyFull) parts.push(t('report.when.energyFull'))
-  if (w.timeWindow) parts.push(t(`report.when.time.${w.timeWindow}`))
-  if (w.weather) parts.push(t(`report.when.weather.${w.weather}`))
-  if (w.weekend) parts.push(t('report.when.weekend'))
-  if (w.noPauses) parts.push(t('report.when.noPauses'))
-  if (w.isLeader) parts.push(t('report.when.isLeader'))
-  if (w.targetLegendary) parts.push(t('report.when.targetLegendary'))
-  if (w.sessionMinMinutes !== undefined) parts.push(t('report.when.sessionMin', { min: w.sessionMinMinutes }))
-  return parts.join(', ')
-}
-
 function passiveLine(p: PassiveLog, m: MemberResult, t: T, names: ReturnType<typeof useNames>, lng: string): string {
   const e: Effect = p.effect
   const when = whenText(e.when, t)
@@ -284,6 +279,62 @@ function passiveLine(p: PassiveLog, m: MemberResult, t: T, names: ReturnType<typ
     default:
       return t('report.effect.generic', { count: p.count })
   }
+}
+
+/** "How the points were calculated" for the whole team (top of the report). */
+function PointsSection({ result }: { result: SessionResult }) {
+  const { t } = useTranslation()
+  const stages = sumPointsStages(result.members.map((m) => m.pointsStages))
+  return (
+    <section aria-labelledby="report-points">
+      <h3 id="report-points" className="mb-1 text-lg">
+        {t('report.points.title')}
+      </h3>
+      {stages ? (
+        <>
+          <p className="mb-2 text-sm text-mist-300">{t('report.points.intro')}</p>
+          <div className="bg-dusk-900 p-3 inset-shadow-well">
+            <p className="mb-1 font-display text-sm text-volt-300">{t('report.points.teamTitle')}</p>
+            <PointsSteps steps={pointsBreakdown(stages, result.rewardFactor, result.totalPoints)} actions={result.members.reduce((a, m) => a + m.actions, 0)} />
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-mist-400">{t('report.points.legacy')}</p>
+      )}
+    </section>
+  )
+}
+
+/** The steps of a points total: label (with a help tip and its multiplier), what it added, and the running total. */
+function PointsSteps({ steps, actions }: { steps: PointsStep[]; actions?: number }) {
+  const { t, i18n } = useTranslation()
+  const lng = i18n.language
+  const tipValues = { min: cfg.session.claimWindowMinutes, full: cfg.session.dailyFullRewardMinutes / 60, half: cfg.session.dailyHalfRewardMinutes / 60 }
+  const last = steps[steps.length - 1]
+  const signed = (n: number) => (n > 0 ? `+${fmtInt(n, lng)}` : n < 0 ? `−${fmtInt(-n, lng)}` : fmtInt(0, lng))
+  return (
+    <div>
+      <ol className="flex flex-col">
+        {steps.map((s) => (
+          <li key={s.kind} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 border-b border-dusk-700 py-1.5 last:border-b-0">
+            <span className="flex min-w-0 flex-wrap items-center gap-x-2">
+              <span>{t(`report.points.step.${s.kind}`)}</span>
+              {s.factor !== null && <span className={s.factor < 1 ? 'font-num text-amber-400' : 'font-num text-leaf-400'}>{s.kind === 'focus' || s.kind === 'daily' ? fmtPct(s.factor, lng) : fmtMult(s.factor)}</span>}
+              <InfoTip content={s.kind === 'base' && actions !== undefined ? `${t('report.points.tip.base')} ${t('report.points.actionsNote', { count: actions })}` : t(`report.points.tip.${s.kind}`, tipValues)} />
+            </span>
+            <span className="text-right font-num tabular text-mist-300">{s.kind === 'base' ? '' : signed(s.delta)}</span>
+            <span className="w-14 text-right font-num tabular">{fmtInt(s.total, lng)}</span>
+          </li>
+        ))}
+      </ol>
+      {last && (
+        <p className="mt-1 flex justify-between font-display text-base">
+          <span>{t('report.points.total')}</span>
+          <span className="font-num tabular">{fmtInt(last.total, lng)}</span>
+        </p>
+      )}
+    </div>
+  )
 }
 
 function WildFactorRow({ f, result, player }: { f: WildFactor; result: SessionResult; player: PlayerState | null }) {
