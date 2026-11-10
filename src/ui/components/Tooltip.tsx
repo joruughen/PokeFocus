@@ -6,7 +6,7 @@ import { cx } from '../lib/cx'
 import { PixelIcon } from './PixelIcon'
 
 const POPUP =
-  'max-w-72 bg-mist-50 px-3 py-2 text-sm text-ink shadow-raised origin-[var(--transform-origin)] transition-[opacity,scale] duration-100 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0'
+  'max-h-[var(--available-height)] max-w-72 overflow-y-auto overscroll-contain bg-mist-50 px-3 py-2 text-sm text-ink shadow-raised origin-[var(--transform-origin)] transition-[opacity,scale] duration-100 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0'
 
 export interface TooltipProps {
   /** The trigger. Must forward refs and spread props (our Button, a span, a TypeBadge…). */
