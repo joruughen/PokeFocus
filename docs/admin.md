@@ -1,0 +1,139 @@
+# Guía del administrador
+
+Cómo cambiar el juego **en vivo** (números, apariciones, misiones y eventos) sin desplegar, y cómo cuidar el servidor mientras tanto. Está escrita para quien opera PokeFocus; los detalles de la API están en [`server.md`](server.md), el diseño original en [`admin-plan.md`](admin-plan.md) y lo que hace el motor con el contenido en [`engine-api.md`](engine-api.md) («Contenido en vivo»).
+
+La pantalla es `#/admin` (no aparece en el menú: se entra por la dirección, p. ej. `https://tu-sitio/#/admin`). Tiene cinco pestañas: **Contenido**, **Eventos**, **Jugadores**, **Métricas** y **Mantenimiento**. El servidor es quien decide qué puede hacer cada rol; la pantalla solo oculta lo que se rechazaría.
+
+## 1. Roles y cómo dar el rol admin
+
+| Rol | Puede |
+|---|---|
+| `player` | Jugar. No ve nada de administración. |
+| `support` | **Leer** el contenido en vivo, las versiones y las simulaciones; **Métricas**; buscar jugadores y ver su ficha; desbloquear nombre/país/zona horaria, cancelar una sesión atascada y cerrar sus sesiones de login (solo sobre cuentas `player`). |
+| `admin` | Todo lo anterior sobre cualquier cuenta, más: editar borradores, validar, simular, publicar, programar, hacer rollback, gestionar eventos e imágenes, **conceder objetos y Polvo**, y los avisos de mantenimiento. |
+
+Los roles nunca se piden desde la app. Para dar el rol:
+
+1. **Registra la cuenta** con el flujo normal de la app (el correo no se verifica, así que usa uno tuyo).
+2. Pon el correo en `ADMIN_EMAILS` (varios, separados por comas) y **reinicia el servidor**. Al arrancar, esas cuentas pasan a `admin` (no se baja a nadie de rango; quitar un correo de la lista no le quita el rol). Si la cuenta no existe todavía, el arranque lo avisa en el log: registra primero y reinicia.
+   - Con Docker: `ADMIN_EMAILS=tu@correo.com` en `.env` y `docker compose up -d`.
+3. Alternativa en desarrollo o desde una máquina con acceso a la base: `npm run admin:role -- tu@correo.com admin` (roles `player|support|admin`). Con PGlite hay que parar el servidor antes. **Dentro de la imagen de producción este comando no está disponible** (el Dockerfile no copia `scripts/admin-role.ts`): usa `ADMIN_EMAILS`.
+
+Para dar `support` a otra persona usa el CLI (`npm run admin:role -- otro@correo.com support`); `ADMIN_EMAILS` solo promueve a `admin`. No hay pantalla para cambiar roles.
+
+> `ADMIN_TOKEN` está **en desuso** y se quitará en la próxima versión. Solo abre los avisos de mantenimiento y nunca toca datos de jugadores. Déjalo vacío y usa tu cuenta admin.
+
+### Reautenticación («modo sudo»)
+
+Las acciones delicadas piden **volver a escribir tu contraseña**: publicar, programar, rollback, conceder objetos o Polvo, publicar o archivar un evento y editar un evento ya publicado. La pantalla abre un diálogo cuando hace falta. La contraseña da un permiso de **30 minutos solo en esa sesión del navegador**; pasado ese tiempo se vuelve a pedir. Cinco contraseñas erróneas en 15 minutos bloquean los intentos un rato.
+
+## 2. Contenido: del borrador a producción
+
+Todo cambio de contenido es una **versión**. Una versión publicada es **inmutable**: no se edita, se publica otra encima. Cada versión es un *parche completo sobre los datos base del repositorio* (no una diferencia con la versión anterior), así que volver atrás es republicar un parche antiguo.
+
+Qué se puede cambiar (todo con límites; lo que no está en la lista se rechaza):
+
+- **Parámetros** (formularios agrupados: Encuentros, Captura, Energía, Acciones, Economía, Ligas, Condiciones), con el valor base al lado.
+- **Especies**: tasa de captura y reglas de aparición (activar/desactivar, multiplicador de peso, horas, clima, nivel mínimo de entrenador).
+- **Movimientos**: potencia y precisión.
+- **Técnicas, habilidades y misiones**: se editan como JSON en la sección **Avanzado** (con «Copiar de la base»); el esquema los valida al escribir.
+- **No se puede** cambiar en vivo: `session.*`, `focus.*`, `statCurves`, `starters`, `historyLimit`, el nivel máximo, etc. (se leen al arrancar o invalidarían partidas). Ni borrar especies, movimientos o definiciones de misión (se desactivan con `weight: 0` / `enabled: false`).
+
+### El flujo
+
+1. **Borrador.** En *Contenido*, crea un borrador a partir de lo que está en vivo, de una versión anterior (copiar) o en blanco. Se guarda solo mientras escribes y **se guarda aunque tenga errores**: así no pierdes trabajo. Máximo 20 borradores abiertos.
+2. **Validar.** La pestaña *Revisión* muestra los errores (que bloquean) y los avisos en vivo, y el botón **Validar** ejecuta la validación completa en el servidor: forma, referencias (especies, movimientos y objetos que existen), umbrales de liga crecientes, **cobertura de apariciones** (para cada hora, clima y tramo de nivel debe haber al menos 5 especies no legendarias con peso), ids de misión inmutables, y una **prueba de humo** del motor (unas 200 sesiones sintéticas sin NaN ni excepciones). Tarda ~0,3 s.
+3. **Vista previa de apariciones** (opcional): qué especies y con qué probabilidad salen para una hora, un clima y un nivel dados, con el borrador frente a lo vivo (y con un evento encima, si eliges uno).
+4. **Simular** (muy recomendable). Pestaña *Simulación*: el simulador de balance juega los mismos perfiles y semillas con el parche **activo** y con el del **borrador**, y compara puntos semanales, ligas alcanzadas, capturas, legendarios y shinies, Polvo y Energía. Por defecto 3 perfiles, 4 semillas, 4 semanas (máximo 20 semillas, 8 semanas, 480 «jugador-semana» en total). Solo corre **una simulación a la vez** en todo el servidor (otra petición recibe «ocupado»), con un tope de 5 minutos. Los eventos no entran en la simulación. Un resultado vale 7 días y solo para el parche exacto que se simuló: si editas el borrador, hay que repetirla.
+   - Simular **no es obligatorio**: publicar sin una simulación reciente se permite, pero la pantalla lo avisa y el registro de auditoría anota que se publicó sin simular.
+5. **Revisar el diff.** La pestaña *Revisión* lista cada ruta cambiada con su valor antes y después.
+6. **Publicar o programar.** *Publicar ya*, o *Programar* con una fecha de **como mucho 60 días** por delante (la pantalla muestra tu zona horaria y la hora en UTC). Pide la contraseña (sudo) y, si hay avisos de cambio grande, el tick de confirmación (ver abajo). El servidor **vuelve a validar** al publicar; con errores no se publica.
+7. **Rollback.** En *Versiones*, **Republicar** sobre una versión que ya estuvo en vigor: crea una versión **nueva** (título «Rollback to #N») con el parche antiguo, en vigor ya. No borra nada del historial. Una versión *programada para más tarde* seguirá sustituyéndola cuando llegue su hora. **No se puede cancelar una programación**: para impedir que entre, publica antes otra versión que la anule o haz rollback cuando haya entrado.
+
+Qué ven los jugadores y cuándo: los jugadores descargan el contenido al abrir la app y cuando el servidor les avisa (cada 30 s como mucho). **Una sesión de estudio conserva el contenido con el que empezó** hasta que se acaban sus oleadas, así que publicar a mitad de una sesión no la cambia. Lo que **sí** afecta a todos de golpe, porque afecta a lo que ya tienen: caramelos, topes de nivel, técnicas y habilidades de Pokémon ya capturados, y los umbrales de liga de la semana en curso. La pantalla de publicación lo avisa; para los umbrales de liga conviene programarlos a primera hora del lunes (la semana de liga empieza el lunes en la zona horaria de cada jugador, así que no hay un único instante limpio).
+
+### Qué pide confirmación (×3 / ×5)
+
+El servidor marca como **aviso que exige confirmar** cualquier cambio grande respecto a la base:
+
+- un número que se **multiplica o divide por más de 3** (multiplicadores, pesos, recompensas…);
+- una **probabilidad que se multiplica por más de 5**;
+- en eventos: peso de una especie destacada > ×3, multiplicador de legendario > ×3 y probabilidad de shiny > ×5 sobre la base.
+
+Hasta que marques la casilla de confirmación, publicar devuelve «confirmación requerida». Los avisos sin esa marca (p. ej. los de cambio con efecto inmediato) se muestran pero no bloquean.
+
+## 3. Eventos
+
+*Eventos* (solo admin): lista por estado (borrador, publicado, archivado) y un editor. Un evento es un **sobre** de reglas que se activa entre dos fechas y **no puede cambiar la configuración**: solo estas cosas.
+
+- **Datos**: identificador (*slug*, único **para siempre**, también entre archivados), nombre y descripción en español e inglés, inicio y fin (duración máxima 62 días) y **imagen** (opcional).
+- **Especies destacadas** (hasta 20, peso ×1–10; siguen sin salir por debajo de su nivel mínimo).
+- **Shiny del evento**: probabilidad (hasta 5 %) y alcance (todas las especies o solo las destacadas). Se usa si es mayor que la base.
+- **Multiplicador de legendario** (×1–10).
+- **Drops**: objetos del evento, probabilidad por oleada (0–100 %) y **máximo por sesión** (1–99). Se tiran con un azar aparte: no cambian qué salvajes salen.
+- **Misiones de evento** (hasta 10) y **objetos propios** (hasta 20; conservan su nombre en el inventario cuando el evento termina, también si se archiva).
+
+Vida de un evento:
+
+1. **Borrador** (se guarda aunque tenga errores semánticos; máximo 50 borradores). La vista previa de apariciones usa el evento aunque sea borrador.
+2. **Publicar** (admin + sudo): necesita fin en el futuro e inicio a como mucho 60 días vista; con inicio futuro queda **programado**. Se valida con la prueba de humo y pide el tick de confirmación si hay cambios grandes.
+3. **Editar un evento publicado** también pide sudo y validación completa; el *slug* ya no se puede cambiar. El cambio se aplica **a la vez**, pero las sesiones ya empezadas siguen con lo suyo. Cada edición guarda una revisión.
+4. **Archivar** (admin + sudo): el evento sale del juego y de la página pública al instante. Los jugadores que ya empezaron una sesión durante el evento la terminan con sus reglas. Los borradores se pueden **borrar**; los publicados solo se archivan.
+
+Los jugadores ven los eventos en `#/events` (activos, próximos y pasados con tarjeta, cuenta atrás, destacadas, drops y misiones) y un **banner** del evento activo en la pantalla previa a la sesión. Las misiones de evento se pueden reclamar hasta 7 días después de que termine.
+
+### Imágenes de eventos
+
+Se suben desde el editor (PNG, JPEG o WebP, **hasta 3 MB**, como mínimo 320×180). El servidor **nunca guarda ni sirve el original**: lo vuelve a codificar a WebP 16:9 recortado desde el centro (máximo 1600×900), sin metadatos, y genera una miniatura de 480 px. Consejos:
+
+- No pongas texto ni caras cerca de los bordes: el recorte 16:9 se hace desde el centro.
+- No valen SVG, GIF (ni animados), HEIC ni HTML. Una imagen idéntica ya subida se reutiliza.
+- Un borrado solo funciona si **ningún** evento (ni borrador ni archivado) usa la imagen. El almacén tiene un tope de 500 MB.
+- Los ficheros están en `UPLOADS_DIR/events/<sha256>.webp`: son parte de lo que hay que respaldar (§6).
+
+## 4. Soporte de jugadores
+
+*Jugadores* (support y admin): busca por correo, nombre de entrenador o código de amigo (2–60 caracteres, hasta 20 resultados). La ficha muestra perfil, rol, bloqueos de 30 días, un resumen de la partida (nivel, equipo, sesión activa), las últimas 20 sesiones y los navegadores con sesión abierta. Acciones, todas con un **motivo opcional** y todas auditadas:
+
+- **Desbloquear** nombre, país o zona horaria (los cambios tienen un bloqueo de 30 días).
+- **Cancelar la sesión** atascada. Es la misma acción `cancel` del jugador: sigue sus reglas normales (GDD §3.4: una sesión larga conserva los minutos) y **no sirve si la sesión ya pasó de su hora de fin**: esa la tiene que reclamar el jugador.
+- **Cerrar todas sus sesiones** de login (no sobre ti mismo).
+- **Conceder objetos o Polvo** (solo admin + sudo): **motivo obligatorio** (5–280 caracteres, queda en la auditoría), como mucho 10 tipos de objeto, 50 unidades de cada uno y 5000 de Polvo por petición. Límite de 20 concesiones cada 15 minutos. El jugador ve el cambio al instante.
+
+`support` solo puede actuar sobre cuentas `player`; un admin sobre cualquiera.
+
+## 5. Métricas
+
+*Métricas* (support y admin): agregados por **día o semana UTC** (por defecto, últimos 28 días; máximo 120 tramos): jugadores activos, sesiones, minutos, puntos, oleadas, capturas, shinies y legendarios, reparto de Foco (bajo < 0,75, medio, completo ≥ 1) y una retención sencilla (de los activos del tramo anterior, cuántos volvieron). Salen de la tabla `session_log`, que guarda **una fila por sesión válida reclamada** (y por las sesiones largas canceladas que conservan minutos); la historia empieza el día que se aplicó esa migración. Nunca salen ids ni nombres de jugadores.
+
+## 6. Copias de seguridad
+
+Hay **tres cosas** que respaldar, y las tres hacen falta para restaurar:
+
+1. **PostgreSQL** (cuentas, partidas, versiones de contenido y sus *snapshots*, eventos, metadatos de imágenes, auditoría, métricas). Con Docker:
+   ```bash
+   docker compose exec -T db pg_dump -U pokefocus pokefocus > backup-$(date +%F).sql
+   ```
+   Restaurar en una base vacía: `docker compose exec -T db psql -U pokefocus pokefocus < backup.sql`. En desarrollo, PGlite vive en `.data/pglite` (copia el directorio con el servidor parado); no es para producción.
+2. **`UPLOADS_DIR`** (en Docker, el volumen `uploads` montado en `/app/.data/uploads`): las imágenes de eventos. La base solo guarda sus metadatos: **`pg_dump` solo no contiene las imágenes**, y restaurar una sin la otra deja eventos con la imagen rota. Con Docker: `docker compose cp app:/app/.data/uploads ./uploads-backup` (al restaurar, comprueba que los ficheros pertenecen al usuario `node`). Si pierdes el directorio pero conservas la base, volver a subir la misma imagen reescribe los ficheros (se nombran por su hash).
+3. **`PASSWORD_PEPPER`**, **guardado aparte de la base** (un gestor de contraseñas, no en el mismo sitio que el volcado). Se mezcla en todos los hashes de contraseña: **si se pierde, nadie puede iniciar sesión** y no hay recuperación por correo. Para rotarlo, pon el valor nuevo en `PASSWORD_PEPPER` y el antiguo en `PASSWORD_PEPPER_PREVIOUS`; cada cuenta se re-hashea con el nuevo en su siguiente login. Quita el antiguo solo cuando ya no queden cuentas por migrar.
+
+Haz una copia **antes de cada despliegue con migraciones** y antes de operaciones grandes (rollback masivo, borrar imágenes). Prueba una restauración al menos una vez.
+
+## 7. Qué no hacer
+
+- **No edites la base a mano** (`content_versions`, `content_snapshots`, `live_events`…). Las versiones publicadas son inmutables a propósito y las sesiones en curso se apoyan en sus *snapshots*; borrarlos o cambiarlos puede dejar sesiones sin su contenido. Todo lo que se puede hacer desde la pantalla debe hacerse desde la pantalla (queda auditado).
+- **No publiques cambios grandes sin simular** ni sin leer el diff. El tick ×3/×5 existe para eso, no para saltártelo.
+- **No cambies umbrales de liga a mitad de semana** sin necesidad: aplican de inmediato a la semana en curso.
+- **No pierdas ni cambies `PASSWORD_PEPPER`** sin `PASSWORD_PEPPER_PREVIOUS`.
+- **No pongas en `ADMIN_EMAILS` un correo que no controles**: el correo no se verifica, así que quien lo registre sería admin.
+- **No uses `ADMIN_TOKEN`** ni lo compartas; está en desuso.
+- **No arranques dos instancias del servidor** sobre la misma base: el aviso en vivo de contenido, los límites de uso, las notificaciones push y la cola de simulaciones viven en memoria del proceso.
+- **No des `admin` por comodidad**: para ayudar a un jugador basta `support`; las concesiones y las publicaciones son de admin.
+- **No esperes que archivar o hacer rollback «deshaga» lo ya ocurrido**: lo que los jugadores ya ganaron (drops, capturas, misiones reclamadas) se queda.
+- **No reutilices el *slug* de un evento** archivado: es único para siempre; añade el año o la edición.
+- **No hagas pruebas de carga ni abras la pantalla en muchas pestañas**: las peticiones de administración tienen límite (600 cada 15 minutos por persona, y límites propios por acción).
+
+## 8. Mantenimiento programado
+
+*Mantenimiento* (solo admin): avisa a los jugadores de una parada (banner con la hora en su zona). Es **solo informativo**: el servidor no se para ni se ralentiza solo. Ventana de hasta 14 días, nota de hasta 280 caracteres, como mucho 20 ventanas pendientes. Parar el servidor, desplegar o tocar la base sigue siendo manual.

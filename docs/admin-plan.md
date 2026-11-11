@@ -2,6 +2,44 @@
 
 > Diseño generado el 2026-11-09 por un agente de planificación. Decisión del usuario: cambios en vivo desde la base de datos, con versiones. Ver «Hoja de ruta» en docs/PENDING.md.
 
+## Estado: implementado (2026-11-10)
+
+La fase E (E0–E12) está entera en `main`. Este documento es el **plan original** y no se ha reescrito: abajo van las desviaciones reales. Para operar el sistema, ver [`admin.md`](admin.md); para la API y el entorno, [`server.md`](server.md); para el motor, [`engine-api.md`](engine-api.md) («Contenido en vivo»). Donde este plan y el código difieran, manda el código.
+
+**Migraciones (la numeración cambió).** Salieron en el orden en que se fusionaron las entregas:
+
+| Plan | Real |
+|---|---|
+| `0005_admin_roles_audit` | igual |
+| `0006_content_versions` | igual (`content_versions`, `content_snapshots`) |
+| `0007_live_events_uploads` | **`0007_session_log`** |
+| `0008_session_log_sim_runs` | **`0008_live_events_uploads`** |
+| (parte de la 0008) | **`0009_content_sim_runs`** |
+
+**Esquema.**
+- `session_log` no lleva `event_ids text[]`; añade `claimed_at`, `focus`, `late_claim` y `wilds`, y un índice único `(user_id, session_id)`. Se escribe en el claim **y** en la cancelación de una sesión larga que conserva minutos; las tiradas posteriores actualizan `catches`.
+- `content_sim_runs`: estados `running | done | failed | timeout | interrupted` (no hay `queued`: no hay cola, solo una ejecución a la vez y 409 `busy`); el informe está en `result`; añade `draft_hash`, `active_version_id` y `active_hash`.
+- `live_events` añade `validation`, `published_by` y `published_at`; hay una tabla extra `live_event_revisions` (una instantánea al publicar y en cada edición publicada); `uploads` añade `thumb_bytes`.
+
+**API (desviaciones).**
+- **`PUT /admin/content/drafts/:id` guarda aunque haya errores** (y guarda la validación barata, sin prueba de humo) en vez de rechazar con 422: así no se pierde trabajo. El 422 `validation_failed` queda para publicar, programar, hacer rollback y simular. Lo mismo para los borradores de eventos.
+- **La simulación no es obligatoria: es un aviso sin bloqueo.** `GET /versions/:id` de un borrador y la respuesta de publicar llevan `sim: {recent, last}`; la auditoría guarda `simRunId` (null = publicado sin simular). Se añadió `GET /admin/content/sim-runs` (lista) y `sim-runs/:id` es `support`, no `admin`. Perfiles: seis (`casual`, `constant`, `marathoner`, `night-owl`, `irregular`, `grinder`).
+- **Subidas binarias, sin multipart**: el cuerpo es la imagen cruda con su `Content-Type`; `app.ts` exceptúa solo esa ruta del requisito de JSON. Extras: 200 `reused: true` si ya existía, 400 `empty_body` y 409 `uploads_full`.
+- **Rutas del plan que no se implementaron**: `POST /admin/content/versions/:id/unschedule` (una programación no se cancela: se anula publicando otra versión o con un rollback), `PUT /admin/players/:id/role` (los roles se dan con `ADMIN_EMAILS` o el CLI) y `GET /admin/audit` (no hay visor: la auditoría se lee en la tabla `admin_audit`). Tampoco hay pestaña de Auditoría.
+- Publicar usa `confirm` (no `confirmRisky`). El rollback solo admite versiones que ya estuvieron en vigor (409 `not_published`) y crea una versión nueva con `parent_id` = la restaurada y título «Rollback to #N». El `diff` de una versión es siempre contra la activa.
+- `POST /drafts` acepta `{from: 'active'|'empty', fromVersionId?, title?, note?}`. Topes: 20 borradores de contenido y 50 de eventos abiertos a la vez; programar como mucho a 60 días; un evento dura como mucho 62 días.
+- Un evento publicado se puede **editar** (sudo, validación completa, `slug` bloqueado, `revision`+1, efecto inmediato). `spawn-preview` es solo `admin` y acepta `eventId` de cualquier estado.
+- `GET /api/content` devuelve `events` como `EventOverlay` completos (con misiones) y un campo extra `eventItems`; la página de eventos usa `GET /api/live-events` (campos públicos).
+- Métricas: por día o semana UTC (máximo 120 tramos): activos, sesiones, minutos, puntos, oleadas, capturas, shinies, legendarios, bandas de Foco y retención simple. **No** hay distribución de ligas ni comparación de un evento con la semana anterior, ni DAU/WAU como tales.
+- **Drops de evento: `max` es por sesión** (no por evento ni por jugador), con un azar derivado `sessionId|drops|eventId`.
+- Límites de uso por acción (`adminContentWrite` 120, `adminContentCompute` 30, `adminContentPublish` 10, `adminEventWrite` 120, `adminEventPublish` 20, `adminUpload` 20, `adminPlayerWrite` 60, `adminGrant` 20, cada 15 min por usuario) en `server/rate-limit.ts`.
+
+**UI (desviaciones).**
+- `#/admin` no tiene enlace en ningún menú: se entra por la dirección. Pestañas: Contenido, Eventos (solo admin), Jugadores, Métricas, Mantenimiento.
+- Técnicas, habilidades y misiones se editan como **JSON** en la sección «Avanzado» del borrador (con «Copiar de la base»), no con tablas y formularios por kind. Parámetros, Especies y Movimientos sí son formularios y tablas. Revisión (diff + validar), Vista previa de apariciones y Simulación son subpestañas del borrador.
+- El editor de eventos incluye selector de imagen con subida, vista previa de la tarjeta y vista previa de apariciones con el evento encima.
+
+**Entorno y despliegue.** Se añadieron `UPLOADS_DIR`, `ADMIN_EMAILS`, `PASSWORD_PEPPER` y `PASSWORD_PEPPER_PREVIOUS` (no estaban en este plan; el pepper es obligatorio en producción). `ADMIN_TOKEN` queda en desuso. El `Dockerfile` copia `scripts/sim` (para el worker) pero **no** `scripts/admin-role.ts`: en la imagen de producción el CLI de roles no existe y se usa `ADMIN_EMAILS`. `docker-compose.yml` monta el volumen `uploads`.
 
 ## 0. Lo que hay hoy (verificado en el código)
 
