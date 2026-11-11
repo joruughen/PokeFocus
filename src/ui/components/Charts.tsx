@@ -36,11 +36,16 @@ function niceMax(v: number): number {
 function Grid({ top, format, height }: { top: number; format: (v: number) => string; height: number }) {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden style={{ height }}>
-      {[1, 0.5].map((f) => (
-        <div key={f} className="absolute inset-x-0 border-t-2 border-dashed border-dusk-700" style={{ bottom: f * height }}>
-          <span className="absolute -top-2.5 right-full mr-2 font-num text-base leading-none text-mist-400">{format(top * f)}</span>
-        </div>
-      ))}
+      {[1, 0.5].map((f) => {
+        // A count axis topping out at 1 would label both lines "1": leave the half line unlabeled then.
+        const text = format(top * f)
+        const duplicate = f < 1 && text === format(top)
+        return (
+          <div key={f} className="absolute inset-x-0 border-t-2 border-dashed border-dusk-700" style={{ bottom: f * height }}>
+            {!duplicate && <span className="absolute -top-2.5 right-full mr-2 font-num text-base leading-none text-mist-400">{text}</span>}
+          </div>
+        )
+      })}
     </div>
   )
 }
