@@ -63,21 +63,29 @@ Balance a vigilar:
 
 Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
 
-## ▶ Para continuar (estado al 2026-11-10, tarde)
+## ▶ Para continuar (estado al 2026-11-10, noche)
 
 Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
 
-**`main` = v0.10.0** (`2af95f8`, sin push). Sobre v0.9.0 añade: pepper de contraseñas (`PASSWORD_PEPPER`, obligatorio en producción), B (globos de técnicas y desglose de puntos), C (sesiones largas cancelables), E1 (validación de contenido), E3 (ContentService, `/api/content`, fijado por sesión, migración 0006), E4 (cliente en vivo), E11 (soporte de jugadores en `/api/admin/players`) y E12 (`session_log`, migración 0007, `/api/admin/metrics`). Typecheck limpio y 1073 tests.
+**`main` = v0.11.0** (`981a494`, sin push). **Fase E terminada** (E0–E13): contenido en vivo con borradores, validación, simulación, publicar/programar/rollback; eventos (página `#/events`, banner, destacadas, drops, misiones de evento, imágenes con `sharp`); soporte de jugadores; métricas. Guía de administración en `docs/admin.md`. Typecheck limpio y 1294 tests.
 
-**Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2`. Con 8 y con 4 agentes VS Code murió por falta de RAM (OOM). `vite.config.ts` limita vitest a 4 workers (`VITEST_MAX_WORKERS`).
+**Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2` (VS Code murió por falta de RAM con 8 y con 4). Los agentes se cortan con el límite de uso de 5 h: se retoman con un mensaje y siguen.
 
-**Después de v0.10.0, ya en `main`:** globo de la probabilidad de captura (`catchBreakdown`), **E5** API admin de contenido (`/api/admin/content`) y **E8** backend de eventos (migración **0008** `live_events`/`uploads`; `UPLOADS_DIR`, por defecto `.data/uploads`, **va en las copias de seguridad** junto con PostgreSQL; `/media/events/*.webp`; `/api/live-events`; dependencia `sharp`).
+**Migraciones:** 0005 roles, 0006 contenido, 0007 `session_log`, 0008 eventos y subidas, 0009 simulación. Se aplican solas al arrancar.
 
-**Migraciones reales:** 0006 contenido, 0007 `session_log`, 0008 eventos y subidas. El plan (`docs/admin-plan.md`) usa otra numeración: E10 (`content_sim_runs`) será la 0009.
+**Para desplegar v0.11.0:** `PASSWORD_PEPPER` (obligatorio en producción, `npm run pepper`, guardarlo aparte), `ADMIN_EMAILS`, volumen `uploads` en las copias de seguridad junto con PostgreSQL.
 
-**En curso:** QA visual de v0.10.0 (rama `worktree-agent-aee0afdc87d389e52`) y **E7** eventos en el motor (Opus).
+**En curso:** pulido tras la QA de admin y eventos (ver lista de abajo).
 
-**Siguientes (de 2 en 2):** E6 UI admin de contenido, E9 UI de eventos (página `#/events`, banner, editor admin), E10 simulación desde admin, E13 docs. Pendientes menores de E5: `unschedule`, estado `archived` de versiones.
+**Pendiente tras la QA de admin y eventos (lógica, sin tocar todavía):**
+- Los drops de evento no se ven en Resultados ni hay marca de «destacada» en las oleadas.
+- Al publicar algo que cambia el hash de contenido, la app se remonta y el admin pierde la pestaña y el editor abierto.
+- Un borrador «desde lo vivo» vuelve a pedir la casilla ×5 por valores que ya estaban en vivo; el aviso muestra fracciones y la tabla porcentajes.
+- Una versión programada no se puede cancelar y su ficha dice «Since» en vez de «Starts».
+- «Nuevo borrador» crea uno vacío al instante.
+- Editar un evento publicado no vuelve a comprobar el límite de 60 días.
+
+**Siguiente después del pulido:** decisiones de balance abiertas (más abajo), F4 (progresión profunda) y F5 (intercambios), recuperación de contraseña por correo, probar PostgreSQL real y micrófono real.
 
 **Decisiones a confirmar de v0.10.0:**
 - C: cancelar una sesión de 25 min o menos sigue sin dar nada; una cancelada no da las 2 Poké Balls por sesión.
