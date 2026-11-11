@@ -29,6 +29,41 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.11.0',
+    date: '2026-11-10',
+    title: { es: 'Eventos', en: 'Events' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Nueva página de Eventos: mira los eventos activos, los próximos y los pasados, con sus fechas en tu hora, las especies destacadas, el shiny o los legendarios del evento, los objetos que pueden caer y sus misiones.',
+          en: 'New Events page: see active, upcoming and past events, with their dates in your time zone, featured species, the event’s shiny or legendary boost, the items that can drop and its missions.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Durante un evento, sus especies destacadas aparecen más, pueden caer objetos del evento y hay misiones propias que puedes reclamar hasta 7 días después de que termine. Un aviso en el inicio te dice cuándo hay uno activo.',
+          en: 'During an event its featured species show up more often, event items can drop and it has its own missions, which you can claim up to 7 days after it ends. A banner on the home screen tells you when one is on.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'En el móvil, el panel para lanzar la Ball ya no tapa a los salvajes de la oleada.',
+          en: 'On phones, the ball-throwing panel no longer covers the wild Pokémon in the wave.',
+        },
+      },
+      {
+        kind: 'fixed',
+        text: {
+          es: 'Varios arreglos de diseño a 390 px: el mote en «Energía del equipo», globos de ayuda que se salían de la pantalla y los equipos guardados con seis Pokémon.',
+          en: 'Several layout fixes at 390 px: the nickname in “Team Energy”, help bubbles that went off screen and saved teams with six Pokémon.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.10.0',
     date: '2026-11-10',
     title: { es: 'Sesiones largas y números claros', en: 'Long sessions and clear numbers' },
