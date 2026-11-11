@@ -43,8 +43,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
-          es: 'Durante un evento, sus especies destacadas aparecen más, pueden caer objetos del evento y hay misiones propias que puedes reclamar hasta 7 días después de que termine. Un aviso en el inicio te dice cuándo hay uno activo.',
-          en: 'During an event its featured species show up more often, event items can drop and it has its own missions, which you can claim up to 7 days after it ends. A banner on the home screen tells you when one is on.',
+          es: 'Durante un evento, sus especies destacadas aparecen más (con la marca «Destacada» en la oleada), pueden caer objetos del evento (los ves en Resultados) y hay misiones propias que puedes reclamar hasta 7 días después de que termine. Un aviso en el inicio te dice cuándo hay uno activo.',
+          en: 'During an event its featured species show up more often (marked “Featured” in the wave), event items can drop (you see them in Results) and it has its own missions, which you can claim up to 7 days after it ends. A banner on the home screen tells you when one is on.',
         },
       },
       {

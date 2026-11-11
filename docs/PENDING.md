@@ -75,17 +75,9 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 
 **Para desplegar v0.11.0:** `PASSWORD_PEPPER` (obligatorio en producción, `npm run pepper`, guardarlo aparte), `ADMIN_EMAILS`, volumen `uploads` en las copias de seguridad junto con PostgreSQL.
 
-**En curso:** pulido tras la QA de admin y eventos (ver lista de abajo).
+**Pulido tras la QA de admin y eventos: hecho** (drops en Resultados y marca «Destacada», el admin ya no se remonta al publicar, aviso ×3/×5 contra lo vivo, `unschedule`, diálogo de nombre para borradores nuevos, fechas al editar eventos publicados). 1311 tests.
 
-**Pendiente tras la QA de admin y eventos (lógica, sin tocar todavía):**
-- Los drops de evento no se ven en Resultados ni hay marca de «destacada» en las oleadas.
-- Al publicar algo que cambia el hash de contenido, la app se remonta y el admin pierde la pestaña y el editor abierto.
-- Un borrador «desde lo vivo» vuelve a pedir la casilla ×5 por valores que ya estaban en vivo; el aviso muestra fracciones y la tabla porcentajes.
-- Una versión programada no se puede cancelar y su ficha dice «Since» en vez de «Starts».
-- «Nuevo borrador» crea uno vacío al instante.
-- Editar un evento publicado no vuelve a comprobar el límite de 60 días.
-
-**Siguiente después del pulido:** decisiones de balance abiertas (más abajo), F4 (progresión profunda) y F5 (intercambios), recuperación de contraseña por correo, probar PostgreSQL real y micrófono real.
+**Siguiente:** decisiones de balance abiertas (más abajo), F4 (progresión profunda) y F5 (intercambios), recuperación de contraseña por correo, probar PostgreSQL real y micrófono real.
 
 **Decisiones a confirmar de v0.10.0:**
 - C: cancelar una sesión de 25 min o menos sigue sin dar nada; una cancelada no da las 2 Poké Balls por sesión.
