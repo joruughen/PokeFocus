@@ -36,10 +36,13 @@ export function SudoForm({ mode, eventName, elevated, risky, busy, error, onSubm
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [note, setNote] = useState('')
-  const needsConfirm = risky.length > 0
+  // Archiving takes the event out of play: the ×3 / ×5 checks of its numbers do not apply.
+  const needsConfirm = mode !== 'archive' && risky.length > 0
   const ready = (elevated || password !== '') && (!needsConfirm || confirm)
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    // The dialog is rendered inside the editor's own <form>: React bubbles submit through portals and would also save the draft.
+    e.stopPropagation()
     if (ready && !busy) onSubmit({ password, confirm, note: note.trim() })
   }
   return (
@@ -52,7 +55,9 @@ export function SudoForm({ mode, eventName, elevated, risky, busy, error, onSubm
           </p>
           <ul className="list-disc pl-5 text-sm break-words text-mist-100">
             {risky.map((w, i) => (
-              <li key={`${w.path}-${i}`}>{issueText(w)}</li>
+              <li key={`${w.path}-${i}`}>
+                <code className="font-mono text-xs text-mist-300">{w.path}</code> {issueText(w)}
+              </li>
             ))}
           </ul>
           <label className="mt-1 flex min-h-11 items-start gap-3">

@@ -60,7 +60,7 @@ export function DiffList({ diff, stale }: DiffListProps) {
   if (diff.length === 0) return <p className="text-mist-300">{t('admin.content.diff.empty')}</p>
   return (
     <div className={cx('overflow-x-auto', stale && 'opacity-60')}>
-      <table className="w-full min-w-[32rem] border-separate border-spacing-y-1 text-left">
+      <table className="w-full border-separate sm:min-w-[32rem] border-spacing-y-1 text-left">
         <caption className="sr-only">{t('admin.content.diff.title')}</caption>
         <thead>
           <tr className="text-sm text-mist-400">
@@ -80,10 +80,10 @@ export function DiffList({ diff, stale }: DiffListProps) {
             <tr key={d.path} className="bg-dusk-900">
               <td className="p-2">
                 <p className="text-mist-50">{pathLabel(d.path, t, lng)}</p>
-                <p className="font-mono text-xs text-mist-400">{d.path}</p>
+                <p className="font-mono text-xs break-all text-mist-400">{d.path}</p>
               </td>
-              <td className="p-2 font-num text-mist-300 line-through decoration-cheek-500/60">{valueText(d.path, d.before, t, i18n.language)}</td>
-              <td className="p-2 font-num text-leaf-400">{valueText(d.path, d.after, t, i18n.language)}</td>
+              <td className="p-2 font-num break-words text-mist-300 line-through decoration-cheek-500/60">{valueText(d.path, d.before, t, i18n.language)}</td>
+              <td className="p-2 font-num break-words text-leaf-400">{valueText(d.path, d.after, t, i18n.language)}</td>
             </tr>
           ))}
         </tbody>
