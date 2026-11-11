@@ -17,7 +17,7 @@ docker compose up --build   # PostgreSQL 17 + app (cuando haya Docker)
 npm run simulate     # simulador de balance → docs/balance-report.md
 ```
 
-Las variables de entorno del servidor están en `.env.example` y se explican en [`docs/server.md`](docs/server.md) (incluye la API de avisos de mantenimiento).
+Las variables de entorno del servidor están en `.env.example` y se explican en [`docs/server.md`](docs/server.md) (incluye la API de administración y los avisos de mantenimiento). Para administrar el juego en vivo (cambiar números, apariciones y misiones sin desplegar, crear **eventos**, dar soporte a jugadores, métricas) hace falta una cuenta con rol `admin` (`ADMIN_EMAILS`) y la pantalla `#/admin`; la guía está en [`docs/admin.md`](docs/admin.md), que también explica las **copias de seguridad** (PostgreSQL, `UPLOADS_DIR` y `PASSWORD_PEPPER`).
 
 ## Documentos
 
@@ -26,10 +26,12 @@ Las variables de entorno del servidor están en `.env.example` y se explican en 
 | [`docs/GDD.md`](docs/GDD.md) | Diseño completo del juego (fuente de verdad), con la calibración aplicada en §20.2 |
 | [`docs/PENDING.md`](docs/PENDING.md) | Estado actual, decisiones tomadas y lo que queda por hacer |
 | [`docs/F2-plan.md`](docs/F2-plan.md) | F2: servidor propio, cuentas, amigos y rankings (decisiones y arquitectura) |
-| [`docs/server.md`](docs/server.md) | El servidor: estructura, entorno, API, seguridad, grupos de estudio y avisos de mantenimiento |
+| [`docs/server.md`](docs/server.md) | El servidor: estructura, entorno, API, seguridad, grupos de estudio, contenido en vivo, eventos, API de administración y avisos de mantenimiento |
+| [`docs/admin.md`](docs/admin.md) | Guía del administrador: roles, flujo borrador → publicar, eventos, soporte, métricas y copias de seguridad |
+| [`docs/admin-plan.md`](docs/admin-plan.md) | Plan de la fase E (administración en vivo y eventos) y las desviaciones de lo implementado |
 | [`docs/session-depth-plan.md`](docs/session-depth-plan.md) | Profundidad de la sesión: reparto del daño, informe, grupos, guía de tipos, micrófono y clima real |
 | [`docs/effects.md`](docs/effects.md) | Primitivas de efecto de técnicas y habilidades |
-| [`docs/engine-api.md`](docs/engine-api.md) | API del motor: modelo de daño, misiones, reglas de sueño |
+| [`docs/engine-api.md`](docs/engine-api.md) | API del motor: modelo de daño, misiones, reglas de sueño, contenido en vivo y eventos |
 | [`docs/ui-foundation.md`](docs/ui-foundation.md) | Sistema de diseño, componentes, estado del cliente, motor de pistas, cómo añadir pantallas |
 | [`docs/audio.md`](docs/audio.md) | Módulo de audio: efectos sintetizados y música generativa |
 | [`docs/balance-report.md`](docs/balance-report.md) | Informe del simulador de balance |
