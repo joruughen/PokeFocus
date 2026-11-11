@@ -674,13 +674,14 @@ export interface AdminPlayerDetail {
  *   POST   /api/admin/content/drafts/:id/validate        → AdminContentValidateResponse     (admin; full, with the engine smoke test)
  *   POST   /api/admin/content/drafts/:id/publish {effectiveAt?, confirm?, note?} → AdminContentVersionResponse (admin + sudo)
  *   POST   /api/admin/content/versions/:id/rollback {confirm?, note?}    → 201 AdminContentVersionResponse (admin + sudo)
+ *   POST   /api/admin/content/versions/:id/unschedule    → AdminContentVersionResponse (admin + sudo; a scheduled version goes back to a draft; 409 not_scheduled)
  *   GET    /api/admin/content/spawn-preview?versionId&eventId&hour&weather&trainerLevel → AdminSpawnPreview (admin; eventId = with that live event on top, drafts too)
  *   Simulation (E10): POST /drafts/:id/simulate, GET /sim-runs, GET /sim-runs/:id — see «Admin: balance simulation».
  *
  * Every mutation is audited in its own transaction (`content.draft.create|update|delete`, `content.publish`,
- * `content.schedule`, `content.rollback`). Drafts never reach `/api/content`: only published versions do.
+ * `content.schedule`, `content.unschedule`, `content.rollback`). Drafts never reach `/api/content`: only published versions do.
  * Errors: 400 invalid_body / invalid_id / invalid_query / invalid_effective_at, 403 forbidden / elevation_required,
- * 404 not_found, 409 (`not_draft`, `not_published`, `too_many_drafts`, `confirm_required`),
+ * 404 not_found, 409 (`not_draft`, `not_published`, `not_scheduled`, `too_many_drafts`, `confirm_required`),
  * 422 `validation_failed` { errors, warnings, requiresConfirm }, 429 rate_limited.
  */
 export type AdminContentStatus = 'draft' | 'published' | 'archived'
@@ -772,6 +773,8 @@ export interface AdminContentLiveResponse {
   hash: string
   baseHash: string
   active: AdminContentVersionSummary | null
+  /** Patch in force now (`{}` = base): the reference of the ×3 / ×5 guard, as the server applies it. */
+  patch: ContentPatch
   /** The next published version that takes effect in the future. */
   scheduled: AdminContentVersionSummary | null
   /** Live events active now. */

@@ -463,7 +463,8 @@
     "pointsShort": "points",
     "howPoints": "How is it calculated?",
     "cancelledTitle": "Session given up",
-    "cancelledSubtitle": "You studied {{minutes}} of {{planned}} min: you get what those minutes earned and the waves of the full 25-min blocks."
+    "cancelledSubtitle": "You studied {{minutes}} of {{planned}} min: you get what those minutes earned and the waves of the full 25-min blocks.",
+    "eventItem": "{{item}} (event)"
   },
   "waves": {
     "title": "Wave {{n}} of {{total}}",
@@ -558,7 +559,9 @@
       "notCounted": "The wild Pokémon’s level, the weather and the time of day don’t change the catch chance.",
       "study": "The {{ball}} catches it for sure.",
       "shiny": "It’s shiny: the {{ball}} is a sure catch."
-    }
+    },
+    "featured": "Featured",
+    "featuredTip": "An active event makes this species show up more."
   },
   "firstRun": {
     "you": "trainer",
@@ -1917,6 +1920,10 @@
         "lastAction": "An ability makes its last action worth more.",
         "daily": "After {{full}} h of study in a day rewards drop, and more from {{half}} h."
       }
+    },
+    "eventDrops": {
+      "title": "Event prizes",
+      "note": "Items that dropped this session thanks to an active event. They are already in your inventory."
     }
   },
   "group": {
@@ -2441,7 +2448,8 @@
         "noneScheduled": "Nothing scheduled.",
         "noEvents": "No event is running.",
         "hashLine": "Content hash {{hash}} · base {{base}}",
-        "isBase": "players have the base content"
+        "isBase": "players have the base content",
+        "starts": "Starts"
       },
       "versions": {
         "title": "Versions",
@@ -2465,7 +2473,14 @@
         "deleteConfirm": "Delete",
         "deleted": "Draft deleted",
         "newFromLive": "New draft from live",
-        "newEmpty": "New draft from base"
+        "newEmpty": "New draft from base",
+        "unschedule": "Cancel schedule",
+        "startsBy": "Starts {{when}} · scheduled by {{who}}",
+        "create": "Create draft",
+        "newFromLiveTitle": "New draft from live",
+        "newFromLiveBody": "Give it a name. It starts from what is live now and is not created until you confirm.",
+        "newEmptyTitle": "New draft from base",
+        "newEmptyBody": "Give it a name. It starts from the game's base data only and is not created until you confirm."
       },
       "view": {
         "title": "Version {{name}}",
@@ -2563,6 +2578,7 @@
         "goto": "Go to field",
         "wholePatch": "The draft",
         "big_change": "More than ×{{factor}} away from the base ({{base}} → {{value}}). It needs your confirmation to publish.",
+        "big_change_live": "More than ×{{factor}} away from what is live ({{base}} → {{value}}). It needs your confirmation to publish.",
         "out_of_range": "Out of the allowed range.",
         "invalid": "Not a valid value.",
         "unknown_key": "Unknown or non-editable setting.",
@@ -2644,7 +2660,8 @@
         "not_published": "Only a version that has already been live can be republished.",
         "too_many_drafts": "There are too many open drafts. Delete one first.",
         "invalid_body": "The server rejected the request.",
-        "invalid_effective_at": "Pick a time between now and 60 days ahead."
+        "invalid_effective_at": "Pick a time between now and 60 days ahead.",
+        "not_scheduled": "That version is not scheduled (or it is already in force)."
       },
       "preview": {
         "title": "Species the wild pool offers",
@@ -2716,6 +2733,12 @@
           "validation_failed": "The draft has errors: fix them before simulating.",
           "not_draft": "This version is no longer a draft."
         }
+      },
+      "unschedule": {
+        "title": "Cancel the schedule",
+        "body": "{{name}} will go back to being a draft and will not take effect on its own. You can edit it or schedule it again.",
+        "confirm": "Cancel schedule",
+        "done": "Version #{{id}} is a draft again"
       }
     },
     "config": {

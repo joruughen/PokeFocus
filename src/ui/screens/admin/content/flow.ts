@@ -49,6 +49,11 @@ export function rollbackTo(id: number, input: { confirm?: boolean; note?: string
   return attempt(() => contentApi.rollback(id, input))
 }
 
+/** Cancel a scheduled version: it goes back to a draft. */
+export function unscheduleVersion(id: number): Promise<Outcome<AdminContentVersion>> {
+  return attempt(() => contentApi.unschedule(id))
+}
+
 /**
  * Run a sudo-protected action after re-entering the password: reauth first, then the action. A wrong password
  * (403 `wrong_password`) comes back as an `error` outcome and the action never runs.

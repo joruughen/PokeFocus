@@ -1,10 +1,12 @@
-import { Fragment, useEffect, useRef } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DevPanel } from './dev/DevPanel'
 import { AppShell } from './AppShell'
 import { AudioBridge, MusicDirector } from './AudioBridge'
 import { TooltipProvider, ToastViewport } from './components'
 import { HintLayer } from './hints'
+import { nextRemountKey } from './lib/remountKey'
+import { useRoute } from './router'
 import { AuthScreen } from './screens/auth/AuthScreen'
 import { FirstRun } from './screens/FirstRun'
 import { Splash } from './screens/Splash'
@@ -40,7 +42,12 @@ export default function App() {
   const status = useAuth((s) => s.status)
   const loaded = useGame((s) => s.loaded)
   // The live content changed (another hash): remount the screens so nothing keeps values of the old rules.
+  // The admin screen publishes content itself: it must not be remounted by its own change (it would lose its tab and editor).
   const contentHash = useContentStore((s) => s.hash)
+  const route = useRoute()
+  const [remountKey, setRemountKey] = useState(contentHash)
+  const nextKey = nextRemountKey(remountKey, contentHash, route)
+  if (nextKey !== remountKey) setRemountKey(nextKey)
   const hasPlayer = useGame((s) => s.player !== null)
   const ready = status === 'authed' && loaded
   usePrefs((s) => s.dev.panelOpen) // re-render when the dev panel is toggled
@@ -67,7 +74,7 @@ export default function App() {
           className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:bg-volt-400 focus:px-3 focus:py-2 focus:text-ink">
           {t('common.skipToContent')}
         </a>
-        <Fragment key={contentHash}>
+        <Fragment key={remountKey}>
           {status === 'loading' ? <Splash /> : status === 'anon' ? <AuthScreen /> : !loaded ? <Splash game /> : hasPlayer ? <AppShell /> : <FirstRun />}
         </Fragment>
         {ready && hasPlayer && <SessionWatcher />}

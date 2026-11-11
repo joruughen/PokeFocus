@@ -94,3 +94,11 @@ export function conditionLines(m: MemberResult, result: Pick<SessionResult, 'for
 export function activationsOf(m: MemberResult): number {
   return m.techniques.reduce((a, t) => a + t.count, 0)
 }
+
+/** Items the live events of the session's content dropped (`SessionResult.eventItems`), most first; empty when none. */
+export function eventDrops(result: Pick<SessionResult, 'eventItems'>): { item: string; count: number }[] {
+  return Object.entries(result.eventItems ?? {})
+    .filter(([, count]) => count > 0)
+    .map(([item, count]) => ({ item, count }))
+    .sort((a, b) => b.count - a.count || (a.item < b.item ? -1 : 1))
+}

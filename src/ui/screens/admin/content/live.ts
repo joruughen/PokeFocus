@@ -15,11 +15,11 @@ export const NO_ISSUES: IssueSet = { errors: [], warnings: [], requiresConfirm: 
 
 let loading: Promise<typeof import('../../../../game/content')> | null = null
 
-/** Validate a patch with the cheap checks (shape, references, rules, coverage, ×3 / ×5 guard). */
-export async function liveValidate(patch: ContentPatch): Promise<IssueSet> {
+/** Validate a patch with the cheap checks (shape, references, rules, coverage, ×3 / ×5 guard against `previous`, the patch in force). */
+export async function liveValidate(patch: ContentPatch, previous?: ContentPatch | null): Promise<IssueSet> {
   loading ??= import('../../../../game/content')
   const { validateContentPatch } = await loading
-  const r = validateContentPatch(patch, { smoke: false })
+  const r = validateContentPatch(patch, { smoke: false, ...(previous && { previous }) })
   return { errors: r.errors, warnings: r.warnings, requiresConfirm: r.requiresConfirm }
 }
 

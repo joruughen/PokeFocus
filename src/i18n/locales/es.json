@@ -463,7 +463,8 @@
     "pointsShort": "puntos",
     "howPoints": "¿Cómo se calculan?",
     "cancelledTitle": "Sesión abandonada",
-    "cancelledSubtitle": "Estudiaste {{minutes}} de {{planned}} min: recibes lo de esos minutos y las oleadas de los bloques de 25 min completos."
+    "cancelledSubtitle": "Estudiaste {{minutes}} de {{planned}} min: recibes lo de esos minutos y las oleadas de los bloques de 25 min completos.",
+    "eventItem": "{{item}} (evento)"
   },
   "waves": {
     "title": "Oleada {{n}} de {{total}}",
@@ -558,7 +559,9 @@
       "notCounted": "El nivel del salvaje, el clima y la hora no cambian la probabilidad de captura.",
       "study": "La {{ball}} lo captura seguro.",
       "shiny": "Es shiny: con {{ball}} la captura está asegurada."
-    }
+    },
+    "featured": "Destacada",
+    "featuredTip": "Un evento activo hace que esta especie aparezca más."
   },
   "firstRun": {
     "you": "entrenador",
@@ -1917,6 +1920,10 @@
         "lastAction": "Una habilidad hace que su última acción valga más.",
         "daily": "Después de {{full}} h de estudio en el día las recompensas bajan, y más aún desde las {{half}} h."
       }
+    },
+    "eventDrops": {
+      "title": "Premios de evento",
+      "note": "Objetos que cayeron esta sesión por un evento activo. Ya están en tu inventario."
     }
   },
   "group": {
@@ -2441,7 +2448,8 @@
         "noneScheduled": "No hay nada programado.",
         "noEvents": "No hay ningún evento en curso.",
         "hashLine": "Hash del contenido {{hash}} · base {{base}}",
-        "isBase": "los jugadores tienen el contenido base"
+        "isBase": "los jugadores tienen el contenido base",
+        "starts": "Empieza"
       },
       "versions": {
         "title": "Versiones",
@@ -2465,7 +2473,14 @@
         "deleteConfirm": "Borrar",
         "deleted": "Borrador borrado",
         "newFromLive": "Borrador nuevo desde lo vivo",
-        "newEmpty": "Borrador nuevo desde la base"
+        "newEmpty": "Borrador nuevo desde la base",
+        "unschedule": "Cancelar programación",
+        "startsBy": "Empieza {{when}} · programada por {{who}}",
+        "create": "Crear borrador",
+        "newFromLiveTitle": "Borrador nuevo desde lo vivo",
+        "newFromLiveBody": "Ponle un nombre. Empieza con lo que está en vivo ahora y no se crea hasta que lo confirmes.",
+        "newEmptyTitle": "Borrador nuevo desde la base",
+        "newEmptyBody": "Ponle un nombre. Empieza solo con los datos base del juego y no se crea hasta que lo confirmes."
       },
       "view": {
         "title": "Versión {{name}}",
@@ -2563,6 +2578,7 @@
         "goto": "Ir al campo",
         "wholePatch": "El borrador",
         "big_change": "Se aleja más de ×{{factor}} de la base ({{base}} → {{value}}). Necesita tu confirmación para publicar.",
+        "big_change_live": "Se aleja más de ×{{factor}} de lo que está en vivo ({{base}} → {{value}}). Necesita tu confirmación para publicar.",
         "out_of_range": "Fuera del rango permitido.",
         "invalid": "Valor no válido.",
         "unknown_key": "Ajuste desconocido o no editable.",
@@ -2644,7 +2660,8 @@
         "not_published": "Solo se puede republicar una versión que ya estuvo en vivo.",
         "too_many_drafts": "Hay demasiados borradores abiertos. Borra uno primero.",
         "invalid_body": "El servidor ha rechazado la petición.",
-        "invalid_effective_at": "Elige una hora entre ahora y 60 días por delante."
+        "invalid_effective_at": "Elige una hora entre ahora y 60 días por delante.",
+        "not_scheduled": "Esa versión no está programada (o ya entró en vigor)."
       },
       "preview": {
         "title": "Especies que ofrece la zona salvaje",
@@ -2716,6 +2733,12 @@
           "validation_failed": "El borrador tiene errores: corrígelos antes de simular.",
           "not_draft": "Esta versión ya no es un borrador."
         }
+      },
+      "unschedule": {
+        "title": "Cancelar la programación",
+        "body": "{{name}} volverá a ser un borrador y no entrará en vigor por sí sola. Podrás editarla o programarla de nuevo.",
+        "confirm": "Cancelar programación",
+        "done": "La versión #{{id}} vuelve a ser un borrador"
       }
     },
     "config": {

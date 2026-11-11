@@ -125,7 +125,7 @@ describe('versions list', () => {
   ]
   const list = (role: 'admin' | 'support') =>
     renderToStaticMarkup(
-      <VersionsList items={items} filter="all" onFilter={noop} canEdit={contentPermissions(role).edit} busy={false} onOpen={noop} onRollback={noop} onCopy={noop} onDelete={noop} />,
+      <VersionsList items={items} filter="all" onFilter={noop} canEdit={contentPermissions(role).edit} busy={false} onOpen={noop} onRollback={noop} onUnschedule={noop} onCopy={noop} onDelete={noop} />,
     )
 
   for (const lng of ['es', 'en'] as const) {
@@ -141,6 +141,9 @@ describe('versions list', () => {
       expect(html).toContain(i18n.t('admin.content.versions.edit'))
       expect(html).toContain(i18n.t('admin.content.versions.validation', { errors: 2, warnings: 1 }))
       expect(html).toContain('abcdef01')
+      // Only the scheduled version (#3) can be cancelled, and its row says when it starts.
+      expect(html.split(`>${i18n.t('admin.content.versions.unschedule')}<`).length - 1).toBe(1)
+      expect(html).toContain(i18n.t('admin.content.versions.startsBy', { when: '', who: '' }).slice(0, 6))
     })
 
     it(`support: read-only, no copy, rollback or delete (${lng})`, async () => {
@@ -148,6 +151,7 @@ describe('versions list', () => {
       const html = list('support')
       expect(html).toContain(i18n.t('admin.content.versions.view'))
       expect(html).not.toContain(i18n.t('admin.content.versions.rollback'))
+      expect(html).not.toContain(i18n.t('admin.content.versions.unschedule'))
       expect(html).not.toContain(i18n.t('admin.content.versions.copy'))
       expect(html).not.toContain(i18n.t('admin.content.versions.edit'))
       expect(html).not.toContain('aria-label="' + i18n.t('admin.content.versions.delete', { name: '#4' }))
@@ -159,6 +163,7 @@ describe('live status', () => {
   const live: AdminContentLiveResponse = {
     hash: 'abcdef0123456789',
     baseHash: '1234567890abcdef',
+    patch: {},
     active: summary({ id: 2, active: true }),
     scheduled: summary({ id: 3, scheduled: true, effectiveAt: Date.UTC(2026, 11, 1) }),
     events: [{ id: 'e1', slug: 'spring-festival', startsAt: 0, endsAt: Date.UTC(2026, 11, 5) }],
@@ -171,6 +176,9 @@ describe('live status', () => {
     expect(html).toContain('#2 · Wave 5')
     expect(html).toContain('#3 · Wave 5')
     expect(html).toContain('spring-festival')
+    // The scheduled card says «Starts», the active one «Since».
+    expect(html).toContain('>Starts<')
+    expect(html).toContain('>Since<')
     const none = renderToStaticMarkup(<LiveStatus live={{ ...live, active: null, scheduled: null, events: [], hash: 'base' }} onReload={noop} loading={false} />)
     expect(none).toContain('No published version')
     expect(none).toContain('Nothing scheduled.')
@@ -206,6 +214,20 @@ describe('review: diff and issues', () => {
     expect(html).toContain('Server says hi')
     expect(html).toContain(i18n.t('admin.content.issues.goto'))
     expect(issueText(big, i18n.t.bind(i18n))).toContain('×5')
+  })
+
+  it('the ×3/×5 text prints probabilities as %, like the table, and says what it was compared with', async () => {
+    const live: ContentIssue = { code: 'big_change', path: 'config.encounters.shinyChance', message: 'm', params: { base: 0.00136, value: 0.01, factor: 5, kind: 'prob', from: 'live' }, requiresConfirm: true }
+    const base: ContentIssue = { ...live, params: { ...live.params, from: 'base' } }
+    await i18n.changeLanguage('en')
+    const t = i18n.t.bind(i18n)
+    expect(issueText(live, t)).toBe('More than ×5 away from what is live (0.136% → 1%). It needs your confirmation to publish.')
+    expect(issueText(base, t)).toBe('More than ×5 away from the base (0.136% → 1%). It needs your confirmation to publish.')
+    await i18n.changeLanguage('es')
+    expect(issueText(live, t)).toContain('de lo que está en vivo (0,136% → 1%)')
+    // A multiplier or an integer keeps its plain number (and its unit when the limit has one).
+    const mult: ContentIssue = { code: 'big_change', path: 'config.rewards.dustPerMinute', message: 'm', params: { base: 6, value: 30, factor: 3, kind: 'number' }, requiresConfirm: true }
+    expect(issueText(mult, t)).toMatch(/\(6 → 30\)/)
   })
 
   it('validation summary', async () => {

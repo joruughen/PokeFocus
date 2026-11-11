@@ -19,7 +19,7 @@ import { whenText } from '../../lib/whenText'
 import { useGame } from '../../store/game'
 import { useChargeLabel } from './ChargeChip'
 import { conditionRuleValues } from './conditionCopy'
-import { activationsOf, chargesBy, conditionLines, wildFactors, type WildFactor } from './sessionReportModel'
+import { activationsOf, chargesBy, conditionLines, eventDrops, wildFactors, type WildFactor } from './sessionReportModel'
 import { useContent } from '../../store/content'
 
 type T = (k: string, o?: Record<string, unknown>) => string
@@ -74,6 +74,7 @@ export function SessionReport({ result, player }: { result: SessionResult; playe
           ))}
         </ul>
       </section>
+      <EventDropsSection result={result} />
       <section aria-labelledby="report-wilds">
         <h3 id="report-wilds" className="mb-2 text-lg">
           {t('report.wildsTitle')}
@@ -89,6 +90,31 @@ export function SessionReport({ result, player }: { result: SessionResult; playe
         )}
       </section>
     </div>
+  )
+}
+
+/** Items the live events dropped this session (nothing when no event gave any). */
+function EventDropsSection({ result }: { result: SessionResult }) {
+  const { t, i18n } = useTranslation()
+  const names = useNames()
+  const drops = eventDrops(result)
+  if (drops.length === 0) return null
+  return (
+    <section aria-labelledby="report-event-drops">
+      <h3 id="report-event-drops" className="mb-1 text-lg">
+        {t('report.eventDrops.title')}
+      </h3>
+      <p className="mb-2 text-sm text-mist-300">{t('report.eventDrops.note')}</p>
+      <ul className="flex flex-col gap-1">
+        {drops.map((d) => (
+          <li key={d.item} className="flex items-center gap-3 bg-dusk-900 p-3 text-sm inset-shadow-well">
+            <PixelIcon name="sparkle" size={16} className="shrink-0 text-shiny-300" />
+            <span className="flex-1">{names.item(d.item)}</span>
+            <span className="font-num text-lg tabular">+{fmtInt(d.count, i18n.language)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

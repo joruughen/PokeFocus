@@ -12,6 +12,7 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
 import { SessionReportButton } from './SessionReport'
+import { eventDrops } from './sessionReportModel'
 import { GroupFairyNote } from './GroupStudy'
 import { StudyStyleLine } from './SoundStyle'
 import { useContent } from '../../store/content'
@@ -153,6 +154,9 @@ export function Results() {
               <RewardRow icon={<PixelIcon name="dust" size={20} className="text-exp-400" />} label={t('items.dust')} value={`+${fmtInt(result.dust, lng)}`} />
               <RewardRow icon={<BallIcon ball="poke-ball" />} label={t('results.balls')} value={`+${result.pokeBalls}`} />
               <RewardRow icon={<PixelIcon name="league" size={20} className="text-volt-400" />} label={t('results.leaguePoints')} value={`+${fmtInt(result.totalPoints, lng)}`} />
+              {eventDrops(result).map((d) => (
+                <RewardRow key={d.item} icon={<PixelIcon name="sparkle" size={20} className="text-shiny-300" />} label={t('results.eventItem', { item: names.item(d.item) })} value={`+${fmtInt(d.count, lng)}`} />
+              ))}
             </ul>
             {events
               .filter((e) => e.type === 'trainerLevelUp' || e.type === 'leagueUp')

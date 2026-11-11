@@ -3,7 +3,7 @@ import type { AdminContentVersionResponse } from '../../../../game/protocol'
 import { Button, Panel } from '../../../components'
 import { DiffList, IssueList, ValidationSummary } from './ReviewPanel'
 import { KindBadge } from './Overview'
-import { canRollback, shortHash, versionKind, versionName } from './versions'
+import { canRollback, canUnschedule, shortHash, versionKind, versionName } from './versions'
 
 export interface VersionViewProps {
   data: AdminContentVersionResponse
@@ -11,11 +11,12 @@ export interface VersionViewProps {
   busy: boolean
   onBack: () => void
   onRollback: () => void
+  onUnschedule: () => void
   onCopy: () => void
 }
 
 /** Read-only look at one version: who made it, its validation and what it changes against the live content. */
-export function VersionView({ data, canEdit, busy, onBack, onRollback, onCopy }: VersionViewProps) {
+export function VersionView({ data, canEdit, busy, onBack, onRollback, onUnschedule, onCopy }: VersionViewProps) {
   const { t, i18n } = useTranslation()
   const v = data.version
   const fmt = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' })
@@ -38,6 +39,11 @@ export function VersionView({ data, canEdit, busy, onBack, onRollback, onCopy }:
               <Button size="sm" variant="secondary" disabled={busy} onClick={onCopy}>
                 {t('admin.content.versions.copy')}
               </Button>
+              {canUnschedule(v) && (
+                <Button size="sm" icon="close" disabled={busy} onClick={onUnschedule}>
+                  {t('admin.content.versions.unschedule')}
+                </Button>
+              )}
               {canRollback(v) && (
                 <Button size="sm" icon="reroll" disabled={busy} onClick={onRollback}>
                   {t('admin.content.versions.rollback')}
@@ -53,7 +59,7 @@ export function VersionView({ data, canEdit, busy, onBack, onRollback, onCopy }:
           </dd>
           {v.effectiveAt !== null && (
             <>
-              <dt className="text-mist-400">{t('admin.content.live.effective')}</dt>
+              <dt className="text-mist-400">{t(kind === 'scheduled' ? 'admin.content.live.starts' : 'admin.content.live.effective')}</dt>
               <dd>
                 {fmt.format(v.effectiveAt)} · {v.publishedBy?.trainerName ?? '—'}
               </dd>

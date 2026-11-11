@@ -1,8 +1,8 @@
 /** Render smoke test of the report body (server-side render, no DOM needed). */
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import i18n from '../../../i18n'
-import { createEngineContext, defaultContext, type AbilityDef } from '../../../engine'
+import { createEngineContext, defaultContext, resolveContent, setDefaultContext, type AbilityDef } from '../../../engine'
 import { makeMon, makePlayer, MIN, runSession, T0 } from '../../../engine/test-helpers'
 import { SessionReport } from './SessionReport'
 
@@ -19,6 +19,8 @@ function sample() {
   const player = makePlayer(team, {}, c)
   return { player, result: runSession(player, 50, 2, { startedAt: T0 + 11 * 60 * MIN }, c).result }
 }
+
+afterEach(() => setDefaultContext(null))
 
 describe('SessionReport', () => {
   for (const lng of ['es', 'en'] as const) {
@@ -54,6 +56,19 @@ describe('SessionReport', () => {
       const html = renderToStaticMarkup(<SessionReport result={legacy} player={player} />)
       expect(html).toContain(i18n.t('report.points.legacy'))
       expect(html).not.toMatch(/report\.points/)
+    })
+
+    it(`shows the event items that dropped, by name, and nothing when none did (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      setDefaultContext(createEngineContext(resolveContent({}, [], { 'golden-banana': { names: { es: 'Plátano dorado', en: 'Golden banana' } } })))
+      const { player, result } = sample()
+      const none = renderToStaticMarkup(<SessionReport result={result} player={player} />)
+      expect(none).not.toContain(i18n.t('report.eventDrops.title'))
+      const html = renderToStaticMarkup(<SessionReport result={{ ...result, eventItems: { 'golden-banana': 2 } }} player={player} />)
+      expect(html).not.toMatch(/report\.eventDrops/)
+      expect(html).toContain(i18n.t('report.eventDrops.title'))
+      expect(html).toContain(lng === 'es' ? 'Plátano dorado' : 'Golden banana')
+      expect(html).toContain('+2')
     })
   }
 })

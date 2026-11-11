@@ -9,6 +9,7 @@ import {
   effectiveHits,
   encounterModifiers,
   estimateTokenDamage,
+  isFeatured,
   isManualWave,
   lockWaveDamage,
   previewAssignment,
@@ -814,6 +815,8 @@ function WildCard({
   const disabled = (done && !targeting) || Boolean(anim) || (targeting !== null && done) || statusTaken || (busy && (targeting !== null || assigning !== null)) || (assigning !== null && done)
   const hpShown = preview && !done ? preview.hpFraction : wild.hpFraction
   const overkill = manual && !done && wastedDamage(preview ?? wild, ctx.config) > 0.5
+  // A species an active event of the session's content features (the pinned context, not the live one).
+  const featured = isFeatured(wild.speciesSlug, ctx)
   return (
     <button
       type="button"
@@ -823,6 +826,7 @@ function WildCard({
       aria-label={[
         t('waves.wildLabel', { name, level: wild.level, pct: fmtPct(wild.hpFraction, i18n.language) }),
         wild.isShiny ? t('pokemon.shiny') : '',
+        featured ? t('waves.featured') : '',
         wild.status ? t(`waves.status.${wild.status}`) : '',
         wild.studyBallEligible && studyAvailable ? t('waves.studyEligibleTip') : '',
         t('waves.failsLeft', { count: left }),
@@ -880,6 +884,11 @@ function WildCard({
           <span title={t('waves.studyEligibleTip')} className="absolute right-0 bottom-0 z-10 inline-flex items-center gap-1 bg-dusk-900/85 py-0.5 pr-1.5 pl-0.5 text-xs text-mist-50 shadow-frame">
             <StudyBallIcon size={24} />
             {t('waves.studyEligible')}
+          </span>
+        )}
+        {featured && !done && (
+          <span title={t('waves.featuredTip')} className="absolute bottom-0 left-0 z-10 bg-dusk-900/85 px-1.5 py-0.5 text-xs text-volt-300 shadow-frame">
+            {t('waves.featured')}
           </span>
         )}
         {wild.isLegendary && (

@@ -336,6 +336,43 @@ describe('big-change guard', () => {
   })
 })
 
+describe('big-change guard against the version in force', () => {
+  const sc = base.config.encounters.shinyChance
+  const live = { config: { encounters: { shinyChance: sc * 6 } } }
+
+  it('does not warn again for a value that is already live and that the draft keeps', () => {
+    expect(bigChangeWarnings(live, base).map((w) => w.path)).toContain('config.encounters.shinyChance') // vs the base
+    expect(bigChangeWarnings(live, base, live)).toEqual([])
+    const r = validateContentPatch({ config: { ...live.config, rewards: { dustPerMinute: base.config.rewards.dustPerMinute * 2 } } }, { ...NO_SMOKE, previous: live })
+    expect(r.requiresConfirm).toBe(false)
+  })
+
+  it('warns about what really changes: further from live, or a value dropped back to the base', () => {
+    const w = bigChangeWarnings({ config: { encounters: { shinyChance: sc * 6 * 2 } } }, base, { config: { encounters: { shinyChance: sc } } })
+    expect(w.map((x) => x.path)).toEqual(['config.encounters.shinyChance'])
+    expect(w[0]!.params).toMatchObject({ base: sc, value: sc * 12, factor: 5, kind: 'prob', from: 'live' })
+    const dropped = bigChangeWarnings({}, base, live)
+    expect(dropped).toHaveLength(1)
+    expect(dropped[0]).toMatchObject({ path: 'config.encounters.shinyChance', requiresConfirm: true, params: { base: sc * 6, value: sc, from: 'live' } })
+  })
+
+  it('covers species, moves and lists against the live patch; an empty live patch is the base', () => {
+    const livePika = { species: { pikachu: { spawn: { weightMult: 5 } } }, config: { encounters: { longSessionLegendaryMult: [1, 5] } } }
+    expect(bigChangeWarnings(livePika, base, livePika)).toEqual([])
+    expect(bigChangeWarnings(livePika, base, {}).map((x) => x.params?.from)).toEqual(['base', 'base'])
+    const more = bigChangeWarnings({ species: { pikachu: { spawn: { weightMult: 20 } } } }, base, livePika)
+    expect(more.map((x) => x.path)).toEqual(expect.arrayContaining(['species.pikachu.spawn.weightMult']))
+  })
+
+  it('an event edit only warns about the values it changes', () => {
+    const ev = { id: 'e', slug: 'e', startsAt: 1, endsAt: 2, featured: [{ species: 'pikachu', weightMult: 8 }], shiny: { chance: sc * 8, scope: 'all' as const }, legendaryChanceMult: 5, drops: [], missions: [] }
+    const paths = (r: ReturnType<typeof validateEventOverlay>) => r.warnings.filter((w) => w.requiresConfirm).map((w) => w.path)
+    expect(paths(validateEventOverlay(ev, { smoke: false }))).toEqual(['featured.0.weightMult', 'shiny.chance', 'legendaryChanceMult'])
+    expect(paths(validateEventOverlay(ev, { smoke: false, previous: ev }))).toEqual([])
+    expect(paths(validateEventOverlay({ ...ev, legendaryChanceMult: 6 }, { smoke: false, previous: ev }))).toEqual(['legendaryChanceMult'])
+  })
+})
+
 describe('smoke test', () => {
   it('passes on the base context (deterministic)', () => {
     expect(smokeTest(base, { sessions: 30 })).toEqual([])

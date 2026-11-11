@@ -69,7 +69,7 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
   useEffect(() => {
     let current = true
     const timer = setTimeout(() => {
-      liveValidate(state.patch)
+      liveValidate(state.patch, live?.patch)
         .then((r) => current && setLiveIssues(r))
         .catch(() => current && setLiveIssues(NO_ISSUES))
     }, 250)
@@ -77,7 +77,7 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
       current = false
       clearTimeout(timer)
     }
-  }, [state.revision, state.patch])
+  }, [state.revision, state.patch, live?.patch])
 
   const fullFresh = full !== null && full.revision === state.revision
   const issues = fullFresh ? issuesToSet(full.validation) : liveIssues
@@ -117,7 +117,7 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
     state.phase === 'error' ? t('admin.content.editor.saveError', { code: state.error ?? '' }) : state.phase === 'saving' ? t('admin.content.editor.saving') : state.phase === 'dirty' ? t('admin.content.editor.unsaved') : t('admin.content.editor.saved')
 
   const tabs = [
-    { value: 'params', label: t('admin.content.sections.params'), content: <ConfigForm patch={state.patch} issues={issues} group={group} onGroup={setGroup} onPatch={edit} /> },
+    { value: 'params', label: t('admin.content.sections.params'), content: <ConfigForm patch={state.patch} livePatch={live?.patch} issues={issues} group={group} onGroup={setGroup} onPatch={edit} /> },
     { value: 'species', label: t('admin.content.sections.species'), content: <SpeciesTable patch={state.patch} issues={issues} onPatch={edit} /> },
     { value: 'moves', label: t('admin.content.sections.moves'), content: <MovesTable patch={state.patch} issues={issues} onPatch={edit} /> },
     { value: 'advanced', label: t('admin.content.sections.advanced'), content: <AdvancedJson patch={state.patch} issues={issues} onPatch={edit} /> },

@@ -29,7 +29,7 @@ export interface ActionDialogProps {
 function errorLine(o: Extract<Outcome<unknown>, { kind: 'error' }>, t: (k: string, v?: Record<string, unknown>) => string): string {
   if (o.code === 'wrong_password') return t('admin.content.action.wrongPassword')
   if (o.code === 'rate_limited' || o.retryAfter !== null) return t('admin.content.action.rateLimited', { count: Math.max(1, Math.ceil((o.retryAfter ?? 60) / 60)) })
-  if (['not_draft', 'not_published', 'invalid_effective_at', 'too_many_drafts'].includes(o.code)) return t(`admin.content.errors.${o.code}`)
+  if (['not_draft', 'not_published', 'not_scheduled', 'invalid_effective_at', 'too_many_drafts'].includes(o.code)) return t(`admin.content.errors.${o.code}`)
   return errorText(o.code)
 }
 

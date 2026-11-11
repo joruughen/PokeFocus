@@ -150,8 +150,15 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     if (endsAt <= startsAt) throw new ApiError(400, 'invalid_dates', { reason: 'order' })
   }
 
+  /** The date rules of publishing (`ended`: ends in the past, `too_far`: starts beyond the schedule limit). */
+  const assertPublishedDates = (row: Row, startsAt: number, endsAt: number, now: number) => {
+    const untouched = startsAt === row.startsAt.getTime() && endsAt === row.endsAt.getTime()
+    if (endsAt <= now && !(untouched && row.endsAt.getTime() <= now)) throw new ApiError(400, 'invalid_dates', { reason: 'ended' })
+    if (startsAt > now + MAX_SCHEDULE_MS) throw new ApiError(400, 'invalid_dates', { reason: 'too_far' })
+  }
+
   /** Validation of the event as a whole (overlay + id, slug and dates) against what is live. */
-  const validate = async (tx: Tx, ev: EventOverlay, smoke: boolean, now: number): Promise<AdminContentValidation> => {
+  const validate = async (tx: Tx, ev: EventOverlay, smoke: boolean, now: number, previous?: EventOverlay): Promise<AdminContentValidation> => {
     const active = await content.current(now, tx)
     const others = await tx.select().from(liveEvents).where(and(inArray(liveEvents.status, ['published', 'archived']), ne(liveEvents.id, ev.id)))
     const items: Record<string, ContentItem> = {}
@@ -159,7 +166,7 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     const overlapping = others
       .filter((o) => o.status === 'published' && o.startsAt.getTime() < ev.endsAt && ev.startsAt < o.endsAt.getTime())
       .map(overlayOf)
-    const r = validateEventOverlay(ev, { patch: active.patch, allEventItems: items, otherEvents: overlapping, smoke })
+    const r = validateEventOverlay(ev, { patch: active.patch, allEventItems: items, otherEvents: overlapping, previous, smoke })
     return { ok: r.ok, errors: r.errors, warnings: r.warnings, requiresConfirm: r.requiresConfirm, smoke, at: now }
   }
 
@@ -267,9 +274,13 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
           overlay: body.overlay ?? row.overlay,
         }
         assertDates(next.startsAt, next.endsAt)
+        // Editing a published event keeps the checks of publishing it: it cannot end in the past nor start more than
+        // 60 days ahead. An event that is already running (start in the past) or already over (dates untouched,
+        // e.g. fixing its text) stays editable.
+        if (live) assertPublishedDates(row, next.startsAt, next.endsAt, now)
         if (next.slug !== row.slug) await assertSlugFree(tx, next.slug, id)
         if (next.imageId !== row.imageId) await assertImage(tx, next.imageId)
-        const validation = await validate(tx, { ...next.overlay, id, slug: next.slug, startsAt: next.startsAt, endsAt: next.endsAt }, live, now)
+        const validation = await validate(tx, { ...next.overlay, id, slug: next.slug, startsAt: next.startsAt, endsAt: next.endsAt }, live, now, live ? overlayOf(row) : undefined)
         if (live) gate(validation, body.confirm)
         const revision = live ? row.revision + 1 : row.revision
         const [after] = await tx
