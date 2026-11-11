@@ -1,6 +1,6 @@
-# PokeFocus server (F2)
+# PokeFocus server (F2 + live administration)
 
-Node + Hono API that owns every player's game state. The browser only sends intents (`POST /api/game/action`); the server runs the rules with the same engine (`src/engine`) through the pure reducer `src/game/actions.ts`, stores the result in PostgreSQL (PGlite in development) and returns the new document. Spec: `docs/F2-plan.md`. Contract: `src/game/protocol.ts`.
+Node + Hono API that owns every player's game state. The browser only sends intents (`POST /api/game/action`); the server runs the rules with the same engine (`src/engine`) through the pure reducer `src/game/actions.ts`, stores the result in PostgreSQL (PGlite in development) and returns the new document. Spec: `docs/F2-plan.md`. Contract: `src/game/protocol.ts`. Phase E (live content, events, admin panel) design: `docs/admin-plan.md`; how to operate it: `docs/admin.md`.
 
 ## Layout
 
@@ -33,11 +33,13 @@ server/
   routes/liveEvents.ts  /api/live-events (public: active, upcoming and past published events)
   uploads.ts          event images: magic-number check, sharp re-encode (webp 16:9, no metadata), hash-named files under UPLOADS_DIR
   /media/events/*     (in app.ts) the stored images: image/webp, nosniff, empty CSP, immutable
-  routes/admin.ts     /api/admin/me, /reauth, /maintenance (roles; legacy ADMIN_TOKEN for maintenance)
+  routes/admin.ts     /api/admin/me, /reauth, /metrics, /maintenance (roles; legacy ADMIN_TOKEN for maintenance); mounts the sub-routers below
   routes/admin/content.ts  /api/admin/content/* live content admin (drafts, validation, diff, publish/schedule, rollback, spawn preview)
   routes/admin/events.ts   /api/admin/events/* live events admin (drafts, publish/schedule, archive, revisions)
   routes/admin/uploads.ts  /api/admin/uploads (raw image upload, list, delete unreferenced)
   routes/admin/players.ts  /api/admin/players/* player support (search, sheet, grant, unlock, cancel session, logout-all)
+  routes/admin/metrics.ts  /api/admin/metrics (aggregates over session_log)
+  session-log.ts     session_log writer (called by runGameAction in the action's transaction)
   admin/audit.ts      audit(tx, c, entry): admin_audit row in the caller's transaction
   admin/roles.ts      setRoleByEmail, promoteAdminEmails (ADMIN_EMAILS, CLI)
   routes/push.ts      /api/push/* (Web Push subscriptions, test push)
@@ -49,6 +51,8 @@ server/
 src/game/actions.ts   applyAction(doc, action, env) — pure reducer (server only)
 scripts/generate-vapid.ts   npm run vapid: prints a fresh VAPID key pair as .env lines
 scripts/admin-role.ts       npm run admin:role -- <email> <role>: set an account's role
+scripts/generate-pepper.ts  npm run pepper: prints a fresh PASSWORD_PEPPER (writes nothing)
+scripts/sim/                balance simulator (npm run simulate; the admin «simulate draft» worker reuses runMatrix)
 ```
 
 ## Running
@@ -63,6 +67,8 @@ npm run build          # tsc -b (incl. server) + vite build → dist/
 npm start              # production: NODE_ENV=production, serves dist/ and /api from one origin
 npm run db:generate    # new migration after editing server/db/schema.ts
 npm run vapid          # print a fresh VAPID key pair for Web Push (writes nothing)
+npm run pepper         # print a fresh PASSWORD_PEPPER (writes nothing)
+npm run admin:role -- you@example.com admin   # set an account's role (see «Becoming admin»)
 docker compose up --build   # PostgreSQL 17 + app on :8787
 ```
 
@@ -80,6 +86,7 @@ Loaded from the process environment; `server/index.ts` also reads `.env` if pres
 | `PGLITE_DIR` | `.data/pglite` | PGlite directory (`memory://` = in memory). Ignored with `DATABASE_URL`. |
 | `APP_ORIGIN` | `http://localhost:5173` | Allowed `Origin`s for non-GET requests, comma-separated. In production: the public URL. |
 | `DEV_TOOLS` | `0` | `1` = accept `x-dev-now` / `x-dev-seed` and `dev*` actions. Always `0` in production. |
+| `COOKIE_SECURE` | `auto` | `auto` = `Secure` cookie in production; `1` / `0` force it. `0` only for plain HTTP inside an already-encrypted network (e.g. `http://<tailscale-ip>:8787`); the server warns at start-up. |
 | `TRUST_PROXY` | `0` | `1` behind a reverse proxy: client IP = last `X-Forwarded-For` hop (rate limits). |
 | `STATIC_DIR` | `dist` | Built client served in production (SPA fallback to `index.html`). |
 | `UPLOADS_DIR` | `.data/uploads` | Where the event images live (`events/<sha256>.webp` and `-480.webp`, written by `POST /api/admin/uploads`). In Docker it is the `uploads` volume mounted at `/app/.data/uploads`. **Back it up together with PostgreSQL**: the database only holds the metadata (`uploads` rows); restoring one without the other leaves events with missing images (the files are named by hash, so re-uploading the same picture rewrites them). |
@@ -99,13 +106,14 @@ All endpoints are under `/api`, JSON in and out, cookie `pf_session`. Errors are
 
 | Status | Codes |
 |---|---|
-| 400 | `invalid_json`, `invalid_body` (+ `fields: string[]`), `invalid_scope`, `invalid_period` |
+| 400 | `invalid_json`, `invalid_body` (+ `fields: string[]`), `invalid_scope`, `invalid_period`, `invalid_query` (bad query string), admin-only: `invalid_dates`, `invalid_effective_at`, `sim_too_big`, `range_too_large`, `empty_body`, grant errors (`empty_grant`, `too_many_items`, `unknown_item`, `invalid_amount`, `amount_too_large`) |
 | 401 | `unauthorized` (no/expired/revoked session, or a wrong admin token), `invalid_credentials` (login: wrong password **or** unknown email) |
-| 403 | `bad_origin`, `dev_disabled` (dev action without DEV_TOOLS), `wrong_password` (POST /auth/password) |
-| 404 | `not_found`, `unknown_friend_code`, `admin_disabled` (no `ADMIN_TOKEN` on the server) |
-| 409 | game rule errors (see below), `email_taken`, `cannot_add_self`, `already_friends`, `already_requested`, `too_many_friends`, `too_many` (maintenance windows), `name_locked` / `country_locked` (PATCH /auth/me, with `unlockAt`; the client keeps it in `ApiError.body`) |
-| 413 | `body_too_large` (> 64 KB) |
-| 415 | `json_required` |
+| 403 | `bad_origin`, `dev_disabled` (dev action without DEV_TOOLS), `wrong_password` (POST /auth/password, POST /admin/reauth), admin-only: `forbidden` (role too low), `forbidden_target` (support on a staff account), `elevation_required` (sudo mode needed) |
+| 404 | `not_found`, `unknown_friend_code`, `unknown_content` (GET /content/:hash), `admin_disabled` (no `ADMIN_TOKEN` on the server) |
+| 409 | game rule errors (see below), `email_taken`, `cannot_add_self`, `already_friends`, `already_requested`, `too_many_friends`, `too_many` (maintenance windows), admin-only: `too_many_drafts`, `not_draft`, `not_published`, `not_editable`, `slug_taken`, `slug_locked`, `confirm_required`, `busy`, `in_use`, `uploads_full`, `not_locked`, `self_target`, `no_player`, `name_locked` / `country_locked` (PATCH /auth/me, with `unlockAt`; the client keeps it in `ApiError.body`) |
+| 413 | `body_too_large` (> 64 KB; 512 KB admin content/events; 3 MB image upload) |
+| 415 | `json_required`, `unsupported_type` (image upload) |
+| 422 | admin-only: `validation_failed` (+ `errors`, `warnings`, `requiresConfirm`), `invalid_patch`, `unknown_image`, `invalid_image`, `image_too_small`, `image_too_large`, `animated_image` |
 | 429 | `rate_limited` (+ `retryAfter` seconds; also the `Retry-After` header) |
 
 Auth: `POST /auth/register` → 201 `{ user }`; `POST /auth/login` → `{ user }`; `POST /auth/logout` (no session needed) → 204; `POST /auth/logout-all` → 204; `GET/PATCH /auth/me`; `POST /auth/password { current, next }` → 204 (other sessions revoked, current kept); `GET /auth/sessions`; `DELETE /auth/sessions/:id` → 204. `PATCH /auth/me { trainerName?, country?, anonymousRankings? }` (at least one field, else 400 `invalid_body`) → `{ user }`; a new `trainerName` also renames the trainer inside the game doc (bumps the version, emits `game`).
@@ -132,17 +140,6 @@ Game: `GET /game` → `GameSnapshot`; `POST /game/action` with a `GameAction` �
 - Week keys are the engine's (`weekKeyOf`: the local Monday, e.g. `2026-11-02`), month keys `2026-11`.
 
 Config: `GET /config` → `ConfigResponse { devTools: boolean }` (public: no session, `Cache-Control: no-store`; `src/game/protocol.ts`). `devTools` is the server's effective `DEV_TOOLS` (always `false` in production, Docker, `npm start`): only then are `x-dev-now` / `x-dev-seed` honored and the `dev*` / `setWeather` actions accepted. The client reads it at boot; when it is `false`, the developer panel (`?dev`, Settings → Developer tools) shows a notice and hides its server-side controls (clock, finish session, items, weather, seed), drops a shifted dev clock, stops sending the dev headers and ignores the lock bypasses. If the request fails the client treats it as unknown and behaves as before (the server still refuses: `409 not_finished` on a claim with a shifted clock, `403 dev_disabled` on dev actions).
-
-Live content (docs/admin-plan.md §1, `server/content/service.ts`):
-
-- `GET /content` (public, no session) → `ContentResponse { hash, baseHash, patch, events, eventItems }`: the published version with the latest `effective_at <= now` (game time, so `x-dev-now` applies with DEV_TOOLS=1) plus the live events active now. `ETag: "<hash>"`, `Cache-Control: no-cache`; `If-None-Match` with the same hash → 304. Nothing published = `{ hash: 'base', patch: {}, events: [], eventItems: {} }`. The client rebuilds the context with `createEngineContext(resolveContent(patch, events, eventItems, { hash }))`; a `baseHash` different from its bundled `src/data/game/meta.json` means the client is stale.
-- `GET /content/:hash` → the same body for a pinned hash (`ActiveSession.contentHash` / `EncounterState.contentHash`). `Cache-Control: public, max-age=31536000, immutable` (a hash never changes meaning), except `base` (no-cache: it moves with each deploy). 404 `unknown_content` for a hash that is not in `content_snapshots` (or malformed). Drafts and archived versions are never resolved.
-- **Hash**: `'base'` when there is no patch, no active event and no event items; otherwise `sha256(baseHash + canonicalJson({ patch, events, eventItems }))` (sorted keys). The engine never hashes.
-- **Pinning** (`contentForAction` in `runGameAction`): `start` runs on the current content and the reducer stores its hash on `activeSession.contentHash` (only when it is not `'base'`, so without a published patch the saved doc is byte-for-byte what it was); the same transaction writes the `content_snapshots` row (`INSERT … ON CONFLICT DO NOTHING`). `claim` and `cancel` run on the session's content; `claim` copies the hash to `encounter.contentHash`; `throwBall`, `applyStatus`, `reroll`, `assignDamage`, `autoAssignDamage`, `nextWave`, `finishWaves` run on the encounter's. Absent hash = `'base'`. Everything else (candies, evolution, missions, team…) runs on the current content. A pinned hash missing from the snapshots (should not happen) falls back to the current content with a warning. Study-group starts go through `runGameAction`, so they pin too.
-- Publishing in the middle of a session does not change that session; a session started during an event keeps the event's content until its waves end, and one started before does not get it.
-- **Service**: published version metadata and events are kept in memory, reloaded every 60 s (lazily, on the next request) and right after a publication in this process; patches of published versions (immutable) are cached; the resolved context is memoized by `versionId + [eventId@revision]` and an LRU of 32 hashes. Events come from an injectable `EventSource` (none until `live_events`, E8). There is no admin API yet (E5): `deps.content.publish({ patch, effectiveAt?, title?, note?, parentId?, userId? })` inserts a published version (tests use it). Schema: migration `0006_content_versions` (`content_versions`, `content_snapshots`).
-- **Broadcast**: `deps.content.check()` sends `{ type: 'content', hash }` to every SSE connection (`EventBus.broadcast`) when the active hash changed since the last check. `server/index.ts` runs it every 30 s (scheduled versions, event start/end); `publish()` runs it too. The first check after boot only records the hash.
-- After a redeploy that changes the base data, an old snapshot is rebuilt on the new base (a warning is logged): only the patch and overlays are stored, not the whole data.
 
 Friends: `GET /friends` → `{ friends: FriendSummary[] }` (accepted + incoming + outgoing, oldest first); `POST /friends/request { friendCode }` → 201 `{ userId, status: 'outgoing' | 'friend' }` (code is case-insensitive, spaces/dashes ignored; an inverse pending request is accepted directly); `POST /friends/:userId/accept` → 204 (only the addressee); `DELETE /friends/:userId` → 204 (reject, cancel or unfriend).
 
@@ -171,72 +168,37 @@ Tables `study_groups` (lobby → started / ended), `study_group_members` (one ro
 - **Claim**: `friendOverlap` = time of my in-group interval during which at least one other member was in theirs ÷ my session minutes (`src/game/group.ts`), passed to the reducer as `ActionEnv.friendOverlap` (never from the client) and stored in `SessionResult.friendOverlap`. Fairy multiplier = `1 + (fairy − 1) × friendOverlap`.
 - Rate limits per user: create + invite 20 / 15 min; other group writes 120 / 15 min.
 
+### Live content (public)
+
+Design: `docs/admin-plan.md` §1. Code: `server/content/service.ts`, `server/routes/content.ts`. Operating guide for the admin: `docs/admin.md`.
+
+- `GET /content` (public, no session) → `ContentResponse { hash, baseHash, patch, events, eventItems }`: the published version with the latest `effective_at <= now` (game time, so `x-dev-now` applies with DEV_TOOLS=1) plus the live events active now (full `EventOverlay`s, with their missions; not the page-oriented `LiveEventPublic`). `ETag: "<hash>"`, `Cache-Control: no-cache`; `If-None-Match` with the same hash → 304. Nothing published = `{ hash: 'base', patch: {}, events: [], eventItems: {} }`. The client rebuilds the context with `createEngineContext(resolveContent(patch, events, eventItems, { hash }))`; a `baseHash` different from its bundled `src/data/game/meta.json` means the client is stale.
+- `GET /content/:hash` → the same body for a pinned hash (`ActiveSession.contentHash` / `EncounterState.contentHash`). `Cache-Control: public, max-age=31536000, immutable` (a hash never changes meaning), except `base` (no-cache: it moves with each deploy). 404 `unknown_content` for a hash that is not in `content_snapshots` (or malformed). Drafts and archived versions are never resolved.
+- **Hash**: `'base'` when there is no patch, no active event and no event items; otherwise `sha256(baseHash + canonicalJson({ patch, events, eventItems }))` (sorted keys). The engine never hashes.
+- **Pinning** (`contentForAction` in `runGameAction`): `start` runs on the current content and the reducer stores its hash on `activeSession.contentHash` (only when it is not `'base'`, so without a published patch the saved doc is byte-for-byte what it was); the same transaction writes the `content_snapshots` row (`INSERT … ON CONFLICT DO NOTHING`). `claim` and `cancel` run on the session's content; `claim` copies the hash to `encounter.contentHash`; `throwBall`, `applyStatus`, `reroll`, `assignDamage`, `autoAssignDamage`, `nextWave`, `finishWaves` run on the encounter's. Absent hash = `'base'`. Everything else (candies, evolution, missions, team…) runs on the current content. A pinned hash missing from the snapshots (should not happen) falls back to the current content with a warning. Study-group starts go through `runGameAction`, so they pin too.
+- Publishing in the middle of a session does not change that session; a session started during an event keeps the event's content until its waves end, and one started before does not get it. Some changes cannot be pinned and apply at once to everyone (candies, level caps, Pokémon already caught, league thresholds of the current week): the validator reports them as `live_owned` / `live_league_week` warnings.
+- **Service**: published versions and events (`server/content/events.ts`: `published` rows of `live_events`, plus `archived` ones as `retired` so their items keep their names) are kept in memory and reloaded every 60 s (lazily, on the next request) and right after a publication in this process; patches of published versions (immutable) are cached; the resolved context is memoized by `versionId + [eventId@revision]` and an LRU of 32 hashes. Writes go through `deps.content.publishDraft(tx, id, …)` / `publish(…, tx)` inside the admin route's transaction, then `refresh()` after the commit (tests also call `deps.content.publish({ patch, effectiveAt?, … })`).
+- **Broadcast**: `deps.content.check()` sends `{ type: 'content', hash }` to every SSE connection (`EventBus.broadcast`) when the active hash changed since the last check. `server/index.ts` runs it every 30 s (scheduled versions, event start/end); `refresh()` runs it right after an admin write. The first check after boot only records the hash.
+- After a redeploy that changes the base data, an old snapshot is rebuilt on the new base (a warning is logged): only the patch and overlays are stored, not the whole data.
+
+**Tables** (migrations; all of them live in PostgreSQL and must be backed up with it): `0005_admin_roles_audit` (`users.role`, `auth_sessions.elevated_until`, `admin_audit`), `0006_content_versions` (`content_versions`, `content_snapshots`), `0007_session_log` (`session_log`), `0008_live_events_uploads` (`live_events`, `live_event_revisions`, `uploads`), `0009_content_sim_runs` (`content_sim_runs`).
+
 ### Live events (public)
 
-- `GET /api/live-events` (public, `Cache-Control: no-cache`) → `LiveEventsResponse { active, upcoming, past, nextCursor, serverNow }`. Only **published** events: drafts and archived events never appear, and only public fields are returned (id, slug, `name`/`description` `{es,en}`, `image {url, thumbUrl, width, height}`, `startsAt`/`endsAt`, `featured`, `shiny`, `legendaryChanceMult`, `drops`, `missions`, `items`). `active`: `startsAt <= now < endsAt`; `upcoming`: starting within 60 days; `past`: ended within 90 days, newest first, 20 per page (`?before=<endsAt ms>`; `nextCursor` null on the last page). The events that apply to game rules go through `GET /api/content` (hash, `events`) and the pinned session snapshots; this endpoint is for the Events page and banners. Refetch it on the SSE `content` event.
-- Events live in `live_events` (draft | published | archived, `revision`, `overlay` jsonb) and are read by `ContentService` through `server/content/events.ts` (only `published`, active at `startsAt <= now < endsAt`; archived ones stay known as `retired` so their items keep their names). Nothing else about events changes the engine: a session pins its content hash at start, so an event that began after the session started does not affect it.
+- `GET /api/live-events` (public, `Cache-Control: no-cache`; game time like `/content`) → `LiveEventsResponse { active, upcoming, past, nextCursor, serverNow }`. Only **published** events: drafts and archived events never appear, and only public fields are returned (id, slug, `name`/`description` `{es,en}`, `image {url, thumbUrl, width, height}` or null, `startsAt`/`endsAt`, `featured`, `shiny`, `legendaryChanceMult`, `drops`, `missions`, `items`; no authors, no validation). `active`: `startsAt <= now < endsAt`; `upcoming`: starting within 60 days; `past`: ended within 90 days, newest first, 20 per page (`?before=<endsAt ms>`; `nextCursor` null on the last page; 400 `invalid_query` for a malformed one). The events that apply to game rules go through `GET /api/content` (hash, `events`) and the pinned session snapshots; this endpoint is for the Events page (`#/events`) and the banner. The client refetches it on the SSE `content` event.
+- Events live in `live_events` (`draft | published | archived`, `revision`, `overlay` jsonb). A session pins its content hash at start, so an event that began after the session started does not affect it.
+
+### Serving event images (`/media`)
+
+- `GET|HEAD /media/events/<sha256>.webp` and `<sha256>-480.webp` (public, development and production alike; Vite proxies `/media` to the server in development). Only `^[a-f0-9]{64}(-480)?\.webp$` resolves, inside `UPLOADS_DIR`; anything else is a JSON 404. Headers: `Content-Type: image/webp`, `Cache-Control: public, max-age=31536000, immutable`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'`, `ETag` (304 on `If-None-Match`).
+- The files are written by `POST /api/admin/uploads` (see *Admin API → Uploading event images*); the database keeps only the metadata (`uploads`). **Back up `UPLOADS_DIR` together with PostgreSQL.**
 
 ### Maintenance notices
 
 Informational banner for planned downtime. Table `maintenance_windows` (`starts_at`, `ends_at`, optional `note`; migration `0002_maintenance_windows`). **Informational only**: the server never blocks or slows requests during a window, and nothing starts or stops by itself. Actually stopping the server (deploy, `docker compose stop`, database work) is still manual; the notice just tells players when to expect it.
 
 - `GET /announcements` (public: no session, `Cache-Control: no-store`) → `AnnouncementsResponse { maintenance, serverNow }`: windows with `ends_at` in the future (upcoming or running), oldest start first, each `{ id, startsAt, endsAt, note }` (epoch ms, UTC). `serverNow` lets the client correct its clock skew.
-- Admin API, for a signed-in user with role `admin` (session cookie) **or** the deprecated `Authorization: Bearer <ADMIN_TOKEN>` (see *Roles and admin access*):
-  - `GET /admin/maintenance` → `{ items, serverNow }`: the same windows as the public list plus `createdAt`.
-  - `POST /admin/maintenance { startsAt, endsAt, note? }` → 201 `{ item }`. `startsAt`/`endsAt` are integer epoch ms with `endsAt > startsAt`, `endsAt` in the future and a window of at most 14 days; `note` is trimmed (empty = none) and at most 280 characters. Otherwise 400 `invalid_body` (+ `fields`). At most 20 windows that have not ended: 409 `too_many`.
-  - `DELETE /admin/maintenance/:id` → 204 (404 `not_found` for an unknown or malformed id).
-- Who may call it: with an `Authorization` header the request is a token request; without one, a session cookie is resolved and the user must be `admin` (403 `forbidden` otherwise; per-user limit below). Creating and deleting are written to `admin_audit` in the same transaction (`maintenance.create` / `maintenance.delete`).
-- Token checks run in this order: `ADMIN_TOKEN` unset → 404 `admin_disabled`; rate limit → 429 `rate_limited`; token → 401 `unauthorized`. The token is compared in constant time (sha256 of both sides + `timingSafeEqual`). Limit: 10 admin requests / 15 min per client IP (set `TRUST_PROXY=1` behind a proxy), counted on every request and cleared by a valid token, so a legitimate admin is never locked out.
-- The CSRF guard still applies to `POST`/`DELETE`: send `Origin` (from `APP_ORIGIN`) and `Content-Type: application/json`.
-
-```bash
-H=(-H "Authorization: Bearer $ADMIN_TOKEN" -H "Origin: https://pokefocus.example" -H "Content-Type: application/json")
-# Schedule: Friday 2026-11-13 02:00-03:00 UTC
-curl "${H[@]}" -X POST https://pokefocus.example/api/admin/maintenance \
-  -d "{\"startsAt\": $(date -u -d '2026-11-13 02:00' +%s)000, \"endsAt\": $(date -u -d '2026-11-13 03:00' +%s)000, \"note\": \"Database upgrade\"}"
-curl "${H[@]}" https://pokefocus.example/api/admin/maintenance            # list (ids)
-curl "${H[@]}" -X DELETE https://pokefocus.example/api/admin/maintenance/<id>   # cancel
-```
-
-### Roles and admin access
-
-Migration `0005_admin_roles_audit`: `users.role` (`player` default | `support` | `admin`, check constraint), `auth_sessions.elevated_until` and the `admin_audit` table. `PublicUser.role` is returned by `/auth/*` so the client can show the admin link; the server re-reads the role from the database on every request, so a demotion applies at once.
-
-- **Guards** (`server/http.ts`): `requireRole('support'|'admin')` after `requireAuth` (403 `forbidden`; order player < support < admin) and `requireElevated(deps)` for sensitive actions (403 `elevation_required` unless the session's `elevated_until` is in the future).
-- `GET /api/admin/me` (support+) → `{ role, elevated, elevatedUntil, serverNow }`.
-- `POST /api/admin/reauth { password }` (support+): verifies the password with the login's scrypt hash and sets `elevated_until = now + 30 min` **on the current session only**; answers like `/me`. Wrong password: 403 `wrong_password`. Limit 5 wrong guesses / 15 min per user (cleared by a right one). Audited as `admin.reauth`.
-- **Rate limit**: every admin request of a signed-in user counts against `adminUser` (600 / 15 min per user, 429 `rate_limited`). `Cache-Control: no-store` on all `/api/admin/*`.
-- **Audit** (`server/admin/audit.ts`): `audit(tx, c, { action, targetType, targetId, before, after, note })` inserts into `admin_audit` (`actor_id` or `actor_label`, `ip`, `created_at`) using the caller's transaction, so the change and its record commit or roll back together. Actors: the user (`actor_id`), `token` (legacy token), `system` (start-up promotion), `cli`.
-- **Player support** (`server/routes/admin/players.ts`, `src/game/admin.ts`; contract in `protocol.ts` "Admin: player support"). All audited in the same transaction (`player.grant|unlock|cancel_session|logout_all`).
-  - `GET /admin/players?q=` (support+; 2..60 chars over email, trainer name, friend code; at most 20) and `GET /admin/players/:id` (profile, 30-day locks, doc summary, last 20 sessions, signed-in browsers).
-  - `POST /admin/players/:id/unlock {field: trainerName|country|timezone, reason?}`, `/cancel-session {reason?}` (same reducer and mirrors as the player's own `cancel`), `/logout-all {reason?}` (not on yourself): support+, but support only on `player` accounts (403 `forbidden_target` otherwise).
-  - `POST /admin/players/:id/grant {items?, dust?, reason}`: **admin + sudo** (403 `forbidden` / `elevation_required`). Positive amounts only; at most 10 item kinds, 50 units each and 5000 Dust per request; the reason (5..280) is the audit note. `applyAdminGrant` is not a `GameAction`.
-  - Limits: `adminPlayerWrite` 60 / 15 min per staff user for mutations, `adminGrant` 20 / 15 min for grants (429 `rate_limited`).
-- **Live content admin** (`server/routes/admin/content.ts`, mounted at `/api/admin/content`; contract in `protocol.ts` "Admin: live content"; pure helpers `diffPatches` / `spawnPreview` in `src/game/content/`). Only `published` versions reach `/api/content`: drafts never do.
-  - Reads (support+): `GET /live` (hash in force, active version, next scheduled one, active events), `GET /versions?status=draft|published|archived` (newest first, at most 100, with author, dates, `active`, `scheduled` and validation counts), `GET /versions/:id` (patch, full last validation and the `diff` against the active patch: `{path, kind: added|changed|removed, before, after}`; absent values show the base value when known).
-  - Drafts (admin): `POST /drafts {from?: 'active'(default)|'empty', fromVersionId?, title?, note?}` → 201 (at most 20 open drafts: 409 `too_many_drafts`); `PUT /drafts/:id {patch?, title?, note?}` saves **even with errors** and stores the cheap validation (no smoke test) so a work in progress is never lost; `DELETE /drafts/:id` → 204; `POST /drafts/:id/validate` runs the full validation (E1 + engine smoke test, ~0.3 s) against the content in force (previous patch, active events) and stores it. Anything on a non-draft: 409 `not_draft`.
-  - **Publish / schedule** (admin + sudo): `POST /drafts/:id/publish {effectiveAt?, confirm?, note?}`. No `effectiveAt` = now; a future one (at most 60 days ahead, 400 `invalid_effective_at`) schedules it (audited as `content.schedule`). It validates again with the smoke test inside the transaction: errors block with 422 `validation_failed {errors, warnings, requiresConfirm}`; warnings that need confirmation (> x3, probabilities x5) need `confirm: true` (409 `confirm_required {warnings}`). The row becomes `published` (immutable) through `ContentService.publishDraft` in the route's transaction; after the commit `ContentService.refresh()` reloads and broadcasts `{type:'content', hash}` if the active hash changed.
-  - **Rollback** (admin + sudo): `POST /versions/:id/rollback {confirm?, note?}` → 201: a NEW published version with the old patch (`parent_id` = the restored version, effective now). Only a version that already took effect can be restored (409 `not_published` for drafts and scheduled-for-later ones). It is validated like a publication. A version scheduled for later still overrides it when its time comes.
-  - `GET /spawn-preview?versionId&hour(0-23, 12)&weather(rain|sun|snow|clear|unknown, clear)&trainerLevel(1-100, 1)` (admin): the non-legendary species the wild pool offers for that slot under a draft/version (default: the active content), with `probability` (average over the wild levels of the band, neutral first wave: weight = captureRate x spawn rule), plus the spawn `rules` in force. It reuses `spawnRuleMult` of the coverage check.
-  - Audit actions: `content.draft.create|update|delete`, `content.publish`, `content.schedule`, `content.rollback` (before/after hold hashes and counts of changed paths, not whole patches), in the same transaction as the change. Limits per staff user: writes 120 / 15 min, validate + preview 30 / 15 min, publish + rollback 10 / 15 min (429 `rate_limited`). Request bodies under `/api/admin/content` may be up to 512 KB (64 KB elsewhere).
-  - **Simulation** (E10; migration `0009_content_sim_runs`; contract in `protocol.ts` "Admin: balance simulation"). `POST /drafts/:id/simulate {profiles?, seeds?, weeks?}` (admin) → 202 `{run}`: the simulator of `scripts/sim` (`runMatrix`, missions on, damage policy `auto`) plays the same profiles and seeds on the **active patch** and on the **draft's patch** (live events are left out: they are dated and temporary) in a `worker_threads` worker, and stores the comparison per profile: weekly points (quartiles per week and the median), league reach, sessions, minutes/day, captures, species caught, legendaries and shinies seen/caught, dust earned/spent/final, Energy (exhausted share, started empty, energy left) and rests. Defaults: `casual, constant, marathoner`, 4 seeds, 4 weeks. Limits: seeds 1-20, weeks 1-8, profiles x seeds x weeks <= 480 (400 `sim_too_big`; about 60 ms per simulated player-week on a laptop, x2 for both sides), one run at a time per server (409 `busy`), cancelled after 5 min (`timeout`), worker heap 512 MB. The draft must have no validation errors (422 `validation_failed`); 409 `not_draft`. It counts against the validate/preview limit (30 / 15 min) and is audited as `content.simulate` (params and hashes). Rows: `running` → `done` (report) | `failed` (error) | `timeout`; a row still `running` after a restart becomes `interrupted`.
-    - `GET /sim-runs?versionId=` (support+; newest first, at most 50, no reports, `busy`) and `GET /sim-runs/:id` (support+; `progress {done, total}` while running, `report` when done).
-    - **"Mandatory" simulation = a warning**: `GET /versions/:id` of a draft and the publish response carry `sim: {recent, last}`; `recent` = a `done` run of the current patch hash (`draft_hash`) in the last 7 days. Publishing without one is allowed; the `content.publish|schedule` audit row records `simRunId` (null = published unsimulated).
-    - Production: the image copies `scripts/sim` (Dockerfile) and `tsx` is a runtime dependency, so the worker runs from sources like the server.
-- **Live events admin** (`server/routes/admin/events.ts`, mounted at `/api/admin/events`; contract in `protocol.ts` "Live events"). All routes are **admin**; the overlay (featured species, shiny, legendary multiplier, drops, event missions, own items) is checked by `validateEventOverlay` (E1). The `live_events` row id is the event id (`EventOverlay.id`); `slug` is unique across statuses.
-  - `GET /events?status=` (newest first, at most 200), `GET /events/:id`, `POST /events {slug, name{es,en}, description{es,en}, startsAt, endsAt, imageId?, overlay}` → 201 draft (at most 50 open drafts: 409 `too_many_drafts`; 409 `slug_taken`; 422 `unknown_image`; 400 `invalid_body {fields}` for a malformed body, 400 `invalid_dates`), `PUT /events/:id` (partial; `confirm?`), `DELETE /events/:id` → 204 (**drafts only**, 409 `not_draft`).
-  - A **draft** is saved even with semantic errors (unknown species…): the cheap validation (no smoke test) is stored in `validation`. A **published** event can still be edited but needs sudo, runs the full validation with the smoke test (422 `validation_failed`, 409 `confirm_required`), cannot change its slug (409 `slug_locked`), bumps `revision` and takes effect at once through the ContentService (new content hash). Archived events: 409 `not_editable`.
-  - `POST /events/:id/publish {confirm?, note?}` and `POST /events/:id/archive {note?}`: **admin + sudo**. Publishing needs a draft (409 `not_draft`), an `endsAt` in the future and a `startsAt` at most 60 days ahead (400 `invalid_dates {reason: ended|too_far}`); a future `startsAt` simply means *scheduled*. Archiving needs a published event (409 `not_published`): it leaves play and the public API, but its own items keep their names in players' inventories.
-  - `live_event_revisions` keeps a snapshot at publication and at every published edit (`revision` 1, 2…). Audit actions: `event.create|update|delete|publish|archive` (before/after hold the full event snapshot), same transaction. Limits per staff user: writes 120 / 15 min, publish/archive/edits of a published event 20 / 15 min. JSON bodies under `/api/admin/events` may be up to 512 KB.
-  - `GET /api/admin/content/spawn-preview` also takes `eventId` (any status, drafts too) to preview the spawn table with that event on top.
-- **Event images** (`server/routes/admin/uploads.ts`, `server/uploads.ts`): `POST /api/admin/uploads` (admin) takes the **raw image as the body** with `Content-Type: image/png|image/jpeg|image/webp`, at most 3 MB (413), and answers `201 {upload, reused: false}` (`200 {reused: true}` when the same picture is already stored). It is the only non-JSON route: `app.ts` skips the JSON content-type check for exactly `POST /api/admin/uploads` and still requires the `Origin` (no multipart is parsed: a cross-site form cannot send a raw `image/*` body).
-  - Nothing uploaded is stored or served as is. The type must agree with the magic numbers (SVG, GIF, HEIC, HTML: 415 `unsupported_type`). sharp decodes with `limitInputPixels` 40 MP and encodes again: centred 16:9 crop, 1600x900 at most (never enlarged), 320x180 at least (422 `image_too_small`), animated images refused (422 `animated_image`), corrupt ones 422 `invalid_image`, bombs 422 `image_too_large`; webp quality 82, EXIF/ICC/XMP dropped, plus a 480 px card version. The file name is the sha256 of the result (never the original name): `UPLOADS_DIR/events/<sha>.webp` and `<sha>-480.webp`.
-  - `GET /api/admin/uploads` (newest first, `inUse` = events that reference it, `totalBytes` / `limitBytes`: 500 MB total, 409 `uploads_full` past it); `DELETE /api/admin/uploads/:id` → 204 only when no event (draft, published or archived) references it (409 `in_use`) and removes the files. Limit: 20 uploads / 15 min per staff user. Audit: `upload.create|delete`.
-  - **Serving**: `GET|HEAD /media/events/<sha256>.webp` and `<sha256>-480.webp` (public, development and production alike). Only `^[a-f0-9]{64}(-480)?\.webp$` resolves, inside `UPLOADS_DIR`; anything else is a JSON 404. Headers: `Content-Type: image/webp`, `Cache-Control: public, max-age=31536000, immutable`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'`, `ETag` (304 on `If-None-Match`). Vite proxies `/media` to the server in development.
-- **Becoming admin** (accounts are created by normal registration; roles are never self-service):
-  - `ADMIN_EMAILS=you@example.com` + restart: existing accounts with those emails become `admin` (idempotent; never demotes; audited as `user.role` by `system`). Emails without an account are skipped with a warning: **register first, then restart** (the email is not verified, so never list one that nobody trusted owns).
-  - CLI: `npm run admin:role -- you@example.com admin` (roles `player|support|admin`; reads `.env`; audited as `cli`). With the embedded PGlite the directory cannot be shared with a running server: stop it first (PostgreSQL has no such limit).
-- The UI (`#/admin`) uses the signed-in session when the user is `admin` and falls back to the token form otherwise.
+- The admin side (`/api/admin/maintenance`) is described under *Admin API*.
 
 ### Web Push
 
@@ -281,6 +243,109 @@ Testing locally: set the three `VAPID_*` in `.env`, enable notifications in Sett
 
 The stream starts with `retry: 5000` and sends a `: ping` comment every 25 s. 401 if there is no session.
 
+## Admin API
+
+Everything under `/api/admin/*` is for staff: accounts with role `support` or `admin`, session cookie, the same CSRF rules as the rest of the API (`Origin` + JSON, except the image upload). `Cache-Control: no-store` on all of it. Every mutation writes an `admin_audit` row **in the same transaction** as the change. The operating guide (flow, confirmations, backups, what not to do) is `docs/admin.md`; the design is `docs/admin-plan.md`; the contracts are in `src/game/protocol.ts` («Admin: …», «Live events»).
+
+| Area | Routes | Who |
+|---|---|---|
+| Session | `GET /me`, `POST /reauth` | support+ |
+| Metrics | `GET /metrics` | support+ |
+| Maintenance | `GET/POST /maintenance`, `DELETE /maintenance/:id` | admin (or the deprecated token) |
+| Players | `GET /players`, `GET /players/:id`, `POST /players/:id/unlock\|cancel-session\|logout-all` | support+ |
+| Players (grants) | `POST /players/:id/grant` | admin + sudo |
+| Content: read | `GET /content/live`, `/versions`, `/versions/:id`, `/sim-runs`, `/sim-runs/:id` | support+ |
+| Content: drafts | `POST /content/drafts`, `PUT\|DELETE /content/drafts/:id`, `POST …/validate`, `POST …/simulate`, `GET /content/spawn-preview` | admin |
+| Content: publish | `POST /content/drafts/:id/publish`, `POST /content/versions/:id/rollback` | admin + sudo |
+| Events | `GET/POST /events`, `GET/PUT/DELETE /events/:id` | admin (editing a published event: + sudo) |
+| Events: publish | `POST /events/:id/publish`, `POST /events/:id/archive` | admin + sudo |
+| Images | `GET/POST /uploads`, `DELETE /uploads/:id` | admin |
+
+There is no API to change roles, to read the audit log or to un-schedule a version: roles are set with `ADMIN_EMAILS` or the CLI, the log is read in the database (`admin_audit`), and a scheduled version is replaced by publishing a newer one or by a rollback once it is in force.
+
+### Roles and access
+
+Migration `0005_admin_roles_audit`: `users.role` (`player` default | `support` | `admin`, check constraint), `auth_sessions.elevated_until` and the `admin_audit` table. `PublicUser.role` is returned by `/auth/*`; the server re-reads the role from the database on every request, so a demotion applies at once. The admin screen is `#/admin` (reached by URL, not in the menu; tabs Content, Events, Players, Metrics, Maintenance; the server is the authority on what each role may do). It uses the signed-in session; without a staff role only the Maintenance tab is offered, with a field for the deprecated token.
+
+- **Guards** (`server/http.ts`): `requireRole('support'|'admin')` after `requireAuth` (403 `forbidden`; order player < support < admin) and `requireElevated(deps)` for sensitive actions (403 `elevation_required` unless the session's `elevated_until` is in the future).
+- `GET /admin/me` (support+) → `{ role, elevated, elevatedUntil, serverNow }`.
+- `POST /admin/reauth { password }` (support+): verifies the password like the login does (with the pepper) and sets `elevated_until = now + 30 min` **on the current session only** («sudo mode»); answers like `/me`. Wrong password: 403 `wrong_password`. Limit 5 wrong guesses / 15 min per user (cleared by a right one). Audited as `admin.reauth`.
+- **Rate limit**: every admin request of a signed-in user counts against `adminUser` (600 / 15 min per user, 429 `rate_limited`); the specific limits are listed with each area below.
+- **Audit** (`server/admin/audit.ts`): `audit(tx, c, { action, targetType, targetId, before, after, note })` inserts into `admin_audit` (`actor_id` or `actor_label`, `ip`, `created_at`) using the caller's transaction, so the change and its record commit or roll back together. Actors: the user (`actor_id`), `token` (legacy token), `system` (start-up promotion), `cli`. Actions: `admin.reauth`, `user.role`, `maintenance.create|delete`, `player.grant|unlock|cancel_session|logout_all`, `content.draft.create|update|delete`, `content.simulate`, `content.publish|schedule|rollback`, `event.create|update|delete|publish|archive`, `upload.create|delete`. (Draft validation is derived data and is not audited.)
+- **Becoming admin** (accounts are created by normal registration; roles are never self-service):
+  - `ADMIN_EMAILS=you@example.com` + restart: existing accounts with those emails become `admin` (idempotent; never demotes; audited as `user.role` by `system`). Emails without an account are skipped with a warning: **register first, then restart** (the email is not verified, so never list one that nobody trusted owns).
+  - CLI: `npm run admin:role -- you@example.com admin` (roles `player|support|admin`; reads `.env`; audited as `cli`). With the embedded PGlite the directory cannot be shared with a running server: stop it first (PostgreSQL has no such limit).
+
+### Metrics
+
+`GET /admin/metrics?from&to&granularity` (support+; `from`/`to` epoch ms, default the last 28 days; `granularity` `day` (default) | `week`) → `AdminMetricsResponse { from, to, granularity, serverNow, buckets, totals }`. Buckets are whole **UTC** days or weeks (Monday start; the range is widened to whole buckets), at most 120 (400 `range_too_large`; 400 `invalid_body` for malformed or reversed parameters). Each bucket: `activePlayers`, `sessions`, `minutes`, `points`, `wilds`, `catches`, `shinies`, `legendaries`, the Focus bands `focusLow` (< 0.75) / `focusMid` (0.75 to < 1) / `focusFull` (≥ 1), and a simple retention (`prevActive` = players active in the previous bucket, `returned` = those who came back). `totals.activePlayers` counts distinct players over the whole range. No player ids or names leave the server.
+
+Source: `session_log` (migration `0007_session_log`; `server/session-log.ts`), one row per **claimed valid session** (and per cancelled long session that keeps its minutes, GDD §3.4), written inside the action's transaction so it commits with the player document; unique per `(user, session)`, with the content hash the session ran with. Later ball throws update the row's `catches`. History starts when the migration was applied (nothing is backfilled).
+
+### Maintenance (admin side)
+
+For a signed-in user with role `admin` (session cookie) **or** the deprecated `Authorization: Bearer <ADMIN_TOKEN>`:
+
+- `GET /admin/maintenance` → `{ items, serverNow }`: the same windows as the public list plus `createdAt`.
+- `POST /admin/maintenance { startsAt, endsAt, note? }` → 201 `{ item }`. `startsAt`/`endsAt` are integer epoch ms with `endsAt > startsAt`, `endsAt` in the future and a window of at most 14 days; `note` is trimmed (empty = none) and at most 280 characters. Otherwise 400 `invalid_body` (+ `fields`). At most 20 windows that have not ended: 409 `too_many`.
+- `DELETE /admin/maintenance/:id` → 204 (404 `not_found` for an unknown or malformed id).
+- Who may call it: with an `Authorization` header the request is a token request; without one, a session cookie is resolved and the user must be `admin` (403 `forbidden` otherwise). Creating and deleting are written to `admin_audit` (`maintenance.create` / `maintenance.delete`).
+- **Deprecated token** (removed in the next version). Checks run in this order: `ADMIN_TOKEN` unset → 404 `admin_disabled`; rate limit → 429 `rate_limited`; token → 401 `unauthorized`. The token is compared in constant time (sha256 of both sides + `timingSafeEqual`). Limit: 10 requests / 15 min per client IP (set `TRUST_PROXY=1` behind a proxy), counted on every request and cleared by a valid token, so a legitimate admin is never locked out. The token opens **only** this route; it never touches player data.
+
+```bash
+H=(-H "Authorization: Bearer $ADMIN_TOKEN" -H "Origin: https://pokefocus.example" -H "Content-Type: application/json")
+# Schedule: Friday 2026-11-13 02:00-03:00 UTC
+curl "${H[@]}" -X POST https://pokefocus.example/api/admin/maintenance \
+  -d "{\"startsAt\": $(date -u -d '2026-11-13 02:00' +%s)000, \"endsAt\": $(date -u -d '2026-11-13 03:00' +%s)000, \"note\": \"Database upgrade\"}"
+curl "${H[@]}" https://pokefocus.example/api/admin/maintenance            # list (ids)
+curl "${H[@]}" -X DELETE https://pokefocus.example/api/admin/maintenance/<id>   # cancel
+```
+
+### Player support
+
+`server/routes/admin/players.ts`, `src/game/admin.ts`. Every mutation is audited in the same transaction and counts against `adminPlayerWrite` (60 / 15 min per staff user); grants also against `adminGrant` (20 / 15 min).
+
+- `GET /admin/players?q=` (support+; 2..60 chars over email, trainer name, friend code; at most 20; 400 `invalid_query`) and `GET /admin/players/:id` (profile, 30-day locks, doc summary, last 20 sessions, signed-in browsers).
+- `POST /admin/players/:id/unlock {field: trainerName|country|timezone, reason?}` (409 `not_locked` when there is no lock), `/cancel-session {reason?}` (the same reducer and mirrors as the player's own `cancel`, so a session already past `endsAt` is refused, 409 `already_finished`, and a long one keeps its minutes by the normal rules), `/logout-all {reason?}` (not on yourself: 409 `self_target`): support+, but support only on `player` accounts (403 `forbidden_target` otherwise).
+- `POST /admin/players/:id/grant {items?, dust?, reason}`: **admin + sudo**. Positive integers only; at most 10 item kinds, 50 units each and 5000 Dust per request (400 `empty_grant`, `too_many_items`, `unknown_item`, `invalid_amount`, `amount_too_large`); the reason (5..280 characters) is the audit note. 409 `no_player` when the account has not created a trainer. `applyAdminGrant` is not a `GameAction`: clients cannot send it. The player gets the usual `game` SSE event.
+
+### Live content admin
+
+`server/routes/admin/content.ts`, mounted at `/api/admin/content`; pure helpers `diffPatches` / `spawnPreview` in `src/game/content/`. Only `published` versions reach `/api/content`: drafts never do.
+
+- Reads (support+): `GET /live` (hash in force, active version, next scheduled one, active events), `GET /versions?status=draft|published|archived` (newest first, at most 100, with author, dates, `active`, `scheduled` and validation counts), `GET /versions/:id` (patch, full last validation and the `diff` against the active patch: `{path, kind: added|changed|removed, before, after}`; drafts also carry `sim`).
+- Drafts (admin): `POST /drafts {from?: 'active'(default)|'empty', fromVersionId?, title?, note?}` → 201 (at most 20 open drafts: 409 `too_many_drafts`); `PUT /drafts/:id {patch?, title?, note?}` saves **even with errors** and stores the cheap validation (no smoke test) so a work in progress is never lost; `DELETE /drafts/:id` → 204; `POST /drafts/:id/validate` runs the full validation (shape + references + spawn coverage + big-change guard + engine smoke test, ~0.3 s) against the content in force (previous patch, active events) and stores it. Anything on a non-draft: 409 `not_draft`. A patch is a **full patch over the base**, not a delta over the previous version.
+- **Publish / schedule** (admin + sudo): `POST /drafts/:id/publish {effectiveAt?, confirm?, note?}`. No `effectiveAt` = now; a future one (at most 60 days ahead, otherwise 400 `invalid_effective_at`) schedules it (audited as `content.schedule`). It validates again with the smoke test inside the transaction: errors block with 422 `validation_failed {errors, warnings, requiresConfirm}`; warnings that need confirmation (a number moved by more than ×3 from the base, a probability by more than ×5) need `confirm: true` (409 `confirm_required {warnings}`). The row becomes `published` (immutable) through `ContentService.publishDraft` in the route's transaction; after the commit `ContentService.refresh()` reloads and broadcasts `{type:'content', hash}` if the active hash changed.
+- **Rollback** (admin + sudo): `POST /versions/:id/rollback {confirm?, note?}` → 201: a NEW published version with the old patch (`parent_id` = the restored version, titled `Rollback to #<id>`, effective now). Only a version that already took effect can be restored (409 `not_published` for drafts and scheduled-for-later ones). It is validated like a publication. A version scheduled for later still overrides it when its time comes.
+- `GET /spawn-preview?versionId&eventId&hour(0-23, 12)&weather(rain|sun|snow|clear|unknown, clear)&trainerLevel(1-100, 1)` (admin): the non-legendary species the wild pool offers for that slot under a draft/version (default: the active content), with `probability` (average over the wild levels of the band, neutral first wave: weight = captureRate x spawn rule), plus the spawn `rules` in force. `eventId` (any status, drafts too) previews with that live event on top. It reuses `spawnRuleMult` of the coverage check. 422 `invalid_patch` when a stored patch does not resolve.
+- Limits per staff user (429 `rate_limited`): draft writes 120 / 15 min; validate + spawn preview + simulate 30 / 15 min; publish + rollback 10 / 15 min. Request bodies under `/api/admin/content` and `/api/admin/events` may be up to 512 KB (64 KB elsewhere). Audit rows hold hashes and counts of changed paths, not whole patches.
+
+#### Simulation
+
+Migration `0009_content_sim_runs`; contract in `protocol.ts` «Admin: balance simulation»; code `server/content/simCompare.ts`, `simWorker.ts`, `simRunner.ts`.
+
+- `POST /content/drafts/:id/simulate {profiles?, seeds?, weeks?}` (admin) → 202 `{run}`: the simulator of `scripts/sim` (`runMatrix`, missions on, damage policy `auto`) plays the same profiles and seeds on the **active patch** and on the **draft's patch** (live events are left out: they are dated and temporary) in a `worker_threads` worker, and stores the comparison per profile: weekly points (quartiles per week and the median), league reach, sessions, minutes/day, captures, species caught, legendaries and shinies seen/caught, dust earned/spent/final, Energy (exhausted share, started empty, energy left) and rests.
+- Profiles: `casual`, `constant`, `marathoner`, `night-owl`, `irregular`, `grinder` (default the first three), seeds 1-20 (default 4), weeks 1-8 (default 4). Profiles x seeds x weeks <= 480 (400 `sim_too_big`; about 60 ms per simulated player-week on a laptop, x2 for both sides). One run at a time per server (409 `busy`), cancelled after 5 min (`timeout`), worker heap 512 MB. The draft must have no validation errors (cheap validation: 422 `validation_failed`); 409 `not_draft`. Audited as `content.simulate` (params and hashes).
+- `GET /content/sim-runs?versionId=` (support+; newest first, at most 50, no reports, `busy`) and `GET /content/sim-runs/:id` (support+; `progress {done, total}` while running, `report` when done). Rows: `running` → `done` | `failed` | `timeout`; a row still `running` after a restart becomes `interrupted` (checked on the next read).
+- **«Mandatory» simulation = a warning, not a block**: `GET /versions/:id` of a draft and the publish response carry `sim: {recent, last}`; `recent` = a `done` run of the draft's current patch hash (`draft_hash`) in the last 7 days (editing the patch makes it stale). Publishing without one is allowed; the `content.publish|schedule` audit row records `simRunId` (null = published unsimulated).
+- Production: the image copies `scripts/sim` (Dockerfile) and `tsx` is a runtime dependency, so the worker runs from sources like the server.
+
+### Live events admin
+
+`server/routes/admin/events.ts`, mounted at `/api/admin/events`; contract in `protocol.ts` «Live events». All routes are **admin**; the overlay (featured species, shiny, legendary multiplier, drops, event missions, own items) is checked by `validateEventOverlay` (`src/game/content`). The `live_events` row id is the event id (`EventOverlay.id`); `slug` is unique across statuses.
+
+- `GET /events?status=` (newest first, at most 200), `GET /events/:id`, `POST /events {slug, name{es,en}, description{es,en}, startsAt, endsAt, imageId?, overlay}` → 201 draft (at most 50 open drafts: 409 `too_many_drafts`; 409 `slug_taken`; 422 `unknown_image`; 400 `invalid_body {fields}` for a malformed body; 400 `invalid_dates {reason: 'order'}` when `endsAt <= startsAt`), `PUT /events/:id` (partial; `confirm?`), `DELETE /events/:id` → 204 (**drafts only**, 409 `not_draft`).
+- A **draft** is saved even with semantic errors (unknown species…): the cheap validation (no smoke test) is stored in `validation`. A **published** event can still be edited but needs sudo, runs the full validation with the smoke test (422 `validation_failed`, 409 `confirm_required`), cannot change its slug (409 `slug_locked`), bumps `revision` and takes effect at once through the ContentService (new content hash; sessions already started keep theirs). Archived events: 409 `not_editable`.
+- `POST /events/:id/publish {confirm?, note?}` and `POST /events/:id/archive {note?}`: **admin + sudo**. Publishing needs a draft (409 `not_draft`), an `endsAt` in the future and a `startsAt` at most 60 days ahead (400 `invalid_dates {reason: 'ended'|'too_far'}`); a future `startsAt` simply means *scheduled*. Archiving needs a published event (409 `not_published`): it leaves play and the public API, but its own items keep their names in players' inventories.
+- `live_event_revisions` keeps a snapshot at publication and at every published edit (`revision` 1, 2…). Audit actions `event.create|update|delete|publish|archive` (before/after hold the full event snapshot). Limits per staff user: writes 120 / 15 min; publish, archive and edits of a published event 20 / 15 min.
+
+### Uploading event images
+
+`server/routes/admin/uploads.ts`, `server/uploads.ts`. `POST /api/admin/uploads` (admin) takes the **raw image as the body** with `Content-Type: image/png|image/jpeg|image/webp`, at most 3 MB (413), and answers `201 {upload, reused: false}` (`200 {reused: true}` when the same picture is already stored; the files are written again, which heals a wiped volume). It is the only non-JSON route: `app.ts` skips the JSON content-type check for exactly `POST /api/admin/uploads` and still requires the `Origin` (no multipart is parsed: a cross-site form cannot send a raw `image/*` body). An empty body is 400 `empty_body`.
+
+- Nothing uploaded is stored or served as is. The type must agree with the magic numbers (SVG, GIF, HEIC, HTML: 415 `unsupported_type`). sharp decodes with `limitInputPixels` 40 MP and encodes again: centred 16:9 crop, 1600x900 at most (never enlarged), 320x180 at least (422 `image_too_small`), animated images refused (422 `animated_image`), corrupt ones 422 `invalid_image`, bombs 422 `image_too_large`; webp quality 82, EXIF/ICC/XMP dropped, plus a 480 px card version. The file name is the sha256 of the result (never the original name): `UPLOADS_DIR/events/<sha>.webp` and `<sha>-480.webp`.
+- `GET /api/admin/uploads` (newest first, at most 200, `inUse` = events that reference it, `totalBytes` / `limitBytes`: 500 MB total, 409 `uploads_full` past it); `DELETE /api/admin/uploads/:id` → 204 only when no event (draft, published or archived) references it (409 `in_use`) and removes the files. Limit: 20 uploads + deletes / 15 min per staff user. Audit: `upload.create|delete`.
+
 ## Security
 
 - **Passwords**: `crypto.scrypt` N=2^15, r=8, p=1, 64-byte key, 16-byte random salt, compared with `timingSafeEqual` (maxmem raised to 64 MiB because N·r·128 = 32 MiB hits Node's default). 8–128 chars, NFKC-normalized. Never logged. With `PASSWORD_PEPPER` the scrypt input is `HMAC-SHA256(pepper, password)` and the hash is stored as `scryptp$<pepperId>$N$r$p$salt_b64$hash_b64` (`pepperId` = 8 hex chars of a sha256 of the pepper, only to pick the right one while rotating). Without a pepper (development, or accounts created before it existed) the format is `scrypt$N$r$p$salt_b64$hash_b64`; those hashes still verify and are re-hashed with the current pepper on the next successful login (`needsRehash`, conditional update so a concurrent password change is never overwritten). A hash whose pepper the server does not know never verifies and logs one warning.
@@ -289,11 +354,11 @@ The stream starts with `retry: 5000` and sends a `: ping` comment every 25 s. 40
 - **CSRF**: `Origin` must be in `APP_ORIGIN` for every non-GET/HEAD request, JSON content type required, plus `SameSite=Lax`.
 - **Brute force**: in-memory fixed windows — login 10 / 15 min per IP and 5 / 15 min per email (attempts; a successful login clears the email counter), register 5 / h per IP, admin API with the legacy token 10 / 15 min per IP (a valid token clears it) and 600 / 15 min per signed-in staff user. Single process only; behind a proxy set `TRUST_PROXY=1`.
 - **Web Push**: endpoints restricted to known push-service hosts (https, port 443, no credentials, ≤ 2048 chars); VAPID private key only in the environment; keys and endpoints never logged.
-- **Admin API**: staff are accounts with role `support`/`admin` (session cookie, CSRF Origin check, per-user rate limit, sudo mode via password re-entry for sensitive actions, every mutation audited). The deprecated `ADMIN_TOKEN` (≥ 24 chars) only opens maintenance notices, compared with `timingSafeEqual` over sha256 digests; it never touches player data.
+- **Admin API**: see *Admin API*. Staff are accounts with role `support`/`admin` (session cookie, CSRF Origin check, per-user rate limit, sudo mode via password re-entry for sensitive actions, every mutation audited in its own transaction). The deprecated `ADMIN_TOKEN` (≥ 24 chars) only opens maintenance notices, compared with `timingSafeEqual` over sha256 digests; it never touches player data.
 - **Authority**: time, rolls, points and captures are decided by the server. `x-dev-now` / `x-dev-seed` and `dev*` actions only with `DEV_TOOLS=1`, never in production.
 - **Concurrency**: every action runs in one transaction: `SELECT … FOR UPDATE` on `player_docs` → `applyAction` → `active_study_sessions` / `league_scores` updates → `version + 1`. Two tabs never overwrite each other.
-- **Event images**: see *Event images*. Re-encoded (never served as uploaded), hash names, `nosniff` + `default-src 'none'`, 3 MB / 40 MP limits, admin only, audited; the upload route is the one CSRF exception (raw `image/*` body, Origin still checked).
-- **Headers**: Hono `secureHeaders()` (HSTS, nosniff, frame options, COOP/CORP, no referrer…). Body limit 64 KB. All SQL through Drizzle (parameterized).
+- **Event images**: see *Uploading event images*. Re-encoded (never served as uploaded), hash names, `nosniff` + `default-src 'none'`, 3 MB / 40 MP limits, admin only, audited; the upload route is the one CSRF exception (raw `image/*` body, Origin still checked).
+- **Headers**: Hono `secureHeaders()` (HSTS, nosniff, frame options, COOP/CORP, no referrer…). Body limit 64 KB (512 KB under `/api/admin/content` and `/api/admin/events`, 3 MB for the image upload). All SQL through Drizzle (parameterized).
 
 ## HTTPS in production
 
@@ -309,9 +374,11 @@ pokefocus.example.com {
 }
 ```
 
-Then run the app with `APP_ORIGIN=https://pokefocus.example.com` and `TRUST_PROXY=1` (and do not publish port 8787 to the internet: bind it to `127.0.0.1:8787:8787` in `docker-compose.yml` or put Caddy in the same compose network).
+Then run the app with `APP_ORIGIN=https://pokefocus.example.com` and `TRUST_PROXY=1` (and do not publish port 8787 to the internet: `docker-compose.yml` binds it to `127.0.0.1` by default (`APP_BIND`, `APP_PORT`); keep it that way or put Caddy in the same compose network). Serve `/media/*` through the same proxy: the images are fetched from the app's origin.
 
 ## Limits / future work
 
-- The event bus, the rate limiter and the Web Push scheduler live in the process: run a single instance (or move them to Postgres `LISTEN/NOTIFY` / Redis / a job queue).
+- The event bus, the rate limiter, the Web Push scheduler, the live-content memo / LRU / 30 s tick and the simulation runner (one run at a time) live in the process: run a single instance (or move them to Postgres `LISTEN/NOTIFY` / Redis / a job queue).
+- Backups: PostgreSQL **and** `UPLOADS_DIR`, with `PASSWORD_PEPPER` kept apart (see `docs/admin.md`). `pg_dump` alone does not contain the event images.
+- Not built (planned in `docs/admin-plan.md`, dropped from phase E): a role-change endpoint, an audit-log viewer, un-scheduling a version, table/form editors for techniques, abilities and missions (they are edited as JSON in the «Advanced» section).
 - No email verification or password reset yet (no mail sending).
