@@ -183,6 +183,15 @@ describe('SudoForm', () => {
     expect(risky).toContain('Big changes you must confirm')
     expect(risky).toContain('Big change')
     expect(form({ elevated: true })).not.toContain('type="checkbox"')
+    // Which number it is about is shown, so two warnings can be told apart.
+    expect(risky).toContain('featured.0.weightMult')
+  })
+
+  it('archiving never asks for the big-change confirmation', async () => {
+    await i18n.changeLanguage('en')
+    const html = form({ mode: 'archive', elevated: true, risky: [{ code: 'big_change', path: 'shiny.chance', message: 'x', requiresConfirm: true }] })
+    expect(html).not.toContain('type="checkbox"')
+    expect(html).not.toContain('Big changes you must confirm')
   })
 
   it('has its own copy for every mode', async () => {

@@ -575,7 +575,7 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
         open={dialog !== null}
         onClose={() => setDialog(null)}
         mode={mode}
-        eventName={d.nameEs || d.nameEn}
+        eventName={(lng === 'en' ? d.nameEn || d.nameEs : d.nameEs || d.nameEn)}
         elevated={elevated}
         risky={risky}
         busy={busy}

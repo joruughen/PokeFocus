@@ -13,7 +13,15 @@ vi.mock('../../store/game', () => ({
   useGame: Object.assign((sel: (s: unknown) => unknown) => sel({ player: mock.player, claimMission: vi.fn(), claimAllMissions: vi.fn(), error: null }), { getState: () => ({ error: null }) }),
 }))
 vi.mock('../../store/selectors', () => ({ usePlayer: () => mock.player, useBusy: () => false }))
-vi.mock('../../store/liveEvents', () => ({ useLiveEvents: (sel: (s: unknown) => unknown) => sel({ active: mock.events, upcoming: [], past: [] }) }))
+// A selector must return the same reference for the same state: a fresh array per call loops forever in zustand v5 (the screen went blank).
+vi.mock('../../store/liveEvents', () => ({
+  useLiveEvents: (sel: (s: unknown) => unknown) => {
+    const state = { active: mock.events, upcoming: [], past: [] }
+    const first = sel(state)
+    if (sel(state) !== first) throw new Error('useLiveEvents selector returns a new value on every call')
+    return first
+  },
+}))
 
 const DAY = 86_400_000
 

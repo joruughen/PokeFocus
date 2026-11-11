@@ -45,14 +45,14 @@ export function Panel({
   return (
     <Tag className={cx('relative', VARIANT[variant], padded && (variant === 'well' ? 'p-3' : 'p-5'), className)} {...rest}>
       {(title || actions) && (
-        <header className="mb-4 flex items-center justify-between gap-3">
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           {title && (
             <div className="flex min-w-0 items-center gap-2">
               <H className={cx('truncate', headingLevel === 2 ? 'text-xl' : 'text-lg')}>{title}</H>
               {help && <HelpDot hint={help} />}
             </div>
           )}
-          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+          {actions && <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">{actions}</div>}
         </header>
       )}
       {children}

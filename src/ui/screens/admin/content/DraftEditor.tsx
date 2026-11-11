@@ -173,7 +173,7 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
         <Tabs label={t('admin.content.sections.label')} items={tabs} value={section} onValueChange={(v) => setSection(v as EditorSection)} />
       </Panel>
 
-      <div className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-3 bg-dusk-800 p-3 shadow-plate" role="region" aria-label={t('admin.content.editor.bar')}>
+      <div className="sticky bottom-0 z-20 flex flex-wrap max-sm:bottom-14 items-center justify-between gap-3 bg-dusk-800 p-3 shadow-plate" role="region" aria-label={t('admin.content.editor.bar')}>
         <p className={state.phase === 'error' ? 'text-cheek-400' : 'text-mist-300'} role="status">
           {status}
           {state.phase === 'error' && (

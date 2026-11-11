@@ -24,4 +24,9 @@ describe('BarChart', () => {
     const html = renderToStaticMarkup(<BarChart data={points(7)} label="x" format={(v) => String(v)} />)
     for (let i = 0; i < 7; i++) expect(html).toContain(`>d${i}<`)
   })
+
+  it('does not label the half line with the same number as the top one', () => {
+    const html = renderToStaticMarkup(<BarChart data={[{ label: 'a', value: 1 }]} label="x" format={(v) => String(Math.round(v))} />)
+    expect(html.match(/leading-none text-mist-400">1</g)).toHaveLength(1)
+  })
 })
