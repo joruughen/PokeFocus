@@ -26,7 +26,11 @@ export default function Missions() {
   const claim = useGame((s) => s.claimMission)
   const claimAll = useGame((s) => s.claimAllMissions)
   const busy = useBusy()
-  const eventNames = useLiveEvents((s) => [...s.active, ...s.upcoming, ...s.past])
+  // Select the three stable arrays: a selector that builds a new array every call loops forever in zustand v5.
+  const liveActive = useLiveEvents((s) => s.active)
+  const liveUpcoming = useLiveEvents((s) => s.upcoming)
+  const livePast = useLiveEvents((s) => s.past)
+  const eventNames = useMemo(() => [...liveActive, ...liveUpcoming, ...livePast], [liveActive, liveUpcoming, livePast])
   const minute = Math.floor(now / 60_000)
   const view = useMemo(() => missionsView(player, minute * 60_000), [player, minute])
 
