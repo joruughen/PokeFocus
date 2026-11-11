@@ -1,5 +1,5 @@
 /**
- * session_log writer (docs/admin-plan.md §2; read by routes/admin-metrics.ts).
+ * session_log writer (docs/admin-plan.md §2; read by routes/admin/metrics.ts).
  * `logSession` is called by runGameAction inside the action's transaction, so the
  * log row and the player document commit (or roll back) together.
  */

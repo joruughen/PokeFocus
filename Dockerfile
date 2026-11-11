@@ -22,6 +22,8 @@ COPY src/game ./src/game
 COPY src/data ./src/data
 # The balance simulator: the admin "simulate draft" worker (server/content/simWorker.ts) runs it.
 COPY scripts/sim ./scripts/sim
+# CLIs usable inside the container: `npm run admin:role -- <email> <role>` and `npm run pepper`.
+COPY scripts/admin-role.ts scripts/generate-pepper.ts ./scripts/
 COPY --from=build /app/dist ./dist
 # .data/uploads is the mount point of the `uploads` volume (event images): it must exist and belong to node
 # in the image so a fresh named volume inherits that ownership.

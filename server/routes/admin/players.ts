@@ -5,7 +5,7 @@
  *   GET  /players/:id                 support+   profile, locks, game summary, last 20 sessions, signed-in browsers
  *   POST /players/:id/grant           admin + sudo   { items?, dust?, reason }  (capped, see src/game/admin.ts)
  *   POST /players/:id/unlock          support+   { field: trainerName|country|timezone, reason? }  clears a 30-day lock
- *   POST /players/:id/cancel-session  support+   { reason? }  cancels a stuck study session (no rewards)
+ *   POST /players/:id/cancel-session  support+   { reason? }  cancels a stuck study session (the player's own cancel rules: a long session keeps its studied minutes, GDD §3.4)
  *   POST /players/:id/logout-all      support+   { reason? }  signs the player out everywhere
  *
  * Every mutation writes `admin_audit` in the same transaction (`player.grant`, `player.unlock`,
