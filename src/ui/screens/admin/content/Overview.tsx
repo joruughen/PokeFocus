@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { AdminContentLiveResponse, AdminContentStatus, AdminContentVersionSummary } from '../../../../game/protocol'
 import { Button, IconButton, Panel, Segmented } from '../../../components'
 import { cx } from '../../../lib/cx'
-import { canRollback, shortHash, versionKind, versionName, type VersionKind } from './versions'
+import { canRollback, canUnschedule, shortHash, versionKind, versionName, type VersionKind } from './versions'
 
 const KIND_CLASS: Record<VersionKind, string> = {
   active: 'bg-leaf-600 text-mist-50',
@@ -23,7 +23,8 @@ function useWhen() {
   return (ts: number | null) => (ts === null ? '—' : fmt.format(ts))
 }
 
-function VersionCard({ title, version, empty }: { title: string; version: AdminContentVersionSummary | null; empty: string }) {
+/** `starts`: the card of a scheduled version, whose date is when it will take effect (not when it did). */
+function VersionCard({ title, version, empty, starts }: { title: string; version: AdminContentVersionSummary | null; empty: string; starts?: boolean }) {
   const { t } = useTranslation()
   const when = useWhen()
   return (
@@ -32,7 +33,7 @@ function VersionCard({ title, version, empty }: { title: string; version: AdminC
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
           <dt className="text-mist-400">{t('admin.content.live.version')}</dt>
           <dd className="font-num">{versionName(version)}</dd>
-          <dt className="text-mist-400">{t('admin.content.live.effective')}</dt>
+          <dt className="text-mist-400">{t(starts ? 'admin.content.live.starts' : 'admin.content.live.effective')}</dt>
           <dd>{when(version.effectiveAt)}</dd>
           <dt className="text-mist-400">{t('admin.content.live.hash')}</dt>
           <dd className="font-mono text-sm">{shortHash(version.hash)}</dd>
@@ -61,7 +62,7 @@ export function LiveStatus({ live, onReload, loading }: { live: AdminContentLive
     >
       <div className="grid gap-4 md:grid-cols-3">
         <VersionCard title={t('admin.content.live.active')} version={live.active} empty={t('admin.content.live.noneActive')} />
-        <VersionCard title={t('admin.content.live.scheduled')} version={live.scheduled} empty={t('admin.content.live.noneScheduled')} />
+        <VersionCard title={t('admin.content.live.scheduled')} version={live.scheduled} empty={t('admin.content.live.noneScheduled')} starts />
         <Panel variant="frame" title={t('admin.content.live.events')} headingLevel={3}>
           {live.events.length === 0 ? (
             <p className="text-mist-300">{t('admin.content.live.noEvents')}</p>
@@ -94,12 +95,13 @@ export interface VersionsListProps {
   busy: boolean
   onOpen: (v: AdminContentVersionSummary) => void
   onRollback: (v: AdminContentVersionSummary) => void
+  onUnschedule: (v: AdminContentVersionSummary) => void
   onCopy: (v: AdminContentVersionSummary) => void
   onDelete: (v: AdminContentVersionSummary) => void
 }
 
 /** Versions, newest first: active, scheduled, drafts, archived. Actions depend on the kind and on the role. */
-export function VersionsList({ items, filter, onFilter, canEdit, busy, onOpen, onRollback, onCopy, onDelete }: VersionsListProps) {
+export function VersionsList({ items, filter, onFilter, canEdit, busy, onOpen, onRollback, onUnschedule, onCopy, onDelete }: VersionsListProps) {
   const { t } = useTranslation()
   const when = useWhen()
   return (
@@ -123,7 +125,7 @@ export function VersionsList({ items, filter, onFilter, canEdit, busy, onOpen, o
                 <div className="min-w-0 flex-1 basis-60">
                   <p className="truncate font-num text-lg">{versionName(v)}</p>
                   <p className="text-sm text-mist-400">
-                    {kind === 'draft' ? t('admin.content.versions.createdBy', { who: v.createdBy?.trainerName ?? '—', when: when(v.createdAt) }) : t('admin.content.versions.effectiveBy', { when: when(v.effectiveAt), who: v.publishedBy?.trainerName ?? '—' })}
+                    {kind === 'draft' ? t('admin.content.versions.createdBy', { who: v.createdBy?.trainerName ?? '—', when: when(v.createdAt) }) : t(kind === 'scheduled' ? 'admin.content.versions.startsBy' : 'admin.content.versions.effectiveBy', { when: when(v.effectiveAt), who: v.publishedBy?.trainerName ?? '—' })}
                     {' · '}
                     <span className="font-mono">{shortHash(v.hash)}</span>
                   </p>
@@ -146,6 +148,11 @@ export function VersionsList({ items, filter, onFilter, canEdit, busy, onOpen, o
                   {canEdit && canRollback(v) && (
                     <Button size="sm" variant="ghost" icon="reroll" disabled={busy} onClick={() => onRollback(v)}>
                       {t('admin.content.versions.rollback')}
+                    </Button>
+                  )}
+                  {canEdit && canUnschedule(v) && (
+                    <Button size="sm" variant="ghost" icon="close" disabled={busy} onClick={() => onUnschedule(v)}>
+                      {t('admin.content.versions.unschedule')}
                     </Button>
                   )}
                   {canEdit && kind === 'draft' && <IconButton icon="trash" size="sm" variant="ghost" label={t('admin.content.versions.delete', { name: versionName(v) })} disabled={busy} onClick={() => onDelete(v)} />}

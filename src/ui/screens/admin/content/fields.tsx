@@ -118,6 +118,8 @@ export interface ScalarFieldProps {
   label: string
   base: number
   value: number
+  /** What is live now (the ×3/×5 badge compares against it, like the server's guard); defaults to the base. */
+  live?: number
   overridden: boolean
   issues?: FieldIssues
   issueText: (i: ContentIssue) => string
@@ -127,11 +129,11 @@ export interface ScalarFieldProps {
 }
 
 /** One config number: label, input with its unit, base value, change vs base, ×3/×5 badge and a reset button. */
-export function ScalarField({ limit, label, base, value, overridden, issues, issueText, disabled, onChange, onReset }: ScalarFieldProps) {
+export function ScalarField({ limit, label, base, value, live, overridden, issues, issueText, disabled, onChange, onReset }: ScalarFieldProps) {
   const { t, i18n } = useTranslation()
   const id = fieldId(`config.${limit.path}`)
   const pct = overridden ? changePercent(base, value) : null
-  const factor = overridden ? bigChangeFactor(limit.kind, base, value) : null
+  const factor = overridden || (live !== undefined && live !== base) ? bigChangeFactor(limit.kind, live ?? base, value) : null
   const baseText = `${formatNumber(limit.kind, base, i18n.language)}${limit.unit && limit.kind !== 'prob' ? ` ${limit.unit}` : ''}`
   const limitsText = t('admin.content.number.limits', { min: formatNumber(limit.kind, limit.min, i18n.language), max: formatNumber(limit.kind, limit.max, i18n.language) })
   return (

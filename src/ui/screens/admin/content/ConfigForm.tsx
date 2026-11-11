@@ -11,6 +11,8 @@ import type { LimitGroup } from '../../../../game/content/limits'
 
 export interface ConfigFormProps {
   patch: ContentPatch
+  /** Patch in force (the reference of the ×3/×5 badges); none = the base. */
+  livePatch?: ContentPatch
   issues: IssueSet
   disabled?: boolean
   /** Group to open (set by «go to field»). */
@@ -28,7 +30,7 @@ const forPath = (set: IssueSet, prefix: string): FieldIssues => {
  * The «Parameters» form: generated from `limits.ts` (groups, labels, bounds, step, unit), with the base value and the
  * change vs base next to every field, and a reset per field. Edits go through `onPatch`; the editor autosaves.
  */
-export function ConfigForm({ patch, issues, disabled, group, onGroup, onPatch }: ConfigFormProps) {
+export function ConfigForm({ patch, livePatch, issues, disabled, group, onGroup, onPatch }: ConfigFormProps) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [onlyChanged, setOnlyChanged] = useState(false)
@@ -88,6 +90,7 @@ export function ConfigForm({ patch, issues, disabled, group, onGroup, onPatch }:
                 label={t(l.labelKey)}
                 base={baseConfigValue(l.path) as number}
                 value={effectiveConfigValue(patch, l.path) as number}
+                live={livePatch ? (effectiveConfigValue(livePatch, l.path) as number) : undefined}
                 overridden={isOverridden(patch, l.path)}
                 issues={forPath(issues, `config.${l.path}`)}
                 issueText={text}

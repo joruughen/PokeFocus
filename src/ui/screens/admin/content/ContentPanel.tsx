@@ -2,19 +2,19 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AdminContentLiveResponse, AdminContentVersionResponse, AdminContentVersionSummary } from '../../../../game/protocol'
 import { isApiError } from '../../../api'
-import { Button, Dialog, DialogClose, Panel, toast } from '../../../components'
+import { Button, Dialog, DialogClose, Panel, TextField, toast } from '../../../components'
 import { errorText } from '../../../lib/errors'
 import { useAuth } from '../../../store/auth'
 import { contentApi } from './api'
 import { DraftEditor } from './DraftEditor'
 import { LiveStatus, VersionsList, type StatusFilter } from './Overview'
-import { RollbackDialog } from './PublishDialog'
+import { RollbackDialog, UnscheduleDialog } from './PublishDialog'
 import { VersionView } from './VersionView'
 import { contentPermissions, versionName } from './versions'
 
 type View = { kind: 'overview' } | { kind: 'view'; id: number } | { kind: 'edit'; id: number }
 
-const OWN = ['forbidden', 'not_found', 'not_draft', 'not_published', 'too_many_drafts', 'invalid_body']
+const OWN = ['forbidden', 'not_found', 'not_draft', 'not_published', 'not_scheduled', 'too_many_drafts', 'invalid_body']
 
 /** Text of an error of the content API (own copy for its codes, else the generic one). */
 export function contentErrorText(e: unknown, t: (k: string, o?: Record<string, unknown>) => string): string {
@@ -42,6 +42,10 @@ export default function ContentPanel() {
   const [busy, setBusy] = useState(false)
   const [loaded, setLoaded] = useState<AdminContentVersionResponse | null>(null)
   const [rollback, setRollback] = useState<AdminContentVersionSummary | null>(null)
+  /** «New draft» waits for a name: nothing is created until it is given. */
+  const [naming, setNaming] = useState<'active' | 'empty' | null>(null)
+  const [draftName, setDraftName] = useState('')
+  const [unscheduling, setUnscheduling] = useState<AdminContentVersionSummary | null>(null)
   const [removing, setRemoving] = useState<AdminContentVersionSummary | null>(null)
 
   const reload = useCallback(
@@ -112,6 +116,18 @@ export default function ContentPanel() {
     }
   }
 
+  const startNaming = (from: 'active' | 'empty' | null) => {
+    setNaming(from)
+    setDraftName('')
+  }
+  const confirmNaming = async () => {
+    const title = draftName.trim()
+    if (!naming || title === '') return
+    const from = naming
+    startNaming(null)
+    await createDraft({ from, title })
+  }
+
   const remove = async (v: AdminContentVersionSummary) => {
     const ok = await act(async () => {
       await contentApi.deleteDraft(v.id)
@@ -140,9 +156,11 @@ export default function ContentPanel() {
           busy={busy}
           onBack={() => setView({ kind: 'overview' })}
           onRollback={() => setRollback(loaded.version)}
+          onUnschedule={() => setUnscheduling(loaded.version)}
           onCopy={() => void createDraft({ fromVersionId: loaded.version.id })}
         />
         <RollbackTarget target={rollback} onClose={() => setRollback(null)} onDone={() => { setView({ kind: 'overview' }); void reload() }} />
+        <UnscheduleTarget target={unscheduling} onClose={() => setUnscheduling(null)} onDone={() => { setView({ kind: 'overview' }); void reload() }} />
       </>
     ) : (
       <p className="text-mist-300">{t('common.loading')}</p>
@@ -166,10 +184,10 @@ export default function ContentPanel() {
         actions={
           perms.edit && (
             <>
-              <Button size="sm" icon="plus" disabled={busy} onClick={() => void createDraft({ from: 'active' })}>
+              <Button size="sm" icon="plus" disabled={busy} onClick={() => startNaming('active')}>
                 {t('admin.content.versions.newFromLive')}
               </Button>
-              <Button size="sm" variant="secondary" disabled={busy} onClick={() => void createDraft({ from: 'empty' })}>
+              <Button size="sm" variant="secondary" disabled={busy} onClick={() => startNaming('empty')}>
                 {t('admin.content.versions.newEmpty')}
               </Button>
             </>
@@ -187,13 +205,42 @@ export default function ContentPanel() {
             busy={busy}
             onOpen={open}
             onRollback={setRollback}
+            onUnschedule={setUnscheduling}
             onCopy={(v) => void createDraft({ fromVersionId: v.id })}
             onDelete={setRemoving}
           />
         )}
       </Panel>
 
+      <Dialog
+        open={naming !== null}
+        onOpenChange={(o) => !o && startNaming(null)}
+        title={t(naming === 'empty' ? 'admin.content.versions.newEmptyTitle' : 'admin.content.versions.newFromLiveTitle')}
+        description={t(naming === 'empty' ? 'admin.content.versions.newEmptyBody' : 'admin.content.versions.newFromLiveBody')}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => startNaming(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" form="new-draft-form" icon="plus" disabled={draftName.trim() === '' || busy}>
+              {t('admin.content.versions.create')}
+            </Button>
+          </>
+        }
+      >
+        <form
+          id="new-draft-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void confirmNaming()
+          }}
+        >
+          <TextField label={t('admin.content.editor.name')} value={draftName} onChange={(e) => setDraftName(e.target.value)} maxLength={80} autoComplete="off" autoFocus />
+        </form>
+      </Dialog>
+
       <RollbackTarget target={rollback} onClose={() => setRollback(null)} onDone={() => void reload()} />
+      <UnscheduleTarget target={unscheduling} onClose={() => setUnscheduling(null)} onDone={() => void reload()} />
 
       <Dialog
         open={removing !== null}
@@ -231,6 +278,26 @@ function RollbackTarget({ target, onClose, onDone }: { target: AdminContentVersi
   if (!last) return null
   return (
     <RollbackDialog
+      open={target !== null}
+      onOpenChange={(o) => !o && onClose()}
+      versionId={last.id}
+      label={versionName(last)}
+      onDone={() => {
+        onClose()
+        onDone()
+      }}
+    />
+  )
+}
+
+function UnscheduleTarget({ target, onClose, onDone }: { target: AdminContentVersionSummary | null; onClose: () => void; onDone: () => void }) {
+  const [last, setLast] = useState<AdminContentVersionSummary | null>(target)
+  useEffect(() => {
+    if (target) setLast(target)
+  }, [target])
+  if (!last) return null
+  return (
+    <UnscheduleDialog
       open={target !== null}
       onOpenChange={(o) => !o && onClose()}
       versionId={last.id}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { defaultContext, type SessionResult } from '../../../engine'
 import { makeMon, makePlayer, MIN, runSession, T0 } from '../../../engine/test-helpers'
-import { chargesBy, conditionLines, wildFactors } from './sessionReportModel'
+import { chargesBy, conditionLines, eventDrops, wildFactors } from './sessionReportModel'
 
 const cfg = defaultContext().config
 
@@ -34,5 +34,17 @@ describe('session report model', () => {
     expect(lines[0]?.type).toBe('ghost')
     expect(chargesBy({ charges: [{ id: 'c1', kind: 'status', status: 'sleep', sourceUid: 'g', source: 'hypnosis' }] }, 'g')).toHaveLength(1)
     expect(chargesBy({ charges: [{ id: 'c1', kind: 'status', status: 'sleep', sourceUid: 'x', source: 'hypnosis' }] }, 'g')).toHaveLength(0)
+  })
+})
+
+describe('event drops', () => {
+  it('lists the items the events dropped, most first, and nothing without them', () => {
+    expect(eventDrops({})).toEqual([])
+    expect(eventDrops({ eventItems: {} })).toEqual([])
+    expect(eventDrops({ eventItems: { b: 1, a: 3, c: 1, z: 0 } })).toEqual([
+      { item: 'a', count: 3 },
+      { item: 'b', count: 1 },
+      { item: 'c', count: 1 },
+    ])
   })
 })

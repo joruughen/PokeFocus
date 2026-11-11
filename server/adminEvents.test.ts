@@ -308,6 +308,39 @@ describe('publish, edit and archive', () => {
     expect(await auditActions()).toEqual(['admin.reauth', 'event.create', 'event.publish', 'admin.reauth', 'event.update'])
   })
 
+  it('editing a published event re-checks the dates of publishing, but a running or finished event stays editable', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithEvent(h)
+    await h.call('POST', `${E}/${id}/publish`, { cookie: a.cookie, body: {} })
+    const put = (body: Record<string, unknown>) => h.call('PUT', `${E}/${id}`, { cookie: a.cookie, body })
+    // Scheduled: moving it to end in the past or to start beyond 60 days is refused.
+    expect((await put({ startsAt: T0 - 2 * DAY, endsAt: T0 - DAY })).json).toMatchObject({ error: 'invalid_dates', reason: 'ended' })
+    expect((await put({ startsAt: T0 + 90 * DAY, endsAt: T0 + 91 * DAY })).json).toMatchObject({ error: 'invalid_dates', reason: 'too_far' })
+    expect((await put({ endsAt: T0 + 2 * DAY })).status).toBe(200)
+    // Running (start in the past): editing the text or extending the end is fine; ending it in the past is not.
+    now = T0 + 2 * HOUR
+    await elevate(h, a)
+    expect((await put({ name: { es: 'Otra', en: 'Other' } })).status).toBe(200)
+    expect((await put({ endsAt: T0 + 3 * DAY })).status).toBe(200)
+    expect((await put({ endsAt: T0 + HOUR + 1000 })).json).toMatchObject({ error: 'invalid_dates', reason: 'ended' })
+    // Already over: fixing its text is allowed, giving it new dates in the past is not.
+    now = T0 + 4 * DAY
+    await elevate(h, a)
+    expect((await put({ description: { es: 'Corregido', en: 'Fixed' } })).status).toBe(200)
+    expect((await put({ endsAt: T0 + 3 * DAY + HOUR })).json).toMatchObject({ error: 'invalid_dates', reason: 'ended' })
+  })
+
+  it('editing a published event only asks to confirm the big values it changes, not the ones already confirmed', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithEvent(h, { overlay: overlay({ legendaryChanceMult: 5, featured: [{ species: 'pikachu', weightMult: 8 }] }) })
+    expect((await h.call('POST', `${E}/${id}/publish`, { cookie: a.cookie, body: { confirm: true } })).status).toBe(200)
+    const same = await h.call('PUT', `${E}/${id}`, { cookie: a.cookie, body: { name: { es: 'Otra', en: 'Other' } } })
+    expect(same.status, JSON.stringify(same.json)).toBe(200)
+    const more = await h.call('PUT', `${E}/${id}`, { cookie: a.cookie, body: { overlay: overlay({ legendaryChanceMult: 5, featured: [{ species: 'pikachu', weightMult: 9 }] }) } })
+    expect([more.status, more.json?.error]).toEqual([409, 'confirm_required'])
+    expect((more.json!.warnings as { path: string }[]).map((w) => w.path)).toEqual(['featured.0.weightMult'])
+  })
+
   it('archiving removes the event from play and from the public API; an archived event cannot be edited', async () => {
     const h = makeApp()
     const { a, id } = await adminWithEvent(h, {

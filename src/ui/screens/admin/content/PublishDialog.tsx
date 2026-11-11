@@ -6,7 +6,7 @@ import { browserTimeZone } from '../../../lib/format'
 import { toLocalInput } from '../../../lib/maintenance'
 import { ActionDialog } from './ActionDialog'
 import { contentApi } from './api'
-import { checkSchedule, publishDraft, publishInput, rollbackTo } from './flow'
+import { checkSchedule, publishDraft, publishInput, rollbackTo, unscheduleVersion } from './flow'
 
 const NOTE_MAX = 400
 const HOUR = 3_600_000
@@ -113,6 +113,34 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
       )}
       <TextField label={t('admin.content.publish.note')} value={note} onChange={(e) => setNote(e.target.value)} maxLength={NOTE_MAX} hint={t('admin.content.publish.noteHint')} />
     </ActionDialog>
+  )
+}
+
+export interface UnscheduleDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  versionId: number
+  label: string
+  onDone: (v: AdminContentVersion) => void
+}
+
+/** «Cancel the schedule»: the version goes back to a draft and never takes effect by itself. */
+export function UnscheduleDialog({ open, onOpenChange, versionId, label, onDone }: UnscheduleDialogProps) {
+  const { t } = useTranslation()
+  return (
+    <ActionDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t('admin.content.unschedule.title')}
+      description={t('admin.content.unschedule.body', { name: label })}
+      confirmLabel={t('admin.content.unschedule.confirm')}
+      warnings={[]}
+      run={() => unscheduleVersion(versionId)}
+      onDone={(v) => {
+        toast.add({ title: t('admin.content.unschedule.done', { id: v.id }), type: 'success' })
+        onDone(v)
+      }}
+    />
   )
 }
 

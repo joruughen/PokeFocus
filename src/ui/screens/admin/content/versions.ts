@@ -25,6 +25,11 @@ export function canRollback(v: Pick<AdminContentVersionSummary, 'status' | 'acti
   return v.status !== 'draft' && !v.scheduled && !v.active
 }
 
+/** A scheduled version that is not in force yet can be cancelled (it goes back to a draft). */
+export function canUnschedule(v: Pick<AdminContentVersionSummary, 'status' | 'scheduled'>): boolean {
+  return v.status === 'published' && v.scheduled
+}
+
 /** «#12 · Title» or just «#12». */
 export function versionName(v: Pick<AdminContentVersionSummary, 'id' | 'title'>): string {
   return v.title ? `#${v.id} · ${v.title}` : `#${v.id}`

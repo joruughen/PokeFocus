@@ -10,6 +10,7 @@
  *   POST   /drafts/:id/validate        admin      full validation (with the engine smoke test) + diff; stores the result
  *   POST   /drafts/:id/publish         admin + sudo   { effectiveAt?, confirm?, note? }: now, or scheduled when in the future
  *   POST   /versions/:id/rollback      admin + sudo   { confirm?, note? }: a NEW version copying that patch, in force now
+ *   POST   /versions/:id/unschedule    admin + sudo   cancels a scheduled version that is not in force yet: it goes back to a draft (409 not_scheduled otherwise)
  *   GET    /spawn-preview              admin      ?versionId&eventId&hour&weather&trainerLevel → species the wild pool offers (eventId: with that live event resolved on top, drafts too)
  *   POST   /drafts/:id/simulate        admin      { profiles?, seeds?, weeks? } → 202: balance simulation active vs draft in a worker (E10; one at a time, 409 busy)
  *   GET    /sim-runs?versionId=        support+   simulation runs, newest first (no reports)
@@ -240,6 +241,7 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       hash: active.hash,
       baseHash: active.baseHash,
       active: cur ? summarize(cur, who, active.versionId, now) : null,
+      patch: active.patch,
       scheduled: next ? summarize(next, who, active.versionId, now) : null,
       events: active.events.map((e) => ({ id: e.id, slug: e.slug, startsAt: e.startsAt, endsAt: e.endsAt })),
       serverNow: now,
@@ -425,6 +427,30 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     })
     await content.refresh()
     return c.json(await versionBody(newId, now), 201)
+  })
+
+  app.post('/versions/:id/unschedule', staff('admin'), requireElevated(deps), async (c) => {
+    const id = idParam(c)
+    publishLimit(c)
+    const now = deps.clock()
+    await db.transaction(async (tx) => {
+      const row = await lockRow(tx, id)
+      // Only a version still waiting for its time. Once it is in force it is immutable: roll back instead.
+      if (row.status !== 'published' || !row.effectiveAt || row.effectiveAt.getTime() <= now) throw new ApiError(409, 'not_scheduled')
+      const [open] = await tx.select({ n: sql<number>`count(*)::int` }).from(contentVersions).where(eq(contentVersions.status, 'draft'))
+      if ((open?.n ?? 0) >= MAX_OPEN_DRAFTS) throw new ApiError(409, 'too_many_drafts')
+      await tx.update(contentVersions).set({ status: 'draft', effectiveAt: null, publishedBy: null, publishedAt: null }).where(eq(contentVersions.id, id))
+      await audit(tx, c, {
+        action: 'content.unschedule',
+        targetType: 'content_version',
+        targetId: String(id),
+        before: { status: 'published', effectiveAt: row.effectiveAt.getTime(), publishedBy: row.publishedBy },
+        after: { status: 'draft', hash: row.hash },
+      })
+    })
+    // Reloads the schedule and announces the hash again if the cancelled version was the next one.
+    await content.refresh()
+    return c.json(await versionBody(id, now, true))
   })
 
   // --- Simulation (E10) ----------------------------------------------------------------------

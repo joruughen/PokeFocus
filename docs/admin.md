@@ -25,11 +25,11 @@ Para dar `support` a otra persona usa el CLI (`npm run admin:role -- otro@correo
 
 ### Reautenticación («modo sudo»)
 
-Las acciones delicadas piden **volver a escribir tu contraseña**: publicar, programar, rollback, conceder objetos o Polvo, publicar o archivar un evento y editar un evento ya publicado. La pantalla abre un diálogo cuando hace falta. La contraseña da un permiso de **30 minutos solo en esa sesión del navegador**; pasado ese tiempo se vuelve a pedir. Cinco contraseñas erróneas en 15 minutos bloquean los intentos un rato.
+Las acciones delicadas piden **volver a escribir tu contraseña**: publicar, programar, cancelar una programación, rollback, conceder objetos o Polvo, publicar o archivar un evento y editar un evento ya publicado. La pantalla abre un diálogo cuando hace falta. La contraseña da un permiso de **30 minutos solo en esa sesión del navegador**; pasado ese tiempo se vuelve a pedir. Cinco contraseñas erróneas en 15 minutos bloquean los intentos un rato.
 
 ## 2. Contenido: del borrador a producción
 
-Todo cambio de contenido es una **versión**. Una versión publicada es **inmutable**: no se edita, se publica otra encima. Cada versión es un *parche completo sobre los datos base del repositorio* (no una diferencia con la versión anterior), así que volver atrás es republicar un parche antiguo.
+Todo cambio de contenido es una **versión**. (Publicar desde la pantalla de administración no la recarga ni cierra la pestaña o el editor abiertos; el resto de pantallas sí se recargan con el contenido nuevo.) Una versión publicada es **inmutable**: no se edita, se publica otra encima. Cada versión es un *parche completo sobre los datos base del repositorio* (no una diferencia con la versión anterior), así que volver atrás es republicar un parche antiguo.
 
 Qué se puede cambiar (todo con límites; lo que no está en la lista se rechaza):
 
@@ -41,24 +41,25 @@ Qué se puede cambiar (todo con límites; lo que no está en la lista se rechaza
 
 ### El flujo
 
-1. **Borrador.** En *Contenido*, crea un borrador a partir de lo que está en vivo, de una versión anterior (copiar) o en blanco. Se guarda solo mientras escribes y **se guarda aunque tenga errores**: así no pierdes trabajo. Máximo 20 borradores abiertos.
+1. **Borrador.** En *Contenido*, crea un borrador a partir de lo que está en vivo, de una versión anterior (copiar) o en blanco. «Borrador nuevo…» pide **un nombre** en un diálogo y no crea nada hasta que lo confirmas (cancelar no deja borradores vacíos). Se guarda solo mientras escribes y **se guarda aunque tenga errores**: así no pierdes trabajo. Máximo 20 borradores abiertos.
 2. **Validar.** La pestaña *Revisión* muestra los errores (que bloquean) y los avisos en vivo, y el botón **Validar** ejecuta la validación completa en el servidor: forma, referencias (especies, movimientos y objetos que existen), umbrales de liga crecientes, **cobertura de apariciones** (para cada hora, clima y tramo de nivel debe haber al menos 5 especies no legendarias con peso), ids de misión inmutables, y una **prueba de humo** del motor (unas 200 sesiones sintéticas sin NaN ni excepciones). Tarda ~0,3 s.
 3. **Vista previa de apariciones** (opcional): qué especies y con qué probabilidad salen para una hora, un clima y un nivel dados, con el borrador frente a lo vivo (y con un evento encima, si eliges uno).
 4. **Simular** (muy recomendable). Pestaña *Simulación*: el simulador de balance juega los mismos perfiles y semillas con el parche **activo** y con el del **borrador**, y compara puntos semanales, ligas alcanzadas, capturas, legendarios y shinies, Polvo y Energía. Por defecto 3 perfiles, 4 semillas, 4 semanas (máximo 20 semillas, 8 semanas, 480 «jugador-semana» en total). Solo corre **una simulación a la vez** en todo el servidor (otra petición recibe «ocupado»), con un tope de 5 minutos. Los eventos no entran en la simulación. Un resultado vale 7 días y solo para el parche exacto que se simuló: si editas el borrador, hay que repetirla.
    - Simular **no es obligatorio**: publicar sin una simulación reciente se permite, pero la pantalla lo avisa y el registro de auditoría anota que se publicó sin simular.
 5. **Revisar el diff.** La pestaña *Revisión* lista cada ruta cambiada con su valor antes y después.
 6. **Publicar o programar.** *Publicar ya*, o *Programar* con una fecha de **como mucho 60 días** por delante (la pantalla muestra tu zona horaria y la hora en UTC). Pide la contraseña (sudo) y, si hay avisos de cambio grande, el tick de confirmación (ver abajo). El servidor **vuelve a validar** al publicar; con errores no se publica.
-7. **Rollback.** En *Versiones*, **Republicar** sobre una versión que ya estuvo en vigor: crea una versión **nueva** (título «Rollback to #N») con el parche antiguo, en vigor ya. No borra nada del historial. Una versión *programada para más tarde* seguirá sustituyéndola cuando llegue su hora. **No se puede cancelar una programación**: para impedir que entre, publica antes otra versión que la anule o haz rollback cuando haya entrado.
+7. **Rollback.** En *Versiones*, **Republicar** sobre una versión que ya estuvo en vigor: crea una versión **nueva** (título «Rollback to #N») con el parche antiguo, en vigor ya. No borra nada del historial. Una versión *programada para más tarde* seguirá sustituyéndola cuando llegue su hora.
+8. **Cancelar una programación.** Mientras una versión programada no haya entrado en vigor, *Versiones* (y su ficha) tiene **Cancelar programación** (admin + sudo): vuelve a ser un **borrador** con el mismo contenido, que puedes editar, borrar o programar de nuevo. Una versión que ya está en vigor no se puede cancelar: se sustituye con otra publicación o con un rollback. La tarjeta de una versión programada dice **Empieza** (no «Desde», que es para la que ya está en vigor).
 
 Qué ven los jugadores y cuándo: los jugadores descargan el contenido al abrir la app y cuando el servidor les avisa (cada 30 s como mucho). **Una sesión de estudio conserva el contenido con el que empezó** hasta que se acaban sus oleadas, así que publicar a mitad de una sesión no la cambia. Lo que **sí** afecta a todos de golpe, porque afecta a lo que ya tienen: caramelos, topes de nivel, técnicas y habilidades de Pokémon ya capturados, y los umbrales de liga de la semana en curso. La pantalla de publicación lo avisa; para los umbrales de liga conviene programarlos a primera hora del lunes (la semana de liga empieza el lunes en la zona horaria de cada jugador, así que no hay un único instante limpio).
 
 ### Qué pide confirmación (×3 / ×5)
 
-El servidor marca como **aviso que exige confirmar** cualquier cambio grande respecto a la base:
+El servidor marca como **aviso que exige confirmar** cualquier cambio grande respecto a **lo que está en vivo ahora** (la versión en vigor; si no hay ninguna publicada, la base). Un borrador creado «desde lo vivo» no vuelve a pedir confirmación por valores que ya estaban en vivo y que no toca; sí la pide un valor que se aleja más de lo vivo, o uno que vuelves a poner en la base cuando lo vivo ya estaba lejos de ella. El aviso muestra los números igual que la tabla (una probabilidad en %, no 0,00136 → 0,01):
 
 - un número que se **multiplica o divide por más de 3** (multiplicadores, pesos, recompensas…);
 - una **probabilidad que se multiplica por más de 5**;
-- en eventos: peso de una especie destacada > ×3, multiplicador de legendario > ×3 y probabilidad de shiny > ×5 sobre la base.
+- en eventos: peso de una especie destacada > ×3, multiplicador de legendario > ×3 y probabilidad de shiny > ×5 sobre la base. Al **editar un evento publicado** solo se pide confirmar los valores grandes que la edición cambia, no los que ya se confirmaron al publicarlo.
 
 Hasta que marques la casilla de confirmación, publicar devuelve «confirmación requerida». Los avisos sin esa marca (p. ej. los de cambio con efecto inmediato) se muestran pero no bloquean.
 
@@ -77,10 +78,10 @@ Vida de un evento:
 
 1. **Borrador** (se guarda aunque tenga errores semánticos; máximo 50 borradores). La vista previa de apariciones usa el evento aunque sea borrador.
 2. **Publicar** (admin + sudo): necesita fin en el futuro e inicio a como mucho 60 días vista; con inicio futuro queda **programado**. Se valida con la prueba de humo y pide el tick de confirmación si hay cambios grandes.
-3. **Editar un evento publicado** también pide sudo y validación completa; el *slug* ya no se puede cambiar. El cambio se aplica **a la vez**, pero las sesiones ya empezadas siguen con lo suyo. Cada edición guarda una revisión.
+3. **Editar un evento publicado** también pide sudo y validación completa; el *slug* ya no se puede cambiar. Se aplican las mismas comprobaciones de fechas que al publicar: el fin tiene que estar en el futuro y el inicio a como mucho 60 días vista (un evento ya en marcha, con el inicio en el pasado, se puede seguir editando; uno ya terminado solo si no tocas sus fechas, p. ej. para corregir un texto). El cambio se aplica **a la vez**, pero las sesiones ya empezadas siguen con lo suyo. Cada edición guarda una revisión.
 4. **Archivar** (admin + sudo): el evento sale del juego y de la página pública al instante. Los jugadores que ya empezaron una sesión durante el evento la terminan con sus reglas. Los borradores se pueden **borrar**; los publicados solo se archivan.
 
-Los jugadores ven los eventos en `#/events` (activos, próximos y pasados con tarjeta, cuenta atrás, destacadas, drops y misiones) y un **banner** del evento activo en la pantalla previa a la sesión. Las misiones de evento se pueden reclamar hasta 7 días después de que termine.
+Cuando cae un objeto de evento, el jugador lo ve en *Resultados* («Objeto (evento) +N») y en el informe de la sesión; las especies destacadas por un evento activo (el de la sesión, no el de ahora) llevan una marca discreta **Destacada** en las oleadas. Los jugadores ven los eventos en `#/events` (activos, próximos y pasados con tarjeta, cuenta atrás, destacadas, drops y misiones) y un **banner** del evento activo en la pantalla previa a la sesión. Las misiones de evento se pueden reclamar hasta 7 días después de que termine.
 
 ### Imágenes de eventos
 

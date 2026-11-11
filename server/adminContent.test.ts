@@ -414,6 +414,78 @@ describe('rollback', () => {
   })
 })
 
+describe('unschedule', () => {
+  const schedule = async (h: Harness, a: Acct, id: number, at = T0 + 2 * HOUR) => expect((await h.call('POST', `${B}/drafts/${id}/publish`, { cookie: a.cookie, body: { effectiveAt: at } })).status).toBe(200)
+
+  it('sends a scheduled version back to a draft: not next any more, never active, audited as content.unschedule', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithDraft(h)
+    await schedule(h, a, id)
+    const r = await h.call('POST', `${B}/versions/${id}/unschedule`, { cookie: a.cookie, body: {} })
+    expect(r.status).toBe(200)
+    expect(asVersion(r).version).toMatchObject({ id, status: 'draft', effectiveAt: null, scheduled: false, active: false, publishedAt: null, publishedBy: null, patch: SHINY })
+    const live = (await h.call('GET', `${B}/live`, { cookie: a.cookie })).json as unknown as AdminContentLiveResponse
+    expect(live).toMatchObject({ hash: 'base', active: null, scheduled: null })
+    now += 3 * HOUR // past the cancelled time: still the base
+    expect(((await h.call('GET', '/api/content')).json as { hash: string }).hash).toBe('base')
+    expect(await auditActions()).toContain('content.unschedule')
+    // It is an ordinary draft again: it can be published.
+    await elevate(h, a)
+    expect((await h.call('POST', `${B}/drafts/${id}/publish`, { cookie: a.cookie, body: {} })).status).toBe(200)
+  })
+
+  it('needs admin + sudo and refuses drafts, versions already in force and unknown ids (409 not_scheduled)', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithDraft(h)
+    const draft = await h.call('POST', `${B}/versions/${id}/unschedule`, { cookie: a.cookie, body: {} })
+    expect([draft.status, draft.json?.error]).toEqual([409, 'not_scheduled'])
+    await schedule(h, a, id)
+    const s = await account(h, 'support')
+    await elevate(h, s)
+    expect((await h.call('POST', `${B}/versions/${id}/unschedule`, { cookie: s.cookie, body: {} })).status).toBe(403)
+    now += 31 * 60_000 // sudo lapses
+    const lapsed = await h.call('POST', `${B}/versions/${id}/unschedule`, { cookie: a.cookie, body: {} })
+    expect([lapsed.status, lapsed.json?.error]).toEqual([403, 'elevation_required'])
+    await elevate(h, a)
+    now = T0 + 2 * HOUR + 1 // it has entered into force
+    await elevate(h, a)
+    const live = await h.call('POST', `${B}/versions/${id}/unschedule`, { cookie: a.cookie, body: {} })
+    expect([live.status, live.json?.error]).toEqual([409, 'not_scheduled'])
+    expect((await h.call('POST', `${B}/versions/99999/unschedule`, { cookie: a.cookie, body: {} })).status).toBe(404)
+  })
+
+  it('announces the hash again when the cancelled version was the next one only after it was in force (no change before)', async () => {
+    const h = makeApp()
+    const events: ServerEvent[] = []
+    h.bus.subscribe({ userId: 'w', sessionId: 's', send: (e) => events.push(e), close: () => {} })
+    await h.deps.content.check()
+    const { a, id } = await adminWithDraft(h)
+    await schedule(h, a, id)
+    events.length = 0
+    expect((await h.call('POST', `${B}/versions/${id}/unschedule`, { cookie: a.cookie, body: {} })).status).toBe(200)
+    expect(events).toEqual([]) // the live hash did not change
+  })
+})
+
+describe('big-change guard against what is live', () => {
+  it('a draft made from live does not ask again for values already live; one that moves them further does', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithDraft(h, RISKY)
+    expect((await h.call('POST', `${B}/drafts/${id}/publish`, { cookie: a.cookie, body: { confirm: true } })).status).toBe(200)
+    const copy = asVersion(await h.call('POST', `${B}/drafts`, { cookie: a.cookie, body: { from: 'active' } })).version.id
+    // Add an unrelated, small change: the x5.7 shiny chance is already live and is not touched.
+    const patch = { config: { encounters: { shinyChance: 0.01 }, rewards: { dustPerMinute: 7 } } }
+    const v = asVersion(await h.call('PUT', `${B}/drafts/${copy}`, { cookie: a.cookie, body: { patch } })).version
+    expect(v.validation).toMatchObject({ requiresConfirm: false })
+    const ok = await h.call('POST', `${B}/drafts/${copy}/publish`, { cookie: a.cookie, body: {} })
+    expect(ok.status).toBe(200)
+    // Dropping it back to the base (x5.7 down from what is live) does need the tick.
+    const next = asVersion(await h.call('POST', `${B}/drafts`, { cookie: a.cookie, body: { from: 'active' } })).version.id
+    const big = asVersion(await h.call('PUT', `${B}/drafts/${next}`, { cookie: a.cookie, body: { patch: {} } })).version
+    expect(big.validation?.requiresConfirm).toBe(true)
+  })
+})
+
 describe('spawn preview', () => {
   const preview = async (h: Harness, a: Acct, qs = '') => {
     const r = await h.call('GET', `${B}/spawn-preview${qs}`, { cookie: a.cookie })

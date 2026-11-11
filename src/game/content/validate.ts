@@ -88,6 +88,11 @@ export interface ValidateEventOptions {
   allEventItems?: Record<string, ContentItem>
   /** Other events active at the same time (resolved together in the smoke test). */
   otherEvents?: readonly EventOverlay[]
+  /**
+   * The published version of this same event, when it is being edited: the big-change guard only fires for
+   * values the edit changes, not for ones that were already confirmed when the event was published.
+   */
+  previous?: EventOverlay | null
   smoke?: boolean | SmokeOptions
 }
 
@@ -186,41 +191,56 @@ function bigChange(base: number, next: number, kind: LimitKind): boolean {
   return r > (kind === 'prob' ? BIG_CHANGE_FACTOR_PROB : BIG_CHANGE_FACTOR)
 }
 
-function guard(issues: Issues, path: string, base: unknown, next: unknown, kind: LimitKind): void {
-  if (typeof base !== 'number' || typeof next !== 'number') return
-  if (!bigChange(base, next, kind)) return
+function guard(issues: Issues, path: string, ref: unknown, next: unknown, kind: LimitKind, from: 'base' | 'live'): void {
+  if (typeof ref !== 'number' || typeof next !== 'number') return
+  if (!bigChange(ref, next, kind)) return
   const factor = kind === 'prob' ? BIG_CHANGE_FACTOR_PROB : BIG_CHANGE_FACTOR
-  issues.warn('big_change', path, `changes more than ×${factor} vs base (${base} → ${next})`, { base, value: next, factor }, true)
+  issues.warn('big_change', path, `changes more than ×${factor} vs ${from === 'live' ? 'the live content' : 'base'} (${ref} → ${next})`, { base: ref, value: next, factor, kind, from }, true)
 }
 
 /**
  * Warnings (with `requiresConfirm`) for every number that moves more than ×3
- * (probabilities ×5) away from the base, or drops to 0. Exported for the
- * admin form (per-field badge).
+ * (probabilities ×5) away from what is in force, or drops to 0. Exported for
+ * the admin form (per-field badge).
+ *
+ * The reference is the patch of the version in force (`active`, what really
+ * changes when this one is published), so a draft made «from live» does not
+ * ask again for values that are already live and that it leaves alone. With no
+ * `active` (a plain draft check, no server context) the reference is the base.
+ * A value the draft drops (back to the base) counts as a change too.
  */
-export function bigChangeWarnings(patch: ContentPatch, base: EngineContext = baseContext()): ValidationIssue[] {
+export function bigChangeWarnings(patch: ContentPatch, base: EngineContext = baseContext(), active?: ContentPatch | null): ValidationIssue[] {
   const issues = new Issues()
+  if (active && Object.keys(active).length === 0) active = null
+  const from = active ? 'live' : 'base'
   const cfg = patch.config ?? {}
-  for (const l of CONFIG_LIMITS) {
-    if (hasPath(cfg, l.path)) guard(issues, `config.${l.path}`, getPath(base.config, l.path), getPath(cfg, l.path), l.kind)
-  }
+  const acfg = active?.config ?? {}
+  /** The value a patch gives a config path, else the base one. */
+  const val = (c: object, path: string) => (hasPath(c, path) ? getPath(c, path) : getPath(base.config, path))
+  for (const l of CONFIG_LIMITS) guard(issues, `config.${l.path}`, val(acfg, l.path), val(cfg, l.path), l.kind, from)
   for (const l of CONFIG_LIST_LIMITS) {
-    const next = getPath(cfg, l.path)
-    const prev = getPath(base.config, l.path)
-    if (Array.isArray(next) && Array.isArray(prev)) next.forEach((v, i) => guard(issues, `config.${l.path}.${i}`, prev[i], v, l.item.kind))
+    const next = val(cfg, l.path)
+    const prev = val(acfg, l.path)
+    if (Array.isArray(next) && Array.isArray(prev)) next.forEach((v, i) => guard(issues, `config.${l.path}.${i}`, prev[i], v, l.item.kind, from))
   }
-  for (const [slug, p] of Object.entries(patch.species ?? {})) {
+  const slugs = (a: object | undefined, b: object | undefined) => [...new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})])]
+  for (const slug of slugs(patch.species, active?.species)) {
     const sp = base.speciesBySlug.get(slug)
-    if (sp && p.captureRate !== undefined) guard(issues, `species.${slug}.captureRate`, sp.captureRate, p.captureRate, 'int')
-    if (p.spawn?.weightMult !== undefined) guard(issues, `species.${slug}.spawn.weightMult`, 1, p.spawn.weightMult, 'mult')
+    const next = patch.species?.[slug]
+    const prev = active?.species?.[slug]
+    if (sp) guard(issues, `species.${slug}.captureRate`, prev?.captureRate ?? sp.captureRate, next?.captureRate ?? sp.captureRate, 'int', from)
+    guard(issues, `species.${slug}.spawn.weightMult`, prev?.spawn?.weightMult ?? 1, next?.spawn?.weightMult ?? 1, 'mult', from)
   }
-  for (const [slug, p] of Object.entries(patch.moves ?? {})) {
+  for (const slug of slugs(patch.moves, active?.moves)) {
     const m = base.movesBySlug.get(slug)
-    if (m && p.power != null && m.power != null) guard(issues, `moves.${slug}.power`, m.power, p.power, 'int')
+    const next = patch.moves?.[slug]?.power ?? m?.power
+    const prev = active?.moves?.[slug]?.power ?? m?.power
+    if (m && m.power != null) guard(issues, `moves.${slug}.power`, prev, next, 'int', from)
   }
-  for (const [slug, t] of Object.entries(patch.techniques ?? {})) {
-    const b = base.techniques[slug]
-    if (b?.baseChance !== undefined && t.baseChance !== undefined) guard(issues, `techniques.${slug}.baseChance`, b.baseChance, t.baseChance, 'prob')
+  for (const slug of slugs(patch.techniques, active?.techniques)) {
+    const b = base.techniques[slug]?.baseChance
+    if (b === undefined) continue
+    guard(issues, `techniques.${slug}.baseChance`, active?.techniques?.[slug]?.baseChance ?? b, patch.techniques?.[slug]?.baseChance ?? b, 'prob', from)
   }
   return issues.warnings
 }
@@ -526,7 +546,7 @@ export function validateContentPatch(input: unknown, opts: ValidateContentOption
   checkConfig(issues, ctx.config, patch.config)
   checkMissions(issues, patch, opts.previous, ctx, opts.allEventItems ?? {})
   for (const i of coverageIssues(ctx)) issues.errors.push(i)
-  issues.warnings.push(...bigChangeWarnings(patch, base))
+  issues.warnings.push(...bigChangeWarnings(patch, base, opts.previous))
 
   const smoke = smokeOpts(opts.smoke)
   if (smoke && issues.errors.length === 0) issues.errors.push(...smokeTest(ctx, smoke))
@@ -570,17 +590,18 @@ export function validateEventOverlay(input: unknown, opts: ValidateEventOptions 
     else if (isLegendarySpecies(sp)) issues.warn('featured_legendary', `${p}.species`, 'featuring a legendary only changes which legendary appears, not how often (use legendaryChanceMult)')
     if (featured.has(f.species)) issues.error('duplicate_featured', `${p}.species`, `${f.species} featured twice`)
     featured.add(f.species)
-    if (f.weightMult > BIG_CHANGE_FACTOR) issues.warn('big_change', `${p}.weightMult`, `featured weight ×${f.weightMult}`, { value: f.weightMult, factor: BIG_CHANGE_FACTOR }, true)
+    const was = opts.previous?.featured.find((x) => x.species === f.species)?.weightMult
+    if (f.weightMult > BIG_CHANGE_FACTOR && f.weightMult !== was) issues.warn('big_change', `${p}.weightMult`, `featured weight ×${f.weightMult}`, { value: f.weightMult, factor: BIG_CHANGE_FACTOR }, true)
   })
   if (ev.shiny) {
     const base = ctx.config.encounters.shinyChance
     if (ev.shiny.scope === 'featured' && ev.featured.length === 0) issues.error('shiny_no_featured', 'shiny.scope', 'shiny scope "featured" without featured species')
     if (ev.shiny.chance <= base) issues.warn('shiny_not_higher', 'shiny.chance', 'event shiny chance not above the base one (no effect)')
-    else if (base > 0 && ev.shiny.chance / base > BIG_CHANGE_FACTOR_PROB) {
+    else if (base > 0 && ev.shiny.chance / base > BIG_CHANGE_FACTOR_PROB && ev.shiny.chance !== opts.previous?.shiny?.chance) {
       issues.warn('big_change', 'shiny.chance', `shiny chance ×${(ev.shiny.chance / base).toFixed(1)} vs base`, { base, value: ev.shiny.chance, factor: BIG_CHANGE_FACTOR_PROB }, true)
     }
   }
-  if (ev.legendaryChanceMult !== undefined && ev.legendaryChanceMult > BIG_CHANGE_FACTOR) {
+  if (ev.legendaryChanceMult !== undefined && ev.legendaryChanceMult > BIG_CHANGE_FACTOR && ev.legendaryChanceMult !== opts.previous?.legendaryChanceMult) {
     issues.warn('big_change', 'legendaryChanceMult', `legendary chance ×${ev.legendaryChanceMult}`, { value: ev.legendaryChanceMult, factor: BIG_CHANGE_FACTOR }, true)
   }
   const dropItems = new Set<string>()

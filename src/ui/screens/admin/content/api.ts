@@ -60,6 +60,8 @@ export const contentApi = {
   publish: (id: number, body: PublishInput) => api.post<AdminContentVersionResponse>(`${draft(id)}/publish`, body),
   /** Admin + sudo: a NEW published version with the old patch. */
   rollback: (id: number, body: { confirm?: boolean; note?: string } = {}) => api.post<AdminContentVersionResponse>(`${version(id)}/rollback`, body),
+  /** Admin + sudo: a scheduled version that is not in force yet goes back to a draft (409 `not_scheduled`). */
+  unschedule: (id: number) => api.post<AdminContentVersionResponse>(`${version(id)}/unschedule`, {}),
   spawnPreview: (q: SpawnPreviewQuery) => {
     const p = new URLSearchParams({ hour: String(q.hour), weather: q.weather, trainerLevel: String(q.trainerLevel) })
     if (q.versionId !== undefined) p.set('versionId', String(q.versionId))

@@ -3,7 +3,7 @@
  * «1% → 2%». Pure apart from the i18n lookups (pass `t`/`lng` in).
  */
 import i18n from 'i18next'
-import { CONFIG_LIMITS, CONFIG_LIST_LIMITS, CONFIG_TABLE_LIMITS, configLimit } from '../../../../game/content/limits'
+import { CONFIG_LIMITS, CONFIG_LIST_LIMITS, CONFIG_TABLE_LIMITS, configLimit, type LimitKind } from '../../../../game/content/limits'
 import type { ContentIssue } from '../../../../game/protocol'
 import type { LocaleCode } from '../../../../engine/data-types'
 import { moveName, speciesName } from '../../../lib/names'
@@ -64,7 +64,23 @@ export function valueText(path: string, v: unknown, t: T, lng: string): string {
 
 /** Text of a validation issue: the translated copy for its code, else the server's English message. */
 export function issueText(issue: ContentIssue, t: T): string {
+  const p = issue.params
+  // The ×3/×5 guard: numbers the way the form and the diff print them (a probability as %, not 0.00136 → 0.01),
+  // and the reference it was compared with (the content in force, or the base when nothing is published).
+  if (issue.code === 'big_change' && typeof p?.base === 'number' && typeof p.value === 'number') {
+    const kind = (typeof p.kind === 'string' ? p.kind : undefined) as LimitKind | undefined
+    const show = (v: number) => (kind ? `${formatNumber(kind, v, i18n.language)}${unitOf(issue.path, kind)}` : valueText(issue.path, v, t, i18n.language))
+    return t(p.from === 'live' ? 'admin.content.issues.big_change_live' : 'admin.content.issues.big_change', { ...p, path: issue.path, base: show(p.base), value: show(p.value) })
+  }
   const key = `admin.content.issues.${issue.code}`
-  const slots = issue.params?.slots
-  return i18n.exists(key) ? t(key, { ...issue.params, path: issue.path, ...(Array.isArray(slots) && { slotCount: slots.length }) }) : issue.message
+  const slots = p?.slots
+  return i18n.exists(key) ? t(key, { ...p, path: issue.path, ...(Array.isArray(slots) && { slotCount: slots.length }) }) : issue.message
+}
+
+/** Unit suffix of a config path (` min`, ` s`…; none for probabilities, which carry the %). */
+function unitOf(path: string, kind: LimitKind): string {
+  if (kind === 'prob' || !path.startsWith('config.')) return ''
+  const rest = path.slice('config.'.length)
+  const limit = configLimit(rest) ?? CONFIG_LIST_LIMITS.find((l) => rest.startsWith(`${l.path}.`))?.item
+  return limit?.unit ? ` ${limit.unit}` : ''
 }

@@ -187,7 +187,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
   }
 
   const gate = (r: FakeRow, confirm: boolean | undefined): Response | null => {
-    const v = validateContentPatch(r.patch, { smoke: { sessions: 20 } })
+    const v = validateContentPatch(r.patch, { previous: activeRow()?.patch, smoke: { sessions: 20 } })
     if (!v.ok) return json(422, { error: 'validation_failed', errors: v.errors, warnings: v.warnings, requiresConfirm: v.requiresConfirm })
     if (v.requiresConfirm && !confirm) return json(409, { error: 'confirm_required', warnings: v.warnings.filter((w) => w.requiresConfirm) })
     return null
@@ -219,7 +219,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
     if (parts[0] === 'live' && method === 'GET') {
       const active = activeRow()
       const sched = scheduledRow()
-      return json(200, { hash: active ? `h${active.id}` : 'base', baseHash: 'base', active: active && summary(active), scheduled: sched && summary(sched), events: [], serverNow: fake.now })
+      return json(200, { hash: active ? `h${active.id}` : 'base', baseHash: 'base', active: active && summary(active), patch: active?.patch ?? {}, scheduled: sched && summary(sched), events: [], serverNow: fake.now })
     }
     if (parts[0] === 'versions' && parts.length === 1 && method === 'GET') {
       const status = params.get('status')
@@ -243,6 +243,16 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
       row.effectiveAt = fake.now
       return json(201, body(row))
     }
+    if (parts[0] === 'versions' && parts[2] === 'unschedule' && method === 'POST') {
+      const denied = needAdmin() ?? needSudo()
+      if (denied) return denied
+      const r = fake.rows.get(Number(parts[1]))
+      if (!r) return json(404, { error: 'not_found' })
+      if (r.status !== 'published' || r.effectiveAt === null || r.effectiveAt <= fake.now) return json(409, { error: 'not_scheduled' })
+      r.status = 'draft'
+      r.effectiveAt = null
+      return json(200, body(r))
+    }
     if (parts[0] === 'drafts' && parts.length === 1 && method === 'POST') {
       const denied = needAdmin()
       if (denied) return denied
@@ -261,7 +271,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
       }
       const row = fake.seedDraft(patch, (data.title as string) || undefined)
       row.parentId = parentId
-      row.validation = toValidation(validateContentPatch(patch, { smoke: false }), false, fake.now)
+      row.validation = toValidation(validateContentPatch(patch, { previous: activeRow()?.patch, smoke: false }), false, fake.now)
       return json(201, body(row))
     }
     if (parts[0] === 'drafts') {
@@ -273,7 +283,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
       if (parts.length === 2 && method === 'PUT') {
         if (data.patch !== undefined) {
           r.patch = data.patch as ContentPatch
-          r.validation = toValidation(validateContentPatch(r.patch, { smoke: false }), false, fake.now)
+          r.validation = toValidation(validateContentPatch(r.patch, { previous: activeRow()?.patch, smoke: false }), false, fake.now)
         }
         if (data.title !== undefined) r.title = (data.title as string | null) || null
         if (data.note !== undefined) r.note = (data.note as string | null) || null
@@ -289,7 +299,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
         const seeds = (data.seeds as number | undefined) ?? 4
         const weeks = (data.weeks as number | undefined) ?? 4
         if (profiles.length * seeds * weeks > ADMIN_SIM_MAX_PLAYER_WEEKS) return json(400, { error: 'sim_too_big', max: ADMIN_SIM_MAX_PLAYER_WEEKS })
-        const v = validateContentPatch(r.patch, { smoke: false })
+        const v = validateContentPatch(r.patch, { previous: activeRow()?.patch, smoke: false })
         if (!v.ok) return json(422, { error: 'validation_failed', errors: v.errors, warnings: v.warnings, requiresConfirm: v.requiresConfirm })
         const active = activeRow()
         const run: AdminSimRun = {
@@ -311,7 +321,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
         return json(202, { run: { ...run }, serverNow: fake.now })
       }
       if (parts[2] === 'validate' && method === 'POST') {
-        r.validation = toValidation(validateContentPatch(r.patch, { smoke: { sessions: 20 } }), true, fake.now)
+        r.validation = toValidation(validateContentPatch(r.patch, { previous: activeRow()?.patch, smoke: { sessions: 20 } }), true, fake.now)
         return json(200, { validation: r.validation, diff: diffPatches(activeRow()?.patch ?? {}, r.patch), serverNow: fake.now })
       }
       if (parts[2] === 'publish' && method === 'POST') {
@@ -324,7 +334,7 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
         r.status = 'published'
         r.effectiveAt = at ?? fake.now
         if (typeof data.note === 'string' && data.note) r.note = data.note
-        r.validation = toValidation(validateContentPatch(r.patch, { smoke: { sessions: 20 } }), true, fake.now)
+        r.validation = toValidation(validateContentPatch(r.patch, { previous: activeRow()?.patch, smoke: { sessions: 20 } }), true, fake.now)
         return json(200, body(r))
       }
     }
