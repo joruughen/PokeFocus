@@ -1,77 +1,32 @@
-import { useId, useMemo, type ReactNode, type TextareaHTMLAttributes } from 'react'
+import { useId, type ReactNode, type TextareaHTMLAttributes } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext } from '../../../../engine'
-import { Button, IconButton, TextField } from '../../../components'
+import { Button, IconButton } from '../../../components'
 import { cx } from '../../../lib/cx'
-import { asLocale, itemName, speciesName } from '../../../lib/names'
+import { ItemCombobox, SpeciesCombobox } from '../pickers'
 
-export const SPECIES_LIST = 'event-species-options'
-export const ITEM_LIST = 'event-item-options'
-
-/** `<datalist>`s of the species and items the form suggests (the event's own items too). One per form. */
-export function EventDatalists({ ownItems }: { ownItems: readonly string[] }) {
-  const { i18n } = useTranslation()
-  const lng = asLocale(i18n.language)
-  const ctx = defaultContext()
-  const species = useMemo(() => ctx.data.species.map((s) => ({ slug: s.slug, name: speciesName(s.slug, lng) })), [ctx, lng])
-  const items = useMemo(() => [...new Set([...ctx.data.items.map((i) => i.slug), ...Object.keys(ctx.missions.placeholderItems)])].map((slug) => ({ slug, name: itemName(slug, lng) })), [ctx, lng])
-  return (
-    <>
-      <datalist id={SPECIES_LIST}>
-        {species.map((s) => (
-          <option key={s.slug} value={s.slug}>
-            {s.name}
-          </option>
-        ))}
-      </datalist>
-      <datalist id={ITEM_LIST}>
-        {[...items, ...ownItems.filter((o) => o && !items.some((i) => i.slug === o)).map((slug) => ({ slug, name: slug }))].map((i) => (
-          <option key={i.slug} value={i.slug}>
-            {i.name}
-          </option>
-        ))}
-      </datalist>
-    </>
-  )
-}
-
-/** A species slug with name suggestions; says which species it is, or that it is unknown. */
+/** A species picker (searchable by name, slug or number); the value is the slug. Says if the stored slug is unknown. */
 export function SpeciesInput({ label, value, onChange, disabled }: { label: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const known = defaultContext().speciesBySlug.has(value)
   return (
-    <TextField
+    <SpeciesCombobox
       label={label}
       value={value}
-      onChange={(e) => onChange(e.target.value.trim().toLowerCase())}
-      list={SPECIES_LIST}
-      autoComplete="off"
-      spellCheck={false}
+      onChange={onChange}
       disabled={disabled}
       error={value !== '' && !known ? t('eventsAdmin.unknownSpecies') : null}
-      hint={known ? speciesName(value, asLocale(i18n.language)) : t('eventsAdmin.speciesHint')}
+      hint={known ? value : t('eventsAdmin.speciesHint')}
     />
   )
 }
 
-/** An item slug with suggestions (game items, mission-only items and this event's own items). */
+/** An item picker (game items, mission-only items and this event's own items; other slugs are kept as typed). */
 export function ItemInput({ label, value, onChange, own, disabled }: { label: string; value: string; onChange: (v: string) => void; own: readonly string[]; disabled?: boolean }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const ctx = defaultContext()
   const known = value === '' || ctx.data.items.some((i) => i.slug === value) || value in ctx.missions.placeholderItems || own.includes(value)
-  return (
-    <TextField
-      label={label}
-      value={value}
-      onChange={(e) => onChange(e.target.value.trim().toLowerCase())}
-      list={ITEM_LIST}
-      autoComplete="off"
-      spellCheck={false}
-      disabled={disabled}
-      error={!known ? t('eventsAdmin.unknownItem') : null}
-      hint={value !== '' && known ? itemName(value, asLocale(i18n.language)) : t('eventsAdmin.itemHint')}
-    />
-  )
+  return <ItemCombobox label={label} value={value} onChange={onChange} own={own} disabled={disabled} error={!known ? t('eventsAdmin.unknownItem') : null} hint={value !== '' && known ? value : t('eventsAdmin.itemHint')} />
 }
 
 /** A repeating group: title, the rows (each with a remove button), and an add button. */

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { baseContent } from '../../../../engine/context'
 import type { ContentPatch } from '../../../../engine/content'
 import type { ContentIssue } from '../../../../game/protocol'
-import { Button, Panel, Select } from '../../../components'
+import { Button, Combobox, Panel } from '../../../components'
 import { parseRaw, rawText, RAW_SECTIONS, setRawSection, type RawSection } from './dataEdits'
 import { issueText } from './describe'
 import type { IssueSet } from './live'
@@ -109,7 +109,7 @@ function RawEditor({ section, patch, issues, disabled, onPatch }: Props & { sect
           </Button>
           {baseDefs && (
             <>
-              <Select label={t('admin.content.advanced.baseSlug')} options={[{ value: '', label: '—' }, ...slugs]} value={base} onChange={setBase} className="min-w-52" />
+              <Combobox label={t('admin.content.advanced.baseSlug')} options={slugs} value={base} onChange={setBase} className="min-w-52" />
               <Button size="sm" variant="secondary" icon="copy" disabled={disabled || !base} onClick={copyBase}>
                 {t('admin.content.advanced.copyBase')}
               </Button>

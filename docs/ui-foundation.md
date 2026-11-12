@@ -150,6 +150,7 @@ Import from `src/ui/components`. Every component takes `className`.
 | `PixelIcon` | `name: IconName`, `size` (multiples of 10), `label?` | 10×10 pixel UI icons. Add one by adding a grid in `PixelIcon.tsx` |
 | `Segmented` | `options`, `value`, `onChange`, `label`, `size` | One-of-many pixel keys (ToggleGroup) |
 | `Select` | `options`, `value`, `onChange`, `label` | Base UI Select |
+| `Combobox` | `options` (`value`, `label`, `keywords`, `code`, `icon`, `secondary`, `trailing`), `value`, `onChange`, `label`, `freeText`, `normalize`, `maxVisible` | Base UI Combobox: text input that filters while typing (accents/case ignored, starts-with before contains, Pokédex number); pure search in `comboboxFilter.ts`. Admin pickers (species, items) in `screens/admin/pickers.tsx` |
 
 Utilities (from `index.css`):
 

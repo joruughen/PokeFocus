@@ -1,9 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ADMIN_GRANT_LIMITS } from '../../../../game/admin'
-import { gameData } from '../../../../data'
-import { Button, Panel, Select, TextField } from '../../../components'
-import { asLocale, itemName } from '../../../lib/names'
+import { Button, Panel, TextField } from '../../../components'
+import { ItemCombobox } from '../pickers'
 import type { GrantInput } from './api'
 
 export interface GrantFormProps {
@@ -18,14 +17,12 @@ export interface GrantFormProps {
 
 /** Items + Dust + a mandatory reason, within the per-request caps of `src/game/admin.ts`. */
 export function GrantForm({ onGrant, onReauth, elevated, error, busy }: GrantFormProps) {
-  const { t, i18n } = useTranslation()
-  const lng = asLocale(i18n.language)
+  const { t } = useTranslation()
   const [item, setItem] = useState('poke-ball')
   const [count, setCount] = useState('')
   const [dust, setDust] = useState('')
   const [reason, setReason] = useState('')
   const [password, setPassword] = useState('')
-  const options = useMemo(() => gameData.items.map((i) => ({ value: i.slug, label: itemName(i.slug, lng) })).sort((a, b) => a.label.localeCompare(b.label, lng)), [lng])
 
   const n = count.trim() === '' ? 0 : Number(count)
   const d = dust.trim() === '' ? 0 : Number(dust)
@@ -48,7 +45,7 @@ export function GrantForm({ onGrant, onReauth, elevated, error, busy }: GrantFor
       <form className="flex flex-col gap-3" onSubmit={(e) => void submit(e).catch(() => undefined)}>
         <p className="text-mist-300">{t('admin.players.grant.body', { items: ADMIN_GRANT_LIMITS.maxPerItem, dust: ADMIN_GRANT_LIMITS.maxDust })}</p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Select label={t('admin.players.grant.item')} options={options} value={item} onChange={setItem} />
+          <ItemCombobox strict label={t('admin.players.grant.item')} value={item} onChange={setItem} />
           <TextField label={t('admin.players.grant.count')} inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value)} placeholder="0" />
         </div>
         <TextField label={t('admin.players.grant.dust')} inputMode="numeric" value={dust} onChange={(e) => setDust(e.target.value)} placeholder="0" />

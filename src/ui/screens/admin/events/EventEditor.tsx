@@ -27,7 +27,7 @@ import {
   type EventRequestBody,
 } from './draft'
 import { eventsErrorText, issuesOf, issueText, type IssueLike } from './errors'
-import { EventDatalists, ItemInput, Row, RowList, SpeciesInput } from './fields'
+import { ItemInput, Row, RowList, SpeciesInput } from './fields'
 import { ImagePicker } from './ImagePicker'
 import { RichField } from './RichField'
 import { SpawnPreview } from './SpawnPreview'
@@ -292,7 +292,6 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
 
   return (
     <form className="flex flex-col gap-6" onSubmit={(e) => void saveDraft(e)} noValidate aria-label={t('eventsAdmin.editor.label')}>
-      <EventDatalists ownItems={ownItems} />
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-2xl break-words">{d.nameEs || d.nameEn || t('eventsAdmin.editor.newTitle')}</h2>

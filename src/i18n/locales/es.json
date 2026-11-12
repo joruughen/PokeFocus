@@ -4,6 +4,16 @@
     "tagline": "Estudia. Captura. Evoluciona.",
     "disclaimer": "Proyecto personal sin fines de lucro. No está afiliado a Nintendo, Game Freak ni The Pokémon Company."
   },
+  "combobox": {
+    "show": "Mostrar opciones",
+    "noResults": "Sin resultados.",
+    "noResultsFree": "Sin resultados. Se usará «{{text}}» tal como está escrito.",
+    "more_one": "{{count}} más. Sigue escribiendo para acotar.",
+    "more_other": "{{count}} más. Sigue escribiendo para acotar.",
+    "stage": "Etapa {{n}}",
+    "pickSpecies": "Busca por nombre, identificador o número",
+    "pickItem": "Busca por nombre o identificador"
+  },
   "common": {
     "close": "Cerrar",
     "moreInfo": "Más información",
