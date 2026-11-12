@@ -146,11 +146,11 @@ export function Combobox({ label, options, value, onChange, freeText = false, no
         </div>
         <BaseCombobox.Portal>
           <BaseCombobox.Positioner sideOffset={6} className="z-50">
-            <BaseCombobox.Popup className="w-(--anchor-width) max-w-[calc(100vw-1.5rem)] bg-dusk-800 shadow-plate">
+            <BaseCombobox.Popup className="flex max-h-[min(22rem,var(--available-height))] w-(--anchor-width) flex-col bg-dusk-800 shadow-plate">
               <BaseCombobox.Empty className="px-3 py-3 text-mist-300 empty:hidden">
                 {freeText && query?.trim() ? t('combobox.noResultsFree', { text: query.trim() }) : t('combobox.noResults')}
               </BaseCombobox.Empty>
-              <BaseCombobox.List className="max-h-[min(20rem,calc(var(--available-height)-3rem))] overflow-y-auto overscroll-contain py-1">
+              <BaseCombobox.List className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
                 {(o: ComboboxOption) => (
                   <BaseCombobox.Item
                     key={o.value}
@@ -169,7 +169,7 @@ export function Combobox({ label, options, value, onChange, freeText = false, no
                   </BaseCombobox.Item>
                 )}
               </BaseCombobox.List>
-              {hidden > 0 && <p className="border-t-2 border-dusk-700 px-3 py-2 text-sm text-mist-400">{t('combobox.more', { count: hidden })}</p>}
+              {hidden > 0 && <p className="shrink-0 border-t-2 border-dusk-700 px-3 py-2 text-sm text-mist-400">{t('combobox.more', { count: hidden })}</p>}
             </BaseCombobox.Popup>
           </BaseCombobox.Positioner>
         </BaseCombobox.Portal>
