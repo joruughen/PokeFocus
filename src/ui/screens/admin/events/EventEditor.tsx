@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, MISSION_KINDS, type MissionKind } from '../../../../engine'
-import type { AdminEvent } from '../../../../game/protocol'
+import type { AdminEvent, AdminEventLinkedContent } from '../../../../game/protocol'
 import { Button, Dialog, DialogClose, IconButton, Panel, Select, Switch, TextField } from '../../../components'
 import { isApiError } from '../../../api'
 import { cx } from '../../../lib/cx'
@@ -10,6 +10,7 @@ import { fromLocalInput } from '../../../lib/maintenance'
 import { asLocale, typeName } from '../../../lib/names'
 import { useNow } from '../../../store/clock'
 import { EventCard } from '../../events/EventCard'
+import { useAdminNav } from '../nav'
 import { eventsAdminApi } from './api'
 import {
   blankDraft,
@@ -73,6 +74,8 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [audience, setAudience] = useState<{ players: number; connections: number } | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  /** Content versions tied to this event (loaded with the saved event; refreshed by every save). */
+  const [linked, setLinked] = useState<AdminEventLinkedContent[] | null>(null)
 
   const locked = d.status === 'archived'
   const published = d.status === 'published'
@@ -80,6 +83,20 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
   const set = <K extends keyof EventDraft>(k: K, v: EventDraft[K]) => setD((cur) => ({ ...cur, [k]: v }))
   const ownItems = useMemo(() => d.items.map((i) => i.slug).filter(Boolean), [d.items])
   const types = useMemo(() => defaultContext().data.types.types.map((ty) => ty.slug), [])
+
+  // The content tied to the event comes with the single-event read (the list does not carry it).
+  const savedId = event?.id ?? null
+  useEffect(() => {
+    if (!savedId) return
+    let live = true
+    void eventsAdminApi
+      .get(savedId)
+      .then((r) => live && setLinked(r.linkedContent ?? []))
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+  }, [savedId])
 
   // Live validation with the same code the server uses (loaded on demand: it carries zod and the engine).
   useEffect(() => {
@@ -106,6 +123,8 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
   const startMs = fromLocalInput(d.startsAt)
   const endMs = fromLocalInput(d.endsAt)
   const startsInFuture = !Number.isNaN(startMs) && startMs > now
+  const waiting = (linked ?? []).filter((v) => v.scheduled)
+  const datesChanged = d.startsAt !== saved.startsAt || d.endsAt !== saved.endsAt
   const ended = current !== null && current.endsAt <= now
   const risky = useMemo(() => {
     const fromLocal = (local?.warnings ?? []).filter((w) => w.requiresConfirm)
@@ -216,6 +235,9 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
         }
       }
       applySaved(res.event)
+      if (res.linkedContent) setLinked(res.linkedContent)
+      if (res.contentMoved?.length) setNotice(t('eventsAdmin.linked.moved', { count: res.contentMoved.length }))
+      else if (res.contentCancelled?.length) setNotice(t('eventsAdmin.linked.cancelled', { count: res.contentCancelled.length }))
       setDialog(null)
     } catch (err) {
       if (isApiError(err) && err.code === 'elevation_required') onElevated(false)
@@ -264,6 +286,9 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
     connections: audience?.connections ?? 0,
   })
   const issueGroups = serverIssues ?? (local ? { errors: local.errors, warnings: local.warnings } : null)
+  // The dialogs say what happens to the content tied to the event.
+  const tiedNote = waiting.length > 0 ? t(mode === 'archive' ? 'eventsAdmin.linked.archiveWarn' : 'eventsAdmin.linked.moveWarn', { count: waiting.length }) : null
+  const sudoBody = mode === 'announce' ? announceBody : tiedNote && (mode === 'archive' || (mode === 'save' && datesChanged)) ? `${t(`eventsAdmin.sudo.body.${mode}`, { name: eventLabel })} ${tiedNote}` : undefined
 
   return (
     <form className="flex flex-col gap-6" onSubmit={(e) => void saveDraft(e)} noValidate aria-label={t('eventsAdmin.editor.label')}>
@@ -549,6 +574,12 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
         </Panel>
       </fieldset>
 
+      {d.id && (
+        <Panel variant="frame" title={t('eventsAdmin.linked.title')} headingLevel={3}>
+          <LinkedContent linked={linked} published={published} waiting={waiting.length} datesChanged={datesChanged} />
+        </Panel>
+      )}
+
       <Panel variant="frame" title={t('eventsAdmin.validation.title')} headingLevel={3}>
         <Validation problems={problems} groups={issueGroups} fromServer={serverIssues !== null} saved={current?.validation ?? null} dirty={dirty} />
       </Panel>
@@ -625,7 +656,7 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
         onClose={() => setDialog(null)}
         mode={mode}
         eventName={(lng === 'en' ? d.nameEn || d.nameEs : d.nameEs || d.nameEn)}
-        body={mode === 'announce' ? announceBody : undefined}
+        body={sudoBody}
         elevated={elevated}
         risky={risky}
         busy={busy}
@@ -647,6 +678,43 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
         }
       />
     </form>
+  )
+}
+
+/** The content versions tied to the event, each one a link to the content tab, and what happens to them when the event changes. */
+function LinkedContent({ linked, published, waiting, datesChanged }: { linked: AdminEventLinkedContent[] | null; published: boolean; waiting: number; datesChanged: boolean }) {
+  const { t, i18n } = useTranslation()
+  const fmt = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' })
+  if (linked === null) return <p className="text-mist-400">{t('common.loading')}</p>
+  if (linked.length === 0) return <p className="text-mist-300">{t('eventsAdmin.linked.empty')}</p>
+  return (
+    <div className="flex flex-col gap-3">
+      <ul className="flex flex-col gap-2">
+        {linked.map((v) => (
+          <li key={v.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-dusk-900 p-3 inset-shadow-well">
+            <div className="min-w-0 flex-1 basis-56">
+              <p className="font-num text-lg break-words">{v.title ? `#${v.id} · ${v.title}` : `#${v.id}`}</p>
+              <p className="text-sm text-mist-300">
+                {t(`eventsAdmin.linked.role.${v.role}`)} · {fmt.format(v.effectiveAt)} · {t(`eventsAdmin.linked.state.${v.active ? 'active' : v.scheduled ? 'scheduled' : 'past'}`)}
+              </p>
+              {v.revertStale && (
+                <p role="note" className="text-sm text-amber-400">
+                  {t('admin.content.link.stale')}
+                </p>
+              )}
+            </div>
+            <Button size="sm" variant="secondary" onClick={() => useAdminNav.getState().openContentVersion(v.id)}>
+              {t('eventsAdmin.linked.open', { id: v.id })}
+            </Button>
+          </li>
+        ))}
+      </ul>
+      {published && waiting > 0 && (
+        <p className="text-sm text-mist-400" role={datesChanged ? 'status' : undefined}>
+          {t(datesChanged ? 'eventsAdmin.linked.moveWarn' : 'eventsAdmin.linked.hint', { count: waiting })}
+        </p>
+      )}
+    </div>
   )
 }
 

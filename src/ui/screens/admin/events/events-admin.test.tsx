@@ -292,6 +292,17 @@ describe('events list and editor markup', () => {
   })
 
   for (const lng of ['es', 'en'] as const) {
+    it(`a saved event has the «Content tied to this event» section; a new one does not (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const title = lng === 'es' ? 'Contenido atado a este evento' : 'Content tied to this event'
+      const html = editor(event({ status: 'published' }))
+      expect(html).not.toMatch(RAW_KEY)
+      expect(html).toContain(title)
+      expect(editor(null)).not.toContain(title)
+    })
+  }
+
+  for (const lng of ['es', 'en'] as const) {
     it(`a published event offers «Notify players» (not when ended or with unsaved changes), and the description has the format bar (${lng})`, async () => {
       await i18n.changeLanguage(lng)
       const es = lng === 'es'

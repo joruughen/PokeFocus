@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { AdminContentLiveResponse, AdminContentStatus, AdminContentVersionSummary } from '../../../../game/protocol'
 import { Button, IconButton, Panel, Segmented } from '../../../components'
 import { cx } from '../../../lib/cx'
+import { EventLinkLine } from './EventLink'
 import { canRollback, canUnschedule, shortHash, versionKind, versionName, type VersionKind } from './versions'
 
 const KIND_CLASS: Record<VersionKind, string> = {
@@ -42,6 +43,11 @@ function VersionCard({ title, version, empty, starts }: { title: string; version
               <dt className="text-mist-400">{t('admin.content.live.by')}</dt>
               <dd>{version.publishedBy.trainerName}</dd>
             </>
+          )}
+          {version.linkedEvent && (
+            <dd className="col-span-full">
+              <EventLinkLine v={version} />
+            </dd>
           )}
         </dl>
       ) : (
@@ -130,6 +136,7 @@ export function VersionsList({ items, filter, onFilter, canEdit, busy, onOpen, o
                     <span className="font-mono">{shortHash(v.hash)}</span>
                   </p>
                   {v.note && <p className="mt-0.5 break-words text-sm text-mist-300">{v.note}</p>}
+                  <EventLinkLine v={v} className="mt-0.5" />
                   {kind === 'draft' && (
                     <p className={cx('text-sm', val === null ? 'text-mist-400' : val.errors > 0 ? 'text-cheek-400' : val.warnings > 0 ? 'text-amber-400' : 'text-leaf-400')}>
                       {val === null ? t('admin.content.versions.notValidated') : t('admin.content.versions.validation', { errors: val.errors, warnings: val.warnings })}

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { AdminContentVersionResponse } from '../../../../game/protocol'
 import { Button, Panel } from '../../../components'
 import { DiffList, IssueList, ValidationSummary } from './ReviewPanel'
+import { EventLinkLine } from './EventLink'
 import { KindBadge } from './Overview'
 import { canRollback, canUnschedule, shortHash, versionKind, versionName } from './versions'
 
@@ -69,6 +70,15 @@ export function VersionView({ data, canEdit, busy, onBack, onRollback, onUnsched
             <>
               <dt className="text-mist-400">{t('admin.content.view.parent')}</dt>
               <dd className="font-num">#{v.parentId}</dd>
+            </>
+          )}
+          {v.linkedEvent && (
+            <>
+              <dt className="text-mist-400">{t('admin.content.link.event')}</dt>
+              <dd>
+                <EventLinkLine v={v} />
+                {v.revertOfVersionId !== null && <p className="text-sm text-mist-400">{t('admin.content.link.revertOf', { id: v.revertOfVersionId })}</p>}
+              </dd>
             </>
           )}
           {v.note && (

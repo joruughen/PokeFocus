@@ -1,7 +1,8 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tabs } from '../../components'
 import { useAuth } from '../../store/auth'
+import { useAdminNav } from './nav'
 import { visibleTabs } from './tabs'
 
 /**
@@ -15,6 +16,12 @@ export default function Admin() {
   const tabs = visibleTabs({ role })
   const [current, setCurrent] = useState<string | null>(null)
   const value = tabs.some((tab) => tab.id === current) ? current! : tabs[0]!.id
+  // A link from another tab (an event's tied content) asks for the content tab.
+  const wantsContent = useAdminNav((s) => s.contentVersionId !== null)
+  useEffect(() => {
+    if (wantsContent && tabs.some((tab) => tab.id === 'content')) setCurrent('content')
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when a request arrives
+  }, [wantsContent])
 
   return (
     <div className="flex max-w-6xl flex-col gap-6">

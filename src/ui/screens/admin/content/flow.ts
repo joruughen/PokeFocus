@@ -74,7 +74,7 @@ export const MAX_SCHEDULE_MS = 60 * 86_400_000
 /** Safety margin so a value that is valid now is still valid when it reaches the server. */
 const MARGIN_MS = 60_000
 
-export type SchedulePlan = { mode: 'now' } | { mode: 'later'; at: number }
+export type SchedulePlan = { mode: 'now' } | { mode: 'later'; at: number } | { mode: 'event'; eventId: string; revert: boolean }
 export type ScheduleProblem = 'invalid' | 'past' | 'tooFar'
 
 /** Check what the admin typed (a `datetime-local` value, in their own zone) as a publication time. */
@@ -89,5 +89,18 @@ export function checkSchedule(localValue: string, now: number): { ok: true; at: 
 /** Body of the publish request for the chosen plan. */
 export function publishInput(plan: SchedulePlan, confirm: boolean, note: string): PublishInput {
   const n = note.trim()
-  return { ...(plan.mode === 'later' && { effectiveAt: plan.at }), ...(confirm && { confirm: true }), ...(n && { note: n }) }
+  return {
+    ...(plan.mode === 'later' && { effectiveAt: plan.at }),
+    ...(plan.mode === 'event' && { linkEventId: plan.eventId, ...(plan.revert && { revertWhenEnds: true }) }),
+    ...(confirm && { confirm: true }),
+    ...(n && { note: n }),
+  }
 }
+
+/** The events a version can be tied to: published and not over, the soonest first. */
+export function linkableEvents<E extends { status: string; endsAt: number; startsAt: number }>(events: readonly E[], now: number): E[] {
+  return events.filter((e) => e.status === 'published' && e.endsAt > now).sort((a, b) => a.startsAt - b.startsAt)
+}
+
+/** When a version tied to an event takes effect: its start, or right now when the event already started (mirrors the server). */
+export const linkedEffectiveAt = (startsAt: number, now: number): number => Math.max(startsAt, now)

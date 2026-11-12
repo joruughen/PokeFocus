@@ -4,6 +4,8 @@
  * pure code the server uses (validateContentPatch, diffPatches, spawnPreview) over an in-memory table of versions,
  * and reproduces the API's contract: sudo mode (403 `elevation_required`, 403 `wrong_password`), 409
  * `confirm_required`, 422 `validation_failed`, 409 `not_draft` / `not_published`, the 20-draft cap and the 60-day schedule.
+ * Events: `GET /api/admin/events?status=` (what `seedEvent` added) and the publish options that tie a version to one
+ * (`linkEventId`, `revertWhenEnds`): the `end` copy, `event_not_linkable`, and the unschedule that takes the copy along.
  */
 import { vi } from 'vitest'
 import { createEngineContext, resolveContent, type ContentPatch } from '../../engine'
@@ -14,6 +16,8 @@ import type {
   AdminContentVersion,
   AdminContentVersionResponse,
   AdminContentVersionSummary,
+  AdminContentLinkRole,
+  AdminEvent,
   AdminSimCheck,
   AdminSimParams,
   AdminSimProfile,
@@ -37,6 +41,18 @@ export interface FakeRow {
   effectiveAt: number | null
   validation: AdminContentValidation | null
   createdAt: number
+  linkedEventId?: string | null
+  linkedRole?: AdminContentLinkRole | null
+  revertOfVersionId?: number | null
+}
+
+export interface FakeEvent {
+  id: string
+  slug: string
+  name: { es: string; en: string }
+  status: 'draft' | 'published' | 'archived'
+  startsAt: number
+  endsAt: number
 }
 
 export interface FakeAdminContent {
@@ -53,6 +69,9 @@ export interface FakeAdminContent {
   /** Add a published version that is in force (effective in the past). */
   seedPublished: (patch: ContentPatch, title?: string) => FakeRow
   seedDraft: (patch: ContentPatch, title?: string) => FakeRow
+  /** Live events the publish dialog can tie a version to (published by default). */
+  events: FakeEvent[]
+  seedEvent: (o: { slug: string; name?: { es: string; en: string }; startsAt: number; endsAt: number; status?: FakeEvent['status'] }) => FakeEvent
   /** Simulation runs (E10), newest last. A run stays `running` until `finishSims()` (or `simAutoFinish`). */
   sims: FakeSimRun[]
   /** Finish a running simulation on its next GET (default true). */
@@ -128,6 +147,12 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
       fake.rows.set(id, row)
       return row
     },
+    events: [],
+    seedEvent(o) {
+      const ev: FakeEvent = { id: `00000000-0000-4000-8000-${String(fake.events.length + 1).padStart(12, '0')}`, slug: o.slug, name: o.name ?? { es: o.slug, en: o.slug }, status: o.status ?? 'published', startsAt: o.startsAt, endsAt: o.endsAt }
+      fake.events.push(ev)
+      return ev
+    },
     sims: [],
     simAutoFinish: true,
     simBusy: false,
@@ -164,7 +189,28 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
   const scheduledRow = (): FakeRow | null =>
     [...fake.rows.values()].filter((r) => r.status === 'published' && r.effectiveAt !== null && r.effectiveAt > fake.now).sort((a, b) => a.effectiveAt! - b.effectiveAt!)[0] ?? null
 
-  const summary = (r: FakeRow): AdminContentVersionSummary => ({
+  const summary = (r: FakeRow): AdminContentVersionSummary => {
+    const ev = r.linkedEventId ? fake.events.find((e) => e.id === r.linkedEventId) : undefined
+    return {
+      ...base(r),
+      linkedEvent: ev ? { id: ev.id, slug: ev.slug, name: ev.name, status: ev.status, startsAt: ev.startsAt, endsAt: ev.endsAt } : null,
+      linkedRole: ev ? (r.linkedRole ?? 'start') : null,
+      revertOfVersionId: r.revertOfVersionId ?? null,
+      revertStale: staleRevert(r),
+    }
+  }
+  /** The `end` copy is out of date when another version sits between the event's start and end (or the baseline changed). */
+  const staleRevert = (r: FakeRow): boolean => {
+    if (r.linkedRole !== 'end' || r.status !== 'published' || r.effectiveAt === null || r.effectiveAt <= fake.now) return false
+    const ev = fake.events.find((e) => e.id === r.linkedEventId)
+    const start = r.revertOfVersionId ? (fake.rows.get(r.revertOfVersionId)?.effectiveAt ?? ev?.startsAt ?? fake.now) : (ev?.startsAt ?? fake.now)
+    const others = [...fake.rows.values()].filter((x) => x.status === 'published' && x.effectiveAt !== null && x.linkedEventId !== r.linkedEventId)
+    if (others.some((x) => x.effectiveAt! > start && x.effectiveAt! <= r.effectiveAt!)) return true
+    const before = others.filter((x) => x.effectiveAt! <= start).sort((a, b) => a.effectiveAt! - b.effectiveAt! || a.id - b.id).at(-1)
+    return JSON.stringify(before?.patch ?? {}) !== JSON.stringify(r.patch)
+  }
+
+  const base = (r: FakeRow): Omit<AdminContentVersionSummary, 'linkedEvent' | 'linkedRole' | 'revertOfVersionId' | 'revertStale'> => ({
     id: r.id,
     status: r.status,
     title: r.title,
@@ -213,6 +259,11 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
       fake.elevated = true
       return json(200, { role: fake.role, elevated: true, elevatedUntil: fake.now + 1_800_000, serverNow: fake.now })
     }
+    if (route === 'events' && method === 'GET') {
+      const status = params.get('status')
+      const items = fake.events.filter((e) => !status || e.status === status).map((e) => ({ ...e, description: e.name, imageId: null, image: null, overlay: { featured: [], drops: [], missions: [] }, revision: 1, announceRev: 0, validation: null, createdBy: null, createdAt: e.startsAt, updatedAt: e.startsAt, publishedBy: null, publishedAt: null, active: e.startsAt <= fake.now && fake.now < e.endsAt, scheduled: e.startsAt > fake.now }) satisfies AdminEvent)
+      return json(200, { items, serverNow: fake.now })
+    }
     if (!route!.startsWith('content/')) return json(404, { error: 'not_found' })
     const parts = route!.slice('content/'.length).split('/')
 
@@ -249,8 +300,16 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
       const r = fake.rows.get(Number(parts[1]))
       if (!r) return json(404, { error: 'not_found' })
       if (r.status !== 'published' || r.effectiveAt === null || r.effectiveAt <= fake.now) return json(409, { error: 'not_scheduled' })
-      r.status = 'draft'
-      r.effectiveAt = null
+      const cancel = (x: FakeRow) => {
+        x.status = 'draft'
+        x.effectiveAt = null
+        x.linkedEventId = null
+        x.linkedRole = null
+        x.revertOfVersionId = null
+      }
+      // The `end` copies of a cancelled `start` version go back to drafts with it.
+      if (r.linkedRole === 'start') for (const x of fake.rows.values()) if (x.revertOfVersionId === r.id && x.status === 'published' && x.effectiveAt !== null && x.effectiveAt > fake.now) cancel(x)
+      cancel(r)
       return json(200, body(r))
     }
     if (parts[0] === 'drafts' && parts.length === 1 && method === 'POST') {
@@ -329,10 +388,31 @@ export function installFakeAdminContent(opts: { role?: UserRole; elevated?: bool
         if (sudo) return sudo
         const at = data.effectiveAt as number | undefined
         if (at !== undefined && (at <= fake.now || at > fake.now + MAX_SCHEDULE_MS)) return json(400, { error: 'invalid_effective_at' })
+        const linkId = data.linkEventId as string | undefined
+        if (linkId !== undefined && at !== undefined) return json(400, { error: 'invalid_body' })
+        if (linkId !== undefined && !fake.events.some((e) => e.id === linkId)) return json(422, { error: 'unknown_event' })
+        const ev = linkId ? fake.events.find((e) => e.id === linkId) : undefined
+        if (ev && ev.status !== 'published') return json(409, { error: 'event_not_linkable', reason: 'not_published' })
+        if (ev && ev.endsAt <= fake.now) return json(409, { error: 'event_not_linkable', reason: 'ended' })
         const blocked = gate(r, data.confirm as boolean | undefined)
         if (blocked) return blocked
+        const when = ev ? Math.max(ev.startsAt, fake.now) : (at ?? fake.now)
+        // What «go back» restores: the latest version in force at that moment that is not tied to this event.
+        const before = ev && data.revertWhenEnds ? [...fake.rows.values()].filter((x) => x.status === 'published' && x.effectiveAt !== null && x.effectiveAt <= when && x.linkedEventId !== ev.id).sort((a, b) => a.effectiveAt! - b.effectiveAt! || a.id - b.id).at(-1) : undefined
         r.status = 'published'
-        r.effectiveAt = at ?? fake.now
+        r.effectiveAt = when
+        if (ev) {
+          r.linkedEventId = ev.id
+          r.linkedRole = 'start'
+          if (data.revertWhenEnds) {
+            const back = fake.seedPublished(before?.patch ?? {}, `Back after ${ev.slug}`)
+            back.parentId = before?.id ?? null
+            back.effectiveAt = ev.endsAt
+            back.linkedEventId = ev.id
+            back.linkedRole = 'end'
+            back.revertOfVersionId = r.id
+          }
+        }
         if (typeof data.note === 'string' && data.note) r.note = data.note
         r.validation = toValidation(validateContentPatch(r.patch, { previous: activeRow()?.patch, smoke: { sessions: 20 } }), true, fake.now)
         return json(200, body(r))
