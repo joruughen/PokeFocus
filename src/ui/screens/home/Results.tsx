@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { pokemonView, type MemberResult, type ProgressEvent, type TypeSlug } from '../../../engine'
 import { BallIcon, Button, Panel, PixelIcon, ProgressBar, Sprite, Stage, StageTeam, toast, Tooltip, TypeBadge } from '../../components'
@@ -16,6 +17,14 @@ import { eventDrops } from './sessionReportModel'
 import { GroupFairyNote } from './GroupStudy'
 import { StudyStyleLine } from './SoundStyle'
 import { useContent } from '../../store/content'
+
+/** "120 Study Dust, 3× Poké Ball, …" for the trainer level-up line (the window shows them with sprites). */
+function levelUpRewardsText(e: Extract<ProgressEvent, { type: 'trainerLevelUp' }>, t: TFunction, names: ReturnType<typeof useNames>, lng: string): string {
+  const parts: string[] = []
+  if (e.dust) parts.push(`${fmtInt(e.dust, lng)} ${t('items.dust')}`)
+  for (const [slug, n] of Object.entries(e.items ?? {})) if (n > 0) parts.push(`${n}× ${names.item(slug)}`)
+  return parts.join(', ')
+}
 
 /** What the session produced, and why. */
 export function Results() {
@@ -164,7 +173,9 @@ export function Results() {
                 <p key={i} className="mt-4 flex items-center gap-2 bg-dusk-900 p-3 text-sm inset-shadow-well">
                   <PixelIcon name="star" size={16} className="text-volt-400" />
                   {e.type === 'trainerLevelUp'
-                    ? t('results.trainerLevelUp', { level: e.to })
+                    ? e.dust || (e.items && Object.keys(e.items).length > 0)
+                      ? t('results.trainerLevelUpRewards', { level: e.to, rewards: levelUpRewardsText(e, t, names, lng) })
+                      : t('results.trainerLevelUp', { level: e.to })
                     : t('results.leagueUp', { league: t(`league.names.${e.to}`) })}
                 </p>
               ))}

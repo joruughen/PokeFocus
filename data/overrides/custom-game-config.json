@@ -364,6 +364,17 @@
     },
     "monthlyMultiplier": 4
   },
+  "trainer": {
+    "levelRewards": {
+      "dustBase": 50,
+      "dustPerLevel": 10,
+      "tiers": [
+        { "step": 1, "poke-ball": 3, "great-ball": 0, "ultra-ball": 0, "potion": 0, "super-potion": 0, "hyper-potion": 0 },
+        { "step": 5, "poke-ball": 0, "great-ball": 3, "ultra-ball": 0, "potion": 1, "super-potion": 0, "hyper-potion": 0 },
+        { "step": 10, "poke-ball": 0, "great-ball": 0, "ultra-ball": 2, "potion": 0, "super-potion": 0, "hyper-potion": 0 }
+      ]
+    }
+  },
   "starters": [
     "bulbasaur",
     "charmander",

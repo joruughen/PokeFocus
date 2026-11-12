@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { trainerLevelRewards } from '../../src/engine/index.ts'
 import { DAMAGE_POLICIES, type DamagePolicy } from './capture-policy.ts'
 import { makeContext } from './experiments.ts'
 import { runPipeline } from './pipeline.ts'
@@ -33,6 +34,17 @@ describe('balance simulator (smoke, 1 week, 1 seed)', () => {
     expect(m.days).toHaveLength(7)
     // The mirror of the engine's condition environment must agree with the engine.
     expect(m.tally.condMismatch).toBe(0)
+  })
+
+  it('applies the trainer level-up rewards like the game and tallies them', () => {
+    const m = week1()
+    const lvl = m.days[m.days.length - 1]!.trainerLevel
+    expect(lvl).toBeGreaterThan(1)
+    const rw = trainerLevelRewards(1, lvl, ctx)
+    expect(m.tally.dustFromLevelUps).toBe(rw.dust)
+    expect(m.tally.pokeBallsFromLevelUps).toBe(rw.items['poke-ball'] ?? 0)
+    expect(m.tally.greatBallsFromLevelUps).toBe(rw.items['great-ball'] ?? 0)
+    expect(m.tally.dustEarned).toBeGreaterThanOrEqual(rw.dust)
   })
 
   it('damage split policies all play; manual policies change the outcome', () => {

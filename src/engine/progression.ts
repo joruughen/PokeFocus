@@ -60,6 +60,61 @@ export function trainerLevelFromExp(exp: number, ctx: EngineContext = defaultCon
   return lvl
 }
 
+/** What a trainer level-up (or several) gave: items and Dust. */
+export interface TrainerLevelRewards {
+  items: Record<string, number>
+  dust: number
+}
+
+/**
+ * Rewards for reaching trainer levels `from + 1 … to` (summed; `to` is capped at `trainer.maxLevel`). Each level L
+ * gives `dustBase + dustPerLevel · L` Dust and the items of every tier whose `step` divides L
+ * (`trainer.levelRewards`). Pure: no RNG, no state.
+ */
+export function trainerLevelRewards(from: number, to: number, ctx: EngineContext = defaultContext()): TrainerLevelRewards {
+  const cfg = ctx.config.trainer
+  const rw = cfg.levelRewards
+  const out: TrainerLevelRewards = { items: {}, dust: 0 }
+  if (!rw) return out
+  const last = Math.min(Math.floor(to), cfg.maxLevel)
+  for (let lvl = Math.max(1, Math.floor(from) + 1); lvl <= last; lvl++) {
+    out.dust += Math.max(0, Math.round(rw.dustBase + rw.dustPerLevel * lvl))
+    for (const tier of rw.tiers) {
+      if (!(tier.step >= 1) || lvl % Math.floor(tier.step) !== 0) continue
+      for (const [slug, n] of Object.entries(tier)) {
+        if (slug !== 'step' && n > 0) out.items[slug] = (out.items[slug] ?? 0) + Math.floor(n)
+      }
+    }
+  }
+  return out
+}
+
+/** Most pending level-up notices kept (older ones are merged into the oldest kept). */
+export const MAX_PENDING_LEVEL_UPS = 20
+
+/**
+ * The player climbed from trainer level `from` to `to` at `at`: gives the Dust and items of `trainerLevelRewards`
+ * and queues a notice in `pendingLevelUps` (the UI window). It does NOT change `state.trainer`; callers set the
+ * new level themselves. No-op when `to <= from`.
+ */
+export function grantTrainerLevelUp(state: PlayerState, from: number, to: number, at: number, ctx: EngineContext = defaultContext()): PlayerState {
+  const last = Math.min(to, ctx.config.trainer.maxLevel)
+  if (last <= from) return state
+  const r = trainerLevelRewards(from, last, ctx)
+  const inventory = { ...state.inventory }
+  for (const [slug, n] of Object.entries(r.items)) inventory[slug] = (inventory[slug] ?? 0) + n
+  let pending = [...(state.pendingLevelUps ?? []), { from, to: last, items: r.items, dust: r.dust, at }]
+  if (pending.length > MAX_PENDING_LEVEL_UPS) {
+    const [a, b, ...rest] = pending
+    if (a && b) {
+      const items = { ...a.items }
+      for (const [k, n] of Object.entries(b.items)) items[k] = (items[k] ?? 0) + n
+      pending = [{ from: a.from, to: b.to, items, dust: a.dust + b.dust, at: b.at }, ...rest]
+    }
+  }
+  return { ...state, inventory, dust: state.dust + r.dust, pendingLevelUps: pending }
+}
+
 // --- Level ups ---------------------------------------------------------------
 
 export type ProgressEvent =
@@ -67,7 +122,8 @@ export type ProgressEvent =
   | { type: 'levelUp'; uid: string; from: number; to: number; newMoves: string[]; slotsUnlocked: boolean }
   | { type: 'evolutionAvailable'; uid: string; to: string; trigger: Evolution['trigger'] }
   | { type: 'levelCapped'; uid: string; cap: number }
-  | { type: 'trainerLevelUp'; from: number; to: number }
+  /** `items`/`dust`: the rewards of the levels gained (`trainerLevelRewards`); absent in events of older code. */
+  | { type: 'trainerLevelUp'; from: number; to: number; items?: Record<string, number>; dust?: number }
   | { type: 'leagueUp'; from: string; to: string }
 
 /**

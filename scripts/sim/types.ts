@@ -102,6 +102,11 @@ export interface Tally {
   greatBallsFromMissions: number
   ultraBallsFromMissions: number
   dustFromMissions: number
+  /** Trainer level-up rewards (`trainer.levelRewards`), read at the end from `pendingLevelUps` (the sim never acks them). */
+  pokeBallsFromLevelUps: number
+  greatBallsFromLevelUps: number
+  ultraBallsFromLevelUps: number
+  dustFromLevelUps: number
   missionsClaimed: number
   wavesTotal: number
   /** Σ hpFraction of the legendaries seen (mean = / legendarySeen). */
@@ -231,6 +236,10 @@ export function emptyTally(): Tally {
     greatBallsFromMissions: 0,
     ultraBallsFromMissions: 0,
     dustFromMissions: 0,
+    pokeBallsFromLevelUps: 0,
+    greatBallsFromLevelUps: 0,
+    ultraBallsFromLevelUps: 0,
+    dustFromLevelUps: 0,
     missionsClaimed: 0,
     wavesTotal: 0,
     legendaryHpSum: 0,

@@ -221,7 +221,7 @@ function sec3(c: Ctx): string {
   const t = (p: ProfileId) => (base[p] as ProfileAgg).tallyMean
   const balls = profs.map((p) => {
     const x = t(p)
-    const earned = x.pokeBallsFromSessions + x.pokeBallsFromConverted + x.pokeBallsFromMissions
+    const earned = x.pokeBallsFromSessions + x.pokeBallsFromConverted + x.pokeBallsFromMissions + x.pokeBallsFromLevelUps
     const thrown = x.throws['poke-ball']
     const nonStudy = x.throws['poke-ball'] + x.throws['great-ball'] + x.throws['ultra-ball']
     const caughtNS = x.catches['poke-ball'] + x.catches['great-ball'] + x.catches['ultra-ball']
@@ -231,8 +231,8 @@ function sec3(c: Ctx): string {
       n0(x.pokeBallsFromSessions),
       n0(x.pokeBallsFromConverted),
       `${n0(thrown)} (${pct(thrown / Math.max(1, earned))})`,
-      `${n0(x.greatBallsFromMissions)} / ${n0(x.throws['great-ball'])}`,
-      `${n0(x.ultraBallsFromMissions)} / ${n0(x.throws['ultra-ball'])}`,
+      `${n0(x.greatBallsFromMissions + x.greatBallsFromLevelUps)} / ${n0(x.throws['great-ball'])}`,
+      `${n0(x.ultraBallsFromMissions + x.ultraBallsFromLevelUps)} / ${n0(x.throws['ultra-ball'])}`,
       pct(x.throws['study-ball'] / waves),
       pct(caughtNS / Math.max(1, nonStudy)),
       n0(x.catchesTotal),
@@ -253,6 +253,20 @@ function sec3(c: Ctx): string {
       n0(x.candiesSpent),
       n0(mean(a.runs.map((m) => m.finalCandies))),
       n0(x.released),
+    ]
+  })
+  const lvl = profs.map((p) => {
+    const x = t(p)
+    const a = base[p] as ProfileAgg
+    return [
+      PN[p],
+      n1(mean(a.runs.map((m) => m.days[m.days.length - 1]?.trainerLevel ?? 1))),
+      n0(x.dustFromLevelUps),
+      n0(x.pokeBallsFromLevelUps),
+      n0(x.greatBallsFromLevelUps),
+      n0(x.ultraBallsFromLevelUps),
+      n1(x.pokeBallsFromLevelUps / weeks),
+      n1(x.dustFromLevelUps / weeks),
     ]
   })
   const cls = profs.map((p) => {
@@ -291,6 +305,10 @@ Misiones del motor (GDD §13, \`custom-missions.json\`): 3 diarias y 3 semanales
 
 ${mdTable(['Perfil', 'Poké (sesión)', 'Poké (conv.)', 'Poké lanzadas (% de las ganadas)', 'Super gan./lanz.', 'Ultra gan./lanz.', 'Estudio/oleada', 'Tasa', 'Capturas', 'Capt./día'], balls)}
 ${conNoM}
+**Recompensas de nivel de entrenador** (\`trainer.levelRewards\`; ya incluidas en las columnas de Balls y en "Polvo ganado"): total por jugador en ${weeks} semanas y media semanal.
+
+${mdTable(['Perfil', 'Nivel final', 'Polvo', 'Poké', 'Super', 'Ultra', 'Poké/sem.', 'Polvo/sem.'], lvl)}
+
 **Polvo y caramelos.**
 
 ${mdTable(['Perfil', 'Polvo ganado', 'Polvo gastado', '% gastado', 'Polvo final', 'Caram. captura', 'Caram. soltar', 'Caram. gastados', 'Caram. final', 'Soltados'], dust)}

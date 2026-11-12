@@ -29,6 +29,7 @@
 | `league` | `{ weeklyPoints: {weekKey: n}, monthlyPoints: {monthKey: n}, bestLeague }` |
 | `roaming` | escaped legendaries `{ speciesSlug, sessionsLeft }` |
 | `pendingWishes` | heals applied at the next `startSession` |
+| `pendingLevelUps?` | `PendingLevelUp[]` = `{ from, to, items, dust, at }`: trainer level-ups whose "Congratulations" window is still to be shown (rewards are already in `inventory`/`dust`). Emptied by the `ackLevelUp` action. Absent in older saves = none. At most `MAX_PENDING_LEVEL_UPS` (20; the oldest two merge) |
 | `activeSession` | `ActiveSession \| null` (single active session) |
 | `encounter` | `EncounterState \| null`: waves of the last claimed session, current wave, status/reroll charges |
 | `days` | dayKey → `{ minutes, sessions, firstStartMinute }` (last 14 days; daily diminishing returns, Poison/Psychic/Steel conditions) |
@@ -179,7 +180,9 @@ recordMissionEvent(state, event, at) // used by applySessionResult / throwBall /
 Pokédex milestones (10/25/50 species caught) are claimable once each (id `dex-10`…); their random stones are deterministic per player.
 
 ## Progression (`progression.ts`)
-`expForLevel(L)` = `round(4·L^2.8)`, `levelFromExp`, `levelCap(state)` / `levelCapFor(nCaught)`, `candyDustCost(level)`, `bondBonus(minutes)`, `trainerExpForLevel`, `trainerLevelFromExp`, `gainExp(p, amount, cap)`, `applyLevel`, `evolutionOptions(state, p, now)`.
+`expForLevel(L)` = `round(4·L^2.8)`, `levelFromExp`, `levelCap(state)` / `levelCapFor(nCaught)`, `candyDustCost(level)`, `bondBonus(minutes)`, `trainerExpForLevel`, `trainerLevelFromExp`, `trainerLevelRewards(from, to, ctx)`, `grantTrainerLevelUp(state, from, to, at, ctx)`, `gainExp(p, amount, cap)`, `applyLevel`, `evolutionOptions(state, p, now)`.
+
+**Trainer level rewards.** `config.trainer.levelRewards = { dustBase, dustPerLevel, tiers: [{ step, <item-slug>: n, … }] }` (source `data/overrides/custom-game-config.json`; defaults: Dust `50 + 10·L`, `step 1` → 3 `poke-ball`, `step 5` → 3 `great-ball` + 1 `potion`, `step 10` → 2 `ultra-ball`; in a tier row every key but `step` is an item slug and its amount, 0 = none; editable live: `trainer.levelRewards.dustBase/dustPerLevel` and the table `trainer.levelRewards.tiers`). `trainerLevelRewards(from, to, ctx)` is pure (no RNG): the sum of levels `from+1 … to` (capped at `trainer.maxLevel`) → `{ items, dust }`, each level paying `round(dustBase + dustPerLevel·L)` Dust and the items of every tier whose `step` divides `L`. `grantTrainerLevelUp(state, from, to, at, ctx)` adds that to `inventory`/`dust` and pushes a `PendingLevelUp` (it does not touch `state.trainer`). It is called by EVERY path that raises the trainer level: `applySessionResult` (minutes of the session, also cancelled ones; the `trainerLevelUp` `ProgressEvent` now carries `items`/`dust`) and `throwBall` (EXP of a new species). The `ackLevelUp` action (`GameAction`, no payload, idempotent, always succeeds) empties `pendingLevelUps`.
 
 ## Contenido en vivo (`content.ts`, `context.ts`)
 Live admin content and events (design: `docs/admin-plan.md` §1; operation: `docs/admin.md`; server side: `docs/server.md` «Live content»). The validation of patches and events lives in `src/game/content/` (not the engine): `validateContentPatch` / `validateEventOverlay`, the whitelist of editable config paths (`limits.ts`), spawn coverage (`coverage.ts`), `diffPatches` and `spawnPreview`. Layers, lowest priority first: **base** (`src/data/game/*.json`) → **admin patch** (`ContentPatch`, a full patch over the base, never a delta) → **overlays of the active events** (`EventOverlay`, applied in `(startsAt, id)` order).

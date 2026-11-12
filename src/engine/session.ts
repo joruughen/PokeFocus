@@ -20,7 +20,7 @@ import { finishEncounter } from './capture'
 import { leagueForPoints, leagueRank } from './league'
 import { recordMissionEvent } from './missions'
 import { getTechnique, type TechniqueInfo } from './moves'
-import { gainExp, levelCap, trainerLevelFromExp, type ProgressEvent } from './progression'
+import { gainExp, grantTrainerLevelUp, levelCap, trainerLevelFromExp, trainerLevelRewards, type ProgressEvent } from './progression'
 import { chance, pick, weightedPick, type Rng } from './rng'
 import {
   err,
@@ -1312,7 +1312,11 @@ export function applySessionResult(
   // Trainer
   const trainerExp = s.trainer.exp + Math.round(result.minutes * cfg.trainer.expPerMinute)
   const trainerLevel = trainerLevelFromExp(trainerExp, ctx)
-  if (trainerLevel > s.trainer.level) events.push({ type: 'trainerLevelUp', from: s.trainer.level, to: trainerLevel })
+  const trainerFrom = s.trainer.level
+  if (trainerLevel > trainerFrom) {
+    const r = trainerLevelRewards(trainerFrom, trainerLevel, ctx)
+    events.push({ type: 'trainerLevelUp', from: trainerFrom, to: trainerLevel, items: r.items, dust: r.dust })
+  }
 
   // Weekly technique uses
   const twu = s.techniqueWeekUses.weekKey === result.weekKey ? { ...s.techniqueWeekUses.uses } : {}
@@ -1380,6 +1384,8 @@ export function applySessionResult(
           }
         : null,
   }
+  // Trainer level-up rewards (Dust, items) and the pending "Congratulations" notice.
+  s = grantTrainerLevelUp(s, trainerFrom, trainerLevel, result.claimedAt, ctx)
   if (result.valid && result.rewardFactor > 0) {
     s = recordMissionEvent(
       s,

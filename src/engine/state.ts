@@ -372,6 +372,20 @@ export interface PlayerState {
   teamPresets?: TeamPreset[]
   /** Preference: split the wave damage automatically (no assignment step). Absent = false. */
   autoDamage?: boolean
+  /**
+   * Trainer level-ups whose "Congratulations" window has not been dismissed yet (the rewards are already in
+   * `inventory`/`dust`). Emptied by the `ackLevelUp` action. Absent in older saves = none.
+   */
+  pendingLevelUps?: PendingLevelUp[]
+}
+
+/** A trainer level-up awaiting its window: levels `from`→`to`, the rewards granted (summed) and when (ms). */
+export interface PendingLevelUp {
+  from: number
+  to: number
+  items: Record<string, number>
+  dust: number
+  at: number
 }
 
 export type FocusInputs = {

@@ -175,6 +175,8 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
   scalar(X, 'rewards.pokeBallsPerSession', b('int', 0, 20)),
   scalar(X, 'trainer.expPerMinute', b('number', 0, 20)),
   scalar(X, 'trainer.expPerNewSpecies', b('int', 0, 1000)),
+  scalar(X, 'trainer.levelRewards.dustBase', b('int', 0, 10_000)),
+  scalar(X, 'trainer.levelRewards.dustPerLevel', b('number', 0, 1000, undefined, 1)),
   scalar(X, 'bond.maxBonus', b('fraction', 0, 0.5)),
   scalar(X, 'progression.candyExp', b('int', 1, 5000), 'owned'),
   scalar(X, 'progression.typeCandyExp', b('int', 1, 5000), 'owned'),
@@ -226,6 +228,18 @@ export const CONFIG_TABLE_LIMITS: readonly ConfigTableLimit[] = [
     minItems: 1,
     maxItems: 20,
     columns: { trainerLevel: b('int', 1, 100, 'lv'), min: b('int', 1, 100, 'lv'), max: b('int', 1, 100, 'lv') },
+  },
+  {
+    // One row per tier: `step` and, per item slug column, how many of it every level multiple of `step` gives.
+    path: 'trainer.levelRewards.tiers',
+    group: X,
+    labelKey: 'admin.config.trainer.levelRewards.tiers',
+    minItems: 0,
+    maxItems: 6,
+    columns: {
+      step: b('int', 1, 100, 'lv'),
+      ...Object.fromEntries([...BALLS, ...POTIONS].map((item) => [item, b('int', 0, 99)])),
+    },
   },
   {
     path: 'progression.levelCaps',

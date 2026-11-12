@@ -444,6 +444,7 @@
     "balls": "Poké Balls",
     "leaguePoints": "Puntos de liga",
     "trainerLevelUp": "Subiste a entrenador nivel {{level}}.",
+    "trainerLevelUpRewards": "Subiste a entrenador nivel {{level}}. Premio: {{rewards}}.",
     "leagueUp": "¡Subiste a la {{league}}! Las oleadas serán más grandes.",
     "wavesReady_one": "Te espera {{count}} oleada",
     "wavesReady_other": "Te esperan {{count}} oleadas",
@@ -2241,6 +2242,15 @@
       "fixed": "Corregido"
     }
   },
+  "levelUp": {
+    "title": "¡Felicidades!",
+    "label": "Subida de nivel de entrenador",
+    "reached": "Subiste al nivel {{level}}",
+    "fromTo": "Subiste del nivel {{from}} al {{to}}",
+    "rewards": "Tus recompensas",
+    "added": "Ya están en tu mochila.",
+    "gotIt": "¡Genial!"
+  },
   "whatsNew": {
     "title": "¿Qué hay de nuevo?",
     "seeAll": "Ver todas las novedades",
@@ -2420,6 +2430,13 @@
       },
       "columns": {
         "trainerLevel": "Nivel de entrenador",
+        "step": "Cada N niveles",
+        "poke-ball": "Poké Ball",
+        "great-ball": "Super Ball",
+        "ultra-ball": "Ultra Ball",
+        "potion": "Poción",
+        "super-potion": "Superpoción",
+        "hyper-potion": "Hiperpoción",
         "min": "Mín.",
         "max": "Máx.",
         "species": "Especies capturadas",
@@ -2865,7 +2882,12 @@
       },
       "trainer": {
         "expPerMinute": "EXP de entrenador por minuto",
-        "expPerNewSpecies": "EXP de entrenador por especie nueva"
+        "expPerNewSpecies": "EXP de entrenador por especie nueva",
+        "levelRewards": {
+          "dustBase": "Polvo base por nivel de entrenador",
+          "dustPerLevel": "Polvo extra por cada nivel de entrenador",
+          "tiers": "Premios por nivel de entrenador (cada N niveles)"
+        }
       },
       "bond": {
         "maxBonus": "Bonus máximo de vínculo"

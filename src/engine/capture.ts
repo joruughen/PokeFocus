@@ -8,7 +8,7 @@ import { encounterModifiers, resolveCounter } from './counter'
 import { effectiveHits, lockWaveAttacks } from './damage'
 import { toOwnedPokemon } from './individual'
 import { recordMissionEvent } from './missions'
-import { trainerLevelFromExp } from './progression'
+import { grantTrainerLevelUp, trainerLevelFromExp } from './progression'
 import { chance, type Rng } from './rng'
 import { err, ok, type CounterResult, type PlayerState, type Result, type WildPokemon, type EncounterState } from './state'
 import { ballCovers, rollWild } from './waves'
@@ -221,7 +221,10 @@ export function throwBall(
       history: s.history.map((h) => (h.id === enc.sessionId ? { ...h, caught: h.caught + 1 } : h)),
       encounter,
     }
-    s = { ...s, trainer: { exp: s.trainer.exp, level: Math.max(s.trainer.level, trainerLevelFromExp(s.trainer.exp, ctx)) } }
+    const levelBefore = s.trainer.level
+    const levelAfter = Math.max(levelBefore, trainerLevelFromExp(s.trainer.exp, ctx))
+    s = { ...s, trainer: { exp: s.trainer.exp, level: levelAfter } }
+    s = grantTrainerLevelUp(s, levelBefore, levelAfter, now, ctx)
     s = recordMissionEvent(s, { kind: 'catch', types: sp.types, ball, firstThrow: wild.failedThrows === 0 }, now, ctx)
     return ok({ state: s, outcome: { kind: 'caught', uid, ball, chance: p, guaranteed } })
   }
