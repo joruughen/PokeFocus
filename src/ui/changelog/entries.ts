@@ -62,6 +62,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         },
       },
       {
+        kind: 'new',
+        text: {
+          es: 'La Mochila tiene su propia página: busca tus objetos por nombre, fíltralos por tipo (Balls, curación, evolución, caramelos, objetos de evento…) y mira para qué sirve cada uno y en qué Pokémon puedes usarlo.',
+          en: 'The Bag has its own page: search your items by name, filter them by kind (Balls, healing, evolution, candies, event items…) and see what each one does and which Pokémon can use it.',
+        },
+      },
+      {
         kind: 'improved',
         text: {
           es: 'La Ball de Estudio ya no hace que tu equipo ataque solo ni le quita Energía: después de usarla puedes seguir eligiendo a qué salvaje ataca cada Pokémon. Ahora sirve con salvajes base de nivel 9 o menor al principio, y ese límite sube con tu nivel de entrenador hasta 25.',
