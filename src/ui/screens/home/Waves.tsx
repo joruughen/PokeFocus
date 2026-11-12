@@ -85,7 +85,9 @@ export function Waves() {
   const [anim, setAnim] = useState<Anim | null>(null)
   /** While the server rolls a throw: keep showing the wild as it was (no flash of the result). */
   const [hold, setHold] = useState<{ wildIndex: number; before: WildPokemon } | null>(null)
-  const [counterFx, setCounterFx] = useState<{ key: number; counter: CounterResult; energyBefore: number } | null>(null)
+  // `source`: 'ball' = a failed ball hit the leader (shown in the throw dock); 'attack' = the counter an
+  // assigned attack drew (shown on the team Energy row only: the dock always shows who a failed ball hits).
+  const [counterFx, setCounterFx] = useState<{ key: number; counter: CounterResult; energyBefore: number; source: 'ball' | 'attack' } | null>(null)
   /** Team Energy as it was before the throw (kept while the ball shakes, see `frozenCard`). */
   const [frozenEnergy, setFrozenEnergy] = useState<Record<string, number> | null>(null)
   /**
@@ -156,7 +158,8 @@ export function Waves() {
   // A failed ball is always answered on the leader, or the next member with Energy (GDD §11.4).
   const ballTargetUid = ballCounterTarget(player) ?? player.team[0]
   const ballTarget = ballTargetUid ? pokemonView(player, ballTargetUid, now) : null
-  const lastHit = counterFx ? pokemonView(player, counterFx.counter.targetUid, now) : null
+  const ballFx = counterFx?.source === 'ball' ? counterFx : null
+  const lastHit = ballFx ? pokemonView(player, ballFx.counter.targetUid, now) : null
   const card = frozenCard ?? lastHit ?? ballTarget
   const teamViews = useTeamViews(player, now)
   const targetWhy = ballTargetUid === player.team[0] ? t('waves.counterWhyLeader') : t('waves.counterWhyNext')
@@ -208,11 +211,12 @@ export function Waves() {
       }
       if (outcome.kind === 'fled') sfxLater('flee', 250)
       if (outcome.kind === 'caught') {
+        setCounterFx(null)
         toast.add({ title: t('waves.caughtToast', { name: names.species(before.speciesSlug) }), description: t('waves.caughtToastBody'), type: 'success' })
         emitHintEvent('throw.caught')
       } else {
         if (outcome.counter) {
-          setCounterFx({ key: Date.now(), counter: outcome.counter, energyBefore: energyBy[outcome.counter.targetUid] ?? 0 })
+          setCounterFx({ key: Date.now(), counter: outcome.counter, energyBefore: energyBy[outcome.counter.targetUid] ?? 0, source: 'ball' })
           emitHintEvent('throw.failed', {
             name: names.pokemon(player.pokemon[outcome.counter.targetUid]),
             damage: Math.round(outcome.counter.damage),
@@ -272,7 +276,7 @@ export function Waves() {
     const last = [...uids].reverse().map((u) => w?.attacks?.[u]).find((a) => a?.counter)
     if (last?.counter) {
       const c = last.counter
-      setCounterFx({ key: Date.now(), counter: c, energyBefore: energyBy[c.targetUid] ?? 0 })
+      setCounterFx({ key: Date.now(), counter: c, energyBefore: energyBy[c.targetUid] ?? 0, source: 'attack' })
       sfx(c.missed ? 'counterMiss' : 'counterHit')
       if (!c.missed && c.energyAfter <= 0) sfxLater('exhausted', 450)
     }
@@ -420,23 +424,23 @@ export function Waves() {
         <Panel padded={false} className="grid grid-cols-1 items-center gap-3 p-3 sm:gap-5 sm:p-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,16rem)]">
           <div {...hintAnchor('waves.leader')}>
             <p className="mb-1.5 flex items-center gap-2 text-sm text-mist-300">
-              {t(counterFx && !anim ? 'waves.counterTook' : 'waves.counterTarget')}
+              {t(ballFx && !anim ? 'waves.counterTook' : 'waves.counterTarget')}
               <HelpDot hint="waves.counter" />
             </p>
             {card && (
               <PokemonCard
-                key={counterFx?.key}
+                key={ballFx?.key}
                 view={card}
                 variant="compact"
                 leader={card.pokemon.uid === player.team[0]}
-                energyFrom={counterFx && !anim ? counterFx.energyBefore : undefined}
-                shake={Boolean(counterFx && !anim)}
-                floating={counterFx && !anim ? (counterFx.counter.missed ? t('waves.missed') : counterFx.counter.healed > 0 ? `+${Math.round(counterFx.counter.healed)}` : `-${Math.round(counterFx.counter.damage)}`) : undefined}
+                energyFrom={ballFx && !anim ? ballFx.energyBefore : undefined}
+                shake={Boolean(ballFx && !anim)}
+                floating={ballFx && !anim ? (ballFx.counter.missed ? t('waves.missed') : ballFx.counter.healed > 0 ? `+${Math.round(ballFx.counter.healed)}` : `-${Math.round(ballFx.counter.damage)}`) : undefined}
               />
             )}
-            {counterFx && !anim ? (
+            {ballFx && !anim ? (
               <p className="mt-2 text-sm text-mist-300" aria-live="polite">
-                {counterLine(counterFx.counter, t, names)}
+                {counterLine(ballFx.counter, t, names)}
               </p>
             ) : (
               targetWhy && <p className="mt-2 text-xs text-mist-400">{targetWhy}</p>
@@ -485,7 +489,7 @@ export function Waves() {
                 ' '
               )}
             </p>
-            {editable && tokens.length > 0 && <p className="text-right text-xs text-mist-400">{t('damage.throwLocks')}</p>}
+            {editable && tokens.length > 0 && ball !== 'study-ball' && <p className="text-right text-xs text-mist-400">{t('damage.throwLocks')}</p>}
           </div>
         </Panel>
       </div>

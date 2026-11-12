@@ -2035,7 +2035,7 @@
   "damage": {
     "title": "Daño de tu equipo",
     "howTo": "Toca una ficha y luego un salvaje: ese Pokémon le ataca con todo su daño y el salvaje le contraataca. No se puede deshacer.",
-    "lockNote": "Duerme o paraliza antes al salvaje y no podrá contraatacar. Al lanzar la primera Ball, quien no haya atacado ataca solo.",
+    "lockNote": "Duerme o paraliza antes al salvaje y no podrá contraatacar. Al lanzar la primera Ball, quien no haya atacado ataca solo (la Ball de Estudio no cuenta: con ella puedes seguir asignando).",
     "locked": "Ataques cerrados: ya lanzaste una Ball en esta oleada.",
     "pickWild": "Ahora toca el salvaje al que atacará {{name}}. Es definitivo.",
     "auto": "Auto",
@@ -2071,7 +2071,7 @@
     },
     "toggle": {
       "label": "Reparto automático del daño",
-      "on": "Tu equipo ataca solo al lanzar la primera Ball de cada oleada.",
+      "on": "Tu equipo ataca solo al lanzar la primera Ball de cada oleada (la Ball de Estudio no cuenta).",
       "off": "Tú eliges a qué salvaje ataca cada Pokémon.",
       "tip": "Sin Auto, en cada oleada decides a qué salvaje ataca cada Pokémon (y quién recibe cada contraataque). Con Auto, al lanzar la primera Ball todos atacan solos, al azar y más hacia los salvajes con más vida. Se aplica al reclamar la sesión.",
       "fixed": "Se aplica al reclamar."

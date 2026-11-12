@@ -172,8 +172,8 @@
     "shinyChance": 0.0017578125,
     "roamingSessions": 3,
     "roamingChance": 0.35,
-    "studyBallMaxLevel": 20,
-    "studyBallLevelMargin": 10,
+    "studyBallMaxLevel": 9,
+    "studyBallLevelMargin": 0,
     "wildLevelByTrainerLevel": [
       {
         "trainerLevel": 1,

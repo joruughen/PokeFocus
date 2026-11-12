@@ -173,7 +173,9 @@ export function throwBall(
   if (rawWave.wilds[ref.wildIndex]?.outcome !== 'pending') return err('wild_resolved')
   // The first ball locks the wave: every member that has not attacked yet (and has Energy) attacks
   // with the automatic split, and each attacked wild strikes back at its attacker (GDD §11.4).
-  let s: PlayerState = lockWaveAttacks(state, ref.waveIndex, rng, ctx)
+  // The Study Ball is the exception: it is a sure catch that needs no damage, so it neither locks
+  // the wave nor makes anyone attack; you can still assign your team to the other wilds after it.
+  let s: PlayerState = ball === 'study-ball' ? state : lockWaveAttacks(state, ref.waveIndex, rng, ctx)
   let encounter: EncounterState = s.encounter as EncounterState
   const wave = encounter.waves[ref.waveIndex] as EncounterState['waves'][number]
   const wild = wave.wilds[ref.wildIndex] as WildPokemon

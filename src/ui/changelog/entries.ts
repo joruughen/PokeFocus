@@ -64,6 +64,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'improved',
         text: {
+          es: 'La Ball de Estudio ya no hace que tu equipo ataque solo ni le quita Energía: después de usarla puedes seguir eligiendo a qué salvaje ataca cada Pokémon. Ahora sirve con salvajes base de nivel 9 o menor.',
+          en: 'The Study Ball no longer makes your team attack on its own or costs it Energy: after using it you can still choose which wild Pokémon each of yours attacks. It now works on base wild Pokémon of level 9 or lower.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
           es: 'La «Energía de captura» de las técnicas de daño ahora se llama «Puntos de captura», para no confundirla con la Energía (la vida) de tus Pokémon.',
           en: '“Catch energy” from damage techniques is now called “Capture Points”, so it isn’t confused with your Pokémon’s Energy (their HP).',
         },

@@ -644,7 +644,7 @@ describe('throwing balls (GDD §11.1)', () => {
   const noLuck = createEngineContext({ config: { capture: { balls: { 'poke-ball': { mult: 0, shinyGuarantee: { maxStage: 1, maxLevel: 25 } } } } } })
 
   it('Study Ball: guaranteed on eligible wilds, one per wave, lost when advancing', () => {
-    const s = withEncounter(makePlayer([makeMon('squirtle', 10)]), [wild('pidgey', 5), wild('pidgeotto', 20)])
+    const s = withEncounter(makePlayer([makeMon('squirtle', 10)]), [wild('pidgey', 5, { studyBallEligible: true }), wild('pidgeotto', 20, { studyBallEligible: false })])
     expect(throwBall(s, { waveIndex: 0, wildIndex: 1 }, 'study-ball', createRng(1), T0)).toEqual({ ok: false, error: 'not_study_eligible' })
     const r = throwBall(s, { waveIndex: 0, wildIndex: 0 }, 'study-ball', createRng(1), T0)
     expect(r.ok && r.value.outcome.kind).toBe('caught')
@@ -653,12 +653,37 @@ describe('throwing balls (GDD §11.1)', () => {
     expect(r.value.state.pokemon[caughtUid]?.speciesSlug).toBe('pidgey')
     expect(r.value.state.candies.chains[String(ctx.speciesBySlug.get('pidgey')!.evolutionChainId)]).toBe(3)
     expect(r.value.state.inventory['study-ball']).toBeUndefined()
-    const again = withEncounter(makePlayer([makeMon('squirtle', 10)]), [wild('pidgey', 5), wild('pidgey', 6)])
+    const again = withEncounter(makePlayer([makeMon('squirtle', 10)]), [wild('pidgey', 5, { studyBallEligible: true }), wild('pidgey', 6, { studyBallEligible: true })])
     const once = throwBall(again, { waveIndex: 0, wildIndex: 0 }, 'study-ball', createRng(1), T0)
     expect(once.ok && throwBall(once.value.state, { waveIndex: 0, wildIndex: 1 }, 'study-ball', createRng(1), T0)).toEqual({ ok: false, error: 'study_ball_unavailable' })
     const next = advanceWave(again)
     expect(next.encounter?.waves[0]?.studyBall).toBe('lost')
     expect(throwBall(next, { waveIndex: 0, wildIndex: 1 }, 'poke-ball', createRng(1), T0)).toEqual({ ok: false, error: 'wave_not_current' })
+  })
+
+  it('the Study Ball does not lock the wave: nobody attacks or takes a counter, and the team can still be assigned', () => {
+    // A real claimed session (damage tokens included), so the first ball would normally make everyone attack.
+    const s0 = makePlayer([makeMon('machamp', 15, { uid: 'L' }), makeMon('butterfree', 17, { uid: 'B' }), makeMon('pidgey', 13, { uid: 'P' })])
+    const run = runSession(s0, 25, 1)
+    const applied = applySessionResult(run.state, run.result)
+    if (!applied.ok) throw new Error(applied.error)
+    const enc = applied.value.state.encounter!
+    const wave0 = enc.waves[0]!
+    const s: PlayerState = {
+      ...applied.value.state,
+      encounter: { ...enc, waves: enc.waves.map((w) => (w.index === 0 ? { ...w, studyBall: 'available', wilds: w.wilds.map((x, i) => (i === 0 ? { ...x, studyBallEligible: true } : x)) } : w)) },
+    }
+    const before = Object.fromEntries(s.team.map((u) => [u, s.pokemon[u]!.energy.current]))
+    const r = throwBall(s, { waveIndex: 0, wildIndex: 0 }, 'study-ball', createRng(1), T0)
+    expect(r.ok && r.value.outcome.kind).toBe('caught')
+    if (!r.ok) return
+    const after = r.value.state
+    for (const u of s.team) expect(after.pokemon[u]!.energy.current).toBe(before[u])
+    const wave = after.encounter!.waves[0]!
+    expect(wave.damageLocked ?? false).toBe(false)
+    expect(Object.keys(wave.attacks ?? {})).toHaveLength(0)
+    // Another ball afterwards still locks the wave as usual (everyone left attacks).
+    expect(wave0.wilds.length).toBeGreaterThan(1)
   })
 
   it('fails trigger counters, the wild flees after maxFailedThrows; legendaries become roaming', () => {

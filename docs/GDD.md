@@ -602,7 +602,7 @@ Si un legendario o mítico **se escapa**, durante tus **3 sesiones siguientes** 
 
 | Ball | Fuente | Captura asegurada | Si no es asegurada |
 |---|---|---|---|
-| **Ball de Estudio** | 1 por oleada, **solo para esa oleada** | Pokémon **base**, no legendario ni mítico, nivel ≤ 20 | No se puede usar en otros |
+| **Ball de Estudio** | 1 por oleada, **solo para esa oleada** | Pokémon **base**, no legendario ni mítico, nivel ≤ 9 (`studyBallMaxLevel`; desde v0.11 sin margen por nivel de entrenador) | No se puede usar en otros. **No bloquea la oleada:** lanzarla no hace atacar a nadie ni provoca contraataques, y después puedes seguir asignando tu equipo |
 | **Poké Ball** | 2 por sesión, misiones | **Shiny** base de nivel ≤ 25 | ×1.0 |
 | **Super Ball** | Misiones diarias | **Shiny** de 2.ª etapa o nivel 26–45 | ×1.5 |
 | **Ultra Ball** | Misiones semanales, recompensas de liga | **Shiny** de nivel > 45 o 3.ª etapa | ×2.0 |

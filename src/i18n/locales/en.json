@@ -2035,7 +2035,7 @@
   "damage": {
     "title": "Your team's damage",
     "howTo": "Tap a token, then a wild Pokémon: that Pokémon attacks it with all its damage and the wild Pokémon strikes back. It can't be undone.",
-    "lockNote": "Put the wild Pokémon to sleep or paralyze it first and it can't strike back. When you throw the first Ball, whoever hasn't attacked attacks on its own.",
+    "lockNote": "Put the wild Pokémon to sleep or paralyze it first and it can't strike back. When you throw the first Ball, whoever hasn't attacked attacks on its own (the Study Ball doesn't count: after it you can still assign).",
     "locked": "Attacks closed: you already threw a Ball this wave.",
     "pickWild": "Now tap the wild Pokémon {{name}} will attack. It's final.",
     "auto": "Auto",
@@ -2071,7 +2071,7 @@
     },
     "toggle": {
       "label": "Automatic damage split",
-      "on": "Your team attacks on its own when you throw each wave's first Ball.",
+      "on": "Your team attacks on its own when you throw each wave's first Ball (the Study Ball doesn't count).",
       "off": "You choose which wild Pokémon each of yours attacks.",
       "tip": "Without Auto, in each wave you decide which wild Pokémon each of yours attacks (and who takes each counterattack). With Auto, when you throw the first Ball everyone attacks on its own, at random and more toward wild Pokémon with more HP. Applied when you claim the session.",
       "fixed": "Applies when you claim."
