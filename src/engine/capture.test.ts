@@ -210,13 +210,13 @@ describe('waves (GDD §10)', () => {
   it('study ball eligibility: base form, not legendary, level ≤ max(studyBallMaxLevel, wild min + margin)', () => {
     const sp = (s: string) => ctx.speciesBySlug.get(s)!
     const max1 = studyBallMaxLevelFor(1, cfg)
-    expect(max1).toBe(Math.max(cfg.encounters.studyBallMaxLevel, wildLevelRange(1, cfg).min + cfg.encounters.studyBallLevelMargin))
+    expect(max1).toBe(Math.min(cfg.encounters.studyBallLevelCap ?? Infinity, Math.max(cfg.encounters.studyBallMaxLevel, wildLevelRange(1, cfg).min + cfg.encounters.studyBallLevelMargin)))
     expect(isStudyBallEligible(sp('pidgey'), max1, cfg)).toBe(true)
     expect(isStudyBallEligible(sp('pidgey'), max1 + 1, cfg)).toBe(false)
     expect(isStudyBallEligible(sp('pidgeotto'), 18, cfg)).toBe(false)
     expect(isStudyBallEligible(sp('mew'), 10, cfg)).toBe(false)
     const c = createEngineContext({
-      config: { encounters: { studyBallMaxLevel: 20, studyBallLevelMargin: 10, wildLevelByTrainerLevel: [{ trainerLevel: 1, min: 2, max: 10 }, { trainerLevel: 40, min: 20, max: 50 }] } } }).config
+      config: { encounters: { studyBallMaxLevel: 20, studyBallLevelMargin: 10, studyBallLevelCap: 100, wildLevelByTrainerLevel: [{ trainerLevel: 1, min: 2, max: 10 }, { trainerLevel: 40, min: 20, max: 50 }] } } }).config
     expect(studyBallMaxLevelFor(1, c)).toBe(20)
     expect(studyBallMaxLevelFor(40, c)).toBe(30)
     expect(isStudyBallEligible(sp('pidgey'), 30, c, 40)).toBe(true)

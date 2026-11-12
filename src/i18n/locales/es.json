@@ -2765,6 +2765,7 @@
         "roamingChance": "Probabilidad de Pokémon errante",
         "studyBallMaxLevel": "Bola Estudio: nivel máximo",
         "studyBallLevelMargin": "Bola Estudio: margen de nivel",
+        "studyBallLevelCap": "Bola Estudio: nivel máximo con el nivel de entrenador",
         "legendaryMinLevel": "Nivel mínimo de legendario",
         "nonLevelEvolutionLevelGap": "Diferencia de nivel en evoluciones no por nivel",
         "longSessionLegendaryMult": "Sesión larga: multiplicador de legendario (por tramo)",

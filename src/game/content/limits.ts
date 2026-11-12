@@ -121,6 +121,7 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
   scalar(E, 'encounters.roamingChance', b('prob', 0, 1, '%')),
   scalar(E, 'encounters.studyBallMaxLevel', b('int', 1, 100, 'lv')),
   scalar(E, 'encounters.studyBallLevelMargin', b('int', 0, 50, 'lv')),
+  scalar(E, 'encounters.studyBallLevelCap', b('int', 1, 100, 'lv')),
   scalar(E, 'encounters.legendaryMinLevel', b('int', 1, 100, 'lv')),
   scalar(E, 'encounters.nonLevelEvolutionLevelGap', b('int', 0, 50, 'lv')),
 

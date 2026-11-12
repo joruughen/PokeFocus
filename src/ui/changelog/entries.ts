@@ -64,8 +64,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'improved',
         text: {
-          es: 'La Ball de Estudio ya no hace que tu equipo ataque solo ni le quita Energía: después de usarla puedes seguir eligiendo a qué salvaje ataca cada Pokémon. Ahora sirve con salvajes base de nivel 9 o menor.',
-          en: 'The Study Ball no longer makes your team attack on its own or costs it Energy: after using it you can still choose which wild Pokémon each of yours attacks. It now works on base wild Pokémon of level 9 or lower.',
+          es: 'La Ball de Estudio ya no hace que tu equipo ataque solo ni le quita Energía: después de usarla puedes seguir eligiendo a qué salvaje ataca cada Pokémon. Ahora sirve con salvajes base de nivel 9 o menor al principio, y ese límite sube con tu nivel de entrenador hasta 25.',
+          en: 'The Study Ball no longer makes your team attack on its own or costs it Energy: after using it you can still choose which wild Pokémon each of yours attacks. It now works on base wild Pokémon of level 9 or lower at first, and that limit rises with your trainer level up to 25.',
         },
       },
       {

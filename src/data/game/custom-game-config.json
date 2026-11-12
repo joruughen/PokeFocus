@@ -173,7 +173,8 @@
     "roamingSessions": 3,
     "roamingChance": 0.35,
     "studyBallMaxLevel": 9,
-    "studyBallLevelMargin": 0,
+    "studyBallLevelMargin": 7,
+    "studyBallLevelCap": 25,
     "wildLevelByTrainerLevel": [
       {
         "trainerLevel": 1,

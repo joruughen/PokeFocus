@@ -2765,6 +2765,7 @@
         "roamingChance": "Roaming Pokémon chance",
         "studyBallMaxLevel": "Study Ball: max level",
         "studyBallLevelMargin": "Study Ball: level margin",
+        "studyBallLevelCap": "Study Ball: highest level as you level up",
         "legendaryMinLevel": "Legendary minimum level",
         "nonLevelEvolutionLevelGap": "Level gap for non-level evolutions",
         "longSessionLegendaryMult": "Long session: legendary multiplier (per tier)",

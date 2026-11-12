@@ -131,8 +131,10 @@ export interface GameConfig {
     roamingSessions: number
     roamingChance: number
     studyBallMaxLevel: number
-    /** Study Ball max level = max(studyBallMaxLevel, wild range min + this). */
+    /** Study Ball max level = clamp(wild range min + this, studyBallMaxLevel, studyBallLevelCap). */
     studyBallLevelMargin: number
+    /** Highest the Study Ball limit can grow with the trainer level (absent = no cap). */
+    studyBallLevelCap?: number
     /** Added to the base wave size by current league (still capped by leagueMaxWaveSize). */
     leagueWaveBonus: Record<LeagueId, number>
     wildLevelByTrainerLevel: { trainerLevel: number; min: number; max: number }[]

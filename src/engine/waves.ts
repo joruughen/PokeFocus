@@ -115,12 +115,13 @@ export function ballCovers(ball: BallSlug, needed: BallSlug | null): boolean {
 }
 
 /**
- * Highest level the Study Ball accepts for a trainer level:
- * max(studyBallMaxLevel, wild range min + studyBallLevelMargin).
+ * Highest level the Study Ball accepts for a trainer level: it starts at `studyBallMaxLevel`
+ * and grows with the wild range (min + `studyBallLevelMargin`) up to `studyBallLevelCap`.
  */
 export function studyBallMaxLevelFor(trainerLevel: number, cfg: GameConfig): number {
   const e = cfg.encounters
-  return Math.max(e.studyBallMaxLevel, wildLevelRange(trainerLevel, cfg).min + (e.studyBallLevelMargin ?? 0))
+  const grown = Math.max(e.studyBallMaxLevel, wildLevelRange(trainerLevel, cfg).min + (e.studyBallLevelMargin ?? 0))
+  return e.studyBallLevelCap !== undefined ? Math.min(Math.max(e.studyBallMaxLevel, e.studyBallLevelCap), grown) : grown
 }
 
 /**
