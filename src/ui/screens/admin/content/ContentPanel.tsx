@@ -5,6 +5,7 @@ import { isApiError } from '../../../api'
 import { Button, Dialog, DialogClose, Panel, TextField, toast } from '../../../components'
 import { errorText } from '../../../lib/errors'
 import { useAuth } from '../../../store/auth'
+import { useAdminNav } from '../nav'
 import { contentApi } from './api'
 import { DraftEditor } from './DraftEditor'
 import { LiveStatus, VersionsList, type StatusFilter } from './Overview'
@@ -14,7 +15,7 @@ import { contentPermissions, versionName } from './versions'
 
 type View = { kind: 'overview' } | { kind: 'view'; id: number } | { kind: 'edit'; id: number }
 
-const OWN = ['forbidden', 'not_found', 'not_draft', 'not_published', 'not_scheduled', 'too_many_drafts', 'invalid_body']
+const OWN = ['forbidden', 'not_found', 'not_draft', 'not_published', 'not_scheduled', 'too_many_drafts', 'invalid_body', 'event_not_linkable', 'unknown_event']
 
 /** Text of an error of the content API (own copy for its codes, else the generic one). */
 export function contentErrorText(e: unknown, t: (k: string, o?: Record<string, unknown>) => string): string {
@@ -69,6 +70,14 @@ export default function ContentPanel() {
     void reload()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- on open only; the filter reloads through `changeFilter`
   }, [])
+
+  // An event's tied-content link asks for a version: open it (read-only).
+  const requested = useAdminNav((s) => s.contentVersionId)
+  useEffect(() => {
+    if (requested === null) return
+    setView({ kind: 'view', id: requested })
+    useAdminNav.getState().consumeContentVersion()
+  }, [requested])
 
   // Load the version the view points at.
   const viewId = view.kind === 'overview' ? null : view.id

@@ -92,13 +92,20 @@ export interface ContentService {
   refresh(): Promise<void>
 }
 
-export interface PublishDraftInput {
+/** The event a version is tied to (see `content_versions.linked_event_id`). */
+export interface EventLinkInput {
+  linkedEventId?: string
+  linkedRole?: 'start' | 'end'
+  revertOfVersionId?: number
+}
+
+export interface PublishDraftInput extends EventLinkInput {
   effectiveAt?: number
   userId?: string | null
   validation?: unknown
 }
 
-export interface PublishInput {
+export interface PublishInput extends EventLinkInput {
   patch: ContentPatch
   effectiveAt?: number
   title?: string | null
@@ -306,6 +313,8 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
         createdBy: input.userId ?? null,
         publishedBy: input.userId ?? null,
         publishedAt: new Date(t),
+        ...(input.linkedEventId && { linkedEventId: input.linkedEventId, linkedRole: input.linkedRole ?? 'start' }),
+        ...(input.revertOfVersionId !== undefined && { revertOfVersionId: input.revertOfVersionId }),
       })
       .returning({ id: contentVersions.id })
     if (ex === db) await refresh()
@@ -327,6 +336,7 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
         ...(input.validation !== undefined && { validation: input.validation }),
         publishedBy: input.userId ?? null,
         publishedAt: new Date(t),
+        ...(input.linkedEventId && { linkedEventId: input.linkedEventId, linkedRole: input.linkedRole ?? 'start' }),
       })
       .where(eq(contentVersions.id, id))
     return { id, hash }

@@ -2716,7 +2716,24 @@
         "noteHint": "Optional. Saved with the version and the audit log.",
         "done": "Version #{{id}} is live",
         "scheduledDone": "Version #{{id}} is scheduled",
-        "noSim": "This draft has no recent simulation of its current version. You can still publish, but simulating first is advised («Simulation» sub-tab)."
+        "noSim": "This draft has no recent simulation of its current version. You can still publish, but simulating first is advised («Simulation» sub-tab).",
+        "optEvent": "Together with an event",
+        "withEvent": "Tie to the event",
+        "doneEvent": "Version #{{id}} will take effect with the event",
+        "doneEventRevert": "Version #{{id}} will take effect with the event and go back to what was before when it ends",
+        "event": {
+          "none": "There are no published events that have not ended. Publish or schedule one in the Events tab and come back.",
+          "label": "Event",
+          "choose": "Choose an event",
+          "option": "{{name}} · {{start}} – {{end}}",
+          "hint": "Only published or scheduled events that have not ended. If you change the event dates, this version moves with it; if you archive it before it starts, it goes back to a draft.",
+          "window": "Event",
+          "takesEffect": "Takes effect",
+          "immediate": "Right now (the event is already running)",
+          "goesBack": "Goes back",
+          "revert": "Go back to what was before when the event ends",
+          "revertHint": "Also schedules a copy of whatever is in force just before the event starts, for when it ends. If you publish another version by hand in the meantime, the return stays scheduled and you will see a warning."
+        }
       },
       "rollback": {
         "title": "Republish an old version",
@@ -2747,7 +2764,9 @@
         "too_many_drafts": "There are too many open drafts. Delete one first.",
         "invalid_body": "The server rejected the request.",
         "invalid_effective_at": "Pick a time between now and 60 days ahead.",
-        "not_scheduled": "That version is not scheduled (or it is already in force)."
+        "not_scheduled": "That version is not scheduled (or it is already in force).",
+        "event_not_linkable": "That event cannot take tied content any more (it is not published, or it already ended).",
+        "unknown_event": "That event does not exist."
       },
       "preview": {
         "title": "Species the wild pool offers",
@@ -2825,6 +2844,14 @@
         "body": "{{name}} will go back to being a draft and will not take effect on its own. You can edit it or schedule it again.",
         "confirm": "Cancel schedule",
         "done": "Version #{{id}} is a draft again"
+      },
+      "link": {
+        "starts": "with the event {{name}}",
+        "ends": "return to what was before when the event {{name}} ends",
+        "archived": "event archived",
+        "stale": "Warning: another version was published or scheduled after this return was set up. When the event ends it will still go back to what was copied, which would override that change. Cancel it if that is not what you want.",
+        "event": "Event",
+        "revertOf": "Copy of what was in force before version #{{id}}"
       }
     },
     "config": {
@@ -3487,6 +3514,29 @@
       "bulletsShort": "List",
       "bulletColor": "Bullet colour",
       "bulletDefault": "Default (yellow)"
+    },
+    "linked": {
+      "title": "Content tied to this event",
+      "empty": "No content version is tied to this event. Tie one by publishing a content draft with the «Together with an event» option.",
+      "role": {
+        "start": "Takes effect with the event",
+        "end": "Goes back to what was before"
+      },
+      "state": {
+        "active": "in force",
+        "scheduled": "scheduled",
+        "past": "already took effect"
+      },
+      "open": "View version #{{id}}",
+      "hint": "Scheduled versions follow this event's dates. If you archive it before it starts they go back to drafts; once it has started they are left alone.",
+      "moveWarn_one": "{{count}} scheduled content version is tied to this event: it will move with the new dates when you save.",
+      "moveWarn_other": "{{count}} scheduled content versions are tied to this event: they will move with the new dates when you save.",
+      "archiveWarn_one": "If the event has not started yet, the scheduled content version tied to it goes back to a draft; if it has started, it is left alone.",
+      "archiveWarn_other": "If the event has not started yet, the {{count}} scheduled content versions tied to it go back to drafts; if it has started, they are left alone.",
+      "moved_one": "{{count}} content version moved with the new dates.",
+      "moved_other": "{{count}} content versions moved with the new dates.",
+      "cancelled_one": "{{count}} content version tied to the event went back to a draft.",
+      "cancelled_other": "{{count}} content versions tied to the event went back to drafts."
     }
   },
   "nick": {

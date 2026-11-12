@@ -677,17 +677,21 @@ export interface AdminPlayerDetail {
  *   PUT    /api/admin/content/drafts/:id {patch?, title?, note?}            → AdminContentVersionResponse (admin; saves even with errors)
  *   DELETE /api/admin/content/drafts/:id                 → 204                              (admin)
  *   POST   /api/admin/content/drafts/:id/validate        → AdminContentValidateResponse     (admin; full, with the engine smoke test)
- *   POST   /api/admin/content/drafts/:id/publish {effectiveAt?, confirm?, note?} → AdminContentVersionResponse (admin + sudo)
+ *   POST   /api/admin/content/drafts/:id/publish {effectiveAt?, linkEventId?, revertWhenEnds?, confirm?, note?} → AdminContentVersionResponse (admin + sudo)
+ *            `linkEventId` (a published event that has not ended; not together with `effectiveAt`): the version takes effect with the event
+ *            (`effectiveAt = event.startsAt`, now when it already started) and follows its dates; `revertWhenEnds` also schedules a copy of
+ *            what was in force before the event at `event.endsAt` (the response's `revert`)
  *   POST   /api/admin/content/versions/:id/rollback {confirm?, note?}    → 201 AdminContentVersionResponse (admin + sudo)
  *   POST   /api/admin/content/versions/:id/unschedule    → AdminContentVersionResponse (admin + sudo; a scheduled version goes back to a draft; 409 not_scheduled)
  *   GET    /api/admin/content/spawn-preview?versionId&eventId&hour&weather&trainerLevel → AdminSpawnPreview (admin; eventId = with that live event on top, drafts too)
  *   Simulation (E10): POST /drafts/:id/simulate, GET /sim-runs, GET /sim-runs/:id — see «Admin: balance simulation».
  *
  * Every mutation is audited in its own transaction (`content.draft.create|update|delete`, `content.publish`,
- * `content.schedule`, `content.unschedule`, `content.rollback`). Drafts never reach `/api/content`: only published versions do.
+ * `content.schedule` (also a version tied to an event), `content.reschedule` (it followed its event's new dates), `content.unschedule`,
+ * `content.rollback`). Drafts never reach `/api/content`: only published versions do.
  * Errors: 400 invalid_body / invalid_id / invalid_query / invalid_effective_at, 403 forbidden / elevation_required,
- * 404 not_found, 409 (`not_draft`, `not_published`, `not_scheduled`, `too_many_drafts`, `confirm_required`),
- * 422 `validation_failed` { errors, warnings, requiresConfirm }, 429 rate_limited.
+ * 404 not_found, 409 (`not_draft`, `not_published`, `not_scheduled`, `too_many_drafts`, `confirm_required`,
+ * `event_not_linkable` { reason: 'not_published' | 'ended' }), 422 `validation_failed` { errors, warnings, requiresConfirm } or `unknown_event`, 429 rate_limited.
  */
 export type AdminContentStatus = 'draft' | 'published' | 'archived'
 
@@ -717,6 +721,19 @@ export interface AdminContentAuthor {
   trainerName: string
 }
 
+/** `start`: takes effect with the event; `end`: restores what was in force before it, when it ends. */
+export type AdminContentLinkRole = 'start' | 'end'
+
+/** The live event a content version is tied to. */
+export interface AdminLinkedEvent {
+  id: string
+  slug: string
+  name: LiveEventText
+  status: AdminEventStatus
+  startsAt: number
+  endsAt: number
+}
+
 export interface AdminContentVersionSummary {
   id: number
   status: AdminContentStatus
@@ -736,6 +753,16 @@ export interface AdminContentVersionSummary {
   scheduled: boolean
   /** Counts of the last saved validation (null = never validated). */
   validation: { ok: boolean; errors: number; warnings: number; requiresConfirm: boolean; smoke: boolean } | null
+  /** The event it is tied to (published versions only; null = a plain version). */
+  linkedEvent: AdminLinkedEvent | null
+  linkedRole: AdminContentLinkRole | null
+  /** An `end` version: the `start` version it restores the content for. */
+  revertOfVersionId: number | null
+  /**
+   * A scheduled `end` version whose copy is out of date: another version took effect (or is scheduled) between the
+   * event's start and end, or what was in force before the start changed. It still fires at the event's end.
+   */
+  revertStale: boolean
 }
 
 /** One changed path of a patch compared with the active one. `before`/`after`: the patch value, else the base value when known, else null. */
@@ -759,6 +786,8 @@ export interface AdminContentVersionResponse {
   diff: AdminContentDiffEntry[]
   /** Drafts (and the publish result): is there a recent simulation of this patch? (delivery E10; a warning, not a block) */
   sim?: AdminSimCheck
+  /** The publish result of a version tied to an event with `revertWhenEnds`: the version scheduled for the event's end. */
+  revert?: AdminContentVersionSummary
   serverNow: number
 }
 
@@ -1061,8 +1090,28 @@ export interface AdminEvent {
   scheduled: boolean
 }
 
+/** A content version tied to an event (GET /api/admin/events/:id). */
+export interface AdminEventLinkedContent {
+  id: number
+  title: string | null
+  role: AdminContentLinkRole
+  /** When it takes (took) effect. */
+  effectiveAt: number
+  /** In force now. */
+  active: boolean
+  /** Waiting for its time: it moves with the event's dates and is cancelled when the event is archived before it starts. */
+  scheduled: boolean
+  revertStale: boolean
+}
+
 export interface AdminEventResponse {
   event: AdminEvent
+  /** Single-event responses: the content versions tied to it (published ones; oldest first). */
+  linkedContent?: AdminEventLinkedContent[]
+  /** PUT: ids of the scheduled content versions that moved with the new dates. */
+  contentMoved?: number[]
+  /** Archive before the start: ids of the scheduled content versions that went back to drafts. */
+  contentCancelled?: number[]
   serverNow: number
 }
 

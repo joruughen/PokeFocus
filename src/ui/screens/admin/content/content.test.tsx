@@ -112,6 +112,10 @@ function summary(over: Partial<AdminContentVersionSummary>): AdminContentVersion
     active: false,
     scheduled: false,
     validation: null,
+    linkedEvent: null,
+    linkedRole: null,
+    revertOfVersionId: null,
+    revertStale: false,
     ...over,
   }
 }
@@ -157,6 +161,65 @@ describe('versions list', () => {
       expect(html).not.toContain('aria-label="' + i18n.t('admin.content.versions.delete', { name: '#4' }))
     })
   }
+})
+
+describe('tied to an event', () => {
+  const linked = (over: Partial<AdminContentVersionSummary> = {}) =>
+    summary({
+      id: 7,
+      scheduled: true,
+      effectiveAt: Date.UTC(2026, 11, 1),
+      linkedEvent: { id: 'e1', slug: 'spring', name: { es: 'Fiesta de primavera', en: 'Spring fest' }, status: 'published', startsAt: Date.UTC(2026, 11, 1), endsAt: Date.UTC(2026, 11, 5) },
+      linkedRole: 'start',
+      ...over,
+    })
+  const render = (items: AdminContentVersionSummary[]) =>
+    renderToStaticMarkup(<VersionsList items={items} filter="all" onFilter={noop} canEdit busy={false} onOpen={noop} onRollback={noop} onUnschedule={noop} onCopy={noop} onDelete={noop} />)
+
+  for (const [lng, starts, ends] of [
+    ['es', 'con el evento Fiesta de primavera', 'vuelta a lo anterior al terminar el evento Fiesta de primavera'],
+    ['en', 'with the event Spring fest', 'return to what was before when the event Spring fest ends'],
+  ] as const) {
+    it(`the list says which event a version goes with, and warns when the return is out of date (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const html = render([linked(), linked({ id: 8, linkedRole: 'end', revertOfVersionId: 7, revertStale: true }), summary({ id: 1 })])
+      expect(html).not.toMatch(RAW)
+      expect(html).toContain(starts)
+      expect(html).toContain(ends)
+      expect(html).toContain(i18n.t('admin.content.link.stale'))
+      expect(html.split(i18n.t('admin.content.link.stale')).length - 1).toBe(1) // only the flagged one
+      expect(render([summary({ id: 1 })])).not.toContain(starts)
+    })
+
+    it(`the «Scheduled» card shows it too (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const live: AdminContentLiveResponse = { hash: 'h', baseHash: 'b', patch: {}, active: null, scheduled: linked(), events: [], serverNow: 0 }
+      const html = renderToStaticMarkup(<LiveStatus live={live} onReload={noop} loading={false} />)
+      expect(html).toContain(starts)
+    })
+  }
+
+  it('an archived event is marked on the line', async () => {
+    await i18n.changeLanguage('en')
+    const v = linked()
+    const html = render([{ ...v, linkedEvent: { ...v.linkedEvent!, status: 'archived' } }])
+    expect(html).toContain('event archived')
+  })
+
+  it('every new key exists in both languages', () => {
+    const keys = [
+      'admin.content.publish.optEvent', 'admin.content.publish.withEvent', 'admin.content.publish.doneEvent', 'admin.content.publish.doneEventRevert',
+      'admin.content.publish.event.none', 'admin.content.publish.event.label', 'admin.content.publish.event.choose', 'admin.content.publish.event.option', 'admin.content.publish.event.hint',
+      'admin.content.publish.event.window', 'admin.content.publish.event.takesEffect', 'admin.content.publish.event.immediate', 'admin.content.publish.event.goesBack',
+      'admin.content.publish.event.revert', 'admin.content.publish.event.revertHint',
+      'admin.content.link.starts', 'admin.content.link.ends', 'admin.content.link.archived', 'admin.content.link.stale', 'admin.content.link.event', 'admin.content.link.revertOf',
+      'admin.content.errors.event_not_linkable', 'admin.content.errors.unknown_event',
+      'eventsAdmin.linked.title', 'eventsAdmin.linked.empty', 'eventsAdmin.linked.role.start', 'eventsAdmin.linked.role.end', 'eventsAdmin.linked.state.active', 'eventsAdmin.linked.state.scheduled',
+      'eventsAdmin.linked.state.past', 'eventsAdmin.linked.open', 'eventsAdmin.linked.hint', 'eventsAdmin.linked.moveWarn_one', 'eventsAdmin.linked.moveWarn_other',
+      'eventsAdmin.linked.archiveWarn_one', 'eventsAdmin.linked.archiveWarn_other', 'eventsAdmin.linked.moved_one', 'eventsAdmin.linked.moved_other', 'eventsAdmin.linked.cancelled_one', 'eventsAdmin.linked.cancelled_other',
+    ]
+    for (const [name, tree] of [['es', es], ['en', en]] as const) for (const k of keys) expect(typeof get(tree as unknown as Tree, k), `${name}:${k}`).toBe('string')
+  })
 })
 
 describe('live status', () => {

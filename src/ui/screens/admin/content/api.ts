@@ -35,6 +35,10 @@ export interface SaveDraftInput {
 export interface PublishInput {
   /** Epoch ms in the future (at most 60 days ahead) = schedule; absent = now. */
   effectiveAt?: number
+  /** Tie the version to a published event that has not ended: it takes effect with it (not together with `effectiveAt`). */
+  linkEventId?: string
+  /** With `linkEventId`: also go back to what was in force before the event when it ends. */
+  revertWhenEnds?: boolean
   confirm?: boolean
   note?: string
 }

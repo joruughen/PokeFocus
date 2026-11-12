@@ -78,6 +78,13 @@
       "when": 1794449231923,
       "tag": "0010_event_announce",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794453959742,
+      "tag": "0011_content_event_link",
+      "breakpoints": true
     }
   ]
 }

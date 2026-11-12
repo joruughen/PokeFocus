@@ -8,13 +8,22 @@
  *   PUT    /drafts/:id                 admin      { patch?, title?, note? }: saved even with errors (the validation is stored)
  *   DELETE /drafts/:id                 admin      → 204
  *   POST   /drafts/:id/validate        admin      full validation (with the engine smoke test) + diff; stores the result
- *   POST   /drafts/:id/publish         admin + sudo   { effectiveAt?, confirm?, note? }: now, or scheduled when in the future
+ *   POST   /drafts/:id/publish         admin + sudo   { effectiveAt?, linkEventId?, revertWhenEnds?, confirm?, note? }: now, scheduled when in the future,
+ *                                                     or tied to a live event: it takes effect with it and follows its dates (see below)
  *   POST   /versions/:id/rollback      admin + sudo   { confirm?, note? }: a NEW version copying that patch, in force now
- *   POST   /versions/:id/unschedule    admin + sudo   cancels a scheduled version that is not in force yet: it goes back to a draft (409 not_scheduled otherwise)
+ *   POST   /versions/:id/unschedule    admin + sudo   cancels a scheduled version that is not in force yet: it goes back to a draft (409 not_scheduled otherwise);
+ *                                                     a tied `start` version takes its scheduled `end` copies with it
  *   GET    /spawn-preview              admin      ?versionId&eventId&hour&weather&trainerLevel → species the wild pool offers (eventId: with that live event resolved on top, drafts too)
  *   POST   /drafts/:id/simulate        admin      { profiles?, seeds?, weeks? } → 202: balance simulation active vs draft in a worker (E10; one at a time, 409 busy)
  *   GET    /sim-runs?versionId=        support+   simulation runs, newest first (no reports)
  *   GET    /sim-runs/:id               support+   one run with its report (progress while running)
+ *
+ * Tied to an event (server/content/eventLink.ts): `linkEventId` = a published event that has not ended (409 `event_not_linkable`,
+ * 422 `unknown_event`); `effectiveAt = max(event.startsAt, now)`; audited as `content.schedule` with the event. `revertWhenEnds` also
+ * publishes, in the same transaction, a copy of the content in force just before the start (not counting versions tied to that event)
+ * scheduled at `event.endsAt` (role `end`, `revertOfVersionId` = the `start` version). The events routes move both with the event's
+ * dates and cancel them when it is archived before it starts. A version published by hand in between does NOT cancel the `end` copy:
+ * it stays scheduled and `revertStale` warns about it.
  *
  * Drafts (and the publish result) carry `sim: { recent, last }`: publishing without a recent
  * simulation of the current patch is allowed (a warning in the editor, `simRunId: null` in the audit).
@@ -41,6 +50,7 @@ import type {
   AdminContentVersionResponse,
   AdminContentVersionsResponse,
   AdminContentVersionSummary,
+  AdminLinkedEvent,
   AdminSimCheck,
   AdminSimRun,
   AdminSimRunResponse,
@@ -50,6 +60,7 @@ import type {
 } from '../../../src/game/protocol'
 import { ADMIN_SIM_MAX_PLAYER_WEEKS, ADMIN_SIM_MAX_SEEDS, ADMIN_SIM_MAX_WEEKS, ADMIN_SIM_PROFILES, ADMIN_SIM_RECENT_MS } from '../../../src/game/protocol'
 import { audit } from '../../admin/audit'
+import { cancelReverts, contentBeforeEvent, linkedEvents, staleReverts, startEffectiveAt, toDraft } from '../../content/eventLink'
 import { patchHash, type ResolvedContent } from '../../content/service'
 import type { SimInput } from '../../content/simCompare'
 import type { Db, Tx } from '../../db/client'
@@ -75,7 +86,18 @@ const createBody = z.object({
 const updateBody = z
   .object({ patch: z.record(z.string(), z.unknown()).optional(), title: titleField.nullable().optional(), note: noteField.nullable().optional() })
   .refine((b) => b.patch !== undefined || b.title !== undefined || b.note !== undefined, { message: 'empty' })
-const publishBody = z.object({ effectiveAt: z.number().int().positive().optional(), confirm: z.boolean().optional(), note: noteField.optional() })
+const publishBody = z
+  .object({
+    effectiveAt: z.number().int().positive().optional(),
+    /** Tie the version to this published event: it takes effect when the event starts. Not together with `effectiveAt`. */
+    linkEventId: z.string().regex(UUID_RE).optional(),
+    /** With `linkEventId`: also restore what was in force before the event when it ends. */
+    revertWhenEnds: z.boolean().optional(),
+    confirm: z.boolean().optional(),
+    note: noteField.optional(),
+  })
+  .refine((b) => !(b.linkEventId !== undefined && b.effectiveAt !== undefined), { message: 'link_and_time' })
+  .refine((b) => !(b.revertWhenEnds && b.linkEventId === undefined), { message: 'revert_without_link' })
 const rollbackBody = z.object({ confirm: z.boolean().optional(), note: noteField.optional() })
 const listQuery = z.object({ status: z.enum(['draft', 'published', 'archived']).optional() })
 const previewQuery = z.object({
@@ -132,7 +154,15 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     return out
   }
 
-  const summarize = (r: Row, who: Map<string, AdminContentAuthor>, activeId: number | null, now: number): AdminContentVersionSummary => {
+  /** What a summary needs besides the row: who wrote it, the events it is tied to and which `end` copies are out of date. */
+  interface Prep {
+    who: Map<string, AdminContentAuthor>
+    events: Map<string, AdminLinkedEvent>
+    stale: Set<number>
+  }
+  const prep = async (ex: Reader, rows: Row[], now: number): Promise<Prep> => ({ who: await authors(ex, rows), events: await linkedEvents(ex, rows), stale: await staleReverts(ex, rows, now) })
+
+  const summarize = (r: Row, { who, events, stale }: Prep, activeId: number | null, now: number): AdminContentVersionSummary => {
     const v = r.validation as AdminContentValidation | null
     return {
       id: r.id,
@@ -149,6 +179,10 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       active: r.id === activeId,
       scheduled: r.status === 'published' && r.effectiveAt !== null && r.effectiveAt.getTime() > now,
       validation: v ? { ok: v.ok, errors: v.errors.length, warnings: v.warnings.length, requiresConfirm: v.requiresConfirm, smoke: v.smoke } : null,
+      linkedEvent: (r.linkedEventId && events.get(r.linkedEventId)) || null,
+      linkedRole: r.linkedEventId ? r.linkedRole : null,
+      revertOfVersionId: r.revertOfVersionId,
+      revertStale: stale.has(r.id),
     }
   }
 
@@ -191,9 +225,8 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     const [row] = await db.select().from(contentVersions).where(eq(contentVersions.id, id))
     if (!row) throw new ApiError(404, 'not_found')
     const active = await content.current(now)
-    const who = await authors(db, [row])
     const version: AdminContentVersion = {
-      ...summarize(row, who, active.versionId, now),
+      ...summarize(row, await prep(db, [row], now), active.versionId, now),
       patch: row.patch,
       baseHash: row.baseHash,
       validationDetail: (row.validation as AdminContentValidation | null) ?? null,
@@ -236,7 +269,7 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       .limit(1)
     const ids = [active.versionId].filter((x): x is number => x !== null)
     const [cur] = ids.length ? await db.select().from(contentVersions).where(eq(contentVersions.id, ids[0]!)) : []
-    const who = await authors(db, [cur, next].filter((r): r is Row => !!r))
+    const who = await prep(db, [cur, next].filter((r): r is Row => !!r), now)
     const body: AdminContentLiveResponse = {
       hash: active.hash,
       baseHash: active.baseHash,
@@ -260,7 +293,7 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       .orderBy(desc(contentVersions.id))
       .limit(VERSIONS_LIMIT)
     const active = await content.current(now)
-    const who = await authors(db, rows)
+    const who = await prep(db, rows, now)
     const body: AdminContentVersionsResponse = { items: rows.map((r) => summarize(r, who, active.versionId, now)), serverNow: now }
     return c.json(body)
   })
@@ -378,25 +411,63 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     // the transaction (PGlite: one connection); the hash check makes a later patch edit count as unsimulated.
     const [pre] = await db.select({ hash: contentVersions.hash }).from(contentVersions).where(eq(contentVersions.id, id))
     const simulated = pre ? (await simCheck(id, pre.hash, now)).recentId : null
-    await db.transaction(async (tx) => {
+    const revertId = await db.transaction(async (tx) => {
+      // The event first (the same lock order as archiving it), so it cannot be archived or edited between the checks and the write.
+      let ev: typeof liveEvents.$inferSelect | undefined
+      if (body.linkEventId !== undefined) {
+        ;[ev] = await tx.select().from(liveEvents).where(eq(liveEvents.id, body.linkEventId)).for('update')
+        if (!ev) throw new ApiError(422, 'unknown_event')
+        if (ev.status !== 'published') throw new ApiError(409, 'event_not_linkable', { reason: 'not_published' })
+        if (ev.endsAt.getTime() <= now) throw new ApiError(409, 'event_not_linkable', { reason: 'ended' })
+      }
       const row = await lockDraft(tx, id)
       const active = await content.current(now, tx)
       const validation = validateAgainst(row.patch, active, true, now)
       gate(validation, body.confirm)
-      const pub = await content.publishDraft(tx, id, { effectiveAt: body.effectiveAt ?? now, userId: c.get('user').id, validation })
+      const effectiveAt = ev ? startEffectiveAt(ev.startsAt.getTime(), now) : (body.effectiveAt ?? now)
+      // What «going back» restores: what is in force at that moment without this version (and without anything else tied to the event).
+      const before = ev && body.revertWhenEnds ? await contentBeforeEvent(tx, ev.id, effectiveAt) : null
+      const pub = await content.publishDraft(tx, id, { effectiveAt, userId: c.get('user').id, validation, ...(ev && { linkedEventId: ev.id, linkedRole: 'start' as const }) })
       if (!pub) throw new ApiError(409, 'not_draft')
       if (body.note) await tx.update(contentVersions).set({ note: body.note }).where(eq(contentVersions.id, id))
       await audit(tx, c, {
-        action: body.effectiveAt !== undefined ? 'content.schedule' : 'content.publish',
+        action: body.effectiveAt !== undefined || ev ? 'content.schedule' : 'content.publish',
         targetType: 'content_version',
         targetId: String(id),
         before: { status: 'draft' },
-        after: { status: 'published', hash: pub.hash, effectiveAt: body.effectiveAt ?? now, changedPaths: diffPatches(active.patch, row.patch).length, warnings: validation.warnings.length, confirmed: !!body.confirm, simRunId: row.hash === pre?.hash ? simulated : null },
+        after: {
+          status: 'published',
+          hash: pub.hash,
+          effectiveAt,
+          changedPaths: diffPatches(active.patch, row.patch).length,
+          warnings: validation.warnings.length,
+          confirmed: !!body.confirm,
+          simRunId: row.hash === pre?.hash ? simulated : null,
+          ...(ev && { linkedEventId: ev.id, eventSlug: ev.slug, linkedRole: 'start', eventStartsAt: ev.startsAt.getTime(), eventEndsAt: ev.endsAt.getTime(), immediate: effectiveAt <= now, revertWhenEnds: !!before }),
+        },
         ...(body.note && { note: body.note }),
       })
+      if (!ev || !before) return null
+      const copy = await content.publish(
+        { patch: before.patch, effectiveAt: ev.endsAt.getTime(), parentId: before.id, title: `Back after ${ev.slug}`, userId: c.get('user').id, linkedEventId: ev.id, linkedRole: 'end', revertOfVersionId: id },
+        tx,
+      )
+      await audit(tx, c, {
+        action: 'content.schedule',
+        targetType: 'content_version',
+        targetId: String(copy.id),
+        before: { status: 'new' },
+        after: { status: 'published', hash: copy.hash, effectiveAt: ev.endsAt.getTime(), linkedEventId: ev.id, eventSlug: ev.slug, linkedRole: 'end', revertOfVersionId: id, copiedFromVersionId: before.id },
+      })
+      return copy.id
     })
     await content.refresh()
-    return c.json(await versionBody(id, now, true))
+    const res = await versionBody(id, now, true)
+    if (revertId !== null) {
+      const [copy] = await db.select().from(contentVersions).where(eq(contentVersions.id, revertId))
+      res.revert = summarize(copy!, await prep(db, [copy!], now), (await content.current(now)).versionId, now)
+    }
+    return c.json(res)
   })
 
   app.post('/versions/:id/rollback', staff('admin'), requireElevated(deps), async (c) => {
@@ -439,14 +510,9 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       if (row.status !== 'published' || !row.effectiveAt || row.effectiveAt.getTime() <= now) throw new ApiError(409, 'not_scheduled')
       const [open] = await tx.select({ n: sql<number>`count(*)::int` }).from(contentVersions).where(eq(contentVersions.status, 'draft'))
       if ((open?.n ?? 0) >= MAX_OPEN_DRAFTS) throw new ApiError(409, 'too_many_drafts')
-      await tx.update(contentVersions).set({ status: 'draft', effectiveAt: null, publishedBy: null, publishedAt: null }).where(eq(contentVersions.id, id))
-      await audit(tx, c, {
-        action: 'content.unschedule',
-        targetType: 'content_version',
-        targetId: String(id),
-        before: { status: 'published', effectiveAt: row.effectiveAt.getTime(), publishedBy: row.publishedBy },
-        after: { status: 'draft', hash: row.hash },
-      })
+      await toDraft(tx, c, row)
+      // The `end` copies of a cancelled `start` version go with it.
+      if (row.linkedRole === 'start') await cancelReverts(tx, c, id, now)
     })
     // Reloads the schedule and announces the hash again if the cancelled version was the next one.
     await content.refresh()

@@ -10,7 +10,8 @@ import { installFakeServer, type FakeServer } from '../../../test/fakeServer'
 import { installFakeAdminContent, type FakeAdminContent } from '../../../test/fakeAdminContent'
 import { contentApi } from './api'
 import { createDraftStore } from './draftStore'
-import { checkSchedule, classify, publishDraft, publishInput, reauthThen, rollbackTo } from './flow'
+import { eventsAdminApi } from '../events/api'
+import { checkSchedule, classify, linkableEvents, linkedEffectiveAt, publishDraft, publishInput, reauthThen, rollbackTo, unscheduleVersion } from './flow'
 import { liveValidate } from './live'
 import { setConfigValue } from './patch'
 import { previewRows } from './previewRows'
@@ -56,6 +57,19 @@ describe('schedule input', () => {
   it('builds the publish body: now has no effectiveAt, confirm and note only when set', () => {
     expect(publishInput({ mode: 'now' }, false, '  ')).toEqual({})
     expect(publishInput({ mode: 'later', at: 5 }, true, ' hi ')).toEqual({ effectiveAt: 5, confirm: true, note: 'hi' })
+  })
+
+  it('together with an event: the body carries the event (and the go-back box), never a time', () => {
+    expect(publishInput({ mode: 'event', eventId: 'e1', revert: false }, false, '')).toEqual({ linkEventId: 'e1' })
+    expect(publishInput({ mode: 'event', eventId: 'e1', revert: true }, true, 'x')).toEqual({ linkEventId: 'e1', revertWhenEnds: true, confirm: true, note: 'x' })
+  })
+
+  it('offers published events that have not ended, soonest first; a running one takes effect now', () => {
+    const e = (id: string, status: string, startsAt: number, endsAt: number) => ({ id, status, startsAt, endsAt })
+    const list = linkableEvents([e('later', 'published', NOW + 5, NOW + 9), e('draft', 'draft', NOW + 1, NOW + 9), e('over', 'published', NOW - 9, NOW - 1), e('running', 'published', NOW - 3, NOW + 3), e('gone', 'archived', NOW + 1, NOW + 9)], NOW)
+    expect(list.map((x) => x.id)).toEqual(['running', 'later'])
+    expect(linkedEffectiveAt(NOW - 3, NOW)).toBe(NOW)
+    expect(linkedEffectiveAt(NOW + 5, NOW)).toBe(NOW + 5)
   })
 })
 
@@ -188,6 +202,77 @@ describe('publishing', () => {
     expect((await contentApi.versions()).items).toHaveLength(1)
     await expect(contentApi.createDraft({ from: 'empty' })).rejects.toMatchObject({ code: 'forbidden', status: 403 })
     await expect(contentApi.spawnPreview({ hour: 12, weather: 'clear', trainerLevel: 5 })).rejects.toMatchObject({ code: 'forbidden' })
+  })
+})
+
+describe('publishing together with an event', () => {
+  const draftWith = async (patch: ContentPatch) => (await contentApi.createDraft({ from: 'empty' }).then((r) => contentApi.saveDraft(r.version.id, { patch }))).version
+  const wave = (n: number): ContentPatch => ({ config: { encounters: { baseWaveSize: n } } })
+
+  it('the dialog reads the events from the events API, and the version is tied to the chosen one', async () => {
+    admin.elevated = true
+    const ev = admin.seedEvent({ slug: 'spring', name: { es: 'Primavera', en: 'Spring' }, startsAt: NOW + 3_600_000, endsAt: NOW + 86_400_000 })
+    admin.seedEvent({ slug: 'hidden', startsAt: NOW + 3_600_000, endsAt: NOW + 86_400_000, status: 'draft' })
+    expect((await eventsAdminApi.list('published')).items.map((e) => e.slug)).toEqual(['spring'])
+    const d = await draftWith(wave(6))
+    const out = await publishDraft(d.id, publishInput({ mode: 'event', eventId: ev.id, revert: false }, false, ''))
+    expect(out).toMatchObject({ kind: 'ok', value: { status: 'published', scheduled: true, active: false, effectiveAt: ev.startsAt, linkedRole: 'start', linkedEvent: { id: ev.id, slug: 'spring' } } })
+    expect(admin.calls.at(-1)).toMatchObject({ method: 'POST', body: { linkEventId: ev.id } })
+    expect((await contentApi.live()).scheduled).toMatchObject({ id: d.id, linkedEvent: { slug: 'spring' } })
+    // The version list says which event it goes with.
+    expect((await contentApi.versions()).items.find((v) => v.id === d.id)?.linkedEvent?.name.es).toBe('Primavera')
+  })
+
+  it('an event that already started: in force now', async () => {
+    admin.elevated = true
+    const ev = admin.seedEvent({ slug: 'now', startsAt: NOW - 3_600_000, endsAt: NOW + 86_400_000 })
+    const d = await draftWith(wave(6))
+    expect(await publishDraft(d.id, { linkEventId: ev.id })).toMatchObject({ kind: 'ok', value: { active: true, scheduled: false, effectiveAt: NOW } })
+  })
+
+  it('go back when it ends: a scheduled copy of what was in force, flagged when another version comes in between, cancelled with the start version', async () => {
+    admin.elevated = true
+    const before = admin.seedPublished(wave(5), 'before')
+    const ev = admin.seedEvent({ slug: 'spring', startsAt: NOW + 3_600_000, endsAt: NOW + 86_400_000 })
+    const d = await draftWith(wave(6))
+    const out = await publishDraft(d.id, publishInput({ mode: 'event', eventId: ev.id, revert: true }, false, ''))
+    expect(out.kind).toBe('ok')
+    const back = [...admin.rows.values()].find((r) => r.linkedRole === 'end')!
+    expect(back).toMatchObject({ status: 'published', effectiveAt: ev.endsAt, revertOfVersionId: d.id, patch: wave(5), parentId: before.id })
+    const items = () => contentApi.versions().then((r) => r.items)
+    expect((await items()).find((v) => v.id === back.id)).toMatchObject({ scheduled: true, linkedRole: 'end', revertOfVersionId: d.id, revertStale: false })
+    // Another version published by hand in the middle of the event: the copy would override it.
+    const mid = admin.seedPublished(wave(8), 'mid')
+    mid.effectiveAt = NOW + 5 * 3_600_000
+    expect((await items()).find((v) => v.id === back.id)?.revertStale).toBe(true)
+    mid.status = 'draft'
+    mid.effectiveAt = null
+    // Cancelling the start version takes the copy with it; both go back to drafts, unlinked.
+    expect(await unscheduleVersion(d.id)).toMatchObject({ kind: 'ok', value: { status: 'draft', linkedEvent: null } })
+    expect(admin.rows.get(back.id)).toMatchObject({ status: 'draft', linkedEventId: null })
+  })
+
+  it('refuses an archived or ended event and an unknown one; needs the sudo password and the ×3 confirmation like any publish', async () => {
+    const gone = admin.seedEvent({ slug: 'gone', startsAt: NOW + 3_600_000, endsAt: NOW + 86_400_000, status: 'archived' })
+    const over = admin.seedEvent({ slug: 'over', startsAt: NOW - 86_400_000, endsAt: NOW - 3_600_000 })
+    const live = admin.seedEvent({ slug: 'live', startsAt: NOW + 3_600_000, endsAt: NOW + 86_400_000 })
+    const d = await draftWith(wave(6))
+    expect(await publishDraft(d.id, { linkEventId: live.id })).toEqual({ kind: 'elevation' })
+    admin.elevated = true
+    expect(await publishDraft(d.id, { linkEventId: gone.id })).toMatchObject({ kind: 'error', code: 'event_not_linkable' })
+    expect(await publishDraft(d.id, { linkEventId: over.id })).toMatchObject({ kind: 'error', code: 'event_not_linkable' })
+    expect(await publishDraft(d.id, { linkEventId: '00000000-0000-4000-8000-0000000000ff' })).toMatchObject({ kind: 'error', code: 'unknown_event' })
+    expect(admin.rows.get(d.id)?.status).toBe('draft')
+    const big = await draftWith({ config: { rewards: { expPerMinute: 100 } } })
+    expect((await publishDraft(big.id, { linkEventId: live.id })).kind).toBe('confirm')
+    expect(await publishDraft(big.id, { linkEventId: live.id, confirm: true })).toMatchObject({ kind: 'ok' })
+  })
+
+  it('support cannot publish tied to an event', async () => {
+    admin.role = 'support'
+    const ev = admin.seedEvent({ slug: 'spring', startsAt: NOW + 3_600_000, endsAt: NOW + 86_400_000 })
+    const d = admin.seedDraft(wave(6))
+    expect(await publishDraft(d.id, { linkEventId: ev.id })).toMatchObject({ kind: 'error', code: 'forbidden' })
   })
 })
 

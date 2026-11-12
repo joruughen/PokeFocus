@@ -280,10 +280,20 @@ export const contentVersions = pgTable(
     createdAt: ts('created_at').notNull().defaultNow(),
     publishedBy: uuid('published_by').references(() => users.id, { onDelete: 'set null' }),
     publishedAt: ts('published_at'),
+    /**
+     * Tied to a live event: the version takes effect with it (`start`: at the event's start) or restores what was
+     * in force before it (`end`: at the event's end, a copy made when the `start` one was published; `revert_of_version_id` = that one).
+     * Only a published version carries the link: cancelling it (back to a draft) clears all three.
+     */
+    linkedEventId: uuid('linked_event_id').references(() => liveEvents.id, { onDelete: 'set null' }),
+    linkedRole: text('linked_role', { enum: ['start', 'end'] }),
+    revertOfVersionId: integer('revert_of_version_id'),
   },
   (t) => [
     check('content_versions_status_check', sql`${t.status} in ('draft', 'published', 'archived')`),
+    check('content_versions_linked_role_check', sql`${t.linkedRole} is null or ${t.linkedRole} in ('start', 'end')`),
     index('content_versions_status_effective_idx').on(t.status, t.effectiveAt),
+    index('content_versions_linked_event_idx').on(t.linkedEventId),
   ],
 )
 

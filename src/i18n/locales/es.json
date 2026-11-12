@@ -2716,7 +2716,24 @@
         "noteHint": "Opcional. Se guarda con la versión y en el registro de auditoría.",
         "done": "La versión #{{id}} está en vivo",
         "scheduledDone": "La versión #{{id}} está programada",
-        "noSim": "Este borrador no tiene una simulación reciente de su versión actual. Puedes publicar igualmente, pero conviene simular antes (subpestaña «Simulación»)."
+        "noSim": "Este borrador no tiene una simulación reciente de su versión actual. Puedes publicar igualmente, pero conviene simular antes (subpestaña «Simulación»).",
+        "optEvent": "Junto a un evento",
+        "withEvent": "Atar al evento",
+        "doneEvent": "La versión #{{id}} entrará en vigor con el evento",
+        "doneEventRevert": "La versión #{{id}} entrará en vigor con el evento y volverá a lo anterior cuando termine",
+        "event": {
+          "none": "No hay eventos publicados que no hayan terminado. Publica o programa uno en la pestaña Eventos y vuelve.",
+          "label": "Evento",
+          "choose": "Elige un evento",
+          "option": "{{name}} · {{start}} – {{end}}",
+          "hint": "Solo eventos publicados o programados que no hayan terminado. Si cambias las fechas del evento, esta versión se mueve con él; si lo archivas antes de que empiece, vuelve a borrador.",
+          "window": "Evento",
+          "takesEffect": "Entrará en vigor",
+          "immediate": "Ahora mismo (el evento ya está en marcha)",
+          "goesBack": "Volverá a lo anterior",
+          "revert": "Volver a lo anterior cuando termine el evento",
+          "revertHint": "Programa también una copia de lo que esté en vigor justo antes de que empiece el evento, para cuando termine. Si publicas otra versión por tu cuenta mientras tanto, la vuelta sigue programada y verás un aviso."
+        }
       },
       "rollback": {
         "title": "Republicar una versión anterior",
@@ -2747,7 +2764,9 @@
         "too_many_drafts": "Hay demasiados borradores abiertos. Borra uno primero.",
         "invalid_body": "El servidor ha rechazado la petición.",
         "invalid_effective_at": "Elige una hora entre ahora y 60 días por delante.",
-        "not_scheduled": "Esa versión no está programada (o ya entró en vigor)."
+        "not_scheduled": "Esa versión no está programada (o ya entró en vigor).",
+        "event_not_linkable": "Ese evento ya no admite contenido atado (no está publicado o ya terminó).",
+        "unknown_event": "Ese evento no existe."
       },
       "preview": {
         "title": "Especies que ofrece la zona salvaje",
@@ -2825,6 +2844,14 @@
         "body": "{{name}} volverá a ser un borrador y no entrará en vigor por sí sola. Podrás editarla o programarla de nuevo.",
         "confirm": "Cancelar programación",
         "done": "La versión #{{id}} vuelve a ser un borrador"
+      },
+      "link": {
+        "starts": "con el evento {{name}}",
+        "ends": "vuelta a lo anterior al terminar el evento {{name}}",
+        "archived": "evento archivado",
+        "stale": "Aviso: después de programar esta vuelta se publicó o programó otra versión. Cuando termine el evento volverá igualmente a lo copiado, y eso pisaría ese cambio. Cancélala si no es lo que quieres.",
+        "event": "Evento",
+        "revertOf": "Copia de lo anterior a la versión #{{id}}"
       }
     },
     "config": {
@@ -3487,6 +3514,29 @@
       "bulletsShort": "Lista",
       "bulletColor": "Color de viñeta",
       "bulletDefault": "Normal (amarillo)"
+    },
+    "linked": {
+      "title": "Contenido atado a este evento",
+      "empty": "Ninguna versión de contenido está atada a este evento. Se ata al publicar un borrador de contenido con la opción «Junto a un evento».",
+      "role": {
+        "start": "Entra con el evento",
+        "end": "Vuelve a lo anterior"
+      },
+      "state": {
+        "active": "en vigor",
+        "scheduled": "programada",
+        "past": "ya entró en vigor"
+      },
+      "open": "Ver la versión #{{id}}",
+      "hint": "Las versiones programadas siguen las fechas de este evento. Si lo archivas antes de que empiece vuelven a borrador; si ya empezó, no se tocan.",
+      "moveWarn_one": "Hay {{count}} versión de contenido programada atada a este evento: se moverá con las nuevas fechas al guardar.",
+      "moveWarn_other": "Hay {{count}} versiones de contenido programadas atadas a este evento: se moverán con las nuevas fechas al guardar.",
+      "archiveWarn_one": "Si el evento aún no ha empezado, la versión de contenido programada atada a él volverá a borrador; si ya empezó, no se toca.",
+      "archiveWarn_other": "Si el evento aún no ha empezado, las {{count}} versiones de contenido programadas atadas a él volverán a borrador; si ya empezó, no se tocan.",
+      "moved_one": "{{count}} versión de contenido se movió con las nuevas fechas.",
+      "moved_other": "{{count}} versiones de contenido se movieron con las nuevas fechas.",
+      "cancelled_one": "{{count}} versión de contenido atada al evento volvió a borrador.",
+      "cancelled_other": "{{count}} versiones de contenido atadas al evento volvieron a borrador."
     }
   },
   "nick": {
