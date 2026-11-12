@@ -1,5 +1,5 @@
 import { Popover } from '@base-ui/react/popover'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../components/Button'
 import { Mascot } from '../components/Mascot'
@@ -64,13 +64,30 @@ export function HintLayer() {
     if (ready && !anchor && active && !active.manual) sfx('hintPop')
   }, [ready, anchor, active])
 
+  // The anchor can be replaced by a re-render (a wild card updating, a list re-keying): a detached
+  // element measures as 0×0 at (0,0) and the bubble jumped to the top-left corner. Follow the new
+  // element with the same anchor id, or dock the bubble when there is none.
+  useEffect(() => {
+    if (!anchor || !ready || !def) return
+    const id = window.setInterval(() => {
+      if (anchor.isConnected) return
+      setAnchor(findAnchor(def.anchor) ?? (active?.manual ? (active.fallbackAnchor?.isConnected ? active.fallbackAnchor : null) : null))
+    }, 250)
+    return () => window.clearInterval(id)
+  }, [anchor, ready, def, active])
+
+  // Sound and scroll once per hint: a re-found anchor (see below) must not yank the page again.
+  const announced = useRef<string | null>(null)
   useEffect(() => {
     if (!anchor || !ready) return
     anchor.setAttribute('data-hint-active', '')
-    if (!active?.manual) sfx('hintPop')
-    if (!active?.manual) anchor.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    if (!active?.manual && announced.current !== active?.id) {
+      announced.current = active?.id ?? null
+      sfx('hintPop')
+      anchor.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
     return () => anchor.removeAttribute('data-hint-active')
-  }, [anchor, ready, active?.manual])
+  }, [anchor, ready, active?.manual, active?.id])
 
   if (!active || !def || !ready) return null
   const step = active.step
