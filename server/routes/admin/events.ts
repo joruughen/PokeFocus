@@ -10,12 +10,15 @@
  *   DELETE /events/:id            admin        → 204, drafts only
  *   POST   /events/:id/publish    admin + sudo { confirm?, note? }: published; a future `startsAt` = scheduled
  *   POST   /events/:id/archive    admin + sudo { note? }: a published event leaves play (its items keep their names)
+ *   POST   /events/:id/announce   admin + sudo { note? }: «Notify players»: bumps `announceRev`, SSE `event_announce` to every
+ *                                 connection; published and not ended only (409 `not_published` / `event_ended`); 5 per hour per event
+ *   GET    /events/:id/audience   admin        { connections, players } connected right now
  *
  * The overlay (featured species, shiny, legendary multiplier, drops, event missions, own items) is checked by
  * `validateEventOverlay` (src/game/content): the shape on every save (400 `invalid_body` with the fields), the
  * semantics and the engine smoke test when publishing or editing a published event (422 `validation_failed`;
  * warnings that need confirmation: 409 `confirm_required` until `confirm: true`). Writes happen in one transaction
- * together with their audit row (`event.create|update|delete|publish|archive`); afterwards the ContentService
+ * together with their audit row (`event.create|update|delete|publish|archive|announce`); afterwards the ContentService
  * reloads and announces the new content hash over SSE. Drafts and archived events never reach the public API or
  * the content resolution as live events. Contract: src/game/protocol.ts «Live events».
  */
@@ -23,8 +26,8 @@ import { Hono } from 'hono'
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import type { ContentItem, EventOverlay } from '../../../src/engine/content'
-import { eventOverlayBodySchema, longTextSchema, shortTextSchema, slugSchema, validateEventOverlay } from '../../../src/game/content'
-import type { AdminContentAuthor, AdminContentValidation, AdminEvent, AdminEventResponse, AdminEventsResponse, AdminEventStatus } from '../../../src/game/protocol'
+import { eventOverlayBodySchema, richLongTextSchema, shortTextSchema, slugSchema, validateEventOverlay } from '../../../src/game/content'
+import type { AdminContentAuthor, AdminContentValidation, AdminEvent, AdminEventAnnounceResponse, AdminEventAudienceResponse, AdminEventResponse, AdminEventsResponse, AdminEventStatus } from '../../../src/game/protocol'
 import { audit } from '../../admin/audit'
 import { imageOf, overlayOf } from '../../content/events'
 import { isUniqueViolation, type Db, type Tx } from '../../db/client'
@@ -43,7 +46,7 @@ const imageIdField = z.string().regex(UUID_RE)
 const createBody = z.object({
   slug: slugSchema,
   name: shortTextSchema,
-  description: longTextSchema,
+  description: richLongTextSchema,
   startsAt: epoch,
   endsAt: epoch,
   imageId: imageIdField.nullable().optional(),
@@ -53,7 +56,7 @@ const updateBody = z
   .object({
     slug: slugSchema.optional(),
     name: shortTextSchema.optional(),
-    description: longTextSchema.optional(),
+    description: richLongTextSchema.optional(),
     startsAt: epoch.optional(),
     endsAt: epoch.optional(),
     imageId: imageIdField.nullable().optional(),
@@ -63,6 +66,7 @@ const updateBody = z
   .refine((b) => Object.keys(b).some((k) => k !== 'confirm' && (b as Record<string, unknown>)[k] !== undefined), { message: 'empty' })
 const publishBody = z.object({ confirm: z.boolean().optional(), note: noteField.optional() })
 const archiveBody = z.object({ note: noteField.optional() })
+const announceBody = z.object({ note: noteField.optional() })
 const listQuery = z.object({ status: z.enum(['draft', 'published', 'archived']).optional() })
 
 type Row = typeof liveEvents.$inferSelect
@@ -78,6 +82,7 @@ const snapshot = (r: Row) => ({
   description: r.description,
   imageId: r.imageId,
   revision: r.revision,
+  announceRev: r.announceRev,
   overlay: r.overlay,
 })
 
@@ -91,6 +96,7 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     return id
   }
   const writeLimit = (c: Ctx) => limit(c, `admin:event:write:${c.get('user').id}`, RULES.adminEventWrite)
+  const announceLimit = (c: Ctx, eventId: string) => limit(c, `admin:event:announce:${eventId}`, RULES.adminEventAnnounce)
   const publishLimit = (c: Ctx) => limit(c, `admin:event:publish:${c.get('user').id}`, RULES.adminEventPublish)
   /** Sudo for the actions that are only sensitive on a published event. */
   const needSudo = (c: Ctx) => {
@@ -118,6 +124,7 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     image: imageOf(up),
     overlay: r.overlay,
     revision: r.revision,
+    announceRev: r.announceRev,
     validation: r.validation ?? null,
     createdBy: (r.createdBy && who.get(r.createdBy)) || null,
     createdAt: r.createdAt.getTime(),
@@ -373,6 +380,48 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     })
     await content.refresh()
     return c.json(await bodyOf(id, now))
+  })
+
+  // --- Notify the players ---------------------------------------------------------------------
+
+  /** Who a notice would reach right now (the admin's confirmation says it). */
+  app.get('/:id/audience', staff('admin'), async (c) => {
+    const id = idParam(c)
+    const [row] = await db.select({ id: liveEvents.id }).from(liveEvents).where(eq(liveEvents.id, id))
+    if (!row) throw new ApiError(404, 'not_found')
+    const body: AdminEventAudienceResponse = deps.bus.audience()
+    return c.json(body)
+  })
+
+  /**
+   * "Notify the players": the announcement window shows again to everybody (those who closed it too), including
+   * those who connect later. Only a published event that has not ended. Does not touch `revision` nor the content.
+   */
+  app.post('/:id/announce', staff('admin'), requireElevated(deps), async (c) => {
+    const id = idParam(c)
+    const body = await readBody(c, announceBody)
+    announceLimit(c, id)
+    const now = deps.clock()
+    const rev = await db.transaction(async (tx) => {
+      const row = await lock(tx, id)
+      if (row.status !== 'published') throw new ApiError(409, 'not_published')
+      if (row.endsAt.getTime() <= now) throw new ApiError(409, 'event_ended')
+      const next = row.announceRev + 1
+      await tx.update(liveEvents).set({ announceRev: next }).where(eq(liveEvents.id, id))
+      await audit(tx, c, {
+        action: 'event.announce',
+        targetType: 'live_event',
+        targetId: id,
+        before: { announceRev: row.announceRev },
+        after: { announceRev: next, scheduled: row.startsAt.getTime() > now },
+        ...(body.note && { note: body.note }),
+      })
+      return next
+    })
+    const notified = deps.bus.audience()
+    deps.bus.broadcast({ type: 'event_announce', eventId: id, rev })
+    const res: AdminEventAnnounceResponse = { ...(await bodyOf(id, now)), notified }
+    return c.json(res)
   })
 
   return app

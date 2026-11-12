@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { defaultContext, type MissionReward, type MissionView, type TimeZoneSpec, type TypeSlug } from '../../../engine'
 import type { LiveEventPublic } from '../../../game/protocol'
-import { PixelIcon, ProgressBar, Sprite } from '../../components'
+import { PixelIcon, ProgressBar, RichText, Sprite } from '../../components'
 import { cx } from '../../lib/cx'
 import { fmtInt } from '../../lib/format'
 import { asLocale, itemName, speciesName, typeName } from '../../lib/names'
@@ -84,7 +84,7 @@ export function EventCard({ event, now, tz, baseShinyChance, missionViews, train
           </p>
         </header>
 
-        <p className="max-w-[70ch] break-words whitespace-pre-line text-mist-100">{eventText(event.description, lng)}</p>
+        <RichText text={eventText(event.description, lng)} className="max-w-[70ch] text-mist-100" />
 
         {(shiny || event.legendaryChanceMult !== undefined) && (
           <ul className="flex flex-wrap gap-2" aria-label={t('events.boosts')}>

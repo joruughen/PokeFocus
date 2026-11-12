@@ -2308,6 +2308,15 @@
       "title": "Event: {{name}}",
       "view": "View",
       "dismiss": "Close the {{name}} notice"
+    },
+    "popup": {
+      "label": "Event announcement",
+      "live": "Live now",
+      "comingSoon": "Coming soon",
+      "startsOn": "Starts {{when}}",
+      "endsOn": "Until {{when}}",
+      "view": "View event",
+      "close": "Close"
     }
   },
   "maintenance": {
@@ -3106,7 +3115,8 @@
       "animated_image": "Animated images are not accepted.",
       "unknown_image": "The chosen image does not exist.",
       "rate_limited_one": "Too many requests. Try again in {{count}} minute.",
-      "rate_limited_other": "Too many requests. Try again in {{count}} minutes."
+      "rate_limited_other": "Too many requests. Try again in {{count}} minutes.",
+      "event_ended": "This event has already ended: there is nobody to notify."
     },
     "issues": {
       "unknown_species": "No such species at {{path}}.",
@@ -3125,13 +3135,16 @@
         "publish": "Publish the event",
         "schedule": "Schedule the event",
         "save": "Save changes to a published event",
-        "archive": "Archive the event"
+        "archive": "Archive the event",
+        "announce": "Notify the players"
       },
       "body": {
         "publish": "“{{name}}” starts right now and shows on every player's events page. It is recorded in the audit log.",
         "schedule": "“{{name}}” will be scheduled: it only starts at its start date. Until then players see it as upcoming.",
         "save": "“{{name}}” is already published: the changes reach players at once and bump its revision.",
-        "archive": "“{{name}}” leaves play and the events page. Its items keep their names in bags."
+        "archive": "“{{name}}” leaves play and the events page. Its items keep their names in bags.",
+        "announce": "“{{name}}” will pop up now to the players connected right now and to everyone who opens the game later, even those who already closed it. Players in a study session see it when they finish. Players connected now: {{players}} (open connections: {{connections}}). Previous notices: {{n}}. It is recorded in the audit log.",
+        "announceNoAudience": "“{{name}}” will pop up now to the players connected right now and to everyone who opens the game later, even those who already closed it. Players in a study session see it when they finish. Previous notices: {{n}}. It is recorded in the audit log."
       },
       "riskyTitle": "Big changes you must confirm",
       "confirm": "I understand these are big changes (more than ×3, or ×5 for probabilities) and I confirm them.",
@@ -3143,7 +3156,8 @@
         "publish": "Publish now",
         "schedule": "Schedule",
         "save": "Save changes",
-        "archive": "Archive"
+        "archive": "Archive",
+        "announce": "Notify players"
       }
     },
     "image": {
@@ -3300,7 +3314,8 @@
     "problem": {
       "required": "This field needs a value.",
       "number": "Type a number.",
-      "dates": "The end must be after the start."
+      "dates": "The end must be after the start.",
+      "tooLong": "Too long: at most 400 visible characters (the format marks do not count)."
     },
     "validation": {
       "title": "Validation",
@@ -3358,6 +3373,33 @@
         "published": "Ended",
         "archived": "Archived"
       }
+    },
+    "announce": {
+      "button": "Notify players…",
+      "unsaved": "Save your changes first: players are shown the saved version.",
+      "hint": "Shows the event window again to every player, also to those who closed it. For a scheduled event it says “Coming soon”.",
+      "ended": "The event has ended.",
+      "done": "Notified. Players connected now: {{players}}. The rest will see it when they open the game.",
+      "count": "Notices sent: {{n}}"
+    },
+    "format": {
+      "label": "Format",
+      "hint": "Select text and press a button. Bold **text**, italic *text*, colour [red]text[/red]. Anything that is not closed shows as typed.",
+      "bold": "Bold",
+      "italic": "Italic",
+      "colors": {
+        "red": "Red",
+        "orange": "Orange",
+        "yellow": "Yellow",
+        "green": "Green",
+        "blue": "Blue",
+        "purple": "Purple",
+        "pink": "Pink"
+      },
+      "preview": "Preview",
+      "previewEmpty": "Nothing to preview yet.",
+      "count": "{{n}}/{{max}} visible characters",
+      "tooMuch": "Too much markup: at most {{max}} characters in total."
     }
   },
   "nick": {

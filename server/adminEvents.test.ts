@@ -140,6 +140,8 @@ describe('permissions', () => {
       ['DELETE', `${E}/${id}`],
       ['POST', `${E}/${id}/publish`, {}],
       ['POST', `${E}/${id}/archive`, {}],
+      ['POST', `${E}/${id}/announce`, {}],
+      ['GET', `${E}/${id}/audience`],
       ['GET', U],
       ['DELETE', `${U}/${id}`],
     ]
@@ -161,7 +163,7 @@ describe('permissions', () => {
     const created = await h.call('POST', E, { cookie: a.cookie, body: payload() })
     expect(created.status).toBe(201)
     const id = asEvent(created).id
-    for (const path of [`${E}/${id}/publish`, `${E}/${id}/archive`]) {
+    for (const path of [`${E}/${id}/publish`, `${E}/${id}/archive`, `${E}/${id}/announce`]) {
       const r = await h.call('POST', path, { cookie: a.cookie, body: {} })
       expect([r.status, r.json?.error], path).toEqual([403, 'elevation_required'])
     }
@@ -367,6 +369,116 @@ describe('publish, edit and archive', () => {
   })
 })
 
+describe('announce (notify the players)', () => {
+  const publish = async (h: Harness, over: Record<string, unknown> = {}) => {
+    const r = await adminWithEvent(h, over)
+    expect((await h.call('POST', `${E}/${r.id}/publish`, { cookie: r.a.cookie, body: {} })).status).toBe(200)
+    return r
+  }
+  const rows = () => database.db.select().from(adminAudit).where(eq(adminAudit.action, 'event.announce'))
+
+  it('bumps announceRev, broadcasts event_announce to every connection, audits it and exposes the rev publicly', async () => {
+    const h = makeApp()
+    const seen: ServerEvent[] = []
+    const other: ServerEvent[] = []
+    h.bus.subscribe({ userId: 'w1', sessionId: 's1', send: (e) => seen.push(e), close: () => {} })
+    h.bus.subscribe({ userId: 'w1', sessionId: 's2', send: () => {}, close: () => {} })
+    h.bus.subscribe({ userId: 'w2', sessionId: 's3', send: (e) => other.push(e), close: () => {} })
+    const { a, id } = await publish(h)
+    now = T0 + 2 * HOUR // running
+    await elevate(h, a)
+    const aud = await h.call('GET', `${E}/${id}/audience`, { cookie: a.cookie })
+    expect(aud.json).toEqual({ connections: 3, players: 2 })
+
+    const r = await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: { note: 'big news' } })
+    expect(r.status, JSON.stringify(r.json)).toBe(200)
+    expect(asEvent(r)).toMatchObject({ announceRev: 1, revision: 1, status: 'published' })
+    expect((r.json as { notified: unknown }).notified).toEqual({ connections: 3, players: 2 })
+    expect(seen).toEqual([{ type: 'event_announce', eventId: id, rev: 1 }])
+    expect(other).toEqual(seen)
+    const again = await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: {} })
+    expect(asEvent(again).announceRev).toBe(2)
+    expect(seen.at(-1)).toEqual({ type: 'event_announce', eventId: id, rev: 2 })
+
+    const log = await rows()
+    expect(log).toHaveLength(2)
+    expect(log[0]).toMatchObject({ action: 'event.announce', targetType: 'live_event', targetId: id, note: 'big news' })
+    expect(log[0]!.after).toMatchObject({ announceRev: 1 })
+    expect(await auditActions()).toContain('event.announce')
+
+    const pub = (await h.call('GET', '/api/live-events')).json as unknown as LiveEventsResponse
+    expect(pub.active[0]).toMatchObject({ id, announceRev: 2 })
+    // not content: no new revision, no content broadcast
+    expect(seen.every((e) => e.type === 'event_announce')).toBe(true)
+  })
+
+  it('works for a scheduled event, and exposes it under upcoming', async () => {
+    const h = makeApp()
+    const { a, id } = await publish(h) // starts at T0 + 1h
+    const r = await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: {} })
+    expect(r.status).toBe(200)
+    expect(asEvent(r)).toMatchObject({ scheduled: true, announceRev: 1 })
+    const pub = (await h.call('GET', '/api/live-events')).json as unknown as LiveEventsResponse
+    expect(pub.upcoming[0]).toMatchObject({ id, announceRev: 1 })
+  })
+
+  it('needs an admin with sudo; drafts, archived and finished events are refused', async () => {
+    const h = makeApp()
+    const draft = await adminWithEvent(h)
+    expect((await h.call('POST', `${E}/${draft.id}/announce`, { cookie: draft.a.cookie, body: {} })).json).toMatchObject({ error: 'not_published' })
+    expect((await h.call('POST', `${E}/${draft.id}/announce`, { cookie: draft.a.cookie, body: {} })).status).toBe(409)
+    expect((await h.call('POST', `${E}/11111111-1111-4111-8111-111111111111/announce`, { cookie: draft.a.cookie, body: {} })).status).toBe(404)
+    expect((await h.call('POST', `${E}/not-a-uuid/announce`, { cookie: draft.a.cookie, body: {} })).status).toBe(404)
+    expect((await h.call('POST', `${E}/${draft.id}/announce`, { cookie: draft.a.cookie, body: { note: 'x'.repeat(401) } })).status).toBe(400)
+
+    const { a, id } = await publish(h, { slug: 'second' })
+    now = T0 + 2 * HOUR
+    const lapsed = await account(h, 'admin') // no sudo
+    expect((await h.call('POST', `${E}/${id}/announce`, { cookie: lapsed.cookie, body: {} })).json).toMatchObject({ error: 'elevation_required' })
+    now = T0 + DAY + HOUR // over
+    await elevate(h, a)
+    expect((await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: {} })).json).toMatchObject({ error: 'event_ended' })
+    now = T0 + 2 * HOUR
+    await elevate(h, a)
+    expect((await h.call('POST', `${E}/${id}/archive`, { cookie: a.cookie, body: {} })).status).toBe(200)
+    expect((await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: {} })).json).toMatchObject({ error: 'not_published' })
+    expect(await rows()).toHaveLength(0)
+  })
+
+  it('is limited to 5 per hour per event (a refused one changes nothing)', async () => {
+    const h = makeApp()
+    const { a, id } = await publish(h)
+    const other = await publish(h, { slug: 'other' }) // its own budget
+    for (let n = 1; n <= 5; n++) expect((await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: {} })).status, `n=${n}`).toBe(200)
+    const blocked = await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: {} })
+    expect([blocked.status, blocked.json?.error]).toEqual([429, 'rate_limited'])
+    const [row] = await database.db.select().from(liveEvents).where(eq(liveEvents.id, id))
+    expect(row!.announceRev).toBe(5)
+    expect((await h.call('POST', `${E}/${other.id}/announce`, { cookie: other.a.cookie, body: {} })).status).toBe(200)
+    now += HOUR + 1
+    await elevate(h, a)
+    expect((await h.call('POST', `${E}/${id}/announce`, { cookie: a.cookie, body: {} })).status).toBe(200)
+  })
+})
+
+describe('rich description', () => {
+  it('accepts the mini-format: 400 visible characters, markers do not count, 3x raw cap', async () => {
+    const h = makeApp()
+    const a = await account(h, 'admin')
+    const long = (n: number) => 'a'.repeat(n)
+    const ok = await h.call('POST', E, { cookie: a.cookie, body: payload({ description: { es: '**Fuerte** [red]rojo[/red] *cursiva*', en: `**${long(400)}**` } }) })
+    expect(ok.status, JSON.stringify(ok.json)).toBe(201)
+    const tooLong = await h.call('POST', E, { cookie: a.cookie, body: payload({ slug: 'b', description: { es: long(401), en: 'x' } }) })
+    expect([tooLong.status, tooLong.json?.error]).toEqual([400, 'invalid_body'])
+    const markupTooBig = await h.call('POST', E, { cookie: a.cookie, body: payload({ slug: 'c', description: { es: 'x', en: 'a' + '[red][/red]'.repeat(110) } }) }) // 1 visible character, 1211 raw
+    expect(markupTooBig.status).toBe(400)
+    const blank = await h.call('POST', E, { cookie: a.cookie, body: payload({ slug: 'd', description: { es: '**  **', en: 'x' } }) })
+    expect(blank.status).toBe(201) // "**  **" is literal text, not blank
+    const onlyTags = await h.call('POST', E, { cookie: a.cookie, body: payload({ slug: 'e', description: { es: '[red] [/red]', en: 'x' } }) })
+    expect(onlyTags.status).toBe(400)
+  })
+})
+
 describe('ContentService integration', () => {
   it('a published event enters the resolution while it runs, then leaves; SSE announces both edges', async () => {
     const h = makeApp()
@@ -485,7 +597,7 @@ describe('/api/live-events', () => {
     expect(body.past.map((e) => e.slug)).toEqual(['over'])
     expect(body).toMatchObject({ nextCursor: null, serverNow: T0 })
     // only public fields
-    expect(Object.keys(body.active[0]!).sort()).toEqual(['description', 'drops', 'endsAt', 'featured', 'id', 'image', 'missions', 'name', 'slug', 'startsAt'])
+    expect(Object.keys(body.active[0]!).sort()).toEqual(['announceRev', 'description', 'drops', 'endsAt', 'featured', 'id', 'image', 'missions', 'name', 'slug', 'startsAt'])
     expect(JSON.stringify(body)).not.toMatch(/validation|createdBy|publishedBy|revision/)
   })
 

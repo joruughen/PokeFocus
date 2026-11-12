@@ -36,6 +36,7 @@ export function toLiveEventPublic(r: typeof liveEvents.$inferSelect, up: typeof 
     image: imageOf(up),
     startsAt: r.startsAt.getTime(),
     endsAt: r.endsAt.getTime(),
+    announceRev: r.announceRev,
     featured: r.overlay.featured,
     ...(r.overlay.shiny && { shiny: r.overlay.shiny }),
     ...(r.overlay.legendaryChanceMult !== undefined && { legendaryChanceMult: r.overlay.legendaryChanceMult }),

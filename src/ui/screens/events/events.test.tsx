@@ -16,6 +16,7 @@ const RAW_KEY = /\b(events|missions)\.[a-zA-Z]+\.?[a-zA-Z]*\b(?![^<]*>)/
 function ev(over: Partial<LiveEventPublic> = {}): LiveEventPublic {
   return {
     id: 'e1',
+    announceRev: 0,
     slug: 'pikachu-week',
     name: { es: 'Semana Pikachu', en: 'Pikachu Week' },
     description: { es: 'Pikachu aparece más.', en: 'Pikachu shows up more.' },

@@ -2308,6 +2308,15 @@
       "title": "Evento: {{name}}",
       "view": "Ver",
       "dismiss": "Cerrar el aviso de {{name}}"
+    },
+    "popup": {
+      "label": "Aviso de evento",
+      "live": "En marcha",
+      "comingSoon": "Próximamente",
+      "startsOn": "Empieza el {{when}}",
+      "endsOn": "Hasta el {{when}}",
+      "view": "Ver evento",
+      "close": "Cerrar"
     }
   },
   "maintenance": {
@@ -3106,7 +3115,8 @@
       "animated_image": "No se aceptan imágenes animadas.",
       "unknown_image": "La imagen elegida no existe.",
       "rate_limited_one": "Demasiadas peticiones. Prueba otra vez en {{count}} minuto.",
-      "rate_limited_other": "Demasiadas peticiones. Prueba otra vez en {{count}} minutos."
+      "rate_limited_other": "Demasiadas peticiones. Prueba otra vez en {{count}} minutos.",
+      "event_ended": "Este evento ya terminó: no hay a quién avisar."
     },
     "issues": {
       "unknown_species": "No existe la especie en {{path}}.",
@@ -3125,13 +3135,16 @@
         "publish": "Publicar el evento",
         "schedule": "Programar el evento",
         "save": "Guardar cambios en un evento publicado",
-        "archive": "Archivar el evento"
+        "archive": "Archivar el evento",
+        "announce": "Notificar a los jugadores"
       },
       "body": {
         "publish": "«{{name}}» empezará ya y se verá en la página de eventos de todos los jugadores. Se guarda en el registro de auditoría.",
         "schedule": "«{{name}}» quedará programado: empezará solo en la fecha de inicio. Hasta entonces los jugadores lo ven como próximo.",
         "save": "«{{name}}» ya está publicado: los cambios se aplican a los jugadores al momento y suben su revisión.",
-        "archive": "«{{name}}» dejará de estar en juego y de aparecer en la página de eventos. Sus objetos seguirán con su nombre en las mochilas."
+        "archive": "«{{name}}» dejará de estar en juego y de aparecer en la página de eventos. Sus objetos seguirán con su nombre en las mochilas.",
+        "announce": "«{{name}}» saldrá ahora como ventana a los jugadores conectados en este momento y a todos los que abran el juego más tarde, incluso a quienes ya la cerraron. Quien esté en una sesión de estudio la verá al terminar. Jugadores conectados ahora: {{players}} (conexiones abiertas: {{connections}}). Avisos anteriores: {{n}}. Queda en el registro de auditoría.",
+        "announceNoAudience": "«{{name}}» saldrá ahora como ventana a los jugadores conectados en este momento y a todos los que abran el juego más tarde, incluso a quienes ya la cerraron. Quien esté en una sesión de estudio la verá al terminar. Avisos anteriores: {{n}}. Queda en el registro de auditoría."
       },
       "riskyTitle": "Cambios grandes que debes confirmar",
       "confirm": "Entiendo que son cambios grandes (más de ×3, o de ×5 en probabilidades) y los confirmo.",
@@ -3143,7 +3156,8 @@
         "publish": "Publicar ahora",
         "schedule": "Programar",
         "save": "Guardar cambios",
-        "archive": "Archivar"
+        "archive": "Archivar",
+        "announce": "Notificar"
       }
     },
     "image": {
@@ -3300,7 +3314,8 @@
     "problem": {
       "required": "Falta rellenar este campo.",
       "number": "Escribe un número.",
-      "dates": "El fin debe ser posterior al inicio."
+      "dates": "El fin debe ser posterior al inicio.",
+      "tooLong": "Demasiado largo: como máximo 400 caracteres visibles (las marcas de formato no cuentan)."
     },
     "validation": {
       "title": "Validación",
@@ -3358,6 +3373,33 @@
         "published": "Terminado",
         "archived": "Archivado"
       }
+    },
+    "announce": {
+      "button": "Notificar a los jugadores…",
+      "unsaved": "Guarda primero los cambios: los jugadores ven la versión guardada.",
+      "hint": "Vuelve a mostrar la ventana del evento a todos los jugadores, también a los que la cerraron. Si el evento está programado dice «Próximamente».",
+      "ended": "El evento ya terminó.",
+      "done": "Notificado. Jugadores conectados ahora: {{players}}. El resto la verá al abrir el juego.",
+      "count": "Avisos enviados: {{n}}"
+    },
+    "format": {
+      "label": "Formato",
+      "hint": "Selecciona texto y pulsa un botón. Negrita **texto**, cursiva *texto*, color [red]texto[/red]. Lo que no se cierra se muestra tal cual.",
+      "bold": "Negrita",
+      "italic": "Cursiva",
+      "colors": {
+        "red": "Rojo",
+        "orange": "Naranja",
+        "yellow": "Amarillo",
+        "green": "Verde",
+        "blue": "Azul",
+        "purple": "Morado",
+        "pink": "Rosa"
+      },
+      "preview": "Vista previa",
+      "previewEmpty": "Todavía no hay nada que previsualizar.",
+      "count": "{{n}}/{{max}} caracteres visibles",
+      "tooMuch": "Demasiadas marcas: como máximo {{max}} caracteres en total."
     }
   },
   "nick": {

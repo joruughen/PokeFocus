@@ -6,6 +6,8 @@
  */
 import type { ContentItem, EventMissionDef, LocalizedText, MissionKind, MissionRewardDef, TypeSlug } from '../../../../engine'
 import type { AdminEvent, AdminEventStatus, EventOverlayBody, LiveEventImage, LiveEventPublic } from '../../../../game/protocol'
+import { DATA_LIMITS } from '../../../../game/content/limits'
+import { richPlainLength, RICH_RAW_FACTOR } from '../../../../game/richText'
 import { fromLocalInput, toLocalInput } from '../../../lib/maintenance'
 
 const HOUR = 3_600_000
@@ -187,7 +189,7 @@ export function draftFromEvent(e: AdminEvent): EventDraft {
 export interface DraftProblem {
   /** Field key (`startsAt`, `featured.2.weightMult`, `missions.0.target`…): the same paths the server's issues use where there is one. */
   path: string
-  code: 'required' | 'number' | 'dates'
+  code: 'required' | 'number' | 'dates' | 'tooLong'
 }
 
 export interface EventRequestBody {
@@ -215,6 +217,13 @@ export function draftToBody(d: EventDraft): { body: EventRequestBody; problems: 
   const text = (path: string, s: string): string => {
     if (s.trim() === '') problems.push({ path, code: 'required' })
     return s.trim()
+  }
+
+  /** A description in the rich format: the limit counts the visible characters (markers and escapes do not). */
+  const rich = (path: string, s: string): string => {
+    const v = text(path, s)
+    if (richPlainLength(v) > DATA_LIMITS.longText || v.length > DATA_LIMITS.longText * RICH_RAW_FACTOR) problems.push({ path, code: 'tooLong' })
+    return v
   }
 
   const startsAt = fromLocalInput(d.startsAt)
@@ -273,7 +282,7 @@ export function draftToBody(d: EventDraft): { body: EventRequestBody; problems: 
   const body: EventRequestBody = {
     slug: d.slug.trim(),
     name: { es: text('name.es', d.nameEs), en: text('name.en', d.nameEn) },
-    description: { es: text('description.es', d.descEs), en: text('description.en', d.descEn) },
+    description: { es: rich('description.es', d.descEs), en: rich('description.en', d.descEn) },
     startsAt: Number.isNaN(startsAt) ? 0 : startsAt,
     endsAt: Number.isNaN(endsAt) ? 0 : endsAt,
     imageId: d.imageId,
@@ -287,7 +296,7 @@ export function draftToBody(d: EventDraft): { body: EventRequestBody; problems: 
 export function draftToPublic(d: EventDraft): LiveEventPublic | null {
   const { body, problems } = draftToBody(d)
   if (problems.some((p) => p.code !== 'dates') || body.endsAt === 0) return null
-  return { id: d.id ?? 'draft', slug: body.slug || 'draft', name: body.name, description: body.description, image: d.image, startsAt: body.startsAt, endsAt: body.endsAt, ...body.overlay }
+  return { id: d.id ?? 'draft', slug: body.slug || 'draft', name: body.name, description: body.description, image: d.image, startsAt: body.startsAt, endsAt: body.endsAt, announceRev: 0, ...body.overlay }
 }
 
 /** What `validateEventOverlay` takes: the overlay with its id, slug and dates. */
