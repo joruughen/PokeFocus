@@ -71,7 +71,7 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 
 **Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2` (VS Code murió por falta de RAM con 8 y con 4). Los agentes se cortan con el límite de uso de 5 h: se retoman con un mensaje y siguen.
 
-**Migraciones:** 0005 roles, 0006 contenido, 0007 `session_log`, 0008 eventos y subidas, 0009 simulación. Se aplican solas al arrancar.
+**Migraciones:** 0005 roles, 0006 contenido, 0007 `session_log`, 0008 eventos y subidas, 0009 simulación, 0010 `announce_rev` de eventos (ventana del evento y botón «Notificar a los jugadores»). Se aplican solas al arrancar.
 
 **Para desplegar v0.11.0:** `PASSWORD_PEPPER` (obligatorio en producción, `npm run pepper`, guardarlo aparte), `ADMIN_EMAILS`, volumen `uploads` en las copias de seguridad junto con PostgreSQL.
 

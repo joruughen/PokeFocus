@@ -48,6 +48,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         },
       },
       {
+        kind: 'new',
+        text: {
+          es: 'Cuando empieza un evento te sale una ventana con su imagen, su descripción y las especies destacadas. Nunca aparece mientras estudias: espera a que termines.',
+          en: 'When an event starts, a window shows you its image, its description and the featured species. It never appears while you study: it waits until you finish.',
+        },
+      },
+      {
         kind: 'improved',
         text: {
           es: 'En el móvil, el panel para lanzar la Ball ya no tapa a los salvajes de la oleada.',
