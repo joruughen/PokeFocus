@@ -64,6 +64,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
+          es: 'Subir de nivel de entrenador ahora tiene premio: Polvo y Poké Balls en cada nivel, Super Balls y una Poción cada 5 niveles y Ultra Balls cada 10. Una ventana de «¡Felicidades!» te cuenta lo que ganaste (nunca mientras estudias).',
+          en: 'Leveling up as a trainer now pays off: Dust and Poké Balls every level, Great Balls and a Potion every 5 levels and Ultra Balls every 10. A “Congratulations!” window tells you what you got (never while you study).',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
           es: 'La Mochila tiene su propia página: busca tus objetos por nombre, fíltralos por tipo (Balls, curación, evolución, caramelos, objetos de evento…) y mira para qué sirve cada uno y en qué Pokémon puedes usarlo.',
           en: 'The Bag has its own page: search your items by name, filter them by kind (Balls, healing, evolution, candies, event items…) and see what each one does and which Pokémon can use it.',
         },
