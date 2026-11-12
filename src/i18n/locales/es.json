@@ -3484,7 +3484,9 @@
       "count": "{{n}}/{{max}} caracteres visibles",
       "tooMuch": "Demasiadas marcas: como máximo {{max}} caracteres en total.",
       "bullets": "Lista con viñetas (empieza la línea con «- »)",
-      "bulletsShort": "Lista"
+      "bulletsShort": "Lista",
+      "bulletColor": "Color de viñeta",
+      "bulletDefault": "Normal (amarillo)"
     }
   },
   "nick": {

@@ -3484,7 +3484,9 @@
       "count": "{{n}}/{{max}} visible characters",
       "tooMuch": "Too much markup: at most {{max}} characters in total.",
       "bullets": "Bulleted list (start the line with “- ”)",
-      "bulletsShort": "List"
+      "bulletsShort": "List",
+      "bulletColor": "Bullet colour",
+      "bulletDefault": "Default (yellow)"
     }
   },
   "nick": {

@@ -1,7 +1,7 @@
 import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DATA_LIMITS } from '../../../../game/content/limits'
-import { richPlainLength, RICH_COLORS, RICH_RAW_FACTOR, toggleBullets, wrapSelection, type RichColor } from '../../../../game/richText'
+import { richPlainLength, RICH_COLORS, RICH_RAW_FACTOR, setBulletColor, toggleBullets, wrapSelection, type RichColor } from '../../../../game/richText'
 import { RichText, RICH_TEXT_CLASS } from '../../../components'
 import { cx } from '../../../lib/cx'
 
@@ -54,6 +54,17 @@ export function RichField({ label, value, onChange, error, disabled, className }
     })
   }
 
+  const bulletColor = (c: RichColor | null) => {
+    const el = area.current
+    if (!el || disabled) return
+    const r = setBulletColor(value, el.selectionStart, el.selectionEnd, c)
+    onChange(r.value)
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(r.start, r.end)
+    })
+  }
+
   return (
     <div className={cx('flex min-w-0 flex-col gap-1.5', className)}>
       <label htmlFor={id} className="font-display text-base text-mist-300">
@@ -70,6 +81,25 @@ export function RichField({ label, value, onChange, error, disabled, className }
           <span aria-hidden="true">•</span>
           <span className="max-sm:sr-only">{t('eventsAdmin.format.bulletsShort')}</span>
         </button>
+        <select
+          className={cx(BTN, 'pr-1')}
+          disabled={disabled}
+          value=""
+          aria-label={t('eventsAdmin.format.bulletColor')}
+          title={t('eventsAdmin.format.bulletColor')}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v) bulletColor(v === 'default' ? null : (v as RichColor))
+          }}
+        >
+          <option value="">{t('eventsAdmin.format.bulletColor')}</option>
+          <option value="default">{t('eventsAdmin.format.bulletDefault')}</option>
+          {RICH_COLORS.map((c) => (
+            <option key={c} value={c}>
+              {t(`eventsAdmin.format.colors.${c}`)}
+            </option>
+          ))}
+        </select>
         {RICH_COLORS.map((c) => (
           <button key={c} type="button" className={cx(BTN, RICH_TEXT_CLASS[c])} disabled={disabled} onClick={() => wrap(c)} title={t(`eventsAdmin.format.colors.${c}`)} aria-label={t(`eventsAdmin.format.colors.${c}`)}>
             <span aria-hidden="true" className="size-3 bg-current" />

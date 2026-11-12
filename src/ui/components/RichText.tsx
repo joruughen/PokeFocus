@@ -2,6 +2,17 @@ import { useMemo, type ReactNode } from 'react'
 import { parseRich, richBlocks, type RichColor, type RichNode } from '../../game/richText'
 import { cx } from '../lib/cx'
 
+/** Bullet marker colours (full class names for Tailwind). */
+const RICH_MARKER_CLASS: Record<RichColor, string> = {
+  red: 'marker:text-rich-red',
+  orange: 'marker:text-rich-orange',
+  yellow: 'marker:text-rich-yellow',
+  green: 'marker:text-rich-green',
+  blue: 'marker:text-rich-blue',
+  purple: 'marker:text-rich-purple',
+  pink: 'marker:text-rich-pink',
+}
+
 /** Full class names (Tailwind reads them statically); the colours are theme tokens (`--color-rich-*`). */
 export const RICH_TEXT_CLASS: Record<RichColor, string> = {
   red: 'text-rich-red',
@@ -32,7 +43,7 @@ function render(nodes: readonly RichNode[]): ReactNode[] {
  * Line breaks are kept.
  */
 export function RichText({ text, className }: { text: string; className?: string }) {
-  const blocks = useMemo(() => richBlocks(text).map((b) => (b.t === 'para' ? { t: b.t, nodes: parseRich(b.text) } : { t: b.t, items: b.items.map(parseRich) })), [text])
+  const blocks = useMemo(() => richBlocks(text).map((b) => (b.t === 'para' ? { t: b.t, nodes: parseRich(b.text) } : { t: b.t, items: b.items.map((it) => ({ nodes: parseRich(it.text), color: it.color })) })), [text])
   if (blocks.length === 1 && blocks[0]!.t === 'para') return <p className={cx('break-words whitespace-pre-line', className)}>{render(blocks[0]!.nodes!)}</p>
   return (
     <div className={cx('break-words', className)}>
@@ -42,9 +53,11 @@ export function RichText({ text, className }: { text: string; className?: string
             {render(b.nodes!)}
           </p>
         ) : (
-          <ul key={i} className="my-1 list-disc space-y-0.5 pl-5 marker:text-volt-300">
+          <ul key={i} className="my-1 list-disc space-y-0.5 pl-5">
             {b.items!.map((item, j) => (
-              <li key={j}>{render(item)}</li>
+              <li key={j} className={item.color ? RICH_MARKER_CLASS[item.color] : 'marker:text-volt-300'}>
+                {render(item.nodes)}
+              </li>
             ))}
           </ul>
         ),

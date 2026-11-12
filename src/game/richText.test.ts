@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { escapeRich, parseRich, richBlocks, richMarkers, richPlainWithBullets, toggleBullets, richPlainLength, richPlainText, RICH_COLORS, RICH_MAX_DEPTH, wrapSelection, type RichNode } from './richText'
+import { escapeRich, parseRich, richBlocks, richMarkers, richPlainWithBullets, setBulletColor, toggleBullets, richPlainLength, richPlainText, RICH_COLORS, RICH_MAX_DEPTH, wrapSelection, type RichNode } from './richText'
 
 const t = (text: string): RichNode => ({ t: 'text', text })
 const b = (...children: RichNode[]): RichNode => ({ t: 'bold', children })
@@ -121,7 +121,7 @@ describe('bullets', () => {
   it('groups runs of "- " / "• " lines into lists and keeps the rest as paragraphs', () => {
     expect(richBlocks('Intro\n- uno\n- **dos**\n• tres\nFin')).toEqual([
       { t: 'para', text: 'Intro' },
-      { t: 'list', items: ['uno', '**dos**', 'tres'] },
+      { t: 'list', items: [{ text: 'uno', color: null }, { text: '**dos**', color: null }, { text: 'tres', color: null }] },
       { t: 'para', text: 'Fin' },
     ])
     expect(richBlocks('sin lista')).toEqual([{ t: 'para', text: 'sin lista' }])
@@ -136,5 +136,21 @@ describe('bullets', () => {
     const off = toggleBullets(on.value, on.start, on.end)
     expect(off.value).toBe(v)
     expect(toggleBullets('solo', 0, 0).value).toBe('- solo')
+  })
+})
+
+describe('bullet colours', () => {
+  it('"-[green] " colours the marker; unknown colours are not bullets', () => {
+    expect(richBlocks('-[green] verde\n- normal')).toEqual([{ t: 'list', items: [{ text: 'verde', color: 'green' }, { text: 'normal', color: null }] }])
+    expect(richBlocks('-[rojo] x')).toEqual([{ t: 'para', text: '-[rojo] x' }])
+    expect(richPlainWithBullets('-[pink] **hola**')).toBe('• hola')
+  })
+
+  it('setBulletColor sets, changes and clears the colour of the selected lines', () => {
+    const a = setBulletColor('uno\n- dos', 0, 8, 'red')
+    expect(a.value).toBe('-[red] uno\n-[red] dos')
+    expect(setBulletColor(a.value, 0, a.value.length, 'blue').value).toBe('-[blue] uno\n-[blue] dos')
+    expect(setBulletColor(a.value, 0, a.value.length, null).value).toBe('- uno\n- dos')
+    expect(toggleBullets(a.value, 0, a.value.length).value).toBe('uno\ndos')
   })
 })

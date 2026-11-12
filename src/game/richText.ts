@@ -160,7 +160,8 @@ export function richPlainText(src: string): string {
 
 /** Visible characters (what the 400-character limit counts). */
 export function richPlainLength(src: string): number {
-  return richPlainText(src).length
+  // Bullet prefixes ("- ", "-[red] ") count as the "• " the player sees.
+  return richPlainWithBullets(src).length
 }
 
 /** Escape a string so that the mini-format shows it literally. */
@@ -189,10 +190,16 @@ export function wrapSelection(value: string, start: number, end: number, kind: '
   return { value: value.slice(0, a) + open + value.slice(a, b) + close + value.slice(b), start: a + open.length, end: b + open.length }
 }
 
-/** A line that starts with "- " or "• " (after optional spaces) is a bullet point. */
-const BULLET = /^\s*(?:-|•)\s+/
+/** A line that starts with "- " or "• " (after optional spaces) is a bullet point; "-[green] " colours its marker. */
+const BULLET = new RegExp(`^\\s*(?:-|•)(?:\\[(${RICH_COLORS.join('|')})\\])?\\s+`)
 
-export type RichBlock = { t: 'para'; text: string } | { t: 'list'; items: string[] }
+export interface RichBullet {
+  text: string
+  /** Colour of the bullet marker (null = the default). */
+  color: RichColor | null
+}
+
+export type RichBlock = { t: 'para'; text: string } | { t: 'list'; items: RichBullet[] }
 
 /**
  * Split a description into blocks: runs of bullet lines become a list, everything else stays as
@@ -205,7 +212,7 @@ export function richBlocks(src: string): RichBlock[] {
     const m = BULLET.exec(line)
     const last = out[out.length - 1]
     if (m) {
-      const item = line.slice(m[0].length)
+      const item: RichBullet = { text: line.slice(m[0].length), color: (m[1] as RichColor | undefined) ?? null }
       if (last?.t === 'list') last.items.push(item)
       else out.push({ t: 'list', items: [item] })
     } else if (last?.t === 'para') last.text += `\n${line}`
@@ -225,18 +232,38 @@ export function richPlainWithBullets(src: string): string {
     .join('\n')
 }
 
+/** The lines `[from, to)` touched by a selection (whole lines). */
+function touchedLines(value: string, start: number, end: number): { from: number; to: number } {
+  const a = Math.max(0, Math.min(start, end, value.length))
+  const b = Math.min(value.length, Math.max(start, end))
+  const from = value.lastIndexOf('\n', a - 1) + 1
+  const nl = value.indexOf('\n', b > a && value[b - 1] === '\n' ? b - 1 : b)
+  return { from, to: nl === -1 ? value.length : nl }
+}
+
 /**
  * The editor's bullet button: add "- " to every line touched by the selection, or remove it when
  * all of them already are bullets. Returns the new text and a selection covering those lines.
  */
 export function toggleBullets(value: string, start: number, end: number): { value: string; start: number; end: number } {
-  const a = Math.max(0, Math.min(start, end, value.length))
-  const b = Math.min(value.length, Math.max(start, end))
-  const from = value.lastIndexOf('\n', a - 1) + 1
-  const nl = value.indexOf('\n', b > a && value[b - 1] === '\n' ? b - 1 : b)
-  const to = nl === -1 ? value.length : nl
+  const { from, to } = touchedLines(value, start, end)
   const lines = value.slice(from, to).split('\n')
   const all = lines.every((l) => BULLET.test(l) || l.trim() === '')
   const next = lines.map((l) => (all ? l.replace(BULLET, '') : l.trim() === '' || BULLET.test(l) ? l : `- ${l}`)).join('\n')
+  return { value: value.slice(0, from) + next + value.slice(to), start: from, end: from + next.length }
+}
+
+/**
+ * The editor's bullet colour picker: set (or clear, with null) the marker colour of every line touched
+ * by the selection; lines that are not bullets yet become bullets.
+ */
+export function setBulletColor(value: string, start: number, end: number, color: RichColor | null): { value: string; start: number; end: number } {
+  const { from, to } = touchedLines(value, start, end)
+  const prefix = color ? `-[${color}] ` : '- '
+  const next = value
+    .slice(from, to)
+    .split('\n')
+    .map((l) => (l.trim() === '' ? l : prefix + l.replace(BULLET, '')))
+    .join('\n')
   return { value: value.slice(0, from) + next + value.slice(to), start: from, end: from + next.length }
 }
