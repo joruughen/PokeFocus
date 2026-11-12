@@ -525,7 +525,7 @@
       "paralysis": "Paralizar",
       "reroll": "Cambiar",
       "pick": "Elige a qué salvaje aplicarla.",
-      "note": "Úsalas antes de lanzar: un salvaje dormido o paralizado es más fácil de capturar.",
+      "note": "Úsalas antes de lanzar: un salvaje dormido o paralizado es más fácil de capturar. Iconos: ⟳ cambia el salvaje por otro, ☾ lo duerme, ⚡ lo paraliza.",
       "applyHere": "Aplicar aquí",
       "hasStatus": "Ya tiene un estado: elige otro Pokémon."
     },

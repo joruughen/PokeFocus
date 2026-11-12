@@ -22,8 +22,8 @@ export function useChargeLabel(player: PlayerState | null) {
 }
 
 /**
- * A sleep/paralysis/reroll charge in the Waves screen: the action label, the
- * mini icon of the Pokémon that produced it and a tooltip with who and how.
+ * A sleep/paralysis/reroll charge in the Waves screen: the action icon, the technique
+ * or ability that made it, the mini icon of that Pokémon and a tooltip with who and how.
  */
 export function ChargeChip({
   charge,
@@ -51,8 +51,11 @@ export function ChargeChip({
         onClick={onToggle}
         aria-pressed={selected}
       >
-        {charge.kind === 'reroll' ? t('waves.charges.reroll') : t(`waves.charges.${charge.status ?? 'sleep'}`)}
-        <span className="text-sm opacity-75">{chargeSourceName(charge, player, names)}</span>
+        {/* Compact: the icon says the action (reroll / sleep / paralyze), so only the technique and
+            who made it are shown; many charges must fit in one row. The action stays for screen
+            readers and in the tooltip. */}
+        <span className="sr-only">{charge.kind === 'reroll' ? t('waves.charges.reroll') : t(`waves.charges.${charge.status ?? 'sleep'}`)}</span>
+        <span className="text-sm">{chargeSourceName(charge, player, names)}</span>
         {slug && <Sprite kind="icon" slug={slug} alt="" className="-my-3 -mr-2" />}
         <span className="sr-only">{` (${label})`}</span>
       </Button>

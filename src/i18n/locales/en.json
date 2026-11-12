@@ -525,7 +525,7 @@
       "paralysis": "Paralyze",
       "reroll": "Swap",
       "pick": "Pick a wild Pokémon to use it on.",
-      "note": "Use them before throwing: an asleep or paralyzed Pokémon is easier to catch.",
+      "note": "Use them before throwing: a sleeping or paralyzed wild Pokémon is easier to catch. Icons: ⟳ swaps the wild for another, ☾ puts it to sleep, ⚡ paralyzes it.",
       "applyHere": "Use here",
       "hasStatus": "It already has a status: pick another Pokémon."
     },
