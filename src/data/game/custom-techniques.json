@@ -29,8 +29,8 @@
       }
     ],
     "description": {
-      "es": "+15% de Energía de captura.",
-      "en": "+15% catch energy."
+      "es": "+15% de Puntos de captura.",
+      "en": "+15% Capture Points."
     }
   },
   "bulk-up": {
@@ -44,8 +44,8 @@
       }
     ],
     "description": {
-      "es": "+15% de Energía de captura.",
-      "en": "+15% catch energy."
+      "es": "+15% de Puntos de captura.",
+      "en": "+15% Capture Points."
     }
   },
   "teleport": {
@@ -507,8 +507,8 @@
       }
     ],
     "description": {
-      "es": "+10% de Ritmo y de Energía de captura.",
-      "en": "+10% Pace and catch energy."
+      "es": "+10% de Ritmo y de Puntos de captura.",
+      "en": "+10% Pace and Capture Points."
     }
   },
   "helping-hand": {

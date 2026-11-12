@@ -852,6 +852,7 @@ function WildCard({
             slug={wild.speciesSlug}
             shiny={wild.isShiny}
             scale={2}
+            maxHeight={148}
             alt=""
             className={cx(
               'relative mb-3 transition-opacity',

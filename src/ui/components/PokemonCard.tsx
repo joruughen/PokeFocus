@@ -108,6 +108,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
           slug={p.speciesSlug}
           shiny={p.isShiny}
           scale={2}
+          maxHeight={128}
           flip
           alt={fullName}
           className={cx('relative mb-3', exhausted && 'grayscale', dim && 'brightness-75')}

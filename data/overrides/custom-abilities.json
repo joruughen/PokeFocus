@@ -41,11 +41,11 @@
   },
   "compound-eyes": {
     "effects": [{ "kind": "statMod", "stat": "captureEnergy", "mult": 1.2, "scope": "self" }],
-    "description": { "es": "+20% de Energía de captura.", "en": "+20% catch energy." }
+    "description": { "es": "+20% de Puntos de captura.", "en": "+20% Capture Points." }
   },
   "tinted-lens": {
     "effects": [{ "kind": "effectivenessFloor", "from": 0.5, "to": 1 }],
-    "description": { "es": "Su Energía de captura no se reduce contra tipos que la resisten.", "en": "Its catch energy isn't reduced against resisting types." }
+    "description": { "es": "Sus Puntos de captura no se reducen contra tipos que los resisten.", "en": "Its Capture Points aren't reduced against resisting types." }
   },
   "keen-eye": {
     "effects": [{ "kind": "revealWildIvs" }],
@@ -93,7 +93,7 @@
   },
   "unaware": {
     "effects": [{ "kind": "statMod", "stat": "captureEnergy", "mult": 1.3, "scope": "self", "when": { "targetLegendary": true } }],
-    "description": { "es": "+30% de Energía de captura contra legendarios y míticos.", "en": "+30% catch energy against legendary and mythical Pokémon." }
+    "description": { "es": "+30% de Puntos de captura contra legendarios y míticos.", "en": "+30% Capture Points against legendary and mythical Pokémon." }
   },
   "inner-focus": {
     "effects": [{ "kind": "focusFloor", "min": 0.75 }],
@@ -101,7 +101,7 @@
   },
   "infiltrator": {
     "effects": [{ "kind": "effectivenessFloor", "from": 0, "to": 0.5 }],
-    "description": { "es": "Su Energía de captura afecta a la mitad contra tipos inmunes.", "en": "Its catch energy deals half against immune types." }
+    "description": { "es": "Sus Puntos de captura hacen la mitad de daño contra tipos inmunes.", "en": "Its Capture Points deal half damage against immune types." }
   },
   "synchronize": {
     "effects": [{ "kind": "encounterWeight", "match": { "natureOfSelf": true }, "mult": 0.5 }],
@@ -109,7 +109,7 @@
   },
   "guts": {
     "effects": [{ "kind": "statMod", "stat": "captureEnergy", "mult": 1.25, "scope": "self", "when": { "energyBelow": 0.5 } }],
-    "description": { "es": "+25% de Energía de captura por debajo de la mitad de Energía.", "en": "+25% catch energy when below half Energy." }
+    "description": { "es": "+25% de Puntos de captura por debajo de la mitad de Energía.", "en": "+25% Capture Points when below half Energy." }
   },
   "no-guard": {
     "effects": [{ "kind": "ballMult", "mult": 1.1 }],

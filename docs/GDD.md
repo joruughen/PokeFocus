@@ -119,7 +119,7 @@ PokeFocus es una aplicación web de escritorio que recompensa el estudio con Pok
 |---|---|
 | Planeada de **25 min o menos** | Nada (como siempre). |
 | Larga (**más de 25 min**), con **menos de 15 min** estudiados | Nada (es el mínimo de cualquier sesión, §3.1). |
-| Larga, con **15 min o más** estudiados | Los **puntos, la EXP y el Polvo de los minutos estudiados** (exactamente lo que daría una sesión completada de esa duración, con su Vínculo, Dominio, energía gastada y condiciones), y **una oleada por cada bloque de 25 min completo** (ninguna antes del primero). La energía de captura producida después del último bloque completo va a la última oleada, como en una sesión normal; sin bloque completo se pierde. |
+| Larga, con **15 min o más** estudiados | Los **puntos, la EXP y el Polvo de los minutos estudiados** (exactamente lo que daría una sesión completada de esa duración, con su Vínculo, Dominio, energía gastada y condiciones), y **una oleada por cada bloque de 25 min completo** (ninguna antes del primero). La puntos de captura producida después del último bloque completo va a la última oleada, como en una sesión normal; sin bloque completo se pierde. |
 
 Además, una sesión abandonada:
 - **nunca es un reclamo tardío** (Foco 100 %), pero **solo se puede abandonar antes del fin**: con el temporizador ya terminado hay que reclamar, con la ventana de 5 min (§3.2). Así no sirve para esquivar el ×0,5;
@@ -239,7 +239,7 @@ Otras = floor((floor((2·Base + IV) · Nivel / 100) + 5) · Naturaleza)     // N
 |---|---|---|
 | Frecuencia de acción | Velocidad | `intervalo_seg = 300 · 60 / (60 + Vel)` |
 | Puntos por acción | Ataque Esp. | `puntos = 0.85 · (5 + AtEsp / 4) · M` (en la configuración, `pointsBase` 4.25 y `pointsSpAtkDivisor` 4 / 0.85; el 0.85 compensa que el Foco base pasara de 0.85 a 1.0) |
-| Energía de captura | Ataque | `energía = (Atq / 5) · (potencia_técnica / 60)` |
+| Puntos de captura | Ataque | `energía = (Atq / 5) · (potencia_técnica / 60)` |
 | Activación de técnicas | Def. Esp. | `Mult_Técnica = min(2.0, 0.5 + DefEsp / 100)`, multiplica la probabilidad base de cada técnica (§7.2) |
 | Aguante: más rendimiento y resistencia a los contraataques | Defensa | `Foco_efectivo = Foco × (1 + 0.10 · min(1, Def / 200))`: Def 100 → ×1.05, Def ≥ 200 → ×1.10 (`defenseFocusMaxBonus`, `defenseFocusCap`), solo para los puntos y la EXP del Pokémon; también reduce el daño de los contraataques (§11.4) |
 | Energía diaria | PS | Cuántas acciones puede hacer al día (ver §5.3) |
@@ -253,7 +253,7 @@ Internamente se usan las estadísticas reales de PokeAPI (los valores base de ca
 | PS (`hp`) | **Energía** | **Energy** | Cuánto aguanta estudiando a lo largo del día |
 | Velocidad (`speed`) | **Ritmo** | **Pace** | Cada cuánto actúa durante la sesión |
 | Ataque Esp. (`special-attack`) | **Rendimiento** | **Output** | Cuántos puntos da cada acción |
-| Ataque (`attack`) | **Captura** | **Catch** | Cuánta Energía de captura genera para debilitar salvajes |
+| Ataque (`attack`) | **Captura** | **Catch** | Cuánta Puntos de captura genera para debilitar salvajes |
 | Def. Esp. (`special-defense`) | **Técnica** | **Technique** | Probabilidad de activar técnicas |
 | Defensa (`defense`) | **Aguante** | **Grit** | Hasta un 10 % más de puntos y EXP, y cuánto resiste los contraataques (§11.4) |
 
@@ -283,7 +283,7 @@ Los PS son la **energía del Pokémon a lo largo del día**. Se gastan al actuar
 
 - **Gasto:** cada acción cuesta `0.4 + Nivel / 45` de energía (`energy.costBase`, `energy.costLevelDivisor`) **[calibrar]**. Como el costo es por acción, los Pokémon rápidos se cansan antes. La Velocidad y los PS se equilibran entre sí: Jolteon actúa mucho y se agota pronto; Snorlax actúa poco y aguanta todo el día.
 - **Objetivo de diseño:** un Pokémon que hace **todas** las sesiones de 25 min seguidas, sin descansos ni pociones, se agota en **~4–6 sesiones**, contando el gasto de sus acciones y el contraataque de cada salvaje al que ataca (§11.4). Simulador: mediana 4.3–4.5 sesiones en los niveles 10–50 (p10–p90: 3.6–5.2), docs/balance-report.md §11. Los de PS alto (Snorlax, Chansey, Lapras) son los aliados de los maratones de estudio.
-- **Agotado (0 PS):** deja de actuar (no genera puntos, Energía de captura ni técnicas), pero **sigue ganando la EXP de la sesión**. Estudiar siempre compensa; rotar el equipo es lo que mantiene los puntos.
+- **Agotado (0 PS):** deja de actuar (no genera puntos, Puntos de captura ni técnicas), pero **sigue ganando la EXP de la sesión**. Estudiar siempre compensa; rotar el equipo es lo que mantiene los puntos.
 - **Reinicio diario:** todos los Pokémon recuperan el 100% de su energía a las **05:00** de la zona horaria del perfil.
 - **Recuperación durante el día:**
 
@@ -405,7 +405,7 @@ Técnicas especiales del Pack 1 (41, diseñadas a mano; la lista completa y sus 
 | Técnica | Categoría | Efecto en PokeFocus | Prob. base | Límite por sesión |
 |---|---|---|---|---|
 | Paz Mental | Pasiva | +30% de puntos del Pokémon en sesiones ≥ 50 min | — | — |
-| Meditación / Corpulencia | Pasiva | +15% de Energía de captura | — | — |
+| Meditación / Corpulencia | Pasiva | +15% de Puntos de captura | — | — |
 | Teletransporte | Pasiva | Reclamar tarde no reduce las recompensas de este Pokémon | — | — |
 | Amnesia | Pasiva | Si un día no estudias, protege tu racha | — | 1 por semana |
 | Foco Energía | Activable | Las 5 acciones siguientes del Pokémon dan ×2 puntos | 4% | 1 |
@@ -424,7 +424,7 @@ Técnicas especiales del Pack 1 (41, diseñadas a mano; la lista completa y sus 
 | Agilidad | Pasiva | +15% de Ritmo | — | — |
 | Maquinación | Pasiva | +15% de puntos | — | — |
 | Desarrollo | Pasiva | +20% de puntos de día | — | — |
-| Danza Dragón | Pasiva | +10% de Ritmo y de Energía de captura | — | — |
+| Danza Dragón | Pasiva | +10% de Ritmo y de Puntos de captura | — | — |
 | Refuerzo / Relevo | Pasiva | +5% de puntos / +10% de probabilidad de técnicas a todo el equipo (no se acumula) | — | — |
 | Protección / Detección | Pasiva | Como líder, −40% de daño de contraataques | — | — |
 | Velo Sagrado | Pasiva | −15% de daño de contraataques a todo el equipo (no se acumula) | — | — |

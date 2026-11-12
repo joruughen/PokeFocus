@@ -62,10 +62,24 @@ export const CHANGELOG: ChangelogEntry[] = [
         },
       },
       {
+        kind: 'improved',
+        text: {
+          es: 'La «Energía de captura» de las técnicas de daño ahora se llama «Puntos de captura», para no confundirla con la Energía (la vida) de tus Pokémon.',
+          en: '“Catch energy” from damage techniques is now called “Capture Points”, so it isn’t confused with your Pokémon’s Energy (their HP).',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'En «Sumar desde la Caja», el nombre de cada Pokémon abre su ficha completa.',
+          en: 'In “Add from the Box”, each Pokémon’s name opens its full page.',
+        },
+      },
+      {
         kind: 'fixed',
         text: {
-          es: 'Varios arreglos de diseño a 390 px: el mote en «Energía del equipo», globos de ayuda que se salían de la pantalla y los equipos guardados con seis Pokémon.',
-          en: 'Several layout fixes at 390 px: the nickname in “Team Energy”, help bubbles that went off screen and saved teams with six Pokémon.',
+          es: 'Varios arreglos de diseño: los Pokémon grandes (como Machamp) ya no se salen de su tarjeta, y a 390 px el mote en «Energía del equipo», los globos de ayuda que se salían de la pantalla y los equipos guardados con seis Pokémon.',
+          en: 'Several layout fixes: big Pokémon (like Machamp) no longer stick out of their card, and at 390 px the nickname in “Team Energy”, help bubbles that went off screen and saved teams with six Pokémon.',
         },
       },
     ],
@@ -92,8 +106,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
-          es: 'Al pasar el ratón (o tocar) por Daño, Pasiva o Activable de una técnica ves cuándo se activa y con qué probabilidad, con los números de ese Pokémon. En las de daño, también para qué sirve acumular Energía.',
-          en: 'Hover over or tap Damage, Passive or Activable on a technique to see when it triggers and how likely it is, with that Pokémon’s own numbers. Damage techniques also explain what building up Energy is for.',
+          es: 'Al pasar el ratón (o tocar) por Daño, Pasiva o Activable de una técnica ves cuándo se activa y con qué probabilidad, con los números de ese Pokémon. En las de daño, también para qué sirven los Puntos de captura.',
+          en: 'Hover over or tap Damage, Passive or Activable on a technique to see when it triggers and how likely it is, with that Pokémon’s own numbers. Damage techniques also explain what Capture Points are for.',
         },
       },
       {

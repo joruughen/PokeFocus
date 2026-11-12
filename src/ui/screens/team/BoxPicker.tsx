@@ -194,7 +194,9 @@ const PickItem = memo(function PickItem({ row, full, disabled, onAction }: { row
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className={cx('flex items-baseline gap-2', dim && 'opacity-70')}>
-          <span className="truncate font-display text-base">{name}</span>
+          <a href={`#/box/${mon.uid}`} className="truncate font-display text-base underline decoration-dusk-500 underline-offset-4 hover:text-volt-300">
+            {name}
+          </a>
           {mon.isShiny && (
             <span className="text-volt-300" aria-label={t('pokemon.shiny')}>
               ★

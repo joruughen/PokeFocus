@@ -57,7 +57,7 @@ Todas las claves presentes deben cumplirse (AND). Sin `when`, el efecto siempre 
 | `lateClaimImmune` | — | Reclamar tarde no le aplica `lateClaimMultiplier` |
 | `focusFloor` | `min` | Para este Pokémon, `Foco_efectivo = max(Foco_efectivo, min)`, después del bono de Aguante. Como a tiempo el Foco es 1.0, solo actúa al reclamar tarde (Foco 0.5, hasta 0.55 con Aguante) |
 | `focusLabelFloor` | `labels`, `value` | Para este Pokémon, las capturas con esas etiquetas valen al menos `value`. **Hoy ninguna habilidad la usa:** el Foco por captura de pantalla se descartó el 2026-11-05 (Despiste era la única y ahora es un `counterMiss` de equipo). La primitiva se conserva, con sus pruebas, por si vuelve a hacer falta |
-| `effectivenessFloor` | `from`, `to` | Su Energía de captura: los multiplicadores de tipo iguales a `from` pasan a `to` |
+| `effectivenessFloor` | `from`, `to` | Su Puntos de captura: los multiplicadores de tipo iguales a `from` pasan a `to` |
 | `encounterWeight` | `match` (`{type}` o `{natureOfSelf: true}`), `mult` | Equipo, no acumulable. `{type}`: multiplica el peso de esas especies al generar oleadas. `{natureOfSelf}`: `mult` es la probabilidad de que el salvaje tenga la misma naturaleza que este Pokémon |
 | `ballMult` | `mult` | Equipo, no acumulable: multiplica la probabilidad de captura de cualquier Ball |
 | `maxFailedThrows` | `add` | Equipo, no acumulable: suma lanzamientos fallidos permitidos antes de que el salvaje escape |
@@ -77,6 +77,6 @@ Las primitivas `counter*`, `nextThrowBonus` y los `statMod` de `counterDamageTak
 
 ## Técnicas y movimientos no definidos
 
-- Un movimiento **de daño** (potencia > 0) que no esté en `custom-techniques.json` es una técnica de daño genérica: produce Energía de captura de su tipo, con su potencia y su categoría.
+- Un movimiento **de daño** (potencia > 0) que no esté en `custom-techniques.json` es una técnica de daño genérica: produce Puntos de captura de su tipo, con su potencia y su categoría.
 - Un movimiento **de estado** que no esté definido **no existe en el juego**: no se aprende, no se muestra y no se puede equipar.
 - Una habilidad que no esté definida no existe en el juego (GDD §6.3).

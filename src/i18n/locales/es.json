@@ -69,7 +69,7 @@
     },
     "attack": {
       "name": "Captura",
-      "what": "Cuánta Energía de captura genera para debilitar salvajes."
+      "what": "Cuántos Puntos de captura genera para debilitar salvajes."
     },
     "specialDefense": {
       "name": "Técnica",
@@ -869,7 +869,7 @@
     "home": {
       "team": {
         "title": "Tu equipo estudia contigo",
-        "body": "Mientras estudias, cada Pokémon actúa por su cuenta y gana puntos, EXP y Energía de captura. La barra es su Energía del día; se recarga a las 5:00."
+        "body": "Mientras estudias, cada Pokémon actúa por su cuenta y gana puntos, EXP y Puntos de captura. La barra es su Energía del día; se recarga a las 5:00."
       },
       "start": {
         "title": "Empieza con 25 minutos",
@@ -1132,7 +1132,7 @@
       "activable": "Activable"
     },
     "kindHelp": {
-      "damage": "Daño: cada acción con esta técnica suma Energía de captura de su tipo. Al acabar cada bloque de 25 min, esa Energía se convierte en daño a los salvajes de la oleada: con menos vida es más fácil capturarlos.",
+      "damage": "Daño: cada acción con esta técnica suma Puntos de captura de su tipo. Al acabar cada bloque de 25 min, esos Puntos se convierten en daño a los salvajes de la oleada: con menos vida es más fácil capturarlos.",
       "passive": "Pasiva: no tira dados. Mientras la tengas equipada funciona sola, siempre o cuando se cumple su condición (hora, clima, Energía…).",
       "activable": "Activable: en cada acción tira un dado y, si sale, da su efecto (por ejemplo, dormir a un salvaje). Algunas tienen un límite por sesión o por semana."
     },
@@ -1140,12 +1140,12 @@
       "withName": "Con {{name}}:",
       "paceMore": "Alguna habilidad suya lo acelera en ciertas sesiones.",
       "damage": {
-        "energy": "Cada acción suma {{energy}} de Energía de captura de tipo {{type}} (según su Captura y la potencia {{power}}).",
+        "energy": "Cada acción suma {{energy}} Puntos de captura de tipo {{type}} (según su Captura y la potencia {{power}}).",
         "stab": "Es de su mismo tipo: hace un 50 % más de daño.",
         "pace": "Actúa cada {{seconds}} s: unas {{actions}} acciones por oleada de 25 min.",
         "share": "Con {{count}} técnicas de daño equipadas, usa esta en {{pct}} de sus acciones.",
-        "wave": "En una oleada suma ≈ {{energy}} de Energía con esta técnica.",
-        "why": "Para qué sirve: más Energía, más daño y menos vida al salvaje; con menos vida, la Ball tiene más probabilidad. Su vida no baja del {{min}} %, así que el daño de sobra se pierde. Si el tipo es eficaz contra el salvaje, el daño se multiplica.",
+        "wave": "En una oleada suma ≈ {{energy}} Puntos de captura con esta técnica.",
+        "why": "Para qué sirve: más Puntos de captura, más daño y menos vida al salvaje; con menos vida, la Ball tiene más probabilidad. Su vida no baja del {{min}} %, así que el daño de sobra se pierde. Si el tipo es eficaz contra el salvaje, el daño se multiplica.",
         "counter": "En las oleadas, enviar a {{name}} contra un salvaje es un ataque definitivo: el salvaje le contraataca y le quita Energía, salvo que esté dormido o paralizado. Cada acción gasta {{cost}} de Energía (con la barra llena, ≈ {{n}} acciones). Si una Ball falla, el contraataque va al líder."
       },
       "activable": {
@@ -1291,7 +1291,7 @@
   },
   "tech": {
     "title": "Técnicas",
-    "intro": "Equipa técnicas en sus huecos: las de daño generan Energía de captura, las pasivas siempre están activas y las activables pueden saltar en cada acción.",
+    "intro": "Equipa técnicas en sus huecos: las de daño generan Puntos de captura, las pasivas siempre están activas y las activables pueden saltar en cada acción.",
     "slotsLabel_one": "{{count}} hueco de técnica",
     "slotsLabel_other": "{{count}} huecos de técnica",
     "slotLocked": "Se abre al nivel {{level}}",
@@ -1308,7 +1308,7 @@
     "noneMore": "Ya tiene equipadas todas las técnicas que conoce. Aprenderá más al subir de nivel.",
     "lockedTitle": "Por desbloquear",
     "unlocksAt": "Se desbloquea al nivel {{level}}",
-    "damageDesc": "En cada acción genera Energía de captura de tipo {{type}} para debilitar salvajes.",
+    "damageDesc": "En cada acción genera Puntos de captura de tipo {{type}} para debilitar salvajes.",
     "power": "Potencia {{power}}",
     "baseChance": "Prob. base {{pct}} por acción",
     "effChance": "(ahora ≈ {{pct}})",
@@ -1810,7 +1810,7 @@
     "stat": {
       "points": "Puntos",
       "pace": "Ritmo",
-      "captureEnergy": "Energía de captura",
+      "captureEnergy": "Puntos de captura",
       "techChance": "Prob. de técnicas",
       "energyCost": "Gasto de Energía",
       "exp": "EXP",
@@ -2847,9 +2847,9 @@
         "intervalSpeedOffset": "Intervalo de acción: desfase de velocidad",
         "pointsBase": "Puntos: base",
         "pointsSpAtkDivisor": "Puntos: divisor de Atq. Esp.",
-        "energyAtkDivisor": "Energía: divisor de Ataque",
-        "energyPowerDivisor": "Energía: divisor de potencia del movimiento",
-        "noDamageMoveEnergyFactor": "Factor de energía de movimientos sin daño",
+        "energyAtkDivisor": "Puntos de captura: divisor de Ataque",
+        "energyPowerDivisor": "Puntos de captura: divisor de potencia del movimiento",
+        "noDamageMoveEnergyFactor": "Factor de Puntos de captura de movimientos sin daño",
         "techMultBase": "Multiplicador de técnica: base",
         "techMultSpDefDivisor": "Multiplicador de técnica: divisor de Def. Esp.",
         "techMultMax": "Multiplicador de técnica: máximo",
@@ -3424,7 +3424,7 @@
     "intro": "Guarda el equipo que tienes ahora con un nombre y cámbiate a él con un toque, en esta pantalla o en el inicio antes de empezar. Se conservan el orden y el líder.",
     "locked": "No puedes cambiar de equipo durante una sesión. Podrás hacerlo al terminar.",
     "nameLabel": "Nombre del equipo",
-    "namePlaceholder": "Ej. Repaso de mates",
+    "namePlaceholder": "Ej. Equipo para lluvia",
     "nameHint": "{{count}}/{{max}} caracteres",
     "save": "Guardar equipo actual",
     "full": "Ya tienes {{max}} equipos guardados. Borra uno para guardar otro.",

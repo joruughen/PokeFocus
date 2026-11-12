@@ -69,7 +69,7 @@
     },
     "attack": {
       "name": "Catch",
-      "what": "How much catch energy it makes to weaken wild Pokémon."
+      "what": "How many Capture Points it makes to weaken wild Pokémon."
     },
     "specialDefense": {
       "name": "Technique",
@@ -869,7 +869,7 @@
     "home": {
       "team": {
         "title": "Your team studies with you",
-        "body": "While you study, each Pokémon acts on its own and earns points, EXP and catch energy. The bar is its Energy for the day; it refills at 5:00."
+        "body": "While you study, each Pokémon acts on its own and earns points, EXP and Capture Points. The bar is its Energy for the day; it refills at 5:00."
       },
       "start": {
         "title": "Start with 25 minutes",
@@ -1132,7 +1132,7 @@
       "activable": "Activable"
     },
     "kindHelp": {
-      "damage": "Damage: every action with this technique adds catch Energy of its type. At the end of each 25-minute block that Energy turns into damage to the wild Pokémon of the wave: with less HP they are easier to catch.",
+      "damage": "Damage: every action with this technique adds Capture Points of its type. At the end of each 25-minute block those points turn into damage to the wild Pokémon of the wave: with less HP they are easier to catch.",
       "passive": "Passive: it does not roll dice. While equipped it works on its own, always or whenever its condition holds (time, weather, Energy…).",
       "activable": "Activable: on every action it rolls a die and, if it hits, gives its effect (for example, put a wild Pokémon to sleep). Some have a limit per session or per week."
     },
@@ -1140,12 +1140,12 @@
       "withName": "With {{name}}:",
       "paceMore": "An ability of its can speed it up in some sessions.",
       "damage": {
-        "energy": "Every action adds {{energy}} catch Energy of {{type}} type (from its Catch and the power {{power}}).",
+        "energy": "Every action adds {{energy}} Capture Points of {{type}} type (from its Catch and the power {{power}}).",
         "stab": "It matches its own type: 50% more damage.",
         "pace": "It acts every {{seconds}} s: about {{actions}} actions per 25-minute wave.",
         "share": "With {{count}} damage techniques equipped, it uses this one on {{pct}} of its actions.",
-        "wave": "In one wave this technique adds ≈ {{energy}} Energy.",
-        "why": "What it is for: more Energy, more damage and less HP on the wild; with less HP, the Ball has a better chance. Its HP never drops below {{min}}%, so extra damage is wasted. If the type is effective against the wild, the damage is multiplied.",
+        "wave": "In one wave this technique adds ≈ {{energy}} Capture Points.",
+        "why": "What it is for: more Capture Points, more damage and less HP on the wild; with less HP, the Ball has a better chance. Its HP never drops below {{min}}%, so extra damage is wasted. If the type is effective against the wild, the damage is multiplied.",
         "counter": "In the waves, sending {{name}} against a wild Pokémon is a final attack: the wild strikes back and takes Energy from it, unless it is asleep or paralyzed. Each action costs {{cost}} Energy (on a full bar, ≈ {{n}} actions). If a Ball fails, the counterattack goes to the leader."
       },
       "activable": {
@@ -1291,7 +1291,7 @@
   },
   "tech": {
     "title": "Techniques",
-    "intro": "Equip techniques in its slots: damage ones make catch Energy, passive ones are always on, and activable ones can trigger on every action.",
+    "intro": "Equip techniques in its slots: damage ones make Capture Points, passive ones are always on, and activable ones can trigger on every action.",
     "slotsLabel_one": "{{count}} technique slot",
     "slotsLabel_other": "{{count}} technique slots",
     "slotLocked": "Opens at level {{level}}",
@@ -1308,7 +1308,7 @@
     "noneMore": "Every technique it knows is equipped. It learns more as it levels up.",
     "lockedTitle": "Still locked",
     "unlocksAt": "Unlocks at level {{level}}",
-    "damageDesc": "Every action makes {{type}} catch Energy to weaken wild Pokémon.",
+    "damageDesc": "Every action makes {{type}} Capture Points to weaken wild Pokémon.",
     "power": "Power {{power}}",
     "baseChance": "Base chance {{pct}} per action",
     "effChance": "(now ≈ {{pct}})",
@@ -1810,7 +1810,7 @@
     "stat": {
       "points": "Points",
       "pace": "Pace",
-      "captureEnergy": "Catch energy",
+      "captureEnergy": "Capture Points",
       "techChance": "Technique chance",
       "energyCost": "Energy cost",
       "exp": "EXP",
@@ -2847,9 +2847,9 @@
         "intervalSpeedOffset": "Action interval: speed offset",
         "pointsBase": "Points: base",
         "pointsSpAtkDivisor": "Points: Sp. Atk divisor",
-        "energyAtkDivisor": "Energy: Atk divisor",
-        "energyPowerDivisor": "Energy: move power divisor",
-        "noDamageMoveEnergyFactor": "Energy factor of non-damaging moves",
+        "energyAtkDivisor": "Capture Points: Atk divisor",
+        "energyPowerDivisor": "Capture Points: move power divisor",
+        "noDamageMoveEnergyFactor": "Capture Points factor of non-damaging moves",
         "techMultBase": "Technique multiplier: base",
         "techMultSpDefDivisor": "Technique multiplier: Sp. Def divisor",
         "techMultMax": "Technique multiplier: maximum",
@@ -3424,7 +3424,7 @@
     "intro": "Save the team you have now under a name and switch to it in one tap, here or on the home screen before you start. Order and leader are kept.",
     "locked": "You can't switch teams during a session. You can when it ends.",
     "nameLabel": "Team name",
-    "namePlaceholder": "E.g. Maths revision",
+    "namePlaceholder": "E.g. Rain team",
     "nameHint": "{{count}}/{{max}} characters",
     "save": "Save current team",
     "full": "You already have {{max}} saved teams. Delete one to save another.",
