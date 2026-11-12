@@ -377,7 +377,8 @@ Open it with `?dev` in the URL or Settings → Developer tools. The wrench butto
 
 | Route | File | What it does |
 |---|---|---|
-| `#/box` | `screens/box/Box.tsx` | Grid of `MonTile`s, search, type/role/where filters, shiny-only switch, sort (recent, level, Pokédex no., IV quality). Filters live in `screens/box/filters.ts` (`useBoxFilters`, kept while you browse details). "Mochila" side panel: Dust, Balls, candies by line/type, items |
+| `#/box` | `screens/box/Box.tsx` | Grid of `MonTile`s, search, type/role/where filters, shiny-only switch, sort (recent, level, Pokédex no., IV quality). Filters live in `screens/box/filters.ts` (`useBoxFilters`, kept while you browse details). A compact "Mochila" button (with the Dust) opens `#/bag` |
+| `#/bag` | `screens/bag/Bag.tsx` | The bag: Dust header, search (name + description, accent-insensitive), category chips with counters (Balls, healing, evolution, candies, missions and events, other), sort (category, name, quantity). Each card shows what the item does and links to the Pokémon that can use it (`#/box/<uid>`). Pure model in `screens/bag/bagItems.ts` (`categorizeItem`, `buildBagEntries`, `filterBag`, `sortBag`) |
 | `#/box/<uid>` | `screens/box/Detail.tsx` (+ `Techniques.tsx`, `Growth.tsx`, `EvolveMoment.tsx`) | Hero on the route band, nameplate with team/leader/release actions, prev/next through the filtered list. Technique slots (1–4, locked slots say their level, "replace" mode when full), known techniques with category/power/base and effective chance/limits/Mastery stars, locked extras "Se desbloquea al nivel X". Candies (species + type; Dust cost, predicted level, level-cap message linking to the Pokédex). Evolution options with why each is blocked; the evolution moment (white silhouettes swapping faster, burst, `evolveStart`/`evolveDone`, music ducked). Stats (`StatRow`), nature "+Ritmo −Captura", ability, IV quality, origin. Energy + healing items + Bond. Release dialog shows the candies you get |
 | `#/team` | `screens/team/Team.tsx` | Band with the team, ordered slot rows (▲▼, crown = leader, remove), warnings (asleep via `isAsleepAt`, exhausted, may run out in 25 min), leader panel (Grit, Energy, type weaknesses/resistances), "add from the Box" list. Locked during a session |
 | `#/dex` | `screens/dex/Dex.tsx` | Level-cap ladder (config `levelCaps`), 56 species as caught (color + check) / seen (dimmed) / unknown (silhouette, "???"), entry with genus, flavor text (es/en), types, role and `EvoLine` |
@@ -410,7 +411,7 @@ Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspe
 
 | Group | Hint ids |
 |---|---|
-| Box | `box.intro` (first visit), `box.filters` (focus), `box.candies` (manual) |
+| Box | `box.intro` (first visit), `box.filters` (focus), `bag.intro` (manual, Bag) |
 | Detail | tour `detail.techniques` → `detail.candies` → `detail.actions`; `detail.evolve` (event `evolveReady`); manual: `detail.mastery`, `detail.extraMoves`, `detail.iv`, `detail.stats`, `detail.levelCap`, `detail.energy`, `detail.bond` |
 | Team | `team.intro`, `team.leader` (first visit), `team.order` (manual), `team.tired` (event `teamTired`) |
 | Pokédex | `dex.intro`, `dex.cap` (first visit) |

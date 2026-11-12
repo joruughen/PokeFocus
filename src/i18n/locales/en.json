@@ -22,6 +22,7 @@
     "label": "Sections",
     "home": "Home",
     "box": "Box",
+    "bag": "Bag",
     "team": "Team",
     "dex": "Pokédex",
     "league": "League",
@@ -982,10 +983,12 @@
       "filters": {
         "title": "Filter and sort",
         "body": "Search by name, filter by type or role, and sort by level or quality (IVs) to find your best candidate."
-      },
-      "candies": {
-        "title": "Candies and Dust",
-        "body": "Candies give EXP to a Pokémon of their line (or type). Each one costs Study Dust, which you only earn by studying: studying stays in charge."
+      }
+    },
+    "bag": {
+      "intro": {
+        "title": "Your bag",
+        "body": "Everything you carry is here: Balls, potions, stones, candies and mission and event items. Search by name, filter by category and tap a Pokémon to use the item on its page. Candies cost Study Dust, which you only earn by studying."
       }
     },
     "detail": {
@@ -1197,13 +1200,69 @@
   },
   "bag": {
     "title": "Bag",
-    "candies": "Candies",
-    "noCandies": "None yet. Catching gives 3 of that line and releasing gives 1 to 3.",
+    "count_one": "{{count}} different item",
+    "count_other": "{{count}} different items",
     "lineCandy": "{{name}} candies",
     "typeCandy": "{{type}} candies",
-    "items": "Items",
-    "noItems": "No items yet. Potions and stones will come with missions.",
-    "healHow": "Use it on a Pokémon's page"
+    "healHow": "Use it on a Pokémon's page",
+    "search": "Search",
+    "searchPlaceholder": "Name or what it does",
+    "category": "Category",
+    "catCount": "{{name}}: {{count}}",
+    "cat": {
+      "all": "All",
+      "ball": "Balls",
+      "heal": "Healing",
+      "evolution": "Evolution",
+      "candy": "Candies",
+      "event": "Missions & events",
+      "other": "Other"
+    },
+    "sort": {
+      "label": "Sort by",
+      "category": "Category",
+      "name": "Name",
+      "quantity": "Quantity"
+    },
+    "clear": "Clear filters",
+    "results_one": "{{count}} item shown",
+    "results_other": "{{count}} items shown",
+    "listLabel_one": "{{count}} item",
+    "listLabel_other": "{{count}} items",
+    "have_one": "You have {{count}}",
+    "have_other": "You have {{count}}",
+    "empty": {
+      "title": "Your bag is empty",
+      "body": "Study, catch Pokémon and complete missions: the Balls, potions, stones and candies you earn will show up here."
+    },
+    "noMatch": {
+      "title": "Nothing matches",
+      "search": "No items match “{{query}}”. Try another name or clear the filters.",
+      "category": "You have nothing in this category right now."
+    },
+    "desc": {
+      "ball": "Used to catch wild Pokémon during study sessions. The better the Ball, the better the catch chance.",
+      "evolution": "Makes certain Pokémon evolve. It is used up when they evolve, from the Pokémon's page.",
+      "event": "An item from a mission or an event. For now it is just kept in your bag.",
+      "other": "A collectible. It has no use in the game yet.",
+      "lineCandy": "Gives {{exp}} EXP to a Pokémon of the {{name}} line. Each candy costs Study Dust; use it on the Pokémon's page.",
+      "typeCandy": "Gives {{exp}} EXP to a {{type}}-type Pokémon. Each candy costs Study Dust; use it on the Pokémon's page."
+    },
+    "users": {
+      "heal": "Need it now:",
+      "evolution": "Evolve with it:",
+      "chainCandy": "From this line in your Box:",
+      "typeCandy": "Of this type in your Box:",
+      "more": "+{{count}} more",
+      "less": "Show less",
+      "notReady": "Cannot evolve yet: open its page to see what it is missing."
+    },
+    "noUsers": {
+      "heal": "None of your Pokémon needs it right now.",
+      "evolution": "None of your Pokémon evolves with it for now.",
+      "chainCandy": "You no longer have Pokémon of this line.",
+      "typeCandy": "You have no Pokémon of this type."
+    }
   },
   "box": {
     "count_one": "{{count}} Pokémon, {{team}} in your team.",
@@ -1242,7 +1301,8 @@
     "noMatch": {
       "title": "No Pokémon match",
       "body": "Try another name, type or role, or clear the filters to see the whole Box."
-    }
+    },
+    "bagLink": "Open the bag ({{dust}} Study Dust)"
   },
   "detail": {
     "nav": "Browse the Box",

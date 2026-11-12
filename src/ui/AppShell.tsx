@@ -115,13 +115,13 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
         {ROUTES.filter((r) => r.nav).map((r) => {
           const active = r.id === route
           return (
-            <li key={r.id}>
+            <li key={r.id} className="max-sm:min-w-0 max-sm:flex-1">
               <a
                 href={hrefTo(r.id)}
                 aria-current={active ? 'page' : undefined}
                 {...hintAnchor(`nav.${r.id}`)}
                 className={cx(
-                  'group flex items-center gap-3 px-3 py-2.5 max-sm:px-2 font-display text-lg transition-colors max-xl:justify-center',
+                  'group flex items-center gap-3 px-3 py-2.5 max-sm:px-1 font-display text-lg transition-colors max-xl:justify-center',
                   active ? 'bg-volt-400 text-ink shadow-frame' : 'text-mist-300 hover:bg-dusk-800 hover:text-mist-50',
                   focusing && !active && 'opacity-60',
                 )}

@@ -22,6 +22,7 @@
     "label": "Secciones",
     "home": "Inicio",
     "box": "Caja",
+    "bag": "Mochila",
     "team": "Equipo",
     "dex": "Pokédex",
     "league": "Liga",
@@ -982,10 +983,12 @@
       "filters": {
         "title": "Filtra y ordena",
         "body": "Busca por nombre, filtra por tipo o rol y ordena por nivel o por calidad (IVs) para encontrar a tu mejor candidato."
-      },
-      "candies": {
-        "title": "Caramelos y Polvo",
-        "body": "Los caramelos dan EXP a un Pokémon de su línea (o de su tipo). Cada uno cuesta Polvo de Estudio, que solo se gana estudiando: así el estudio sigue mandando."
+      }
+    },
+    "bag": {
+      "intro": {
+        "title": "Tu mochila",
+        "body": "Aquí está todo lo que llevas: Balls, pociones, piedras, caramelos y objetos de misiones y eventos. Busca por nombre, filtra por categoría y toca un Pokémon para usar el objeto en su ficha. Los caramelos cuestan Polvo de Estudio, que solo se gana estudiando."
       }
     },
     "detail": {
@@ -1197,13 +1200,69 @@
   },
   "bag": {
     "title": "Mochila",
-    "candies": "Caramelos",
-    "noCandies": "Aún no tienes. Capturar da 3 de esa línea y soltar da de 1 a 3.",
+    "count_one": "{{count}} objeto distinto",
+    "count_other": "{{count}} objetos distintos",
     "lineCandy": "Caramelos de {{name}}",
     "typeCandy": "Caramelos tipo {{type}}",
-    "items": "Objetos",
-    "noItems": "Sin objetos por ahora. Las pociones y piedras llegarán con las misiones.",
-    "healHow": "Úsala en la ficha del Pokémon"
+    "healHow": "Úsala en la ficha del Pokémon",
+    "search": "Buscar",
+    "searchPlaceholder": "Nombre o para qué sirve",
+    "category": "Categoría",
+    "catCount": "{{name}}: {{count}}",
+    "cat": {
+      "all": "Todas",
+      "ball": "Balls",
+      "heal": "Curación",
+      "evolution": "Evolución",
+      "candy": "Caramelos",
+      "event": "Misiones y eventos",
+      "other": "Otros"
+    },
+    "sort": {
+      "label": "Ordenar por",
+      "category": "Categoría",
+      "name": "Nombre",
+      "quantity": "Cantidad"
+    },
+    "clear": "Limpiar filtros",
+    "results_one": "{{count}} objeto mostrado",
+    "results_other": "{{count}} objetos mostrados",
+    "listLabel_one": "{{count}} objeto",
+    "listLabel_other": "{{count}} objetos",
+    "have_one": "Tienes {{count}}",
+    "have_other": "Tienes {{count}}",
+    "empty": {
+      "title": "Tu mochila está vacía",
+      "body": "Estudia, captura Pokémon y completa misiones: las Balls, pociones, piedras y caramelos que ganes aparecerán aquí."
+    },
+    "noMatch": {
+      "title": "Nada coincide",
+      "search": "No hay objetos que encajen con «{{query}}». Prueba con otro nombre o limpia los filtros.",
+      "category": "No tienes nada de esta categoría ahora mismo."
+    },
+    "desc": {
+      "ball": "Sirve para capturar Pokémon salvajes durante las sesiones de estudio. Cuanto mejor es la Ball, más probabilidad de captura.",
+      "evolution": "Hace evolucionar a ciertos Pokémon. Se gasta al evolucionar, desde la ficha del Pokémon.",
+      "event": "Objeto de una misión o un evento. Por ahora solo se guarda en la mochila.",
+      "other": "Objeto de colección. Por ahora no tiene un uso en el juego.",
+      "lineCandy": "Da {{exp}} EXP a un Pokémon de la línea de {{name}}. Cada caramelo cuesta Polvo de Estudio; se usa en la ficha del Pokémon.",
+      "typeCandy": "Da {{exp}} EXP a un Pokémon de tipo {{type}}. Cada caramelo cuesta Polvo de Estudio; se usa en la ficha del Pokémon."
+    },
+    "users": {
+      "heal": "Lo necesitan ahora:",
+      "evolution": "Evolucionan con él:",
+      "chainCandy": "De esta línea en tu Caja:",
+      "typeCandy": "De este tipo en tu Caja:",
+      "more": "+{{count}} más",
+      "less": "Ver menos",
+      "notReady": "Aún no puede evolucionar: mira su ficha para ver qué le falta."
+    },
+    "noUsers": {
+      "heal": "Ninguno de tus Pokémon lo necesita ahora.",
+      "evolution": "Ninguno de tus Pokémon evoluciona con él por ahora.",
+      "chainCandy": "Ya no tienes Pokémon de esta línea.",
+      "typeCandy": "No tienes Pokémon de este tipo."
+    }
   },
   "box": {
     "count_one": "{{count}} Pokémon, {{team}} en el equipo.",
@@ -1242,7 +1301,8 @@
     "noMatch": {
       "title": "Ningún Pokémon coincide",
       "body": "Prueba con otro nombre, tipo o rol, o quita los filtros para ver toda la Caja."
-    }
+    },
+    "bagLink": "Abrir la mochila ({{dust}} de Polvo de Estudio)"
   },
   "detail": {
     "nav": "Navegar por la Caja",
