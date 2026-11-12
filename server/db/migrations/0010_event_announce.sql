@@ -1,0 +1,1 @@
+ALTER TABLE "live_events" ADD COLUMN "announce_rev" integer DEFAULT 0 NOT NULL;

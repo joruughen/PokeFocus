@@ -52,6 +52,15 @@
   --color-exp-600: #2f86d1;
   --color-shiny-300: #ffe9f6;
 
+  /* Text colours of the rich event descriptions ([red]…[/red]): all readable (>= 4.5:1) on dusk-900, 800 and 700. */
+  --color-rich-red: #ff8782;
+  --color-rich-orange: #ffa857;
+  --color-rich-yellow: #ffe174;
+  --color-rich-green: #6fe09a;
+  --color-rich-blue: #7ccbff;
+  --color-rich-purple: #bda6ff;
+  --color-rich-pink: #ff9fcb;
+
   /* Sky: the route band changes with the local time (it tells you which
      time-based type conditions are active). */
   --color-sky-morning-top: #8fd0f5;

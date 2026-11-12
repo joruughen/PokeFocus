@@ -46,6 +46,11 @@ export class EventBus {
     }
   }
 
+  /** Open connections and distinct players connected right now (this process only). */
+  audience(): { connections: number; players: number } {
+    return { connections: this.count(), players: this.byUser.size }
+  }
+
   count(userId?: string): number {
     if (userId) return this.byUser.get(userId)?.size ?? 0
     let n = 0

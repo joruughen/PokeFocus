@@ -5,6 +5,7 @@ import { BALL_ORDER, missionsView } from '../engine'
 import { DevToggle } from './dev/DevPanel'
 import { StageBadge } from './changelog/StageBadge'
 import { WhatsNewDialog } from './changelog/WhatsNewDialog'
+import { EventPopupHost } from './screens/events/EventPopup'
 import { GroupInviteNotice } from './GroupInviteNotice'
 import { ContentNotice } from './ContentNotice'
 import { MaintenanceBanner } from './MaintenanceBanner'
@@ -44,6 +45,7 @@ export function AppShell() {
       <Rail route={route} focusing={focusing} />
       <GroupInviteNotice />
       <WhatsNewDialog />
+      <EventPopupHost />
       <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
           <ContentNotice className="mb-6" />

@@ -37,6 +37,8 @@ export const RULES = {
   adminEventWrite: { limit: 120, windowMs: 15 * 60_000 },
   /** Publish and archive events per staff user (publishing runs the smoke test). */
   adminEventPublish: { limit: 20, windowMs: 15 * 60_000 },
+  /** "Notify players" per event (each one pops a window up to every connected player). */
+  adminEventAnnounce: { limit: 5, windowMs: 60 * 60_000 },
   /** Image uploads per staff user (each one decodes and re-encodes an image: CPU and RAM). */
   adminUpload: { limit: 20, windowMs: 15 * 60_000 },
   /** Web Push subscribe + unsubscribe per user. */

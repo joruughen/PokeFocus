@@ -58,7 +58,7 @@ function playerWith(ev: EventOverlay) {
   return { ...s, missions: { ...s.missions!, event: { fest: { ...group, slots: group.slots.map((x) => ({ ...x, progress: x.target })) } } } }
 }
 
-const named = (ev: EventOverlay): LiveEventPublic => ({ ...ev, name: { es: 'Fiesta de estudio', en: 'Study fest' }, description: { es: 'd', en: 'd' }, image: null, startsAt: ev.startsAt, endsAt: ev.endsAt, items: undefined })
+const named = (ev: EventOverlay): LiveEventPublic => ({ ...ev, name: { es: 'Fiesta de estudio', en: 'Study fest' }, description: { es: 'd', en: 'd' }, image: null, startsAt: ev.startsAt, endsAt: ev.endsAt, announceRev: 0, items: undefined })
 
 describe('Missions: event groups', () => {
   afterEach(() => {

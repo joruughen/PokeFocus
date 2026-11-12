@@ -4,7 +4,7 @@ import { Button, Dialog, TextField } from '../../../components'
 import { issueText, type IssueLike } from './errors'
 
 /** What the dialog is asking permission for. `schedule` = publish with a start in the future. */
-export type SudoMode = 'publish' | 'schedule' | 'save' | 'archive'
+export type SudoMode = 'publish' | 'schedule' | 'save' | 'archive' | 'announce'
 
 export interface SudoSubmit {
   password: string
@@ -16,6 +16,8 @@ export interface SudoSubmit {
 export interface SudoFormProps {
   mode: SudoMode
   eventName: string
+  /** Replaces the default explanation of the mode (the notice says how many players are connected). */
+  body?: string
   /** The session already has the sudo mode (30 min after a password check). */
   elevated: boolean
   /** Warnings that need an explicit confirmation before it goes live. */
@@ -30,14 +32,14 @@ export interface SudoFormProps {
  * The confirmation of a sensitive event action (docs/admin-plan.md §4): the password again when the sudo mode
  * has run out, a note for the audit log, and, for changes beyond ×3 (probabilities ×5), an explicit «I confirm».
  */
-export function SudoForm({ mode, eventName, elevated, risky, busy, error, onSubmit, onCancel }: SudoFormProps) {
+export function SudoForm({ mode, eventName, body, elevated, risky, busy, error, onSubmit, onCancel }: SudoFormProps) {
   const { t } = useTranslation()
   const id = useId()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [note, setNote] = useState('')
-  // Archiving takes the event out of play: the ×3 / ×5 checks of its numbers do not apply.
-  const needsConfirm = mode !== 'archive' && risky.length > 0
+  // Archiving takes the event out of play and announcing changes no number: the ×3 / ×5 checks do not apply.
+  const needsConfirm = mode !== 'archive' && mode !== 'announce' && risky.length > 0
   const ready = (elevated || password !== '') && (!needsConfirm || confirm)
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -47,7 +49,7 @@ export function SudoForm({ mode, eventName, elevated, risky, busy, error, onSubm
   }
   return (
     <form className="flex flex-col gap-4" onSubmit={submit}>
-      <p className="text-mist-300">{t(`eventsAdmin.sudo.body.${mode}`, { name: eventName })}</p>
+      <p className="text-mist-300">{body ?? t(`eventsAdmin.sudo.body.${mode}`, { name: eventName })}</p>
       {needsConfirm && (
         <div className="flex flex-col gap-2 bg-dusk-900 p-3 inset-shadow-well" role="group" aria-labelledby={`${id}-risky`}>
           <p id={`${id}-risky`} className="font-display text-base text-amber-400">
@@ -84,7 +86,7 @@ export function SudoForm({ mode, eventName, elevated, risky, busy, error, onSubm
         <Button variant="ghost" onClick={onCancel}>
           {t('common.cancel')}
         </Button>
-        <Button type="submit" variant={mode === 'publish' || mode === 'schedule' || mode === 'save' ? 'primary' : 'danger'} disabled={!ready || busy}>
+        <Button type="submit" variant={mode === 'publish' || mode === 'schedule' || mode === 'save' || mode === 'announce' ? 'primary' : 'danger'} disabled={!ready || busy}>
           {t(`eventsAdmin.sudo.submit.${mode}`)}
         </Button>
       </div>

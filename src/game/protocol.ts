@@ -441,6 +441,8 @@ export type ServerEvent =
   | { type: 'group'; groupId: string; kind: GroupEventKind; userId: string; trainerName: string; reason?: GroupLeaveReason }
   /** Broadcast to every connection: the active live content changed (refetch GET /api/content). */
   | { type: 'content'; hash: string }
+  /** Broadcast: an admin notified the players about a live event (reload GET /api/live-events; the pop-up shows again for `rev`). */
+  | { type: 'event_announce'; eventId: string; rev: number }
 
 /** Header names used only when the server runs with DEV_TOOLS=1. */
 export const DEV_NOW_HEADER = 'x-dev-now'
@@ -948,13 +950,16 @@ export interface AdminSimCheck {
  *   DELETE /api/admin/events/:id                    → 204                  (admin; drafts only)
  *   POST   /api/admin/events/:id/publish {confirm?, note?}  → AdminEventResponse (admin + sudo; a future `startsAt` = scheduled)
  *   POST   /api/admin/events/:id/archive {note?}            → AdminEventResponse (admin + sudo; a published event only)
+ *   POST   /api/admin/events/:id/announce {note?}           → AdminEventAnnounceResponse (admin + sudo; published and not ended: bumps
+ *                                                   `announceRev`, broadcasts SSE `event_announce`; 5 per hour per event)
+ *   GET    /api/admin/events/:id/audience           → AdminEventAudienceResponse (admin; open connections now)
  *
  *   GET    /api/admin/uploads                       → AdminUploadsResponse (admin)
  *   POST   /api/admin/uploads  (raw body, Content-Type image/png|jpeg|webp, at most 3 MB) → 201 | 200 AdminUploadResponse (admin; re-encoded)
  *   DELETE /api/admin/uploads/:id                   → 204                  (admin; only images no event references)
  *   GET    /media/events/<sha256>.webp | <sha256>-480.webp   the sanitized images (immutable, nosniff)
  *
- * Every mutation is audited in its own transaction (`event.create|update|delete|publish|archive`,
+ * Every mutation is audited in its own transaction (`event.create|update|delete|publish|archive|announce`,
  * `upload.create|delete`). Errors: 400 invalid_body / invalid_query / invalid_dates, 403 forbidden / elevation_required,
  * 404 not_found, 409 (`not_draft`, `not_published`, `not_editable`, `slug_taken`, `slug_locked`, `too_many_drafts`,
  * `confirm_required`, `in_use`, `uploads_full`), 413 body_too_large, 415 unsupported_type, 422 (`validation_failed`
@@ -987,6 +992,8 @@ export interface LiveEventPublic extends EventOverlayBody {
   image: LiveEventImage | null
   startsAt: number
   endsAt: number
+  /** Times the admins notified the players (0 = never). The pop-up shows once per (event, `announceRev`, phase). */
+  announceRev: number
 }
 
 export interface LiveEventsResponse {
@@ -1036,6 +1043,8 @@ export interface AdminEvent {
   overlay: EventOverlayBody
   /** 1 when created; +1 on every edit of a published event. */
   revision: number
+  /** Times the players were notified (POST /:id/announce). */
+  announceRev: number
   /** Last saved validation (the shape is the same as the content versions'). */
   validation: AdminContentValidation | null
   createdBy: AdminContentAuthor | null
@@ -1052,6 +1061,17 @@ export interface AdminEvent {
 export interface AdminEventResponse {
   event: AdminEvent
   serverNow: number
+}
+
+/** POST /api/admin/events/:id/announce: the event with its new `announceRev`, and how many open connections got the notice. */
+export interface AdminEventAnnounceResponse extends AdminEventResponse {
+  notified: { connections: number; players: number }
+}
+
+/** GET /api/admin/events/:id/audience: who would get a notice right now (open SSE connections; one process only). */
+export interface AdminEventAudienceResponse {
+  connections: number
+  players: number
 }
 
 export interface AdminEventsResponse {

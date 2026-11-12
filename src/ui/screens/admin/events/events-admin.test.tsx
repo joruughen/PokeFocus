@@ -53,6 +53,7 @@ function event(over: Partial<AdminEvent> = {}): AdminEvent {
       items: { 'spark-token': { names: { es: 'Ficha chispa', en: 'Spark token' } } },
     },
     revision: 1,
+    announceRev: 0,
     validation: null,
     createdBy: null,
     createdAt: NOW - HOUR,
@@ -196,7 +197,7 @@ describe('SudoForm', () => {
 
   it('has its own copy for every mode', async () => {
     await i18n.changeLanguage('es')
-    for (const mode of ['publish', 'schedule', 'save', 'archive'] as const) {
+    for (const mode of ['publish', 'schedule', 'save', 'archive', 'announce'] as const) {
       const html = form({ mode, elevated: true })
       expect(html).not.toMatch(RAW_KEY)
       expect(html).toContain('Semana Pikachu')
@@ -290,6 +291,32 @@ describe('events list and editor markup', () => {
     expect(archived).toContain('Duplicate as a draft')
   })
 
+  for (const lng of ['es', 'en'] as const) {
+    it(`a published event offers «Notify players» (not when ended or with unsaved changes), and the description has the format bar (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const es = lng === 'es'
+      const future = Date.now() + 40 * HOUR
+      const live = editor(event({ status: 'published', active: true, startsAt: Date.now() - HOUR, endsAt: future, announceRev: 2 }))
+      expect(live).not.toMatch(RAW_KEY)
+      expect(live).toContain(es ? 'Notificar a los jugadores…' : 'Notify players…')
+      expect(live).toContain(es ? 'Avisos enviados: 2' : 'Notices sent: 2')
+      expect(live).not.toMatch(/<button[^>]*disabled=""[^>]*>[^<]*(Notificar a los jugadores…|Notify players…)/)
+      const scheduled = editor(event({ status: 'published', scheduled: true, startsAt: Date.now() + HOUR, endsAt: future }))
+      expect(scheduled).toContain(es ? 'Notificar a los jugadores…' : 'Notify players…')
+      const ended = editor(event({ status: 'published', startsAt: Date.now() - 5 * HOUR, endsAt: Date.now() - HOUR }))
+      expect(ended).toMatch(es ? /disabled=""[^>]*>(?:<[^>]*>)*Notificar a los jugadores…/ : /disabled=""[^>]*>(?:<[^>]*>)*Notify players…/)
+      expect(ended).toContain(es ? 'El evento ya terminó.' : 'The event has ended.')
+      // never for a draft or an archived event
+      expect(editor(event())).not.toContain(es ? 'Notificar a los jugadores…' : 'Notify players…')
+      expect(editor(event({ status: 'archived' }))).not.toContain(es ? 'Notificar a los jugadores…' : 'Notify players…')
+      // the format bar and the live preview, once per language
+      expect((live.match(/role="toolbar"/g) ?? []).length).toBe(2)
+      for (const c of es ? ['Negrita', 'Cursiva', 'Rojo', 'Naranja', 'Amarillo', 'Verde', 'Azul', 'Morado', 'Rosa'] : ['Bold', 'Italic', 'Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'Pink']) expect(live).toContain(`aria-label="${c}"`)
+      expect(live).toContain(es ? 'Vista previa' : 'Preview')
+      expect(live).toContain(es ? 'caracteres visibles' : 'visible characters')
+    })
+  }
+
   it('a new event starts empty, with a delete-free action bar and no spawn preview until saved', async () => {
     await i18n.changeLanguage('en')
     const html = editor(null)
@@ -299,11 +326,25 @@ describe('events list and editor markup', () => {
   })
 })
 
+describe('rich description in the form', () => {
+  it('the limit counts visible characters, not the markers', () => {
+    const d = draftFromEvent(event())
+    const ok = draftToBody({ ...d, descEs: `**${'a'.repeat(400)}**`, descEn: `[red]${'b'.repeat(400)}[/red]` })
+    expect(ok.problems).toEqual([])
+    const long = draftToBody({ ...d, descEs: 'a'.repeat(401), descEn: 'x' })
+    expect(long.problems).toContainEqual({ path: 'description.es', code: 'tooLong' })
+    expect(draftToBody({ ...d, descEs: '[red][/red]'.repeat(120) + 'a' }).problems).toContainEqual({ path: 'description.es', code: 'tooLong' })
+  })
+  it('the player preview keeps the marks (the card renders them)', () => {
+    expect(draftToPublic({ ...draftFromEvent(event()), descEn: 'a **b**' })?.description.en).toBe('a **b**')
+  })
+})
+
 describe('error copy', () => {
   it('has text for the codes the event routes answer, in both languages', async () => {
     for (const lng of ['es', 'en'] as const) {
       await i18n.changeLanguage(lng)
-      for (const code of ['slug_taken', 'elevation_required', 'wrong_password', 'confirm_required', 'validation_failed', 'unsupported_type', 'image_too_small', 'in_use']) {
+      for (const code of ['event_ended', 'slug_taken', 'elevation_required', 'wrong_password', 'confirm_required', 'validation_failed', 'unsupported_type', 'image_too_small', 'in_use']) {
         const text = eventsErrorText(new ApiError(code === 'slug_taken' ? 409 : 400, code))
         expect(text).not.toMatch(RAW_KEY)
         expect(text.length).toBeGreaterThan(10)
@@ -337,14 +378,19 @@ describe('api calls', () => {
     await eventsAdminApi.update('e1', { slug: 'x', confirm: true })
     await eventsAdminApi.publish('e1', { confirm: true, note: 'go' })
     await eventsAdminApi.archive('e1', {})
+    await eventsAdminApi.announce('e1', { note: 'hi' })
+    await eventsAdminApi.audience('e1')
     await eventsAdminApi.spawnPreview({ eventId: 'e1', hour: 9, weather: 'rain', trainerLevel: 12 })
     const calls = f.mock.calls.map(([u, i]) => `${i?.method} ${u}`)
     expect(calls).toEqual([
       'PUT /api/admin/events/e1',
       'POST /api/admin/events/e1/publish',
       'POST /api/admin/events/e1/archive',
+      'POST /api/admin/events/e1/announce',
+      'GET /api/admin/events/e1/audience',
       'GET /api/admin/content/spawn-preview?hour=9&weather=rain&trainerLevel=12&eventId=e1',
     ])
     expect(JSON.parse(String(f.mock.calls[1]![1]!.body))).toEqual({ confirm: true, note: 'go' })
+    expect(JSON.parse(String(f.mock.calls[3]![1]!.body))).toEqual({ note: 'hi' })
   })
 })

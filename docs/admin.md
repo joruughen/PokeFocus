@@ -25,7 +25,7 @@ Para dar `support` a otra persona usa el CLI (`npm run admin:role -- otro@correo
 
 ### Reautenticación («modo sudo»)
 
-Las acciones delicadas piden **volver a escribir tu contraseña**: publicar, programar, cancelar una programación, rollback, conceder objetos o Polvo, publicar o archivar un evento y editar un evento ya publicado. La pantalla abre un diálogo cuando hace falta. La contraseña da un permiso de **30 minutos solo en esa sesión del navegador**; pasado ese tiempo se vuelve a pedir. Cinco contraseñas erróneas en 15 minutos bloquean los intentos un rato.
+Las acciones delicadas piden **volver a escribir tu contraseña**: publicar, programar, cancelar una programación, rollback, conceder objetos o Polvo, publicar o archivar un evento, **notificar a los jugadores** y editar un evento ya publicado. La pantalla abre un diálogo cuando hace falta. La contraseña da un permiso de **30 minutos solo en esa sesión del navegador**; pasado ese tiempo se vuelve a pedir. Cinco contraseñas erróneas en 15 minutos bloquean los intentos un rato.
 
 ## 2. Contenido: del borrador a producción
 
@@ -80,6 +80,27 @@ Vida de un evento:
 2. **Publicar** (admin + sudo): necesita fin en el futuro e inicio a como mucho 60 días vista; con inicio futuro queda **programado**. Se valida con la prueba de humo y pide el tick de confirmación si hay cambios grandes.
 3. **Editar un evento publicado** también pide sudo y validación completa; el *slug* ya no se puede cambiar. Se aplican las mismas comprobaciones de fechas que al publicar: el fin tiene que estar en el futuro y el inicio a como mucho 60 días vista (un evento ya en marcha, con el inicio en el pasado, se puede seguir editando; uno ya terminado solo si no tocas sus fechas, p. ej. para corregir un texto). El cambio se aplica **a la vez**, pero las sesiones ya empezadas siguen con lo suyo. Cada edición guarda una revisión.
 4. **Archivar** (admin + sudo): el evento sale del juego y de la página pública al instante. Los jugadores que ya empezaron una sesión durante el evento la terminan con sus reglas. Los borradores se pueden **borrar**; los publicados solo se archivan.
+5. **Notificar a los jugadores** (admin + sudo; solo eventos publicados que no hayan terminado, activos **o programados**). Botón *Notificar a los jugadores…* del editor (desactivado si hay cambios sin guardar: los jugadores ven la versión guardada). El diálogo de confirmación dice **cuántos jugadores hay conectados ahora** (el servidor cuenta las conexiones abiertas; solo vale para un servidor) y cuántas veces se ha avisado ya. Al confirmar, la ventana del evento vuelve a salir a **todos**, también a quienes ya la cerraron, y a quienes abran el juego más tarde. Para un evento programado la ventana dice «Próximamente» con la fecha de inicio. Máximo **5 avisos por hora y por evento**; cada uno queda en la auditoría (`event.announce`) y no cambia la revisión ni el contenido del juego.
+
+### La ventana del evento
+
+Los jugadores ven una ventana con la imagen grande, el nombre, la descripción con formato, las fechas en **su** zona horaria, las especies destacadas y los botones *Ver evento* (lleva a `#/events`) y *Cerrar*:
+
+- Sale **sola** cuando hay un evento activo que ese dispositivo aún no ha visto (una vez por evento y por aviso; se recuerda en el navegador, así que otro dispositivo o borrar los datos del sitio la vuelve a mostrar). Con *Notificar a los jugadores* sale otra vez.
+- **Nunca durante una sesión de estudio** (en marcha, en pausa, esperando el reclamo, oleadas de captura o descanso), ni encima de una pista de Profe Pika, de otro diálogo ni de «¿Qué hay de nuevo?» (esa va primero). Se pospone y sale cuando el jugador vuelve al inicio o a los resultados. Si hay varias, de una en una. Si el jugador ya está en `#/events`, se da por vista sin abrirla.
+
+### Formato de la descripción
+
+La descripción (y solo ella) admite un formato propio y seguro; no hay HTML. Se guarda como texto con estas marcas:
+
+| Marca | Resultado |
+| --- | --- |
+| `**texto**` | negrita |
+| `*texto*` | cursiva |
+| `[red]texto[/red]` | color: `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink` (nombres en inglés en lo guardado; el editor los muestra traducidos: rojo, naranja, amarillo, verde, azul, morado, rosa) |
+| `\*`, `\[`, `\\` | muestran `*`, `[` y `\` tal cual |
+
+Se puede anidar (`**a [red]b[/red]**`, hasta 6 niveles). Lo que no se entiende (etiqueta desconocida como `[rojo]`, cierre sin apertura, marca sin cerrar) **se ve como se escribió**. Los asteriscos rodeados de espacios (`2 * 3`) no son formato. El editor tiene una barra con *Negrita*, *Cursiva* y los siete colores (envuelven la selección) y una **vista previa en vivo** idéntica a lo que verá el jugador. Los colores son una paleta fija pensada para el tema oscuro. **Límite**: 400 caracteres **visibles** por idioma (las marcas no cuentan); lo guardado puede llegar a 1200 caracteres en total. La tarjeta de `#/events` y la ventana muestran el formato; el banner y el resto de textos cortos, no.
 
 Cuando cae un objeto de evento, el jugador lo ve en *Resultados* («Objeto (evento) +N») y en el informe de la sesión; las especies destacadas por un evento activo (el de la sesión, no el de ahora) llevan una marca discreta **Destacada** en las oleadas. Los jugadores ven los eventos en `#/events` (activos, próximos y pasados con tarjeta, cuenta atrás, destacadas, drops y misiones) y un **banner** del evento activo en la pantalla previa a la sesión. Las misiones de evento se pueden reclamar hasta 7 días después de que termine.
 

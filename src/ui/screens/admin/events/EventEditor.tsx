@@ -26,8 +26,9 @@ import {
   type EventRequestBody,
 } from './draft'
 import { eventsErrorText, issuesOf, issueText, type IssueLike } from './errors'
-import { EventDatalists, ItemInput, Row, RowList, SpeciesInput, TextArea } from './fields'
+import { EventDatalists, ItemInput, Row, RowList, SpeciesInput } from './fields'
 import { ImagePicker } from './ImagePicker'
+import { RichField } from './RichField'
 import { SpawnPreview } from './SpawnPreview'
 import { SudoDialog, type SudoMode, type SudoSubmit } from './SudoDialog'
 
@@ -70,6 +71,8 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [serverRisky, setServerRisky] = useState<IssueLike[]>([])
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [audience, setAudience] = useState<{ players: number; connections: number } | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const locked = d.status === 'archived'
   const published = d.status === 'published'
@@ -103,6 +106,7 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
   const startMs = fromLocalInput(d.startsAt)
   const endMs = fromLocalInput(d.endsAt)
   const startsInFuture = !Number.isNaN(startMs) && startMs > now
+  const ended = current !== null && current.endsAt <= now
   const risky = useMemo(() => {
     const fromLocal = (local?.warnings ?? []).filter((w) => w.requiresConfirm)
     const extra = serverRisky.filter((s) => !fromLocal.some((w) => w.path === s.path && w.code === s.code))
@@ -161,6 +165,25 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
     setDialog(mode)
   }
 
+  /** "Notify players": ask who is connected now (the confirmation says it), then the usual password / note dialog. */
+  const openAnnounce = async () => {
+    if (!d.id || busy) return
+    setDialogError(null)
+    setNotice(null)
+    setError(null)
+    setBusy(true)
+    let seen: { players: number; connections: number } | null = null
+    try {
+      seen = await eventsAdminApi.audience(d.id)
+    } catch {
+      // the count is a courtesy: the notice can still be sent
+    } finally {
+      setBusy(false)
+    }
+    setAudience(seen)
+    setDialog('announce')
+  }
+
   const submitSudo = async (v: SudoSubmit) => {
     if (!dialog || busy) return
     setBusy(true)
@@ -173,7 +196,11 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
       const note = v.note || undefined
       const confirm = v.confirm || undefined
       let res
-      if (dialog === 'archive') res = await eventsAdminApi.archive(d.id!, { note })
+      if (dialog === 'announce') {
+        const sent = await eventsAdminApi.announce(d.id!, { note })
+        res = sent
+        setNotice(t('eventsAdmin.announce.done', { players: sent.notified.players }))
+      } else if (dialog === 'archive') res = await eventsAdminApi.archive(d.id!, { note })
       else {
         // Save what is on screen first (a draft, or an edit of a published event), then publish.
         const body = draftToBody(d).body
@@ -229,6 +256,13 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
   const endErr = problemFor('endsAt')
 
   const mode: SudoMode = dialog ?? 'publish'
+  const eventLabel = lng === 'en' ? d.nameEn || d.nameEs : d.nameEs || d.nameEn
+  const announceBody = t(audience ? 'eventsAdmin.sudo.body.announce' : 'eventsAdmin.sudo.body.announceNoAudience', {
+    name: eventLabel,
+    n: current?.announceRev ?? 0,
+    players: audience?.players ?? 0,
+    connections: audience?.connections ?? 0,
+  })
   const issueGroups = serverIssues ?? (local ? { errors: local.errors, warnings: local.warnings } : null)
 
   return (
@@ -255,10 +289,11 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
               <TextField label={t('eventsAdmin.basics.nameEs')} value={d.nameEs} maxLength={80} onChange={(e) => set('nameEs', e.target.value)} error={problemFor('name.es')} />
               <TextField label={t('eventsAdmin.basics.nameEn')} value={d.nameEn} maxLength={80} onChange={(e) => set('nameEn', e.target.value)} error={problemFor('name.en')} />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <TextArea label={t('eventsAdmin.basics.descEs')} value={d.descEs} maxLength={400} onChange={(e) => set('descEs', e.target.value)} error={problemFor('description.es')} />
-              <TextArea label={t('eventsAdmin.basics.descEn')} value={d.descEn} maxLength={400} onChange={(e) => set('descEn', e.target.value)} error={problemFor('description.en')} />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <RichField label={t('eventsAdmin.basics.descEs')} value={d.descEs} onChange={(v) => set('descEs', v)} error={problemFor('description.es')} disabled={locked} />
+              <RichField label={t('eventsAdmin.basics.descEn')} value={d.descEn} onChange={(v) => set('descEn', v)} error={problemFor('description.en')} disabled={locked} />
             </div>
+            <p className="text-sm text-mist-400">{t('eventsAdmin.format.hint')}</p>
             <div className="flex flex-wrap items-end gap-3">
               <TextField
                 className="min-w-0 flex-1 basis-60"
@@ -557,6 +592,9 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
               <Button icon="check" disabled={busy || !dirty} onClick={() => openDialog('save')}>
                 {t('eventsAdmin.actions.saveChanges')}
               </Button>
+              <Button variant="secondary" icon="sparkle" disabled={busy || dirty || ended} onClick={() => void openAnnounce()}>
+                {t('eventsAdmin.announce.button')}
+              </Button>
               <Button variant="danger" disabled={busy} onClick={() => openDialog('archive')}>
                 {t('eventsAdmin.actions.archive')}
               </Button>
@@ -568,7 +606,18 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
             </Button>
           )}
         </div>
+        {notice && (
+          <p className="text-sm break-words text-leaf-400" role="status">
+            {notice}
+          </p>
+        )}
         <p className={cx('text-sm text-mist-400')}>{t(`eventsAdmin.actions.help.${d.status}`)}</p>
+        {published && (
+          <p className="text-sm text-mist-400">
+            {ended ? t('eventsAdmin.announce.ended') : dirty ? t('eventsAdmin.announce.unsaved') : t('eventsAdmin.announce.hint')}
+            {current && current.announceRev > 0 && ` ${t('eventsAdmin.announce.count', { n: current.announceRev })}`}
+          </p>
+        )}
       </div>
 
       <SudoDialog
@@ -576,6 +625,7 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
         onClose={() => setDialog(null)}
         mode={mode}
         eventName={(lng === 'en' ? d.nameEn || d.nameEs : d.nameEs || d.nameEn)}
+        body={mode === 'announce' ? announceBody : undefined}
         elevated={elevated}
         risky={risky}
         busy={busy}

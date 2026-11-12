@@ -372,6 +372,8 @@ export const liveEvents = pgTable(
     imageId: uuid('image_id').references(() => uploads.id),
     overlay: jsonb('overlay').$type<EventOverlayBody>().notNull(),
     revision: integer('revision').notNull().default(1),
+    /** Times an admin pressed "Notify players": each one makes the announcement window show again to everyone. */
+    announceRev: integer('announce_rev').notNull().default(0),
     /** Result of the last save/publish validation. */
     validation: jsonb('validation').$type<AdminContentValidation>(),
     createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),

@@ -13,6 +13,7 @@ const OWN = [
   'not_found',
   'not_draft',
   'not_published',
+  'event_ended',
   'not_editable',
   'slug_taken',
   'slug_locked',

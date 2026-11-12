@@ -9,6 +9,7 @@
 import { z } from 'zod'
 import type { ContentPatch, EventOverlay } from '../../engine/content'
 import type { AbilityDef, Effect, EffectKind, TechniqueDef } from '../../engine/effect-types'
+import { richPlainText, RICH_RAW_FACTOR } from '../richText'
 import { MISSION_KINDS } from '../../engine/mission-kinds'
 import type { MissionDef, PokedexMilestoneDef } from '../../engine/missions'
 import type { TypeSlug } from '../../engine/data-types'
@@ -50,6 +51,24 @@ export function localizedTextSchema(max: number) {
 
 export const shortTextSchema = localizedTextSchema(D.shortText)
 export const longTextSchema = localizedTextSchema(D.longText)
+
+/**
+ * `{ es, en }` in the rich mini-format (src/game/richText.ts): the limit counts the VISIBLE characters, and
+ * what is stored may be up to `RICH_RAW_FACTOR` times that. Used for the description of an event.
+ */
+export function richTextSchema(max: number) {
+  const s = z
+    .string()
+    .min(1)
+    .max(max * RICH_RAW_FACTOR)
+    .superRefine((v, ctx) => {
+      const plain = richPlainText(v)
+      if (plain.length > max) ctx.addIssue({ code: 'custom', message: `visible text longer than ${max}` })
+      if (!nonBlank.test(plain)) ctx.addIssue({ code: 'custom', message: 'blank' })
+    })
+  return z.strictObject({ es: s, en: s })
+}
+export const richLongTextSchema = richTextSchema(D.longText)
 
 // ---------------------------------------------------------------------------
 // Config (whitelist from limits.ts)
@@ -324,7 +343,7 @@ export const eventOverlaySchema = eventOverlayBodySchema
   })
 
 /** Name and description of an event (`live_events.name/description`). */
-export const eventMetaSchema = z.strictObject({ name: shortTextSchema, description: longTextSchema })
+export const eventMetaSchema = z.strictObject({ name: shortTextSchema, description: richLongTextSchema })
 
 // ---------------------------------------------------------------------------
 // Compile-time checks: what the schemas accept is what the engine types allow.

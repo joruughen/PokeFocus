@@ -1,10 +1,11 @@
 /**
  * Live events store (docs/admin-plan.md §6): the published events from
  * GET /api/live-events (active, upcoming, past with a cursor). Not persisted,
- * except the per-event "I closed the banner" list. It reloads on the SSE
- * `content` event (an event starting, ending, being published or archived moves
- * the content hash) and when the tab is visible again; a failed reload keeps
- * what we had.
+ * except two per-device lists: "I closed the banner" and "I saw the pop-up". It
+ * reloads on the SSE `content` event (an event starting, ending, being
+ * published or archived moves the content hash), on `event_announce` (an admin
+ * notified the players: `announceRev` moved) and when the tab is visible
+ * again; a failed reload keeps what we had.
  */
 import { create } from 'zustand'
 import type { LiveEventPublic, LiveEventsResponse } from '../../game/protocol'
@@ -14,6 +15,8 @@ import { onServerEvent } from '../api/events'
 export const LIVE_EVENTS_PATH = '/live-events'
 const DISMISSED_KEY = 'pokefocus:eventBanner:dismissed'
 const DISMISSED_MAX = 50
+const POPUP_SEEN_KEY = 'pokefocus:eventPopup:seen'
+const POPUP_SEEN_MAX = 100
 
 export type LiveEventsStatus = 'idle' | 'loading' | 'ready' | 'error'
 
@@ -29,25 +32,28 @@ export interface LiveEventsState {
   loadingMore: boolean
   /** Ids of events whose home banner the player closed (kept in this browser). */
   dismissed: string[]
+  /** Pop-up keys (`popupKey`: event, announce revision, phase) this device already showed. */
+  popupSeen: string[]
   load: () => Promise<void>
   loadMore: () => Promise<void>
   dismissBanner: (id: string) => void
+  markPopupSeen: (keys: readonly string[]) => void
 }
 
-function readDismissed(): string[] {
+function readList(key: string, max: number): string[] {
   try {
-    const v: unknown = JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? '[]')
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(-DISMISSED_MAX) : []
+    const v: unknown = JSON.parse(localStorage.getItem(key) ?? '[]')
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(-max) : []
   } catch {
     return []
   }
 }
 
-function writeDismissed(ids: string[]): void {
+function writeList(key: string, ids: string[]): void {
   try {
-    localStorage.setItem(DISMISSED_KEY, JSON.stringify(ids))
+    localStorage.setItem(key, JSON.stringify(ids))
   } catch {
-    // private mode: the banner just comes back after a reload
+    // private mode: it just comes back after a reload
   }
 }
 
@@ -61,7 +67,8 @@ export const useLiveEvents = create<LiveEventsState>()((set, get) => ({
   skew: 0,
   status: 'idle',
   loadingMore: false,
-  dismissed: readDismissed(),
+  dismissed: readList(DISMISSED_KEY, DISMISSED_MAX),
+  popupSeen: readList(POPUP_SEEN_KEY, POPUP_SEEN_MAX),
   load: async () => {
     const mine = ++seq
     if (get().status === 'idle') set({ status: 'loading' })
@@ -104,21 +111,29 @@ export const useLiveEvents = create<LiveEventsState>()((set, get) => ({
     set((s) => {
       if (s.dismissed.includes(id)) return s
       const dismissed = [...s.dismissed, id].slice(-DISMISSED_MAX)
-      writeDismissed(dismissed)
+      writeList(DISMISSED_KEY, dismissed)
       return { dismissed }
+    }),
+  markPopupSeen: (keys) =>
+    set((s) => {
+      const fresh = keys.filter((k) => !s.popupSeen.includes(k))
+      if (fresh.length === 0) return s
+      const popupSeen = [...s.popupSeen, ...fresh].slice(-POPUP_SEEN_MAX)
+      writeList(POPUP_SEEN_KEY, popupSeen)
+      return { popupSeen }
     }),
 }))
 
 let started = false
 
-/** Fetch now and follow the SSE `content` event and tab visibility (idempotent; called once at boot). */
+/** Fetch now and follow the SSE `content` / `event_announce` events and tab visibility (idempotent; called once at boot). */
 export function startLiveEvents(): void {
   if (started || typeof document === 'undefined') return
   started = true
   const load = () => void useLiveEvents.getState().load()
   load()
   onServerEvent((e) => {
-    if ((e as { type?: string }).type === 'content') load()
+    if (e.type === 'content' || e.type === 'event_announce') load()
   })
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) load()
@@ -128,5 +143,5 @@ export function startLiveEvents(): void {
 /** Tests: back to an empty store. */
 export function resetLiveEventsForTests(): void {
   seq++
-  useLiveEvents.setState({ active: [], upcoming: [], past: [], nextCursor: null, skew: 0, status: 'idle', loadingMore: false, dismissed: [] })
+  useLiveEvents.setState({ active: [], upcoming: [], past: [], nextCursor: null, skew: 0, status: 'idle', loadingMore: false, dismissed: [], popupSeen: [] })
 }

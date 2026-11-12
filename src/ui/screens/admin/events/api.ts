@@ -1,5 +1,7 @@
 /** Event admin calls (server/routes/admin/events.ts, uploads.ts, content.ts spawn-preview). They all use the staff session. */
 import type {
+  AdminEventAnnounceResponse,
+  AdminEventAudienceResponse,
   AdminEventResponse,
   AdminEventsResponse,
   AdminEventStatus,
@@ -29,6 +31,8 @@ export const eventsAdminApi = {
   remove: (id: string) => api.delete(base(id)),
   publish: (id: string, body: { confirm?: boolean; note?: string }) => api.post<AdminEventResponse>(`${base(id)}/publish`, body),
   archive: (id: string, body: { note?: string }) => api.post<AdminEventResponse>(`${base(id)}/archive`, body),
+  announce: (id: string, body: { note?: string }) => api.post<AdminEventAnnounceResponse>(`${base(id)}/announce`, body),
+  audience: (id: string) => api.get<AdminEventAudienceResponse>(`${base(id)}/audience`),
 
   uploads: () => api.get<AdminUploadsResponse>('/admin/uploads'),
   upload: (file: File) => api.upload<AdminUploadResponse>('/admin/uploads', file),
