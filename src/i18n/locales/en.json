@@ -4,6 +4,16 @@
     "tagline": "Study. Capture. Evolve.",
     "disclaimer": "Personal non-commercial project. Not affiliated with Nintendo, Game Freak or The Pokémon Company."
   },
+  "combobox": {
+    "show": "Show options",
+    "noResults": "No matches.",
+    "noResultsFree": "No matches. «{{text}}» will be used as typed.",
+    "more_one": "{{count}} more. Keep typing to narrow it down.",
+    "more_other": "{{count}} more. Keep typing to narrow it down.",
+    "stage": "Stage {{n}}",
+    "pickSpecies": "Search by name, identifier or number",
+    "pickItem": "Search by name or identifier"
+  },
   "common": {
     "close": "Close",
     "moreInfo": "More info",

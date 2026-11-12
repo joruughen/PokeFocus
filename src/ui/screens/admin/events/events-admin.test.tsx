@@ -260,7 +260,10 @@ describe('events list and editor markup', () => {
       expect(html).toContain('pikachu-week')
       expect(html).toContain('type="datetime-local"')
       expect(html).toContain('UTC')
-      expect(html).toContain('<datalist')
+      // Species and items are searchable comboboxes (no native datalist), showing the stored species by name.
+      expect(html).not.toContain('<datalist')
+      expect(html).toContain('role="combobox"')
+      expect(html).toContain('value="Pikachu"')
       expect(html).toContain(es ? 'Especies destacadas' : 'Featured species')
       expect(html).toContain(es ? 'Premios por oleada' : 'Prizes per wave')
       expect(html).toContain(es ? 'Misiones del evento' : 'Event missions')

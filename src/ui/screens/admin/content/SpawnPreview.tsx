@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AdminSpawnPreview, AdminSpawnWeather } from '../../../../game/protocol'
-import { Segmented, Select, Sprite } from '../../../components'
+import { Combobox, Segmented, Sprite } from '../../../components'
 import { asLocale, speciesName } from '../../../lib/names'
 import { cx } from '../../../lib/cx'
 import { contentApi } from './api'
@@ -86,12 +86,13 @@ export function SpawnPreview({ draftId, flush, revision, events }: SpawnPreviewP
           <Segmented label={t('admin.content.preview.weather')} value={weather} onChange={setWeather} options={WEATHERS.map((w) => ({ value: w, label: t(`admin.content.weather.${w}`) }))} />
         </div>
         {events.length > 0 && (
-          <Select
+          <Combobox
             label={t('admin.content.preview.event')}
             value={eventId}
             onChange={setEventId}
             className="min-w-48"
-            options={[{ value: '', label: t('admin.content.preview.noEvent') }, ...events.map((e) => ({ value: e.id, label: e.slug }))]}
+            placeholder={t('admin.content.preview.noEvent')}
+            options={events.map((e) => ({ value: e.id, label: e.slug }))}
           />
         )}
       </div>

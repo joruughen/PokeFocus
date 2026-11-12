@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AdminContentVersion, AdminEvent, ContentIssue } from '../../../../game/protocol'
-import { Segmented, Select, TextField, toast } from '../../../components'
+import { Combobox, Segmented, TextField, toast } from '../../../components'
 import { browserTimeZone } from '../../../lib/format'
 import { toLocalInput } from '../../../lib/maintenance'
 import { asLocale } from '../../../lib/names'
@@ -129,14 +129,12 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
             </p>
           ) : (
             <>
-              <Select
+              <Combobox
                 label={t('admin.content.publish.event.label')}
-                value={eventId || 'none'}
-                onChange={(v) => setEventId(v === 'none' ? '' : v)}
-                options={[
-                  { value: 'none', label: t('admin.content.publish.event.choose') },
-                  ...events.map((e) => ({ value: e.id, label: t('admin.content.publish.event.option', { name: eventText(e.name, lng), start: fmt.format(e.startsAt), end: fmt.format(e.endsAt) }) })),
-                ]}
+                value={eventId}
+                onChange={setEventId}
+                placeholder={t('admin.content.publish.event.choose')}
+                options={events.map((e) => ({ value: e.id, label: eventText(e.name, lng), secondary: `${fmt.format(e.startsAt)} – ${fmt.format(e.endsAt)}`, keywords: [e.slug, e.name.es, e.name.en] }))}
               />
               <p className="text-sm text-mist-400">{t('admin.content.publish.event.hint')}</p>
             </>

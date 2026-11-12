@@ -1,7 +1,8 @@
 /** UI kit. Documented in docs/ui-foundation.md §Components. */
 export { BallIcon, StudyBallIcon } from './BallIcon'
 export { Button, IconButton, type ButtonProps, type ButtonVariant, type IconButtonProps } from './Button'
-export { Dialog, DialogClose, type DialogProps } from './Dialog'
+export { Combobox, type ComboboxOption, type ComboboxProps } from './Combobox'
+export { Dialog,DialogClose, type DialogProps } from './Dialog'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
 export { HelpDot } from './HelpDot'
 export { Logo } from './Logo'
