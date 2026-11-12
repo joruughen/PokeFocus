@@ -9,7 +9,9 @@ registerHints([
   // Box
   { id: 'box.intro', screen: 'box', trigger: { kind: 'firstVisit' }, anchor: 'box.grid', pose: 'point', side: 'top', order: 1 },
   { id: 'box.filters', screen: 'box', trigger: { kind: 'focus' }, anchor: 'box.filters', pose: 'think', side: 'bottom' },
-  { id: 'box.candies', screen: 'box', trigger: { kind: 'manual' }, anchor: 'box.bag', pose: 'point', side: 'left' },
+
+  // Bag
+  { id: 'bag.intro', screen: 'bag', trigger: { kind: 'manual' }, pose: 'point' },
 
   // Pokémon detail: a short 3-step tour the first time, then "?" on each widget.
   { id: 'detail.techniques', screen: 'detail', trigger: { kind: 'firstVisit' }, anchor: 'detail.slots', pose: 'point', side: 'top', sequence: 'detailTour', order: 1 },

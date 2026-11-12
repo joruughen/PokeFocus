@@ -23,6 +23,7 @@ export interface RouteDef {
 
 const loaders = {
   box: () => import('./screens/box/BoxRoute'),
+  bag: () => import('./screens/bag/Bag'),
   team: () => import('./screens/team/Team'),
   dex: () => import('./screens/dex/Dex'),
   league: () => import('./screens/league/League'),
@@ -37,6 +38,7 @@ const loaders = {
 export const ROUTES: RouteDef[] = [
   { id: 'home', labelKey: 'nav.home', icon: 'home', component: HomeRoute, nav: true },
   { id: 'box', labelKey: 'nav.box', icon: 'box', component: lazy(loaders.box), nav: true, preload: loaders.box },
+  { id: 'bag', labelKey: 'nav.bag', icon: 'bag', component: lazy(loaders.bag), nav: true, preload: loaders.bag },
   { id: 'team', labelKey: 'nav.team', icon: 'team', component: lazy(loaders.team), nav: true, preload: loaders.team },
   { id: 'dex', labelKey: 'nav.dex', icon: 'dex', component: lazy(loaders.dex), nav: true, preload: loaders.dex },
   { id: 'league', labelKey: 'nav.league', icon: 'league', component: lazy(loaders.league), nav: true, preload: loaders.league },
