@@ -98,6 +98,7 @@ La descripción (y solo ella) admite un formato propio y seguro; no hay HTML. Se
 | `**texto**` | negrita |
 | `*texto*` | cursiva |
 | `[red]texto[/red]` | color: `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink` (nombres en inglés en lo guardado; el editor los muestra traducidos: rojo, naranja, amarillo, verde, azul, morado, rosa) |
+| `- texto` (al principio de la línea; también `• `) | punto de lista; varias líneas seguidas forman una lista. El botón **«• Lista»** pone o quita la viñeta en las líneas seleccionadas |
 | `\*`, `\[`, `\\` | muestran `*`, `[` y `\` tal cual |
 
 Se puede anidar (`**a [red]b[/red]**`, hasta 6 niveles). Lo que no se entiende (etiqueta desconocida como `[rojo]`, cierre sin apertura, marca sin cerrar) **se ve como se escribió**. Los asteriscos rodeados de espacios (`2 * 3`) no son formato. El editor tiene una barra con *Negrita*, *Cursiva* y los siete colores (envuelven la selección) y una **vista previa en vivo** idéntica a lo que verá el jugador. Los colores son una paleta fija pensada para el tema oscuro. **Límite**: 400 caracteres **visibles** por idioma (las marcas no cuentan); lo guardado puede llegar a 1200 caracteres en total. La tarjeta de `#/events` y la ventana muestran el formato; el banner y el resto de textos cortos, no.

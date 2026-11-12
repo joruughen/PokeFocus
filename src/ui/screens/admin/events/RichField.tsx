@@ -1,7 +1,7 @@
 import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DATA_LIMITS } from '../../../../game/content/limits'
-import { richPlainLength, RICH_COLORS, RICH_RAW_FACTOR, wrapSelection, type RichColor } from '../../../../game/richText'
+import { richPlainLength, RICH_COLORS, RICH_RAW_FACTOR, toggleBullets, wrapSelection, type RichColor } from '../../../../game/richText'
 import { RichText, RICH_TEXT_CLASS } from '../../../components'
 import { cx } from '../../../lib/cx'
 
@@ -43,6 +43,17 @@ export function RichField({ label, value, onChange, error, disabled, className }
     })
   }
 
+  const bullets = () => {
+    const el = area.current
+    if (!el || disabled) return
+    const r = toggleBullets(value, el.selectionStart, el.selectionEnd)
+    onChange(r.value)
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(r.start, r.end)
+    })
+  }
+
   return (
     <div className={cx('flex min-w-0 flex-col gap-1.5', className)}>
       <label htmlFor={id} className="font-display text-base text-mist-300">
@@ -54,6 +65,10 @@ export function RichField({ label, value, onChange, error, disabled, className }
         </button>
         <button type="button" className={cx(BTN, 'italic')} disabled={disabled} onClick={() => wrap('italic')} title={t('eventsAdmin.format.italic')} aria-label={t('eventsAdmin.format.italic')}>
           I
+        </button>
+        <button type="button" className={BTN} disabled={disabled} onClick={bullets} title={t('eventsAdmin.format.bullets')} aria-label={t('eventsAdmin.format.bullets')}>
+          <span aria-hidden="true">•</span>
+          <span className="max-sm:sr-only">{t('eventsAdmin.format.bulletsShort')}</span>
         </button>
         {RICH_COLORS.map((c) => (
           <button key={c} type="button" className={cx(BTN, RICH_TEXT_CLASS[c])} disabled={disabled} onClick={() => wrap(c)} title={t(`eventsAdmin.format.colors.${c}`)} aria-label={t(`eventsAdmin.format.colors.${c}`)}>

@@ -188,3 +188,55 @@ export function wrapSelection(value: string, start: number, end: number, kind: '
   const { open, close } = richMarkers(kind)
   return { value: value.slice(0, a) + open + value.slice(a, b) + close + value.slice(b), start: a + open.length, end: b + open.length }
 }
+
+/** A line that starts with "- " or "• " (after optional spaces) is a bullet point. */
+const BULLET = /^\s*(?:-|•)\s+/
+
+export type RichBlock = { t: 'para'; text: string } | { t: 'list'; items: string[] }
+
+/**
+ * Split a description into blocks: runs of bullet lines become a list, everything else stays as
+ * paragraph text (line breaks kept). Inline formats are parsed per block, so a format does not
+ * cross from a bullet into the next line.
+ */
+export function richBlocks(src: string): RichBlock[] {
+  const out: RichBlock[] = []
+  for (const line of src.split('\n')) {
+    const m = BULLET.exec(line)
+    const last = out[out.length - 1]
+    if (m) {
+      const item = line.slice(m[0].length)
+      if (last?.t === 'list') last.items.push(item)
+      else out.push({ t: 'list', items: [item] })
+    } else if (last?.t === 'para') last.text += `\n${line}`
+    else out.push({ t: 'para', text: line })
+  }
+  return out
+}
+
+/** Plain text of a description with bullets shown as "• " (banner and short texts). */
+export function richPlainWithBullets(src: string): string {
+  return src
+    .split('\n')
+    .map((line) => {
+      const m = BULLET.exec(line)
+      return m ? `• ${richPlainText(line.slice(m[0].length))}` : richPlainText(line)
+    })
+    .join('\n')
+}
+
+/**
+ * The editor's bullet button: add "- " to every line touched by the selection, or remove it when
+ * all of them already are bullets. Returns the new text and a selection covering those lines.
+ */
+export function toggleBullets(value: string, start: number, end: number): { value: string; start: number; end: number } {
+  const a = Math.max(0, Math.min(start, end, value.length))
+  const b = Math.min(value.length, Math.max(start, end))
+  const from = value.lastIndexOf('\n', a - 1) + 1
+  const nl = value.indexOf('\n', b > a && value[b - 1] === '\n' ? b - 1 : b)
+  const to = nl === -1 ? value.length : nl
+  const lines = value.slice(from, to).split('\n')
+  const all = lines.every((l) => BULLET.test(l) || l.trim() === '')
+  const next = lines.map((l) => (all ? l.replace(BULLET, '') : l.trim() === '' || BULLET.test(l) ? l : `- ${l}`)).join('\n')
+  return { value: value.slice(0, from) + next + value.slice(to), start: from, end: from + next.length }
+}

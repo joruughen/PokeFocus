@@ -3482,7 +3482,9 @@
       "preview": "Vista previa",
       "previewEmpty": "Todavía no hay nada que previsualizar.",
       "count": "{{n}}/{{max}} caracteres visibles",
-      "tooMuch": "Demasiadas marcas: como máximo {{max}} caracteres en total."
+      "tooMuch": "Demasiadas marcas: como máximo {{max}} caracteres en total.",
+      "bullets": "Lista con viñetas (empieza la línea con «- »)",
+      "bulletsShort": "Lista"
     }
   },
   "nick": {

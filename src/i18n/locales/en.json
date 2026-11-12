@@ -3482,7 +3482,9 @@
       "preview": "Preview",
       "previewEmpty": "Nothing to preview yet.",
       "count": "{{n}}/{{max}} visible characters",
-      "tooMuch": "Too much markup: at most {{max}} characters in total."
+      "tooMuch": "Too much markup: at most {{max}} characters in total.",
+      "bullets": "Bulleted list (start the line with “- ”)",
+      "bulletsShort": "List"
     }
   },
   "nick": {

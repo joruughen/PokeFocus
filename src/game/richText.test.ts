@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { escapeRich, parseRich, richMarkers, richPlainLength, richPlainText, RICH_COLORS, RICH_MAX_DEPTH, wrapSelection, type RichNode } from './richText'
+import { escapeRich, parseRich, richBlocks, richMarkers, richPlainWithBullets, toggleBullets, richPlainLength, richPlainText, RICH_COLORS, RICH_MAX_DEPTH, wrapSelection, type RichNode } from './richText'
 
 const t = (text: string): RichNode => ({ t: 'text', text })
 const b = (...children: RichNode[]): RichNode => ({ t: 'bold', children })
@@ -114,5 +114,27 @@ describe('wrapSelection', () => {
     expect(wrapSelection('a  b  c', 1, 6, 'red')).toEqual({ value: 'a  [red]b[/red]  c', start: 8, end: 9 })
     expect(wrapSelection('abc', 3, 3, 'italic')).toEqual({ value: 'abc**', start: 4, end: 4 })
     expect(wrapSelection('abc', 9, 1, 'italic')).toEqual({ value: 'a*bc*', start: 2, end: 4 })
+  })
+})
+
+describe('bullets', () => {
+  it('groups runs of "- " / "• " lines into lists and keeps the rest as paragraphs', () => {
+    expect(richBlocks('Intro\n- uno\n- **dos**\n• tres\nFin')).toEqual([
+      { t: 'para', text: 'Intro' },
+      { t: 'list', items: ['uno', '**dos**', 'tres'] },
+      { t: 'para', text: 'Fin' },
+    ])
+    expect(richBlocks('sin lista')).toEqual([{ t: 'para', text: 'sin lista' }])
+    expect(richBlocks('-sin espacio')).toEqual([{ t: 'para', text: '-sin espacio' }])
+    expect(richPlainWithBullets('- [red]a[/red]\nb')).toBe('• a\nb')
+  })
+
+  it('toggleBullets adds "- " to the selected lines, or removes it when they all have it', () => {
+    const v = 'uno\ndos\ntres'
+    const on = toggleBullets(v, 1, 6) // selection inside "uno" .. "dos"
+    expect(on.value).toBe('- uno\n- dos\ntres')
+    const off = toggleBullets(on.value, on.start, on.end)
+    expect(off.value).toBe(v)
+    expect(toggleBullets('solo', 0, 0).value).toBe('- solo')
   })
 })
