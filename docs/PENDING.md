@@ -67,7 +67,7 @@ Panel de desarrollo contra un servidor de producción: con `?dev` el panel se ab
 
 Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
 
-**`main` = v0.11.0** (`981a494`, sin push). **Fase E terminada** (E0–E13): contenido en vivo con borradores, validación, simulación, publicar/programar/rollback; eventos (página `#/events`, banner, destacadas, drops, misiones de evento, imágenes con `sharp`); soporte de jugadores; métricas. Guía de administración en `docs/admin.md`. Typecheck limpio y 1294 tests.
+**`main` = v0.11.0** (subido a `origin/main` el 2026-11-11). **Fase E terminada** (E0–E13): contenido en vivo con borradores, validación, simulación, publicar/programar/rollback; eventos (página `#/events`, banner, destacadas, drops, misiones de evento, imágenes con `sharp`); soporte de jugadores; métricas. Guía de administración en `docs/admin.md`. Typecheck limpio y 1294 tests.
 
 **Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2` (VS Code murió por falta de RAM con 8 y con 4). Los agentes se cortan con el límite de uso de 5 h: se retoman con un mensaje y siguen.
 
@@ -83,8 +83,6 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 - C: cancelar una sesión de 25 min o menos sigue sin dar nada; una cancelada no da las 2 Poké Balls por sesión.
 - E11: solo admin (con reautenticación) puede conceder objetos y Polvo; support no. El plan se contradecía.
 - E11: «últimas 20 sesiones» de la ficha sale del documento; podría pasar a leer `session_log`.
-
-**Limpieza:** worktrees de agentes ya fusionados en `.claude/worktrees/` (se pueden borrar tras revisar `git branch --merged main`).
 
 **Por revisar de v0.9.0:**
 - **Navegador a 390 px:** sin probar la ventana «¿Qué hay de nuevo?», las oleadas con la Energía del equipo, los motes, los equipos guardados ni la ventana de comparación.
