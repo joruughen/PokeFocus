@@ -6,10 +6,13 @@
  *   GET    /events/:id            admin
  *   PUT    /events/:id            admin        partial update. A draft is saved even with semantic errors (the
  *                                              validation is stored); a PUBLISHED event also needs sudo, is validated
- *                                              with the smoke test, bumps `revision` and takes effect at once
+ *                                              with the smoke test, bumps `revision` and takes effect at once. New dates move
+ *                                              the scheduled content versions tied to it, in the same transaction (`contentMoved`)
  *   DELETE /events/:id            admin        → 204, drafts only
  *   POST   /events/:id/publish    admin + sudo { confirm?, note? }: published; a future `startsAt` = scheduled
- *   POST   /events/:id/archive    admin + sudo { note? }: a published event leaves play (its items keep their names)
+ *   POST   /events/:id/archive    admin + sudo { note? }: a published event leaves play (its items keep their names). Before it
+ *                                 starts, the scheduled content versions tied to it go back to drafts (`contentCancelled`);
+ *                                 once it started they are left alone
  *   POST   /events/:id/announce   admin + sudo { note? }: «Notify players»: bumps `announceRev`, SSE `event_announce` to every
  *                                 connection; published and not ended only (409 `not_published` / `event_ended`); 5 per hour per event
  *   GET    /events/:id/audience   admin        { connections, players } connected right now
@@ -30,6 +33,7 @@ import { eventOverlayBodySchema, richLongTextSchema, shortTextSchema, slugSchema
 import type { AdminContentAuthor, AdminContentValidation, AdminEvent, AdminEventAnnounceResponse, AdminEventAudienceResponse, AdminEventResponse, AdminEventsResponse, AdminEventStatus } from '../../../src/game/protocol'
 import { audit } from '../../admin/audit'
 import { imageOf, overlayOf } from '../../content/events'
+import { cancelLinked, linkedContentOf, moveLinked } from '../../content/eventLink'
 import { isUniqueViolation, type Db, type Tx } from '../../db/client'
 import { liveEventRevisions, liveEvents, uploads, users } from '../../db/schema'
 import { ApiError, readBody, requireElevated, UUID_RE, type AppEnv, type Ctx, type Deps } from '../../http'
@@ -138,7 +142,8 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
   const bodyOf = async (id: string, now: number): Promise<AdminEventResponse> => {
     const [hit] = await db.select({ ev: liveEvents, up: uploads }).from(liveEvents).leftJoin(uploads, eq(uploads.id, liveEvents.imageId)).where(eq(liveEvents.id, id))
     if (!hit) throw new ApiError(404, 'not_found')
-    return { event: view(hit.ev, hit.up, await authors(db, [hit.ev]), now), serverNow: now }
+    const active = await content.current(now)
+    return { event: view(hit.ev, hit.up, await authors(db, [hit.ev]), now), linkedContent: await linkedContentOf(db, id, active.versionId, now), serverNow: now }
   }
 
   const lock = async (tx: Tx, id: string): Promise<Row> => {
@@ -261,7 +266,7 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     const body = await readBody(c, updateBody)
     writeLimit(c)
     const now = deps.clock()
-    const wasPublished = await slugGuard(() =>
+    const { wasPublished, moved } = await slugGuard(() =>
       db.transaction(async (tx) => {
         const row = await lock(tx, id)
         if (row.status === 'archived') throw new ApiError(409, 'not_editable')
@@ -308,11 +313,16 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
           .returning()
         if (live) await tx.insert(liveEventRevisions).values({ eventId: id, revision, snapshot: snapshot(after!), createdBy: c.get('user').id, createdAt: new Date(now) })
         await audit(tx, c, { action: 'event.update', targetType: 'live_event', targetId: id, before: snapshot(row), after: snapshot(after!), ...(live && body.confirm && { note: 'confirmed' }) })
-        return live
+        // The content tied to the event follows its dates (same transaction, with its own audit rows).
+        const datesChanged = after!.startsAt.getTime() !== row.startsAt.getTime() || after!.endsAt.getTime() !== row.endsAt.getTime()
+        const moved = live && datesChanged ? await moveLinked(tx, c, after!, now) : []
+        return { wasPublished: live, moved }
       }),
     )
     if (wasPublished) await content.refresh()
-    return c.json(await bodyOf(id, now))
+    const res = await bodyOf(id, now)
+    if (moved.length > 0) res.contentMoved = moved
+    return c.json(res)
   })
 
   app.delete('/:id', staff('admin'), async (c) => {
@@ -365,21 +375,27 @@ export function eventsAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
     const body = await readBody(c, archiveBody)
     publishLimit(c)
     const now = deps.clock()
-    await db.transaction(async (tx) => {
+    const cancelled = await db.transaction(async (tx) => {
       const row = await lock(tx, id)
       if (row.status !== 'published') throw new ApiError(409, 'not_published')
       await tx.update(liveEvents).set({ status: 'archived', updatedAt: new Date(now) }).where(eq(liveEvents.id, id))
+      // It will never happen: the content scheduled for its start (and its «back» copy) goes back to drafts. Once it has
+      // started the versions stay as they are (the start one is in force; the «back» copy still fires at the planned end).
+      const cancelled = row.startsAt.getTime() > now ? await cancelLinked(tx, c, id, now) : []
       await audit(tx, c, {
         action: 'event.archive',
         targetType: 'live_event',
         targetId: id,
         before: { status: 'published', revision: row.revision },
-        after: { status: 'archived' },
+        after: { status: 'archived', ...(cancelled.length > 0 && { contentCancelled: cancelled }) },
         ...(body.note && { note: body.note }),
       })
+      return cancelled
     })
     await content.refresh()
-    return c.json(await bodyOf(id, now))
+    const res = await bodyOf(id, now)
+    if (cancelled.length > 0) res.contentCancelled = cancelled
+    return c.json(res)
   })
 
   // --- Notify the players ---------------------------------------------------------------------
