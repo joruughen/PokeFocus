@@ -55,6 +55,8 @@ export interface EventPopupContext {
   otherDialogOpen: boolean
   /** The "What's new?" window is due (or showing): it goes first. */
   whatsNewPending: boolean
+  /** A trainer level-up window is owed (`levelUp/levelUp.ts`): it goes before the event window. Absent = no. */
+  levelUpPending?: boolean
   /** The player is already on `#/events`. */
   onEvents: boolean
 }
@@ -71,6 +73,6 @@ export function decideEventPopup(c: EventPopupContext): EventPopupDecision {
   const first = c.pending[0]
   if (!first) return { kind: 'none' }
   if (c.onEvents) return { kind: 'record', keys: c.pending.map((p) => p.key) }
-  if (!POPUP_CALM_PHASES.includes(c.phase) || c.hintOpen || c.otherDialogOpen || c.whatsNewPending) return { kind: 'wait' }
+  if (!POPUP_CALM_PHASES.includes(c.phase) || c.hintOpen || c.otherDialogOpen || c.whatsNewPending || c.levelUpPending) return { kind: 'wait' }
   return { kind: 'show', candidate: first }
 }

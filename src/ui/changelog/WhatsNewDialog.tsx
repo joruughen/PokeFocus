@@ -21,6 +21,12 @@ function anotherDialogOpen(): boolean {
   return typeof document !== 'undefined' && document.querySelector('[role="dialog"], [role="alertdialog"]') !== null
 }
 
+/** "What's new?" is due now or waiting for a calm moment: other windows (level-up, events) let it go first. */
+export function whatsNewDue(): boolean {
+  const d = decideWhatsNew({ lastSeen: usePrefs.getState().lastSeenVersion, current: APP_VERSION, studying: false, hintOpen: false, otherDialogOpen: false, onChangelog: false })
+  return d === 'show' || d === 'wait'
+}
+
 /**
  * "What's new?" after an update: opens once per version, only at a calm moment
  * (see `decideWhatsNew`). Mount once inside the app shell (needs a player).

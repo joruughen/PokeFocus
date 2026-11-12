@@ -2,15 +2,14 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TimeZoneSpec } from '../../../engine'
 import type { LiveEventPublic } from '../../../game/protocol'
-import { decideWhatsNew } from '../../changelog/whatsNew'
-import { APP_VERSION } from '../../changelog/release'
+import { whatsNewDue } from '../../changelog/WhatsNewDialog'
+import { owedLevelUps } from '../../levelUp/owed'
 import { Button, Dialog, RichText, Sprite } from '../../components'
 import { setHintsHeld, useHints } from '../../hints'
 import { asLocale, speciesName } from '../../lib/names'
 import { navigate, useRoute } from '../../router'
 import { phaseOf, useGame } from '../../store/game'
 import { useLiveEvents } from '../../store/liveEvents'
-import { usePrefs } from '../../store/prefs'
 import { usePhase } from '../../store/selectors'
 import { eventText, fmtMult, formatEventWhen, imageSrcSet } from './model'
 import { decideEventPopup, pendingPopups, popupCandidates, type PopupCandidate, type PopupPhase } from './popup'
@@ -21,12 +20,6 @@ const SETTLE_MS = 2000
 const RETRY_MS = 1000
 
 const anotherDialogOpen = (): boolean => typeof document !== 'undefined' && document.querySelector('[role="dialog"], [role="alertdialog"]') !== null
-
-/** "What's new?" has priority: it is due now or waiting for a calm moment. */
-function whatsNewDue(): boolean {
-  const d = decideWhatsNew({ lastSeen: usePrefs.getState().lastSeenVersion, current: APP_VERSION, studying: false, hintOpen: false, otherDialogOpen: false, onChangelog: false })
-  return d === 'show' || d === 'wait'
-}
 
 /**
  * The live event window. Opens by itself for a running event the device has not shown yet, and again for every
@@ -60,6 +53,7 @@ export function EventPopupHost() {
         hintOpen: useHints.getState().active !== null,
         otherDialogOpen: anotherDialogOpen(),
         whatsNewPending: whatsNewDue(),
+        levelUpPending: owedLevelUps().length > 0,
         onEvents: location.hash.startsWith('#/events'),
       })
       if (d.kind === 'show') setShown(d.candidate)

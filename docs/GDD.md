@@ -757,6 +757,8 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 | 25 | Chapas |
 | 30 | Cápsula Habilidad |
 
+**Recompensa por subir de nivel.** Cada nivel de entrenador alcanzado da **Polvo** (`50 + 10 · nivel`) y **3 Poké Balls**; cada **5** niveles además **3 Super Balls y 1 Poción**, y cada **10** además **2 Ultra Balls** (`trainer.levelRewards`, editable desde el panel de administración). Si un solo estudio o una captura sube varios niveles, se pagan todos (suma de los niveles intermedios); el tope es `trainer.maxLevel`. Las vías que suben el nivel son dos: los minutos de una sesión (al reclamarla) y la **especie nueva** capturada. El premio se ingresa al instante y, cuando el jugador está tranquilo (nunca en sesión, oleadas o descanso, ni encima de pistas, «¿Qué hay de nuevo?» o la ventana de un evento), sale una ventana **«¡Felicidades!»** con la mascota, el nivel alcanzado (o «del N al M» si fueron varios, en una sola ventana), los objetos con su imagen y el Polvo; el botón «¡Genial!» la cierra. En Resultados, la línea de subida de nivel también cuenta el premio. No cambia el azar de ninguna sesión ni captura (solo suma inventario y Polvo).
+
 ### 12.8 Intercambios entre amigos
 
 - **Solo entre amigos**, con al menos **3 días** de amistad (evita crear cuentas para pasarse Pokémon).

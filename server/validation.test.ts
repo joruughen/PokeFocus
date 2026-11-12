@@ -44,3 +44,12 @@ describe('nickname and saved team actions (validation)', () => {
     expect(ok({ type: 'renamePreset', id: 't1' })).toBe(false)
   })
 })
+
+describe('ackLevelUp (validation)', () => {
+  it('takes no payload: the type alone is enough, a wrong type is not', () => {
+    expect(ok({ type: 'ackLevelUp' })).toBe(true)
+    expect(ok({ type: 'ackLevelUps' })).toBe(false)
+    expect(ok({ type: 'ackLevelUp', level: 5 })).toBe(true) // extra keys are stripped, never trusted
+    expect(gameActionBody.parse({ type: 'ackLevelUp', level: 5 })).toEqual({ type: 'ackLevelUp' })
+  })
+})

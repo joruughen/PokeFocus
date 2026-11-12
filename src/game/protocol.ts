@@ -102,6 +102,8 @@ export type GameAction =
    */
   | { type: 'claim'; devFocusLabel?: string | null; soundProfile?: SoundProfile | null }
   | { type: 'dismissResults' }
+  /** The trainer level-up window was closed: empties `PlayerState.pendingLevelUps` (idempotent). */
+  | { type: 'ackLevelUp' }
   // Waves
   | { type: 'throwBall'; ref: WildRef; ball: ThrowBall }
   | { type: 'applyStatus'; chargeId: string; ref: WildRef }
@@ -160,6 +162,7 @@ export interface ActionResults {
   markNotified: null
   claim: { outcome: LastOutcome }
   dismissResults: null
+  ackLevelUp: null
   throwBall: { outcome: ThrowOutcome }
   applyStatus: null
   reroll: null

@@ -316,3 +316,40 @@ describe('damage split', () => {
     expect(applyAction(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))).toEqual({ ok: false, error: 'damage_auto' })
   })
 })
+
+describe('trainer level-up window (ackLevelUp)', () => {
+  const pending = [{ from: 1, to: 3, items: { 'poke-ball': 6 }, dust: 130, at: T0 }]
+
+  it('empties pendingLevelUps, touches nothing else and is idempotent', () => {
+    const doc = newPlayer()
+    const withPending: GameDoc = { ...doc, player: { ...doc.player!, dust: 130, inventory: { 'poke-ball': 6 }, pendingLevelUps: pending } }
+    const acked = must(withPending, { type: 'ackLevelUp' }, env(T0 + 1))
+    expect(acked.player!.pendingLevelUps).toBeUndefined()
+    expect(acked.player!.dust).toBe(130)
+    expect(acked.player!.inventory).toEqual({ 'poke-ball': 6 })
+    expect(must(acked, { type: 'ackLevelUp' }, env(T0 + 2)).player).toEqual(acked.player)
+  })
+
+  it('works for an old save with no pendingLevelUps, and needs a player', () => {
+    const doc = newPlayer()
+    expect(doc.player!.pendingLevelUps).toBeUndefined()
+    expect(must(doc, { type: 'ackLevelUp' }, env(T0)).player).toEqual(doc.player)
+    expect(applyAction(EMPTY_DOC, { type: 'ackLevelUp' }, env(T0))).toEqual({ ok: false, error: 'no_player' })
+  })
+
+  it('a claimed session that raises the trainer level leaves the notice in the doc (and a JSON round trip keeps it)', () => {
+    const doc0 = newPlayer()
+    let doc: GameDoc = { ...doc0, player: { ...doc0.player!, trainer: { level: 1, exp: 99 } } }
+    doc = must(doc, { type: 'start', minutes: 30 }, env(T0))
+    const dev = env(T0 + 31 * MINUTE_MS, { dev: true })
+    doc = must(doc, { type: 'claim', devFocusLabel: 'studying' }, dev)
+    expect(doc.player!.trainer.level).toBeGreaterThanOrEqual(2)
+    const n = doc.player!.pendingLevelUps
+    expect(n).toHaveLength(1)
+    expect(n![0]!.from).toBe(1)
+    expect(n![0]!.dust).toBeGreaterThan(0)
+    const reloaded = JSON.parse(JSON.stringify(doc)) as GameDoc
+    expect(reloaded.player!.pendingLevelUps).toEqual(n)
+    expect(must(reloaded, { type: 'ackLevelUp' }, dev).player!.pendingLevelUps).toBeUndefined()
+  })
+})

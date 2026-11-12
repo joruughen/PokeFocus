@@ -233,6 +233,15 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
   // --- Final summary -------------------------------------------------------------------------------------
   tally.sleepingStuckEnd = sleepersInBox(state)
   m.finalTeam = state.team.map((u) => state.pokemon[u]).filter((p): p is NonNullable<typeof p> => Boolean(p)).map((p) => ({ slug: p.speciesSlug, level: p.level }))
+  // Trainer level-up rewards were paid into the state by the engine (sessions and captures); the sim never
+  // acknowledges the notices, so their sum is exactly what the climb gave.
+  for (const lu of state.pendingLevelUps ?? []) {
+    tally.pokeBallsFromLevelUps += lu.items['poke-ball'] ?? 0
+    tally.greatBallsFromLevelUps += lu.items['great-ball'] ?? 0
+    tally.ultraBallsFromLevelUps += lu.items['ultra-ball'] ?? 0
+    tally.dustFromLevelUps += lu.dust
+    tally.dustEarned += lu.dust
+  }
   m.finalDust = state.dust
   m.finalCandies = Object.values(state.candies.chains).reduce((a, b) => a + b, 0)
   m.finalBalls = { ...state.inventory }

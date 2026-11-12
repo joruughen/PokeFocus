@@ -445,6 +445,7 @@
     "balls": "Poké Balls",
     "leaguePoints": "League points",
     "trainerLevelUp": "You reached trainer level {{level}}.",
+    "trainerLevelUpRewards": "You reached trainer level {{level}}. Reward: {{rewards}}.",
     "leagueUp": "You moved up to {{league}}! Waves will be bigger.",
     "wavesReady_one": "{{count}} wave is waiting",
     "wavesReady_other": "{{count}} waves are waiting",
@@ -2301,6 +2302,15 @@
       "fixed": "Fixed"
     }
   },
+  "levelUp": {
+    "title": "Congratulations!",
+    "label": "Trainer level up",
+    "reached": "You reached level {{level}}",
+    "fromTo": "You went from level {{from}} to {{to}}",
+    "rewards": "Your rewards",
+    "added": "They are already in your bag.",
+    "gotIt": "Awesome!"
+  },
   "whatsNew": {
     "title": "What's new?",
     "seeAll": "See all the news",
@@ -2480,6 +2490,13 @@
       },
       "columns": {
         "trainerLevel": "Trainer level",
+        "step": "Every N levels",
+        "poke-ball": "Poké Ball",
+        "great-ball": "Great Ball",
+        "ultra-ball": "Ultra Ball",
+        "potion": "Potion",
+        "super-potion": "Super Potion",
+        "hyper-potion": "Hyper Potion",
         "min": "Min",
         "max": "Max",
         "species": "Species caught",
@@ -2925,7 +2942,12 @@
       },
       "trainer": {
         "expPerMinute": "Trainer EXP per minute",
-        "expPerNewSpecies": "Trainer EXP per new species"
+        "expPerNewSpecies": "Trainer EXP per new species",
+        "levelRewards": {
+          "dustBase": "Base Dust per trainer level",
+          "dustPerLevel": "Extra Dust per trainer level",
+          "tiers": "Trainer level rewards (every N levels)"
+        }
       },
       "bond": {
         "maxBonus": "Maximum bond bonus"

@@ -167,6 +167,11 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       if (a.patch.location !== undefined) patch.location = a.patch.location ? toGeoCell(a.patch.location.lat, a.patch.location.lon) : null
       return withPlayer({ ...p, profile: { ...p.profile, ...patch } })
     }
+    case 'ackLevelUp': {
+      if (!p.pendingLevelUps) return withPlayer(p)
+      const { pendingLevelUps: _done, ...rest } = p
+      return withPlayer(rest)
+    }
     case 'setWeather':
       return withPlayer({ ...p, profile: { ...p.profile, weather: a.weather } })
 

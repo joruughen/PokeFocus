@@ -208,6 +208,12 @@ export interface GameConfig {
     expPerMinute: number
     expPerNewSpecies: number
     maxLevel: number
+    /**
+     * Reward for every trainer level reached: `dustBase + dustPerLevel · level` Dust, plus the items of every tier
+     * whose `step` divides the level (step 1 = every level, 5 = levels 5, 10, 15…). In a tier row every key but
+     * `step` is an item slug and its amount (0 = none). See `trainerLevelRewards`.
+     */
+    levelRewards: { dustBase: number; dustPerLevel: number; tiers: { step: number; [item: string]: number }[] }
   }
   leagues: {
     order: LeagueId[]
@@ -240,7 +246,7 @@ export const ENGINE_DEFAULTS = {
   },
   capture: { counter: { immuneHealPct: 0.25, damageMult: 1 } },
   progression: { maxLevel: 100 },
-  trainer: { expCoef: 100, expExponent: 1.5, expPerMinute: 1, expPerNewSpecies: 60, maxLevel: 50 },
+  trainer: { expCoef: 100, expExponent: 1.5, expPerMinute: 1, expPerNewSpecies: 60, maxLevel: 50, levelRewards: { dustBase: 0, dustPerLevel: 0, tiers: [] } },
   historyLimit: 1000,
 } as const
 

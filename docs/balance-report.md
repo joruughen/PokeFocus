@@ -127,6 +127,8 @@ Caramelos: 1 caramelo = 300 EXP a un coste de 25 + 3·nivel Polvo. Con el Polvo 
 
 ## 3. Economía
 
+> Nota (2026-11, posterior al informe): subir de nivel de entrenador ahora paga Polvo y objetos (`trainer.levelRewards`; GDD §12.7). Este informe es anterior a ese premio: al regenerarlo, las columnas de Balls y de Polvo ganado lo incluyen y hay una tabla nueva «Recompensas de nivel de entrenador». En una prueba corta (4 semanas, 2 semillas) aporta ≈ +140–640 Polvo/semana y 4–13 Poké Balls/semana (grinder: ≈ 2.5k Polvo y 29 Poké/semana), es decir +2–8 % del Polvo ganado; el perfil casual captura bastante más (≈ +35 % en 4 semanas) porque va corto de Balls.
+
 El motor aún no tiene misiones. El simulador modela su aporte (supuesto): 1 Super Ball por día con ≥ 75 min (entrenador ≥ 5), 1 Ultra Ball por semana con ≥ 5 días activos y piedras al registrar 10/25/50 especies. Los totales son por jugador en 12 semanas (media de semillas).
 
 **Balls.** "Estudio" = Balls de Estudio lanzadas por oleada; "Tasa" = capturas ÷ lanzamientos sin contar la Ball de Estudio (que siempre captura).
