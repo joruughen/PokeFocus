@@ -389,7 +389,7 @@
                   "properties": {
                     "pool": {
                       "minItems": 1,
-                      "maxItems": 20,
+                      "maxItems": 30,
                       "type": "array",
                       "items": {
                         "type": "string",
@@ -1143,6 +1143,86 @@
                         ],
                         "additionalProperties": false
                       }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "advanced": {
+                  "type": "object",
+                  "properties": {
+                    "mint": {
+                      "type": "object",
+                      "properties": {
+                        "minTrainerLevel": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "tera": {
+                      "type": "object",
+                      "properties": {
+                        "minTrainerLevel": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "unlockGift": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 20
+                        },
+                        "shardCost": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 20
+                        },
+                        "hours": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 168
+                        },
+                        "sessions": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 50
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "bottleCap": {
+                      "type": "object",
+                      "properties": {
+                        "minTrainerLevel": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "unlockGift": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 20
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "abilityCapsule": {
+                      "type": "object",
+                      "properties": {
+                        "minTrainerLevel": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "unlockGift": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 20
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "additionalProperties": false
@@ -5913,7 +5993,7 @@
                               "properties": {
                                 "pool": {
                                   "minItems": 1,
-                                  "maxItems": 20,
+                                  "maxItems": 30,
                                   "type": "array",
                                   "items": {
                                     "type": "string",
@@ -6060,7 +6140,7 @@
                               "properties": {
                                 "pool": {
                                   "minItems": 1,
-                                  "maxItems": 20,
+                                  "maxItems": 30,
                                   "type": "array",
                                   "items": {
                                     "type": "string",
