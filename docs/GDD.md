@@ -587,6 +587,8 @@ Para cada hueco del grupo:
 - **Legendario:** la tirada de legendario se multiplica por el factor del evento.
 - **Drops:** cada oleada puede dar objetos del evento (probabilidad por oleada, con un máximo por sesión). Se tiran con un azar aparte, así que no cambian los salvajes.
 
+**Probabilidad que ve el jugador** (Pokédex, ventana y página de eventos, editor de eventos): se expresa **por Pokémon salvaje** («≈1 de cada N salvajes a tu nivel»), como el promedio de la cuota de la especie sobre toda la banda de niveles del entrenador, con condiciones neutras (hora 12, clima despejado, sin reglas en vivo ni eventos, sin condición del día, sonido ni equipo) y usando la misma regla de pesos que la vista previa de apariciones (`src/game/content/spawnOdds.ts` sobre `spawnPreview`). Una oleada trae varios salvajes, así que ver al menos uno en una oleada de `n` es `1 − (1 − p)^n` (≈9 % con p = 1,5 % y n = 6). Una especie cuyo nivel mínimo de salvaje (§10.3) supera la banda del jugador no sale todavía («Aparece en salvajes desde nivel N»); las destacadas de un evento en esa situación se ven atenuadas con una etiqueta, nunca ocultas. Los legendarios van aparte (tirada de la regla 1).
+
 ### 10.3 Nivel de los salvajes
 
 - Base y forma: un rango que crece con el nivel de entrenador. Por ejemplo, entrenador nivel 1: niveles 2–10; nivel 30: niveles 15–40 **[calibrar]**.
