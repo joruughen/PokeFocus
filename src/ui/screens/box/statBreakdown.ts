@@ -11,7 +11,7 @@ export interface StatBreakdown {
   total: number
 }
 
-type Core = Pick<IndividualCore, 'speciesSlug' | 'level' | 'ivs' | 'nature'>
+type Core = Pick<IndividualCore, 'speciesSlug' | 'level' | 'ivs' | 'nature'> & { mintNature?: string }
 
 /**
  * Splits a stat into species+level, nature and IV, using the engine itself so it
@@ -23,6 +23,6 @@ export function statBreakdown(p: Core, stat: StatKey, ctx?: EngineContext): Stat
   const total = computeStats(p, ctx)[stat]
   const noIv: Core = { ...p, ivs: { ...p.ivs, [stat]: 0 } }
   const withNatureNoIv = computeStats(noIv, ctx)[stat]
-  const base = computeStats({ ...noIv, nature: '' }, ctx)[stat]
+  const base = computeStats({ ...noIv, nature: '', mintNature: undefined }, ctx)[stat]
   return { base, nature: withNatureNoIv - base, iv: total - withNatureNoIv, total }
 }

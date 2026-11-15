@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { abilityOutlook, defaultContext, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
+import { abilityOutlook, defaultContext, effectiveNature, ivQuality, type BaseStats, type PokemonView, type StatKey } from '../../../engine'
 import { ArtIcon, CategoryChip, HelpDot, InfoTip, IvQuality, Panel, Stars, STAT_ICON, STAT_ORDER, StatRow, Tabs } from '../../components'
 import { hintAnchor } from '../../hints'
 import { useNames } from '../../lib/names'
@@ -53,13 +53,15 @@ function StatsTab({ view }: { view: PokemonView }) {
   const { t, i18n } = useTranslation()
   const names = useNames()
   const p = view.pokemon
-  const nature = ctx.naturesBySlug.get(p.nature)
+  // A Mint changes the effect (the stats); the original nature is still the one shown first.
+  const effective = effectiveNature(p)
+  const nature = ctx.naturesBySlug.get(effective)
   const statScale = Math.max(50, Math.ceil(Math.max(...STAT_ORDER.map((k) => view.stats[k])) / 50) * 50)
   return (
     <>
       <div className="flex flex-col gap-2.5">
         {STAT_ORDER.map((k) => (
-          <StatRow key={k} stat={k} value={view.stats[k]} nature={p.nature} breakdown={statBreakdown(p, k, ctx)} scale={statScale} className="grid-cols-[9.5rem_1fr_3rem]" />
+          <StatRow key={k} stat={k} value={view.stats[k]} nature={effective} breakdown={statBreakdown(p, k, ctx)} scale={statScale} className="grid-cols-[9.5rem_1fr_3rem]" />
         ))}
       </div>
       <ul className="mt-4 grid grid-cols-1 gap-1.5 bg-dusk-900 p-3 text-sm text-mist-300 inset-shadow-well">
@@ -76,6 +78,7 @@ function StatsTab({ view }: { view: PokemonView }) {
           </dt>
           <dd className="mt-0.5">
             <span className="font-display text-lg text-mist-50">{names.nature(p.nature)}</span>{' '}
+            {p.mintNature && <span className="text-sm text-volt-300">{t('training.mint.byMint', { nature: names.nature(p.mintNature) })} </span>}
             {nature?.increased && nature.decreased ? (
               <span className="text-sm">
                 <span className="text-leaf-400">+{t(`stats.${nature.increased}.name`)}</span> <span className="text-cheek-400">−{t(`stats.${nature.decreased}.name`)}</span>
@@ -162,6 +165,7 @@ function IvsTab({ view }: { view: PokemonView }) {
                 </span>
                 <span className="text-xs text-mist-400">{t('iv.adds', { n: adds(k) })}</span>
                 {ivs[k] >= ivMax && <span className="bg-volt-400 px-1 font-display text-xs text-ink">{t('iv.max')}</span>}
+                {p.bottleCapped?.includes(k) && <span className="text-xs text-exp-400">{t('training.bottleCap.capped')}</span>}
               </span>
             </li>
           )

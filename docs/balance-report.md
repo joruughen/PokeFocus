@@ -801,3 +801,18 @@ Lectura:
 - **Puntos casi iguales para los perfiles normales** (casual, constante, irregular: −4 % a +2 %, dentro del ruido de 20 semillas). Los perfiles de muchas horas suben algo (+3 % a +14 %) porque el coste por acción a nivel alto baja ~30 % y rotan menos; el contraataque por ataque lo compensa solo en parte. Con el coste anterior perdían puntos (−4 % a −12 %) y se agotaban antes de la 4.ª sesión.
 - **Riesgo:** el noctámbulo +14 % es el cambio mayor. La palanca es `energy.costBase`: con 0.45 el Pokémon solo baja a 4.2–4.4 sesiones (medido con `exhaustion.ts`; su efecto en los puntos no está simulado).
 - Capturas y Pokédex no cambian de forma apreciable (tasas por rareza y especies por semana dentro de ±3 puntos/±1.5 especies, ruido de muestra): el contraataque no toca la probabilidad de captura salvo por Espejo Mágico, Cuerpo Maldito e Impasible.
+
+## 12. Objetos avanzados (F4), 2026-11-14
+
+`npx tsx scripts/simulate-advanced.ts --weeks 12 --seeds 2` (jugador del simulador con misiones; no gasta estos objetos, así que se cuenta lo que acumula). Fuentes: §13 del GDD y `docs/engine-api.md` «Advanced items».
+
+| Perfil | Nivel entr. final | Semana nv 10 / 20 / 25 / 30 | Teralitos | MT | Mentas | Chapas | Cápsulas |
+|---|---|---|---|---|---|---|---|
+| casual | 10.0 | 11.9 / — / — / — | 4.0 | 1.0 | 0.0 | 0.0 | 0.0 |
+| constant | 22.0 | 3.3 / 10.6 / — / — | 18.0 | 3.0 | 3.0 | 0.0 | 0.0 |
+| marathoner | 33.0 | 2.1 / 5.7 / 8.1 / 10.8 | 20.0 | 4.0 | 11.0 | 3.0 | 1.0 |
+| night-owl | 28.0 | 2.5 / 7.2 / 10.4 / — | 20.0 | 4.0 | 11.0 | 3.0 | 0.0 |
+| irregular | 11.5 | 8.6 / — / — / — | 10.0 | 1.0 | 2.0 | 0.0 | 0.0 |
+| grinder | 50.0 | 1.3 / 2.1 / 2.7 / 3.4 | 21.0 | 6.0 | 12.0 | 5.0 | 3.0 |
+
+Lectura: ≈ 1,5 Teralitos por semana (una Teracristalización cada ~1,5 semanas con el coste de 2), ≈ 1 menta al azar por semana desde el nivel 10, ≈ 0,5–1 Chapa por semana desde el 25 y ≈ 0,25 Cápsulas por semana desde el 30. Los Teralitos se acumulan antes del nivel 20 (el constante llega al 20 con ≈ 14). Las Balls, el Polvo y los caramelos de las misiones no cambian (los escalones nuevos solo añaden objetos), así que el resto del informe sigue valiendo. Efecto en puntos sin medir (el simulador no usa los objetos): una menta mueve un 10 % entre dos estadísticas y una Chapa en Rendimiento de IV 15 a 31 a nivel 50 son ≈ +8 de Atq. Esp., ≈ +2 puntos por acción (≈ +6 % para ese Pokémon).

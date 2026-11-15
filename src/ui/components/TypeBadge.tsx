@@ -1,6 +1,9 @@
 import type { TypeSlug } from '../../engine'
+import { useTranslation } from 'react-i18next'
 import { cx } from '../lib/cx'
+import { fmtTimeLeft } from '../lib/format'
 import { useNames } from '../lib/names'
+import { PixelIcon } from './PixelIcon'
 
 /** Static class strings so Tailwind can see them. Dark types get light text. */
 const TYPE_CLASS: Record<TypeSlug, string> = {
@@ -91,6 +94,42 @@ export function TypeBadge({ type, size = 'sm', muted, className }: TypeBadgeProp
       )}
     >
       {names.type(type)}
+    </span>
+  )
+}
+
+/**
+ * Active Terastallization (GDD §9.4, `PokemonView.tera`): a type chip with a crystal mark and "Tera", whose
+ * tooltip / accessible text says the time and sessions left. `compact` shows only the mark in the type color.
+ */
+export function TeraBadge({
+  tera,
+  size = 'sm',
+  compact,
+  className,
+}: {
+  tera: { type: TypeSlug; msLeft: number; sessionsLeft: number }
+  size?: 'sm' | 'md'
+  compact?: boolean
+  className?: string
+}) {
+  const { t } = useTranslation()
+  const names = useNames()
+  const label = t('training.tera.tip', { type: names.type(tera.type), time: fmtTimeLeft(tera.msLeft), count: tera.sessionsLeft })
+  if (compact) return <PixelIcon name="sparkle" size={10} className={cx('shrink-0', TYPE_TEXT[tera.type], className)} label={label} />
+  return (
+    <span
+      title={label}
+      className={cx(
+        'inline-flex items-center gap-1 font-display leading-none whitespace-nowrap shadow-frame outline-2 -outline-offset-2 outline-mist-50/70',
+        size === 'sm' ? 'h-5 px-1.5 text-sm' : 'h-7 px-2.5 text-base',
+        TYPE_CLASS[tera.type],
+        className,
+      )}
+    >
+      <PixelIcon name="sparkle" size={10} />
+      {t('training.tera.badge')} {names.type(tera.type)}
+      <span className="sr-only">. {label}</span>
     </span>
   )
 }

@@ -88,3 +88,12 @@ export function clampMinutes(raw: string, fallback: number, min: number, max: nu
   const v = Number.isFinite(n) ? Math.round(n) : fallback
   return Math.max(min, Math.min(max, v))
 }
+
+/** Time left, coarse: "23 h 10 min", "45 min" (at least "1 min"). */
+export function fmtTimeLeft(ms: number): string {
+  const minutes = Math.max(1, Math.ceil(ms / 60_000))
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h === 0) return `${m} min`
+  return m === 0 ? `${h} h` : `${h} h ${m} min`
+}

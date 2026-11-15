@@ -25,7 +25,11 @@ describe('Bag page', () => {
       expect(html).not.toMatch(/\b(bag|nav|items|box|energy)\.[a-zA-Z]+/)
       expect(html).toContain(i18n.t('items.dust'))
       expect(html).toContain(lng === 'es' ? '12.345' : '12,345')
-      for (const c of ['all', 'ball', 'heal', 'evolution', 'candy', 'event', 'other']) expect(html).toContain(i18n.t(`bag.cat.${c}`).replace('&', '&amp;'))
+      for (const c of ['all', 'ball', 'heal', 'evolution', 'candy', 'training']) expect(html).toContain(i18n.t(`bag.cat.${c}`).replace('&', '&amp;'))
+      // Advanced items are locked at trainer level 1: real description + the unlock level, no "no use yet".
+      expect(html).toContain(i18n.t('bag.lockedAt', { level: 20 }))
+      expect(html).toContain(i18n.t('bag.lockedAt', { level: 25 }))
+      expect(html).not.toContain(i18n.t('bag.desc.other'))
       expect(html).toContain(i18n.t('bag.search'))
       expect(html).toContain(lng === 'es' ? 'Piedra Lunar' : 'Moon Stone')
       expect(html).toContain(lng === 'es' ? 'Caramelos de Pikachu' : 'Pikachu candies')

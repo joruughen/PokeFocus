@@ -37,7 +37,7 @@
 | `techniqueWeekUses`, `counters` | bookkeeping (weekly technique limits, id counters) |
 | `missions?` | `{ daily: { key, slots }, weekly: { key, slots }, pokedexClaimed }` (optional: older saves get it lazily; read it through `missionsView`) |
 
-`OwnedPokemon`: `uid, speciesSlug, level, exp (total), ivs, nature, ability, isShiny, bondMinutes, learnedMoves, extraMoves, equippedMoves, moveMasteryMinutes, energy {current, updatedAt}, asleepNextSession, asleepSetAt?, teraType, teraUntil, teraSessionsLeft (stub), caughtAt, caughtBall, metLevel`.
+`OwnedPokemon`: `uid, speciesSlug, level, exp (total), ivs, nature, ability, isShiny, bondMinutes, learnedMoves, extraMoves, equippedMoves, moveMasteryMinutes, energy {current, updatedAt}, asleepNextSession, asleepSetAt?, teraType, teraUntil, teraSessionsLeft, mintNature?, bottleCapped?, tmMoves?, caughtAt, caughtBall, metLevel`. The last three are optional (older saves load as they are); see «Advanced items».
 
 **Rest sleep** (`asleepNextSession`): set when Rest fires (`asleepSetAt` = session end). It ends after the next session the Pokémon is in (it skips it), when it sits out a completed session (boxed), or at the daily energy reset (05:00 local; `refreshEnergy` clears it). To show "asleep" use `isAsleepAt(state, p, now)`, not the raw flag.
 
@@ -153,6 +153,26 @@ All return `Result<…, BoxError>`; Pokémon in the active session are locked.
 - `evolvePokemon(state, uid, toSlug, now, rng)` → `{ state, pokemon }` (advances `evolve` missions). Level, stone (consumed), friendship (Bond ≥ `friendshipEvolutionBond`; day = 05–18, night = otherwise). Errors: `level_too_low`, `missing_item`, `bond_too_low`, `wrong_time_of_day`, `trade_unavailable`, `unsupported`, `no_such_evolution`.
 - `addItems(state, { slug: n })`, `levelProgress(p)`.
 
+## Advanced items (`advanced.ts`, phase F4)
+
+Pure reducers, `Result<PlayerState, AdvancedError>`; none uses an RNG. Each one: Pokémon exists (`unknown_pokemon`), is not in the active session (`session_active`), the trainer level unlocks it (`trainer_level_too_low`, `config.advanced.<kind>.minTrainerLevel`), the item is in the inventory (`no_item`), then its own rule. One use is spent.
+
+| Reducer | Item | Unlock | Effect | Own errors |
+|---|---|---|---|---|
+| `useTera(state, uid, type, now)` | `tera-shard` × `advanced.tera.shardCost` (2) | `tera` (20) | `teraType = type`, `teraUntil = now + hours` (24 h), `teraSessionsLeft = sessions` (5). Again = replaces and restarts | `invalid_type`, `same_type` (the active Tera type, or the only type of a single-type species) |
+| `useTm(state, uid, move)` | `technical-machine` | — | adds the move to `learnedMoves` (equippable at once) and `tmMoves` | `move_not_compatible` (not in `tmCandidates`), `move_already_known` |
+| `useMint(state, uid, nature)` | `<nature>-mint` | `mint` (10) | `mintNature = nature` (the mint of the original nature deletes it) | `invalid_nature`, `same_nature` (same raise/lower as the current effect) |
+| `useBottleCap(state, uid, stat)` | `bottle-cap` | `bottleCap` (25) | `ivs[stat] = ivMax`, `stat` added to `bottleCapped`; a higher HP IV also adds the extra max Energy to `energy.current` | `invalid_stat`, `iv_maxed` |
+| `useAbilityCapsule(state, uid, ability)` | `ability-capsule` | `abilityCapsule` (30) | `ability = ability` | `no_other_ability`, `same_ability`, `invalid_ability` (hidden or not of the species) |
+
+Queries: `unlockLevel(kind)`, `isUnlocked(state, kind)`, `activeTera(p, at)` (type or null: needs `at < teraUntil` and `teraSessionsLeft > 0`), `teraChoices(p)` (the 18 types minus the only type of a single-type species), `tmCandidates(p)` (usable moves of the species' PokeAPI `machine` learnset it cannot equip yet, sorted; a locked extra move counts, so a TM can unlock it early), `mintChoices(p)` (natures with a different effect), `mintItem(nature)` / `mintNatureOf(slug)`, `bottleCapStats(p)`, `abilityCapsuleChoices(p)` (defined, non-hidden, not the current one). `effectiveNature(p)` (`stats.ts`) = `mintNature ?? nature`; `computeStats` uses it, `nature` stays as caught (shown first, and Synchronize copies it).
+
+**Tera in sessions.** `conditionTypes(p, at)` returns `[teraType]` while `activeTera(p, at)`; the session uses it at `startedAt` for each member's condition bonus and the Bug count (and the UI for its condition previews). STAB = species types ∪ active Tera type (unchanged without Tera). The move type, the defensive type against counterattacks and the team types for spawns stay the species'. `applySessionResult` spends one Tera session when the Tera was active at the session start (valid sessions only).
+
+**Unlock gifts.** `trainerLevelRewards` adds `advanced.<kind>.unlockGift` of its item (`UNLOCK_GIFT_ITEMS`: 2 `tera-shard` at 20, 1 `bottle-cap` at 25, 1 `ability-capsule` at 30) to the reward of the level that unlocks it. Mints have no gift.
+
+**Sources** (missions, editable as live content): weekly `weekly-days` +1 Tera Shard from trainer level 20; `weekly-techniques` (1) and `weekly-evolve` (2) Tera Shards as before; `weekly-long-sessions` and `weekly-catch` 1 random mint (pool of the 21 mints) from level 10; `weekly-catch` +1 TM from level 15 (besides the Pokédex 25/50 TMs); `weekly-minutes` +1 Bottle Cap from level 25; `weekly-catch-type` +1 Ability Capsule from level 30. Economy check: `npx tsx scripts/simulate-advanced.ts` (`docs/balance-report.md` §12).
+
 ## Energy (`energy.ts`)
 - `refreshEnergy(state, now)` — full refill when the local `dailyResetHour` (05:00) passed since `updatedAt`; box members regenerate `boxRecoverPctPerHour`·max per hour; team members don't regenerate. Also ends Rest sleep at the reset.
 - `energyAt(state, p, now)` (pure read), `energyFraction(p)`, `isAsleepAt(state, p, now)`.
@@ -163,7 +183,7 @@ All return `Result<…, BoxError>`; Pokémon in the active session are locked.
 `weekKey(state, now)` (local Monday `YYYY-MM-DD`), `monthKey`, `weeklyPoints`, `monthlyPoints`, `currentLeague(state, now)` (resets to Base every local Monday 00:00), `currentMaxWaveSize`, `nextLeagueProgress`, `leagueForPoints(points, 'week' | 'month')`.
 
 ## Missions (`missions.ts`, GDD §13)
-Content: `data/overrides/custom-missions.json` (`ctx.missions`): `dailyCount` (3), `weeklyCount` (3), `pool[]`, `pokedex[]` milestones and `placeholderItems` (names of mission-only items the engine doesn't use yet: `tera-shard` = Teralito, `technical-machine` = MT).
+Content: `data/overrides/custom-missions.json` (`ctx.missions`): `dailyCount` (3), `weeklyCount` (3), `pool[]`, `pokedex[]` milestones and `placeholderItems` (names and descriptions of mission-only items that are not in the PokeAPI data: `tera-shard` = Teralito, `technical-machine` = MT; both are used by the advanced items, see above).
 - Pool entry: `{ id, period: 'daily'|'weekly' ('event' only in `EventOverlay.missions`, see «Live spawn rules and event hooks»), kind, target, minMinutes? (longSession), type? ('random' or a slug, catchType), weight, minTrainerLevel?, title, description (es/en, with {n} {minutes} {type}), rewards: tiers[] }`. A tier: `{ minTrainerLevel?, items?, dust?, typeCandies? (of the mission's type), randomItem?: { pool, count } }`; the last tier with `minTrainerLevel ≤` trainer level at generation is used (e.g. Super Balls from trainer level 5, GDD §12.7).
 - Kinds: `sessions`, `studyMinutes`, `longSession` (≥ minMinutes), `studyDays` (distinct local days), `techniques` (activations), `catch`, `catchType` (species has type T; T drawn ∝ Σ captureRate of the non-legendary species of that type), `catchFirstThrow` (non-Study ball, no failed throw), `studyBall`, `evolve`. Session kinds only count rewarded sessions (valid, rewardFactor > 0).
 - Rotation: daily key = local day, weekly key = local Monday; the draw (weighted, without repetition, filtered by `minTrainerLevel`) is deterministic per player (`profile.createdAt`) and period. Unclaimed missions of past periods are dropped.

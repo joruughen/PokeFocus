@@ -212,7 +212,8 @@ export const missionRewardSchema = z.strictObject({
   items: z.record(slugSchema, numberSchema(D.rewardItemCount)).optional(),
   dust: numberSchema(D.rewardDust).optional(),
   typeCandies: numberSchema(D.rewardTypeCandies).optional(),
-  randomItem: z.strictObject({ pool: z.array(slugSchema).min(1).max(20), count: numberSchema(D.rewardRandomCount) }).optional(),
+  // Up to 30 slugs: the 21 mints (F4) fit in one pool.
+  randomItem: z.strictObject({ pool: z.array(slugSchema).min(1).max(30), count: numberSchema(D.rewardRandomCount) }).optional(),
 })
 
 const missionFields = {
