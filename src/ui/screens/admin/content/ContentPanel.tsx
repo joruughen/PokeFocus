@@ -98,8 +98,8 @@ export default function ContentPanel() {
       })
     return () => {
       current = false
+    }
   }, [viewId, t, perms.edit])
-  }, [viewId, t])
 
   const changeFilter = (f: StatusFilter) => {
     setFilter(f)

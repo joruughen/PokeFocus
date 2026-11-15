@@ -48,10 +48,17 @@ const MAX_SCHEDULE_DAYS = 60
 /** ISO 8601 with a zone: `2026-12-01T18:00:00-05:00` or `…Z` (seconds optional). */
 const ISO_ZONED = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/
 
-const isoDateSchema = z
-  .string()
-  .regex(ISO_ZONED)
-  .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'bad_date' })
+/** The calendar fields are real (no 30 February, no 25:00): `Date.parse` alone lets some of them through. */
+function realIsoDate(s: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(s)
+  if (!m) return false
+  const [y, mo, d, h, mi, sec] = m.slice(1).map((x) => (x === undefined ? 0 : Number(x))) as [number, number, number, number, number, number]
+  const day = new Date(Date.UTC(y, mo - 1, d))
+  const offset = /([+-])(\d{2}):(\d{2})$/.exec(s)
+  return day.getUTCMonth() === mo - 1 && day.getUTCDate() === d && h < 24 && mi < 60 && sec < 60 && (!offset || (Number(offset[2]) < 24 && Number(offset[3]) < 60)) && !Number.isNaN(Date.parse(s))
+}
+
+const isoDateSchema = z.string().regex(ISO_ZONED).refine(realIsoDate, { message: 'bad_date' })
 
 const nonBlank = /\S/
 
@@ -239,8 +246,15 @@ function mapZod(i: ZodIssueLike, prefix: string, out: ValidationIssue[]): void {
 function zodIssues(error: z.ZodError, prefix = ''): ValidationIssue[] {
   const out: ValidationIssue[] = []
   for (const i of error.issues) mapZod(i, prefix, out)
-  // An empty string is also «blank»: say it once.
-  return out.filter((i) => i.code !== 'blank' || !out.some((o) => o.path === i.path && o.code === 'text_min'))
+  // An empty string is also «blank», and a bad date fails the pattern and the calendar: say each thing once.
+  const seen = new Set<string>()
+  return out.filter((i) => {
+    if (i.code === 'blank' && out.some((o) => o.path === i.path && o.code === 'text_min')) return false
+    const key = `${i.path}|${i.code}|${JSON.stringify(i.params ?? null)}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 const withPrefix = (issues: readonly ValidationIssue[], prefix: string): ValidationIssue[] => issues.map((i) => ({ ...i, path: join(prefix, i.path === '' ? [] : i.path.split('.')) }))
