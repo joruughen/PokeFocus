@@ -412,6 +412,15 @@ describe('advanced items (F4)', () => {
     expect(applyAction(inSession, { type: 'useBottleCap', uid: 'p1', stat: 'attack' }, env(T0 + 1000))).toEqual({ ok: false, error: 'session_active' })
   })
 
+  it('useMint spends a choice mint for the nature the player picks, and refuses without one', () => {
+    let doc = withItems(10, { 'choice-mint': 1 })
+    const nature = doc.player!.pokemon.p1!.nature === 'modest' ? 'jolly' : 'modest'
+    doc = must(doc, { type: 'useMint', uid: 'p1', nature }, env(T0))
+    expect(doc.player?.pokemon.p1?.mintNature).toBe(nature)
+    expect(doc.player?.inventory['choice-mint']).toBe(0)
+    expect(applyAction(doc, { type: 'useMint', uid: 'p1', nature: 'bold' }, env(T0))).toEqual({ ok: false, error: 'no_item' })
+  })
+
   it('useMint, useBottleCap and useTm change the Pokémon', () => {
     let doc = withItems(30, { 'bottle-cap': 1, 'technical-machine': 1 })
     const p = doc.player!.pokemon.p1!

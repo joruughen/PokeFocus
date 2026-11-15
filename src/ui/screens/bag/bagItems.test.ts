@@ -37,7 +37,7 @@ describe('categorizeItem', () => {
   })
 
   it('sends the advanced items (F4) to training', () => {
-    for (const slug of ['tera-shard', 'technical-machine', 'bottle-cap', 'ability-capsule', 'adamant-mint', 'serious-mint']) expect(categorizeItem(slug, ctx)).toBe('training')
+    for (const slug of ['tera-shard', 'technical-machine', 'bottle-cap', 'ability-capsule', 'adamant-mint', 'serious-mint', 'choice-mint']) expect(categorizeItem(slug, ctx)).toBe('training')
   })
 
   it('sends mission-only items to the event category', () => {
@@ -116,6 +116,28 @@ describe('buildBagEntries', () => {
     expect(by('timid-mint').description).toContain('Miedosa')
     expect(by('timid-mint').description).toContain('+Ritmo')
     expect(by('modest-mint').users).toEqual([])
+  })
+
+  it('the Choice Mint is a training item with its own text, ES and EN, and links to Pokémon whose role a nature could improve', async () => {
+    const pidgey = makeMon('pidgey', 20, { uid: 'pid', nature: 'relaxed' }) // Sprinter with a Pace-lowering nature
+    const pika = makeMon('pikachu', 20, { uid: 'pika', nature: 'timid' }) // Sprinter already raising Pace
+    const player = makePlayer([pika], { trainer: { level: 30, exp: 0 }, pokemon: { pika, pid: pidgey }, inventory: { 'choice-mint': 2 } })
+    for (const lng of ['es', 'en'] as const) {
+      await i18n.changeLanguage(lng)
+      const e = buildBagEntries(player, ctx, lng, (k, p) => String(i18n.t(k, p as never)), T0).find((x) => x.slug === 'choice-mint')!
+      expect(e.category).toBe('training')
+      expect(e.name).toBe(lng === 'es' ? 'Menta a elegir' : 'Choice Mint')
+      expect(e.description).toBe(i18n.t('bag.desc.choiceMint'))
+      expect(e.description).not.toMatch(/bag\.|\{\{/)
+      expect(e.usersKey).toBe('choiceMint')
+      expect(i18n.t(`bag.users.choiceMint`)).not.toBe('bag.users.choiceMint')
+      expect(i18n.t(`bag.noUsers.choiceMint`)).not.toBe('bag.noUsers.choiceMint')
+      expect(e.users.map((u) => u.uid)).toEqual(['pid'])
+      expect(e.lockedLevel).toBeUndefined()
+    }
+    await i18n.changeLanguage('es')
+    const low = makePlayer([pika], { trainer: { level: 5, exp: 0 }, inventory: { 'choice-mint': 1 } })
+    expect(buildBagEntries(low, ctx, 'es', text, T0).find((x) => x.slug === 'choice-mint')!.lockedLevel).toBe(10)
   })
 })
 

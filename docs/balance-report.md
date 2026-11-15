@@ -815,4 +815,15 @@ Lectura:
 | irregular | 11.5 | 8.6 / — / — / — | 10.0 | 1.0 | 2.0 | 0.0 | 0.0 |
 | grinder | 50.0 | 1.3 / 2.1 / 2.7 / 3.4 | 21.0 | 6.0 | 12.0 | 5.0 | 3.0 |
 
-Lectura: ≈ 1,5 Teralitos por semana (una Teracristalización cada ~1,5 semanas con el coste de 2), ≈ 1 menta al azar por semana desde el nivel 10, ≈ 0,5–1 Chapa por semana desde el 25 y ≈ 0,25 Cápsulas por semana desde el 30. Los Teralitos se acumulan antes del nivel 20 (el constante llega al 20 con ≈ 14). Las Balls, el Polvo y los caramelos de las misiones no cambian (los escalones nuevos solo añaden objetos), así que el resto del informe sigue valiendo. Efecto en puntos sin medir (el simulador no usa los objetos): una menta mueve un 10 % entre dos estadísticas y una Chapa en Rendimiento de IV 15 a 31 a nivel 50 son ≈ +8 de Atq. Esp., ≈ +2 puntos por acción (≈ +6 % para ese Pokémon).
+Lectura: ≈ 1,5 Teralitos por semana (una Teracristalización cada ~1,5 semanas con el coste de 2), ≈ 1 Menta a elegir por semana desde el nivel 10, ≈ 0,5–1 Chapa por semana desde el 25 y ≈ 0,25 Cápsulas por semana desde el 30. Los Teralitos se acumulaban antes del nivel 20 (el constante llegaba al 20 con ≈ 14); ver la nota de abajo. Las Balls, el Polvo y los caramelos de las misiones no cambian (los escalones nuevos solo añaden objetos), así que el resto del informe sigue valiendo. Efecto en puntos sin medir (el simulador no usa los objetos): una menta mueve un 10 % entre dos estadísticas y una Chapa en Rendimiento de IV 15 a 31 a nivel 50 son ≈ +8 de Atq. Esp., ≈ +2 puntos por acción (≈ +6 % para ese Pokémon).
+
+**Ajuste 2026-11-15 (decidido por el jugador).** Los Teralitos de las misiones solo caen desde el nivel de entrenador 15 (`weekly-days`, `weekly-techniques` y `weekly-evolve`; la Teracristalización sigue desbloqueándose en el 20) y la menta de «Fondo» y «Gran cosecha» pasa a ser la **Menta a elegir** (`choice-mint`: misma frecuencia, ya no depende del azar entre 21). `simulate-advanced.ts` muestra ahora la columna «Teralitos al nv 20» (los que tiene el jugador el día en que llega al 20, regalo de desbloqueo de 2 incluido; 12 semanas, 2 semillas):
+
+| Perfil | Teralitos al nv 20 (antes) | Teralitos al nv 20 (ahora) |
+|---|---|---|
+| constant | ≈ 14 | 10.0 |
+| night-owl | — | 8.0 |
+| marathoner | — | 5.0 |
+| grinder | — | 4.0 |
+
+El constante sigue acumulando 10 (≈ 8 de misiones en las ~4–5 semanas entre el 15 y el 20, más los 2 del regalo): alcanza para 5 Teracristalizaciones al desbloquear. Si se quisiera menos, la palanca es subir el umbral de los tres escalones (por ejemplo a 18) o bajar los 2 Teralitos de «Metamorfosis». Los jugadores rápidos llegan al 20 con 4–8, lo que es lo previsto.

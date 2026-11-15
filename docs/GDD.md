@@ -346,7 +346,7 @@ Cada naturaleza sube una estadística un 10% y baja otra un 10%. Con los roles d
 | Grosera | DefEsp | Vel | Más técnicas, menos acciones |
 | Cauta | DefEsp | AtEsp | Más técnicas, menos puntos |
 
-Las **Mentas** (objeto avanzado, nivel de entrenador 10) cambian el efecto de la naturaleza. Hay **una menta por naturaleza** (las 21 reales de PokeAPI, `<naturaleza>-mint`): la Menta Modesta hace que sus estadísticas suban y bajen como una Modesta. La **naturaleza original se conserva** y se muestra («Fuerte, por menta (Modesta)»); Sincronía sigue usando la original. Usar la menta de la naturaleza original quita el cambio. No se puede usar una menta que no cambie nada (mismo efecto que el actual, por ejemplo dos neutras). La PS no cambia nunca (las naturalezas no la tocan).
+Las **Mentas** (objeto avanzado, nivel de entrenador 10) cambian el efecto de la naturaleza. Las misiones dan la **Menta a elegir** (`choice-mint`, decidido en F4): al usarla en la ficha, el jugador elige la naturaleza objetivo en el diálogo, que muestra el efecto de cada una (y cuáles van con el rol del Pokémon). Las 21 mentas concretas de PokeAPI (`<naturaleza>-mint`) siguen funcionando para quien ya tenga alguna: al usar una naturaleza se gasta antes la menta concreta de esa naturaleza, si hay, y si no una Menta a elegir. Elegir la Modesta hace que las estadísticas suban y bajen como una Modesta. La **naturaleza original se conserva** y se muestra («Fuerte, por menta (Modesta)»); Sincronía sigue usando la original. Elegir la naturaleza original quita el cambio. No se puede usar una menta que no cambie nada (mismo efecto que el actual, por ejemplo dos neutras). La PS no cambia nunca (las naturalezas no la tocan).
 
 ### 6.3 Habilidades
 
@@ -530,7 +530,7 @@ Se guarda la celda redondeada en el perfil, y no se envía con cada `start`, por
 ### 9.4 Teracristalización
 
 - Se desbloquea con el nivel de entrenador 20 **[calibrar]**.
-- Cuesta **Teralitos** (de misiones). Cambia el tipo del Pokémon a un tipo único durante **24 h o 5 sesiones**, lo que ocurra primero.
+- Cuesta **Teralitos** (de misiones, solo desde el nivel de entrenador 15: la Teracristalización se desbloquea en el 20 y así no se acumulan decenas antes; ver §12.7 y §13). Cambia el tipo del Pokémon a un tipo único durante **24 h o 5 sesiones**, lo que ocurra primero.
 - Afecta a las condiciones. Las técnicas siguen produciendo Energía de su propio tipo.
 - **Decidido (F4):** se puede elegir **cualquiera de los 18 tipos** (el Teralito es genérico, no hay uno por tipo), salvo el único tipo de una especie monotipo; un doble tipo sí puede quedarse en uno de los suyos. Cuesta **2 Teralitos** (`advanced.tera.shardCost`) y dura **24 h o 5 sesiones** (`hours`, `sessions`), lo primero que ocurra. Solo entre sesiones. Volver a usarlo cambia el tipo y reinicia la cuenta. Una sesión gasta una de las 5 si empezó con la Tera activa.
 - El tipo Tera también da **STAB** a las técnicas de ese tipo, sin quitar el de los tipos de la especie. El tipo defensivo contra los contraataques y los tipos del equipo para los encuentros siguen siendo los de la especie.
@@ -799,7 +799,7 @@ Los niveles de las Mentas, la Teracristalización, las Chapas y la Cápsula est�
 | Pokédex | Registra 10/25/50 especies | Piedras, MT |
 | Evento | Lista fija de cada evento activo (sin sorteo) | Las que defina el evento |
 
-**Fuentes de los objetos avanzados (F4).** Con escalones nuevos de recompensa por nivel de entrenador en las semanales (nada cambia en las Balls, el Polvo ni los caramelos): «Semana constante» +1 Teralito desde el nivel 20 (además de «Repertorio» y «Metamorfosis», que ya los daban); «Fondo» y «Gran cosecha» +1 menta al azar desde el nivel 10; «Gran cosecha» +1 MT desde el 15; «Maratón semanal» +1 Chapa desde el 25; «Especialista en tipo» +1 Cápsula Habilidad desde el 30. Más los regalos de desbloqueo de §12.7. Medido en `docs/balance-report.md` §12: ≈ 1,5 Teralitos, ≈ 1 menta, ≈ 0,5–1 Chapa y ≈ 0,25 Cápsulas por semana una vez desbloqueados.
+**Fuentes de los objetos avanzados (F4).** Con escalones nuevos de recompensa por nivel de entrenador en las semanales (nada cambia en las Balls, el Polvo ni los caramelos): los **Teralitos de las misiones solo caen desde el nivel de entrenador 15** (decidido): «Semana constante» +1, «Repertorio» +1 y «Metamorfosis» +2 desde el 15 (por debajo dan otra cosa pequeña: una Ultra Ball extra o 2 Great Ball; los hitos de la Pokédex, los premios por nivel y los eventos por defecto no dan Teralitos, y el regalo de desbloqueo de 2 llega en el 20); «Fondo» y «Gran cosecha» +1 **Menta a elegir** desde el nivel 10; «Gran cosecha» +1 MT desde el 15; «Maratón semanal» +1 Chapa desde el 25; «Especialista en tipo» +1 Cápsula Habilidad desde el 30. Más los regalos de desbloqueo de §12.7. Medido en `docs/balance-report.md` §12: ≈ 1,5 Teralitos, ≈ 1 menta, ≈ 0,5–1 Chapa y ≈ 0,25 Cápsulas por semana una vez desbloqueados.
 
 Las **misiones de evento** avanzan mientras el evento está activo; una sesión (y las capturas de sus oleadas) cuenta si empezó durante el evento, aunque se reclame después. Se pueden reclamar hasta 7 días después de que termine.
 

@@ -44,7 +44,7 @@ export function spriteScale(naturalHeight: number, scale: number, maxHeight?: nu
 }
 
 /** Items PokeAPI has no sprite for: drawn here as pixel-art SVGs (public/sprites/items/<slug>.svg). */
-const SVG_ITEMS: ReadonlySet<string> = new Set(['tera-shard', 'technical-machine'])
+const SVG_ITEMS: ReadonlySet<string> = new Set(['tera-shard', 'technical-machine', 'choice-mint'])
 
 export function spriteUrl(kind: SpriteKind, slug: string, shiny = false): string {
   if (kind === 'item') return `/sprites/items/${slug}.${SVG_ITEMS.has(slug) ? 'svg' : 'png'}`

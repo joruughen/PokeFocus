@@ -7,7 +7,7 @@
  * Runs the normal simulator player (`scripts/sim/run.ts`, missions claimed) and reads the final
  * inventory: the sim never spends these items, so the counts are what a player would have to use.
  */
-import { defaultContext, mintNatureOf } from '../src/engine/index.ts'
+import { defaultContext, isMintItem } from '../src/engine/index.ts'
 import { PROFILE_IDS, type ProfileId } from './sim/profiles.ts'
 import { runPlayer } from './sim/run.ts'
 
@@ -23,10 +23,10 @@ const ctx = defaultContext()
 const UNLOCKS = [10, 20, 25, 30]
 
 const rows: string[] = []
-rows.push(`| Perfil | Nivel entr. final | Semana nv 10 / 20 / 25 / 30 | Teralitos | MT | Mentas | Chapas | Cápsulas |`)
-rows.push('|---|---|---|---|---|---|---|---|')
+rows.push(`| Perfil | Nivel entr. final | Semana nv 10 / 20 / 25 / 30 | Teralitos al nv 20 | Teralitos | MT | Mentas | Chapas | Cápsulas |`)
+rows.push('|---|---|---|---|---|---|---|---|---|')
 for (const profile of profiles) {
-  const acc = { level: 0, tera: 0, tm: 0, mint: 0, cap: 0, capsule: 0, reach: UNLOCKS.map(() => [] as number[]) }
+  const acc = { level: 0, tera: 0, teraAt20: [] as number[], tm: 0, mint: 0, cap: 0, capsule: 0, reach: UNLOCKS.map(() => [] as number[]) }
   for (let seed = 1; seed <= seeds; seed++) {
     const m = runPlayer({ profile, seed, weeks, ctx, missions: true, captures: true, candies: true, soloStarter: false, detail: false })
     const inv = m.finalBalls
@@ -36,7 +36,9 @@ for (const profile of profiles) {
     acc.tm += inv['technical-machine'] ?? 0
     acc.cap += inv['bottle-cap'] ?? 0
     acc.capsule += inv['ability-capsule'] ?? 0
-    acc.mint += Object.entries(inv).filter(([k]) => mintNatureOf(k, ctx)).reduce((n, [, v]) => n + v, 0)
+    acc.mint += Object.entries(inv).filter(([k]) => isMintItem(k, ctx)).reduce((n, [, v]) => n + v, 0)
+    const at20 = m.days.find((x) => x.trainerLevel >= 20)
+    if (at20) acc.teraAt20.push(at20.teraShards)
     UNLOCKS.forEach((lvl, i) => {
       const d = m.days.find((x) => x.trainerLevel >= lvl)
       if (d) acc.reach[i]!.push(d.day / 7)
@@ -44,7 +46,7 @@ for (const profile of profiles) {
   }
   const avg = (n: number) => (n / seeds).toFixed(1)
   const reach = acc.reach.map((r) => (r.length === seeds ? (r.reduce((a, b) => a + b, 0) / r.length + 1).toFixed(1) : r.length ? `${r.length}/${seeds}` : '—')).join(' / ')
-  rows.push(`| ${profile} | ${avg(acc.level)} | ${reach} | ${avg(acc.tera)} | ${avg(acc.tm)} | ${avg(acc.mint)} | ${avg(acc.cap)} | ${avg(acc.capsule)} |`)
+  rows.push(`| ${profile} | ${avg(acc.level)} | ${reach} | ${acc.teraAt20.length ? (acc.teraAt20.reduce((a, b) => a + b, 0) / acc.teraAt20.length).toFixed(1) : '—'} | ${avg(acc.tera)} | ${avg(acc.tm)} | ${avg(acc.mint)} | ${avg(acc.cap)} | ${avg(acc.capsule)} |`)
 }
 console.log(`Objetos avanzados tras ${weeks} semanas (${seeds} semillas por perfil; media por jugador; la semana es 1-based)\n`)
 console.log(rows.join('\n'))

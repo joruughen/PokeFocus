@@ -11,6 +11,7 @@ import {
   abilityCapsuleChoices,
   BOTTLE_CAP,
   bottleCapStats,
+  CHOICE_MINT,
   definedAbilities,
   effectiveNature,
   getTechnique,
@@ -36,6 +37,7 @@ import { sfx } from '../../lib/sound'
 import { useContent } from '../../store/content'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer } from '../../store/selectors'
+import { roleNatureFit } from './roleNature'
 
 type Kind = 'tera' | 'tm' | 'mint' | 'bottleCap' | 'abilityCapsule'
 
@@ -58,7 +60,12 @@ export function Training({ view, locked }: { view: PokemonView; locked: string |
   const tera = cfg.advanced.tera
 
   const tms = tmCandidates(p, ctx)
-  const ownedMints = mintChoices(p, ctx).filter((n) => inv(mintItem(n)) > 0)
+  const choiceMints = inv(CHOICE_MINT)
+  // With a Choice Mint any nature that changes the effect can be picked; otherwise only those of a mint of that nature the player still has.
+  const mintTargets = mintChoices(p, ctx).filter((n) => choiceMints > 0 || inv(mintItem(n)) > 0)
+  const role = view.species.role
+  const fitsRole = (n: string) => roleNatureFit(role, ctx.naturesBySlug.get(n))?.kind === 'with'
+  const legacyMints = Object.keys(player.inventory).filter((k) => k !== CHOICE_MINT && k.endsWith('-mint') && inv(k) > 0 && ctx.naturesBySlug.has(k.slice(0, -5))).length
   const capStats = bottleCapStats(p, ctx)
   const abilities = abilityCapsuleChoices(p, ctx)
   const hidden = p.ability !== null && definedAbilities(view.species, ctx).some((a) => a.slug === p.ability && a.isHidden)
@@ -130,15 +137,20 @@ export function Training({ view, locked }: { view: PokemonView; locked: string |
     },
     {
       kind: 'mint',
-      item: ownedMints[0] ? mintItem(ownedMints[0]) : mintItem(effectiveNature(p) === 'modest' ? 'jolly' : 'modest'),
+      item: choiceMints > 0 || legacyMints === 0 ? CHOICE_MINT : (mintTargets[0] ? mintItem(mintTargets[0]) : CHOICE_MINT),
       status: (
         <span className="text-xs text-mist-300">
           {t('training.mint.current', { nature: `${names.nature(effectiveNature(p))} (${effectText(effective)})` })}
           {p.mintNature && <> · {t('training.mint.original', { nature: names.nature(p.nature) })}</>}
         </span>
       ),
-      usable: ownedMints.length > 0,
-      note: ownedMints.length > 0 ? t('training.mint.owned', { count: ownedMints.length }) : t('training.mint.noneOwned'),
+      usable: mintTargets.length > 0,
+      note:
+        choiceMints > 0
+          ? t('training.mint.choiceOwned', { count: choiceMints })
+          : mintTargets.length > 0
+            ? t('training.mint.owned', { count: mintTargets.length })
+            : t('training.mint.noneOwned'),
     },
     {
       kind: 'bottleCap',
@@ -163,7 +175,7 @@ export function Training({ view, locked }: { view: PokemonView; locked: string |
         ? t('training.bottleCap.body', { max: ivMax })
         : t(`training.${k}.body`)
 
-  const haveCount = (k: Kind, item: string) => (k === 'mint' ? ownedMints.reduce((n, m) => n + inv(mintItem(m)), 0) : inv(item))
+  const haveCount = (k: Kind, item: string) => (k === 'mint' ? choiceMints + mintTargets.reduce((n, m) => n + inv(mintItem(m)), 0) : inv(item))
 
   return (
     <Panel title={t('training.title')}>
@@ -251,18 +263,31 @@ export function Training({ view, locked }: { view: PokemonView; locked: string |
           </Choices>
         )}
         {open === 'mint' && (
-          <Choices label={t('training.mint.pick')} help={t('training.mint.current', { nature: `${names.nature(effectiveNature(p))} (${effectText(effective)})` })}>
-            <div className="flex flex-col gap-1.5">
-              {ownedMints.map((n) => (
-                <Choice key={n} selected={choice === n} onSelect={() => setChoice(n)}>
-                  <Sprite kind="item" slug={mintItem(n)} fit={24} alt="" />
-                  <span className="min-w-0 flex-1 text-left">
-                    {names.item(mintItem(n))} <span className="text-mist-400">×{inv(mintItem(n))}</span>
-                    <span className="block text-xs text-mist-300">{n === p.nature ? t('training.mint.restore') : effectText(ctx.naturesBySlug.get(n))}</span>
-                  </span>
-                </Choice>
-              ))}
+          <Choices
+            label={choiceMints > 0 ? t('training.mint.pickNature') : t('training.mint.pick')}
+            help={t('training.mint.current', { nature: `${names.nature(effectiveNature(p))} (${effectText(effective)})` })}
+          >
+            <div className="grid max-h-80 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2">
+              {mintTargets.map((n) => {
+                const own = inv(mintItem(n)) > 0
+                return (
+                  <Choice key={n} selected={choice === n} onSelect={() => setChoice(n)} className="py-2">
+                    <Sprite kind="item" slug={own ? mintItem(n) : CHOICE_MINT} fit={24} alt="" />
+                    <span className="min-w-0 flex-1 text-left">
+                      <span className="font-display text-base leading-tight">{names.nature(n)}</span>
+                      <span className="block text-xs text-mist-300">{n === p.nature ? t('training.mint.restore') : effectText(ctx.naturesBySlug.get(n))}</span>
+                      {fitsRole(n) && <span className="block text-xs text-volt-400">{t('training.mint.fitsRole')}</span>}
+                    </span>
+                    {own && <span className="shrink-0 text-xs text-mist-400">×{inv(mintItem(n))}</span>}
+                  </Choice>
+                )
+              })}
             </div>
+            {choice && (
+              <p className="mt-3 text-sm text-mist-300">
+                {t('training.mint.spends', { item: names.item(inv(mintItem(choice)) > 0 ? mintItem(choice) : CHOICE_MINT) })}
+              </p>
+            )}
           </Choices>
         )}
         {open === 'bottleCap' && (
