@@ -152,6 +152,8 @@ export interface GameState extends GameDoc {
   /** Client-only: jumps the dev clock to the end of the session. */
   devFinishNow: () => Promise<void>
   devLevelUp: (levels: number) => Promise<GameActionError | null>
+  /** Trainer EXP, positive or negative (dev). */
+  devAddTrainerExp: (amount: number) => Promise<GameActionError | null>
   devAddRandomPokemon: (count: number) => Promise<GameActionError | null>
   resetAll: () => Promise<GameActionError | null>
 }
@@ -382,6 +384,7 @@ export const useGame = create<GameState>()((set, get) => {
       if (ahead > 0) usePrefs.getState().advanceClock(ahead + 50)
     },
     devLevelUp: async (levels) => errOf(await dispatch({ type: 'devLevelUp', levels })),
+    devAddTrainerExp: async (amount) => errOf(await dispatch({ type: 'devAddTrainerExp', amount })),
     devAddRandomPokemon: async (count) => errOf(await dispatch({ type: 'devAddRandomPokemon', count })),
     resetAll: async () => errOf(await dispatch({ type: 'resetAll' })),
   }

@@ -28,6 +28,7 @@ import {
   expForLevel,
   finishEncounter,
   gainExp,
+  grantTrainerLevelUp,
   levelCap,
   MINUTE_MS,
   overwritePreset,
@@ -45,6 +46,7 @@ import {
   startSession,
   throwBall,
   toOwnedPokemon,
+  trainerLevelFromExp,
   useAbilityCapsule,
   useBottleCap,
   useCandy,
@@ -102,6 +104,7 @@ export const DEV_ACTIONS: ReadonlySet<GameActionType> = new Set<GameActionType>(
   'devAddDust',
   'devAddCandies',
   'devLevelUp',
+  'devAddTrainerExp',
   'devAddRandomPokemon',
   'resetAll',
   // Manual weather: dev-panel override only (players never pick the weather, GDD §9.2).
@@ -466,6 +469,16 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
         pokemon[uid] = gainExp(mon, Math.max(0, expForLevel(target, ctx) - mon.exp), cap, ctx).pokemon
       }
       return withPlayer({ ...p, pokemon })
+    }
+    case 'devAddTrainerExp': {
+      // Same path as the game: the level follows the EXP, going up pays the rewards and queues the level-up window
+      // (`grantTrainerLevelUp`). Going down only lowers the level: what was already given is not taken back.
+      const exp = Math.max(0, p.trainer.exp + a.amount)
+      const level = trainerLevelFromExp(exp, ctx)
+      const from = p.trainer.level
+      let next: PlayerState = { ...p, trainer: { level, exp } }
+      if (level > from) next = grantTrainerLevelUp(next, from, level, t, ctx)
+      return withPlayer(next)
     }
     case 'devAddRandomPokemon': {
       const pool = ctx.data.species.filter((sp) => !sp.isLegendary && !sp.isMythical)

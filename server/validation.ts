@@ -151,6 +151,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('devAddDust', { amount: z.number().int().min(1).max(1_000_000) }),
   act('devAddCandies', { amount: count }),
   act('devLevelUp', { levels: z.number().int().min(1).max(100) }),
+  act('devAddTrainerExp', { amount: z.number().int().min(-1_000_000).max(1_000_000).refine((n) => n !== 0, 'zero') }),
   act('devAddRandomPokemon', { count: z.number().int().min(1).max(200) }),
   act('resetAll', {}),
 ])

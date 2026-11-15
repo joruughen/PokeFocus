@@ -164,6 +164,8 @@ export type GameAction =
   | { type: 'devAddDust'; amount: number }
   | { type: 'devAddCandies'; amount: number }
   | { type: 'devLevelUp'; levels: number }
+  /** Trainer EXP, positive or negative (dev only): recomputes the trainer level; going up pays the level rewards, going down takes nothing back. */
+  | { type: 'devAddTrainerExp'; amount: number }
   | { type: 'devAddRandomPokemon'; count: number }
   | { type: 'resetAll' }
 
@@ -222,6 +224,7 @@ export interface ActionResults {
   devAddDust: null
   devAddCandies: null
   devLevelUp: null
+  devAddTrainerExp: null
   devAddRandomPokemon: null
   resetAll: null
 }
