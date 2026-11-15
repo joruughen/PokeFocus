@@ -63,7 +63,7 @@ describe('config and unlocks', () => {
   })
 
   it('every use is refused one level before its unlock and accepted at it (TM 15, Mint 25, Bottle Cap 40)', () => {
-    const p = makeMon('pidgey', 20, { uid: 'a', ivs: { hp: 0, attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0 } })
+    const p = makeMon('pidgey', 20, { uid: 'a', ivs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } })
     const move = tmCandidates(p, ctx)[0]!
     const inv = { 'technical-machine': 1, [CHOICE_MINT]: 1, 'bottle-cap': 1 }
     const locked = { ok: false, error: 'trainer_level_too_low' }
