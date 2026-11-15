@@ -256,6 +256,29 @@ describe('box errors', () => {
   })
 })
 
+describe('releaseMany', () => {
+  function withBox(): GameDoc {
+    const doc = newPlayer()
+    const p = doc.player!
+    const mon = (slug: string, uid: string) => ({ ...p.pokemon.p1!, uid, speciesSlug: slug })
+    return { ...doc, player: { ...p, pokemon: { ...p.pokemon, p2: mon('charmander', 'p2'), p3: mon('squirtle', 'p3') } } }
+  }
+  it('releases the box Pokémon and returns the candies', () => {
+    const r = applyAction(withBox(), { type: 'releaseMany', uids: ['p2', 'p3'] }, env(T0))
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(Object.keys(r.doc.player!.pokemon)).toEqual(['p1'])
+    expect(r.result).toMatchObject({ released: 2, totalCandies: 2 })
+  })
+  it('fails as a whole and leaves the doc intact', () => {
+    const doc = withBox()
+    expect(applyAction(doc, { type: 'releaseMany', uids: ['p2', 'p1'] }, env(T0))).toEqual({ ok: false, error: 'in_team' })
+    expect(applyAction(doc, { type: 'releaseMany', uids: ['p2', 'zz'] }, env(T0))).toEqual({ ok: false, error: 'unknown_pokemon' })
+    expect(applyAction(doc, { type: 'releaseMany', uids: [] }, env(T0))).toEqual({ ok: false, error: 'empty_selection' })
+    expect(applyAction(EMPTY_DOC, { type: 'releaseMany', uids: ['p2'] }, env(T0))).toEqual({ ok: false, error: 'no_player' })
+  })
+})
+
 describe('timezone lock', () => {
   const DAY = 86_400_000
   it('allows one change, then locks it for 30 days outside dev mode', () => {

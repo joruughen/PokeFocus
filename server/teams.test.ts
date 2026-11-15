@@ -114,3 +114,18 @@ describe('saved teams over HTTP', () => {
     expect(r.json).toMatchObject({ error: 'session_active' })
   })
 })
+
+describe('releaseMany over HTTP', () => {
+  it('validates the body (400) and refuses team members or unknown uids as a whole (409), changing nothing', async () => {
+    const u = await newUser()
+    expect((await act(u.cookie, { type: 'releaseMany', uids: [] })).status).toBe(400)
+    expect((await act(u.cookie, { type: 'releaseMany', uids: ['p1', 'p1'] })).status).toBe(400)
+    expect((await act(u.cookie, { type: 'releaseMany', uids: Array.from({ length: 201 }, (_, i) => `x${i}`) })).status).toBe(400)
+    const team = await act(u.cookie, { type: 'releaseMany', uids: ['p1'] })
+    expect(team.status).toBe(409)
+    expect(team.json).toMatchObject({ error: 'in_team' })
+    expect((await act(u.cookie, { type: 'releaseMany', uids: ['nope'] })).json).toMatchObject({ error: 'unknown_pokemon' })
+    const snap = await call('GET', '/api/game', u.cookie)
+    expect((snap.json as unknown as GameSnapshot).doc.player?.pokemon.p1).toBeDefined()
+  })
+})

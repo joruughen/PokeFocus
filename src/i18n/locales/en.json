@@ -735,6 +735,9 @@
       "unknown_pokemon": "That Pokémon is gone.",
       "session_active": "Finish the session before changing the team or its techniques.",
       "in_team": "You can't release a team member.",
+      "empty_selection": "No Pokémon selected.",
+      "too_many_selected": "You can release at most 200 Pokémon at once.",
+      "duplicate_selection": "The selection has repeated Pokémon.",
       "team_too_large": "The team holds 6 at most.",
       "team_empty": "The team needs at least one Pokémon.",
       "duplicate_in_team": "That Pokémon is already in the team.",
@@ -989,7 +992,7 @@
     "box": {
       "intro": {
         "title": "Your Box",
-        "body": "Every Pokémon you catch lives here. Tap one to open its page: techniques, candies, evolution and whether it joins the team."
+        "body": "Every Pokémon you catch lives here. Tap one to open its page: techniques, candies, evolution and whether it joins the team. \"Select\" lets you release several at once."
       },
       "filters": {
         "title": "Filter and sort",
@@ -1313,7 +1316,49 @@
       "title": "No Pokémon match",
       "body": "Try another name, type or role, or clear the filters to see the whole Box."
     },
-    "bagLink": "Open the bag ({{dust}} Study Dust)"
+    "bagLink": "Open the bag ({{dust}} Study Dust)",
+    "select": {
+      "start": "Select",
+      "startTip": "Pick several Pokémon to release them at once and keep their candies.",
+      "bar": "Pokémon selection",
+      "help": "Tap Pokémon to pick them; Shift + click picks a range. Esc to leave.",
+      "count_one": "{{count}} selected",
+      "count_other": "{{count}} selected",
+      "hidden_one": "{{count}} outside the filter",
+      "hidden_other": "{{count}} outside the filter",
+      "visible": "Select visible",
+      "clear": "Clear selection",
+      "release": "Release…",
+      "cancel": "Cancel",
+      "inTeam": "In the team: it can't be released. Remove it from the team first.",
+      "none": "No Pokémon can be selected with these filters.",
+      "dialogTitle_one": "Release {{count}} Pokémon?",
+      "dialogTitle_other": "Release {{count}} Pokémon?",
+      "dialogBody": "They go back to the wild and you get their candies. This can't be undone.",
+      "gains": "Candies you get",
+      "gain_one": "{{count}} Pokémon",
+      "gain_other": "{{count}} Pokémon",
+      "total_one": "Total: +{{count}} candy",
+      "total_other": "Total: +{{count}} candies",
+      "warnTitle": "Check before releasing",
+      "more": "and {{count}} more",
+      "keep": "Remove from selection",
+      "warn": {
+        "shiny_one": "{{count}} is shiny",
+        "shiny_other": "{{count}} are shiny",
+        "legendary_one": "{{count}} is legendary or mythical",
+        "legendary_other": "{{count}} are legendary or mythical",
+        "preset_one": "{{count}} is in a saved team",
+        "preset_other": "{{count}} are in saved teams",
+        "nickname_one": "{{count}} has a nickname",
+        "nickname_other": "{{count}} have nicknames",
+        "highLevel_one": "{{count}} is level {{level}} or higher",
+        "highLevel_other": "{{count}} are level {{level}} or higher"
+      },
+      "confirm": "Release {{count}}",
+      "done_one": "You released {{count}} Pokémon: +{{total}} candies",
+      "done_other": "You released {{count}} Pokémon: +{{total}} candies"
+    }
   },
   "detail": {
     "nav": "Browse the Box",

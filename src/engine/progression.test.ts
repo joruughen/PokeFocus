@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evolvePokemon, releasePokemon, useCandy } from './box'
+import { evolvePokemon, MAX_RELEASE_BATCH, releaseMany, releasePokemon, useCandy } from './box'
 import { defaultContext } from './context'
 import { candyDustCost, evolutionOptions, expForLevel, gainExp, levelCapFor, levelFromExp, trainerLevelFromExp } from './progression'
 import { createRng } from './rng'
@@ -70,6 +70,47 @@ describe('candies and dust (GDD §12.2–12.3)', () => {
     expect(releasePokemon(s, 'a').ok).toBe(false)
     const r = releasePokemon({ ...s, team: ['b'] }, 'a')
     expect(r.ok && r.value.candies.chains['2']).toBe(2)
+  })
+})
+
+describe('releaseMany', () => {
+  const mk = () => {
+    const a = makeMon('charmeleon', 20, { uid: 'a' }) // chain 2, stage 2 → 2 candies
+    const b = makeMon('charmander', 5, { uid: 'b' }) // chain 2, stage 1 → 1
+    const c = makeMon('squirtle', 5, { uid: 'c' }) // another chain → 1
+    const t = makeMon('pidgey', 5, { uid: 't' })
+    return { ...makePlayer([t]), pokemon: { a, b, c, t } }
+  }
+  it('releases all of them and adds the candies per chain', () => {
+    const s = mk()
+    const r = releaseMany(s, ['a', 'b', 'c'])
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(Object.keys(r.value.state.pokemon)).toEqual(['t'])
+    expect(r.value.released).toBe(3)
+    expect(r.value.totalCandies).toBe(4)
+    expect(r.value.candies['2']).toBe(3)
+    expect(r.value.state.candies.chains['2']).toBe(3)
+    const sq = Object.entries(r.value.candies).find(([k]) => k !== '2')!
+    expect(sq[1]).toBe(1)
+  })
+  it('is all or nothing: one invalid uid changes nothing', () => {
+    const s = mk()
+    expect(releaseMany(s, ['a', 't'])).toEqual({ ok: false, error: 'in_team' })
+    expect(releaseMany(s, ['a', 'nope'])).toEqual({ ok: false, error: 'unknown_pokemon' })
+    expect(Object.keys(s.pokemon)).toHaveLength(4)
+    expect(s.candies.chains).toEqual({})
+  })
+  it('rejects empty, repeated and oversized lists', () => {
+    const s = mk()
+    expect(releaseMany(s, [])).toEqual({ ok: false, error: 'empty_selection' })
+    expect(releaseMany(s, ['a', 'a'])).toEqual({ ok: false, error: 'duplicate_selection' })
+    expect(releaseMany(s, Array.from({ length: MAX_RELEASE_BATCH + 1 }, (_, i) => `x${i}`))).toEqual({ ok: false, error: 'too_many_selected' })
+  })
+  it('leaves saved teams alone, like releasePokemon', () => {
+    const s = { ...mk(), teamPresets: [{ id: 't1', name: 'X', uids: ['a', 't'] }] }
+    const r = releaseMany(s, ['a'])
+    expect(r.ok && r.value.state.teamPresets).toEqual(s.teamPresets)
   })
 })
 

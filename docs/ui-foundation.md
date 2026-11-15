@@ -198,7 +198,7 @@ Actions:
 - **Setup:** `createPlayer` (language, time zone, starter; the trainer name comes from the account), `updateProfile` (language, time zone, city, `location`). `setWeather` is a dev-panel action only (the server refuses it without DEV_TOOLS=1).
 - **Session:** `start(minutes)`, `pause`, `resume`, `cancel`, `claim()`, `markNotified`, `dismissResults`.
 - **Waves:** `throwBall(ref, ball)`, `applyStatus(chargeId, ref)`, `reroll(chargeId, ref)`, `assignDamage`, `autoAssignDamage`, `setAutoDamage`, `nextWave`, `finishWaves`.
-- **Box, team, missions and breaks:** `release`, `feedCandy`, `equip`, `setTeam`, `setLeader`, `evolve`, `heal`, `claimMission`, `claimAllMissions`, `startBreak`, `endBreak`, `skipBreak`.
+- **Box, team, missions and breaks:** `release`, `releaseMany`, `feedCandy`, `equip`, `setTeam`, `setLeader`, `evolve`, `heal`, `claimMission`, `claimAllMissions`, `startBreak`, `endBreak`, `skipBreak`.
 - **Dev:** `devAddItems`, `devAddDust`, `devAddCandies`, `devFinishNow` (client-only: it moves the dev clock), `devLevelUp`, `devAddRandomPokemon`, `resetAll`.
 
 `claim()` is idempotent on the server: it only works on an active session whose timer has ended, and a second claim (for example from another tab) gets `no_session`, so rewards are never delivered twice. It sends only the microphone percentages (`soundProfile`), never audio.
@@ -397,7 +397,7 @@ Screens other than Home are lazy routes (`routes.tsx`, `preload` on idle, `Suspe
 
 ### Stores
 
-- `useGame`: `release`, `feedCandy`, `equip`, `setTeam`, `setLeader`, `evolve`, `heal`, `claimMission`, `claimAllMissions`, `startBreak` / `endBreak` / `skipBreak` (`breakTimer`, `lastBreakFor` live in the server document), dev `devLevelUp(n)`, `devAddRandomPokemon(n)`. `phaseOf` has a `break` phase.
+- `useGame`: `release`, `releaseMany`, `feedCandy`, `equip`, `setTeam`, `setLeader`, `evolve`, `heal`, `claimMission`, `claimAllMissions`, `startBreak` / `endBreak` / `skipBreak` (`breakTimer`, `lastBreakFor` live in the server document), dev `devLevelUp(n)`, `devAddRandomPokemon(n)`. `phaseOf` has a `break` phase.
 - `usePrefs`: `audio: AudioSettings` (replaces part A's `sound`; a saved `sound: false` becomes muted), `milestones`, `checklistDismissed`.
 - Engine helpers added (additive, tested in `src/engine/helpers.test.ts`): `ivQuality(ivs)`, `conditionEnvAt(state, now, minutes)` (now used by `lib/conditions.ts`).
 

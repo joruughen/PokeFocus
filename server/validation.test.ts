@@ -53,3 +53,18 @@ describe('ackLevelUp (validation)', () => {
     expect(gameActionBody.parse({ type: 'ackLevelUp', level: 5 })).toEqual({ type: 'ackLevelUp' })
   })
 })
+
+describe('releaseMany (validation)', () => {
+  it('accepts 1..200 unique uids', () => {
+    expect(ok({ type: 'releaseMany', uids: ['p2'] })).toBe(true)
+    expect(ok({ type: 'releaseMany', uids: Array.from({ length: 200 }, (_, i) => `p${i}`) })).toBe(true)
+  })
+  it('rejects empty, oversized, repeated or malformed lists', () => {
+    expect(ok({ type: 'releaseMany', uids: [] })).toBe(false)
+    expect(ok({ type: 'releaseMany', uids: Array.from({ length: 201 }, (_, i) => `p${i}`) })).toBe(false)
+    expect(ok({ type: 'releaseMany', uids: ['p2', 'p2'] })).toBe(false)
+    expect(ok({ type: 'releaseMany', uids: [''] })).toBe(false)
+    expect(ok({ type: 'releaseMany', uids: 'p2' })).toBe(false)
+    expect(ok({ type: 'releaseMany' })).toBe(false)
+  })
+})

@@ -105,6 +105,8 @@ export interface GameState extends GameDoc {
 
   /** Box (error code or null). */
   release: (uid: string) => Promise<BoxError | GameActionError | null>
+  /** Release several at once (all or nothing): the candies gained, or the error. */
+  releaseMany: (uids: string[]) => Promise<{ ok: true; released: number; totalCandies: number; candies: Record<string, number> } | { ok: false; error: GameActionError }>
   feedCandy: (
     uid: string,
     candy: CandyKind,
@@ -292,6 +294,10 @@ export const useGame = create<GameState>()((set, get) => {
     finishWaves: async () => errOf(await dispatch({ type: 'finishWaves' })),
 
     release: async (uid) => errOf(await dispatch({ type: 'release', uid })),
+    releaseMany: async (uids) => {
+      const r = await dispatch({ type: 'releaseMany', uids })
+      return r.ok ? { ok: true, ...r.result } : { ok: false, error: r.error }
+    },
     feedCandy: async (uid, candy, count) => {
       const r = await dispatch({ type: 'feedCandy', uid, candy, count })
       if (!r.ok) return { ok: false, error: r.error }

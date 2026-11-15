@@ -33,6 +33,7 @@ import {
   overwritePreset,
   applyPreset,
   deletePreset,
+  releaseMany,
   releasePokemon,
   renamePreset,
   savePreset,
@@ -318,6 +319,12 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
     case 'release': {
       const r = releasePokemon(p, a.uid, ctx)
       return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'releaseMany': {
+      const r = releaseMany(p, a.uids, ctx)
+      if (!r.ok) return fail(r.error)
+      const { state, released, candies, totalCandies } = r.value
+      return withPlayer(state, { released, candies, totalCandies })
     }
     case 'feedCandy': {
       const r = useCandy(p, a.uid, a.candy, a.count, ctx)

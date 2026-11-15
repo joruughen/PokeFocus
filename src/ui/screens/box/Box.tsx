@@ -1,13 +1,18 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ALL_TYPES, energyAt, maxEnergyOf, type SpeciesRole, type TypeSlug } from '../../../engine'
-import { Button, EmptyState, HelpDot, MonTile, Panel, PixelIcon, Segmented, Select, Switch } from '../../components'
+import { Button, EmptyState, HelpDot, MonTile, Panel, PixelIcon, Segmented, Select, Switch, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
+import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
 import { useNames } from '../../lib/names'
+import { sfx } from '../../lib/sound'
 import { navigate } from '../../router'
 import { useNow } from '../../store/clock'
-import { usePlayer } from '../../store/selectors'
+import { useGame } from '../../store/game'
+import { useBusy, usePlayer } from '../../store/selectors'
+import { ReleaseDialog, SelectionBar } from './ReleaseMany'
+import { releaseSummary } from './releaseSummary'
 import { filteredMons, filtersActive, useBoxFilters, type BoxSort, type BoxWhere } from './filters'
 
 const ROLES: SpeciesRole[] = ['scholar', 'hunter', 'sprinter', 'marathoner', 'technician', 'guardian', 'support', 'allrounder']
@@ -29,6 +34,66 @@ export function Box() {
     return out
   }, [list, player, minute])
   const total = Object.keys(player.pokemon).length
+
+  // ---- Multi-select (release) -----------------------------------------------
+  const releaseMany = useGame((st) => st.releaseMany)
+  const busy = useBusy()
+  const [selecting, setSelecting] = useState(false)
+  const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set())
+  const [confirm, setConfirm] = useState(false)
+  const lastPicked = useRef<string | null>(null)
+  const inTeam = useCallback((uid: string) => player.team.includes(uid), [player.team])
+  // Only what can still be released (a team change or a release elsewhere drops it).
+  const pickedUids = useMemo(() => [...picked].filter((uid) => player.pokemon[uid] && !inTeam(uid)), [picked, player.pokemon, inTeam])
+  const summary = useMemo(() => releaseSummary(player, pickedUids), [player, pickedUids])
+  const visibleUids = useMemo(() => new Set(list.map((p) => p.uid)), [list])
+  const selectableVisible = useMemo(() => list.filter((p) => !inTeam(p.uid) && !picked.has(p.uid)).length, [list, inTeam, picked])
+  const hiddenPicked = pickedUids.filter((uid) => !visibleUids.has(uid)).length
+
+  const exitSelect = useCallback(() => {
+    setSelecting(false)
+    setConfirm(false)
+    setPicked(new Set())
+    lastPicked.current = null
+  }, [])
+  const toggle = (uid: string, range: boolean) => {
+    if (inTeam(uid)) return
+    setPicked((prev) => {
+      const next = new Set(prev)
+      const turnOn = !prev.has(uid)
+      const anchor = lastPicked.current
+      const a = range && anchor ? list.findIndex((p) => p.uid === anchor) : -1
+      const b = list.findIndex((p) => p.uid === uid)
+      const uids = a >= 0 && b >= 0 ? list.slice(Math.min(a, b), Math.max(a, b) + 1).map((p) => p.uid) : [uid]
+      for (const u of uids) {
+        if (inTeam(u)) continue
+        if (turnOn) next.add(u)
+        else next.delete(u)
+      }
+      return next
+    })
+    lastPicked.current = uid
+  }
+  // Esc leaves the mode (the confirmation dialog handles its own Esc first).
+  useEffect(() => {
+    if (!selecting || confirm) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) exitSelect()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selecting, confirm, exitSelect])
+  const doRelease = async () => {
+    const r = await releaseMany(summary.uids)
+    if (!r.ok) {
+      setConfirm(false)
+      toast.add({ title: errorText(r.error, 'box'), type: 'danger' })
+      return
+    }
+    sfx('flee')
+    toast.add({ title: t('box.select.done', { count: r.released, total: r.totalCandies }), type: 'success' })
+    exitSelect()
+  }
   const onlyStarter = total <= 1
 
   const typeOptions = [{ value: 'any', label: t('box.filter.anyType') }, ...ALL_TYPES.map((ty) => ({ value: ty, label: names.type(ty) }))]
@@ -50,6 +115,17 @@ export function Box() {
           </h1>
           <p className="mt-1 text-mist-300">{t('box.count', { count: total, team: player.team.length })}</p>
         </div>
+        <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant={selecting ? 'primary' : 'secondary'}
+          icon="check"
+          aria-pressed={selecting}
+          disabled={onlyStarter && !selecting}
+          onClick={() => (selecting ? exitSelect() : setSelecting(true))}
+          title={t('box.select.startTip')}
+        >
+          {t('box.select.start')}
+        </Button>
         <Button
           variant="secondary"
           icon="bag"
@@ -65,9 +141,11 @@ export function Box() {
         >
           {t('nav.bag')}
         </Button>
+        </div>
       </header>
 
       <div className="flex min-w-0 flex-col gap-5">
+        {selecting && <p className="text-sm text-mist-300">{t('box.select.help')}</p>}
         <Panel variant="frame" padded={false} className="flex flex-col gap-4 p-4" {...hintAnchor('box.filters')}>
           <div className="flex flex-wrap items-end gap-4">
             <label className="flex min-w-48 flex-1 flex-col gap-1.5">
@@ -118,7 +196,14 @@ export function Box() {
               const slot = player.team.indexOf(p.uid)
               return (
                 <li key={p.uid}>
-                  <MonTile mon={p} teamSlot={slot >= 0 ? slot : null} energy={energies[p.uid] ?? 0} onClick={() => navigate('box', p.uid)} className="w-full" />
+                  <MonTile
+                    mon={p}
+                    teamSlot={slot >= 0 ? slot : null}
+                    energy={energies[p.uid] ?? 0}
+                    select={selecting ? { checked: picked.has(p.uid), blockedReason: slot >= 0 ? t('box.select.inTeam') : undefined } : undefined}
+                    onClick={(e) => (selecting ? toggle(p.uid, e.shiftKey) : navigate('box', p.uid))}
+                    className="w-full"
+                  />
                 </li>
               )
             })}
@@ -148,6 +233,27 @@ export function Box() {
           </div>
         )}
       </div>
+
+      {selecting && (
+        <SelectionBar
+          count={pickedUids.length}
+          hidden={hiddenPicked}
+          selectableVisible={selectableVisible}
+          onSelectVisible={() => setPicked((prev) => new Set([...prev, ...list.filter((p) => !inTeam(p.uid)).map((p) => p.uid)]))}
+          onClear={() => setPicked(new Set())}
+          onRelease={() => setConfirm(true)}
+          onCancel={exitSelect}
+        />
+      )}
+      <ReleaseDialog
+        open={confirm && summary.count > 0}
+        onOpenChange={setConfirm}
+        summary={summary}
+        player={player}
+        busy={busy}
+        onConfirm={doRelease}
+        onKeep={(uids) => setPicked((prev) => new Set([...prev].filter((u) => !uids.includes(u))))}
+      />
     </div>
   )
 }
