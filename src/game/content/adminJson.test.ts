@@ -1,6 +1,6 @@
 /** The admin import JSON (docs/admin-json.md): shape, semantics shared with the server, merge over live, export, and the examples of the doc. */
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import docRaw from '../../../docs/admin-json.md?raw'
 import type { ContentPatch } from '../../engine/content'
 import {
   adminJsonKind,
@@ -17,7 +17,7 @@ import {
   type EventExportInput,
 } from './index'
 
-const DOC = readFileSync(new URL('../../../docs/admin-json.md', import.meta.url), 'utf8')
+const DOC = docRaw
 
 /** Every ```json block of the doc that is a whole document (starts with its `format`). */
 function docExamples(): { format: string; json: unknown; text: string }[] {
