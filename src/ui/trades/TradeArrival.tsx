@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TradeArrival } from '../../engine'
 import { whatsNewDue } from '../changelog/WhatsNewDialog'
-import { Button, Dialog, Sprite, toast } from '../components'
+import { Button, Dialog, Mascot, Platform, Sprite, toast } from '../components'
 import { setHintsHeld, useHints } from '../hints'
 import { LEVEL_UP_CALM_PHASES } from '../levelUp/levelUp'
 import { errorText } from '../lib/errors'
@@ -86,7 +86,7 @@ export function TradeArrivalHost() {
   return <TradeArrivalModal key={keyOf(current)} arrival={current} onClose={next} />
 }
 
-/** The "it arrived" window (controlled, open). Exported for tests. */
+/** The "it arrived" window (controlled, open): the Pokémon pops in on a night stage with a burst, Profe Pika cheers. Exported for tests. */
 export function TradeArrivalModal({ arrival, onClose }: { arrival: TradeArrival; onClose: () => void }) {
   const { t } = useTranslation()
   const names = useNames()
@@ -102,14 +102,28 @@ export function TradeArrivalModal({ arrival, onClose }: { arrival: TradeArrival;
       description={evolved ? t('trades.arrival.evolved', { from: names.species(arrival.fromSpecies), to: names.species(arrival.toSpecies), name: arrival.partnerName }) : t('trades.arrival.body', { name: arrival.partnerName })}
       footer={
         <Button icon="check" onClick={onClose}>
-          {t('common.continue')}
+          {t('trades.arrival.ok')}
         </Button>
       }
     >
-      <div className="grid place-items-center py-4">
-        <Sprite kind="showdown" slug={arrival.toSpecies} shiny={arrival.shiny} scale={2} maxHeight={160} alt={names.species(arrival.toSpecies)} />
+      <TradeArrivalBody arrival={arrival} />
+    </Dialog>
+  )
+}
+
+/** The stage of the arrival window (server-renderable). */
+export function TradeArrivalBody({ arrival }: { arrival: TradeArrival }) {
+  const { t } = useTranslation()
+  const names = useNames()
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="relative flex h-48 items-end justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,var(--color-dusk-700),var(--color-dusk-950)_70%)] shadow-plate">
+        <span className="absolute inset-0 m-auto size-48 motion-safe:animate-burst bg-[radial-gradient(circle,var(--color-volt-200)_0_30%,transparent_31%)]" aria-hidden />
+        <Platform width={170} night className="absolute bottom-4" />
+        <Sprite kind="showdown" slug={arrival.toSpecies} shiny={arrival.shiny} scale={2} maxHeight={130} maxWidth={200} alt={names.species(arrival.toSpecies)} className="relative mb-8 motion-safe:animate-pop-in" />
+        <Mascot pose="cheer" size={72} className="absolute right-2 bottom-1" />
       </div>
       <p className="text-sm text-mist-300">{t('trades.arrival.note')}</p>
-    </Dialog>
+    </div>
   )
 }

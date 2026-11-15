@@ -61,6 +61,13 @@ export function tradeSnapshot(p: OwnedPokemon, ctx: EngineContext = defaultConte
     moveMasteryMinutes: { ...p.moveMasteryMinutes },
   }
   if (p.traded) v.traded = { ...p.traded }
+  if (p.mintNature) v.mintNature = p.mintNature
+  if (p.bottleCapped?.length) v.bottleCapped = [...p.bottleCapped]
+  if (p.tmMoves?.length) v.tmMoves = [...p.tmMoves]
+  if (p.teraType) {
+    v.teraType = p.teraType
+    v.teraUntil = p.teraUntil
+  }
   return v
 }
 

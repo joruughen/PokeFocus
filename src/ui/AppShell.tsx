@@ -100,14 +100,14 @@ function ScreenLoading() {
 
 /** Alert counts of the sections that live inside the phone's «More» sheet (friend requests, live events). */
 function useMoreBadges(): NavBadges {
-  // Friend requests and trade offers waiting for me (both live under Friends).
-  const friends = useIncomingCount() + useTradeTurnCount()
+  const friends = useIncomingCount()
+  const trades = useTradeTurnCount()
   const active = useLiveEvents((s) => s.active)
   const skew = useLiveEvents((s) => s.skew)
   const now = useNow() + skew
   const minute = Math.floor(now / 60_000)
   const events = useMemo(() => active.filter((e) => eventPhase(e, minute * 60_000) === 'active').length, [active, minute])
-  return { friends, events }
+  return { friends, trades, events }
 }
 
 function Rail({ route, focusing }: { route: string; focusing: boolean }) {
@@ -155,6 +155,7 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
                   <PixelIcon name={r.icon} size={20} />
                   {r.id === 'missions' && <MissionsBadge active={active} />}
                   {r.id === 'friends' && <FriendsBadge active={active} />}
+                  {r.id === 'trades' && <TradesBadge active={active} />}
                 </span>
                 <span className="max-xl:sr-only">{t(r.labelKey)}</span>
               </a>
@@ -193,18 +194,31 @@ function MissionsBadge({ active }: { active: boolean }) {
   )
 }
 
-/** Friend requests and trade offers waiting for an answer, on the nav icon. */
-function FriendsBadge({ active }: { active: boolean }) {
+/** Trade offers waiting for my answer (received, or a counteroffer to confirm), on the nav icon. */
+function TradesBadge({ active }: { active: boolean }) {
   const { t } = useTranslation()
-  const requests = useIncomingCount()
-  const trades = useTradeTurnCount()
-  const n = requests + trades
-  useHintEvent('friendRequest', requests > 0 && !active)
+  const n = useTradeTurnCount()
   if (n === 0) return null
   return (
     <span
       className={cx('absolute -top-2 -left-2 grid h-4 min-w-4 place-items-center px-0.5 font-num text-sm leading-none shadow-frame', active ? 'bg-ink text-volt-300' : 'bg-cheek-500 text-mist-50')}
-      aria-label={[requests > 0 ? t('friends.badge', { count: requests }) : '', trades > 0 ? t('trades.badge', { count: trades }) : ''].filter(Boolean).join(', ')}
+      aria-label={t('trades.badge', { count: n })}
+    >
+      {n}
+    </span>
+  )
+}
+
+/** Friend requests waiting for an answer, on the nav icon. */
+function FriendsBadge({ active }: { active: boolean }) {
+  const { t } = useTranslation()
+  const n = useIncomingCount()
+  useHintEvent('friendRequest', n > 0 && !active)
+  if (n === 0) return null
+  return (
+    <span
+      className={cx('absolute -top-2 -left-2 grid h-4 min-w-4 place-items-center px-0.5 font-num text-sm leading-none shadow-frame', active ? 'bg-ink text-volt-300' : 'bg-cheek-500 text-mist-50')}
+      aria-label={t('friends.badge', { count: n })}
     >
       {n}
     </span>

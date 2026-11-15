@@ -8,7 +8,7 @@ describe('splitNav', () => {
   it('keeps the four main sections in the bar, in order, and the rest in More', () => {
     const { primary, more } = splitNav(ROUTES)
     expect(primary.map((r) => r.id)).toEqual([...PRIMARY_NAV])
-    expect(more.map((r) => r.id)).toEqual(['bag', 'dex', 'league', 'friends', 'events', 'settings'])
+    expect(more.map((r) => r.id)).toEqual(['bag', 'dex', 'league', 'friends', 'trades', 'events', 'settings'])
     // 4 sections + the More button = 5 buttons on a phone; nothing is lost.
     expect(primary.length + 1).toBe(5)
     expect(primary.length + more.length).toBe(ROUTES.filter((r) => r.nav).length)

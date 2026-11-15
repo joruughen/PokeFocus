@@ -122,6 +122,27 @@ describe('applyTrade', () => {
     expect(p.dust).toBe(1000)
   })
 
+  it('keeps the F4 individual state: mint, Bottle Caps, TM moves and an active Tera (until it lapses)', () => {
+    const p = player()
+    const got = makeMon('kadabra', 20, {
+      uid: 'f4',
+      mintNature: 'modest',
+      bottleCapped: ['speed'],
+      tmMoves: ['psychic'],
+      teraType: 'fairy',
+      teraUntil: T0 + 5 * HOUR,
+      teraSessionsLeft: 2,
+    })
+    got.learnedMoves = [...got.learnedMoves, 'psychic']
+    const r = applyTrade(p, side(got), T0, createRng(1), ctx)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    const m = r.value.state.pokemon[r.value.uid]!
+    expect(m.speciesSlug).toBe('alakazam')
+    expect(m).toMatchObject({ mintNature: 'modest', bottleCapped: ['speed'], tmMoves: ['psychic'], teraType: 'fairy', teraUntil: T0 + 5 * HOUR, teraSessionsLeft: 2 })
+    expect(m.learnedMoves).toContain('psychic')
+  })
+
   it('keeps the first original trainer on later trades', () => {
     const p = player()
     const got = makeMon('caterpie', 5, { uid: 'z', traded: { originalTrainer: 'Misty', receivedFrom: 'Misty', receivedAt: T0 - HOUR, count: 1 } })

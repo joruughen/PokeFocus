@@ -498,6 +498,12 @@ export interface TradePokemonView {
   /** Minutes of Mastery per technique. */
   moveMasteryMinutes: Record<string, number>
   traded?: TradeRecord
+  /** F4 individual state, kept by the trade: mint (nature whose effect applies), Bottle-Capped stats, TM moves, Tera. */
+  mintNature?: string
+  bottleCapped?: StatKey[]
+  tmMoves?: string[]
+  teraType?: TypeSlug | null
+  teraUntil?: number | null
   /** Open offers: it is no longer in its owner's box (released or traded): the offer cannot complete. */
   missing?: boolean
 }

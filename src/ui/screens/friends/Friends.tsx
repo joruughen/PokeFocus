@@ -373,7 +373,7 @@ function TradeButton({ friend }: { friend: FriendSummary }) {
   if (state.ok) {
     return (
       <a href={hrefTo('trades', 'new', friend.userId)} className="inline-flex h-8 items-center gap-1.5 bg-dusk-700 px-2 font-display text-base shadow-frame hover:bg-dusk-600" aria-label={t('trades.friend.buttonOf', { name: friend.trainerName })}>
-        <PixelIcon name="reroll" size={14} />
+        <PixelIcon name="trade" size={14} />
         {t('trades.friend.button')}
       </a>
     )

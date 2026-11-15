@@ -386,6 +386,9 @@ describe('trade arrival window (ackTrade)', () => {
     expect(acked.player!.pendingTrades).toBeUndefined()
     expect(must(acked, { type: 'ackTrade' }, env(T0 + 2)).player).toEqual(acked.player)
     expect(applyAction(EMPTY_DOC, { type: 'ackTrade' }, env(T0))).toEqual({ ok: false, error: 'no_player' })
+  })
+})
+
 describe('advanced items (F4)', () => {
   function withItems(level: number, items: Record<string, number>): GameDoc {
     const doc = newPlayer()

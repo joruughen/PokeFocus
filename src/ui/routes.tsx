@@ -44,11 +44,11 @@ export const ROUTES: RouteDef[] = [
   { id: 'dex', labelKey: 'nav.dex', icon: 'dex', component: lazy(loaders.dex), nav: true, preload: loaders.dex },
   { id: 'league', labelKey: 'nav.league', icon: 'league', component: lazy(loaders.league), nav: true, preload: loaders.league },
   { id: 'friends', labelKey: 'nav.friends', icon: 'friends', component: lazy(loaders.friends), nav: true, preload: loaders.friends },
+  { id: 'trades', labelKey: 'nav.trades', icon: 'trade', component: lazy(loaders.trades), nav: true, preload: loaders.trades },
   { id: 'missions', labelKey: 'nav.missions', icon: 'missions', component: lazy(loaders.missions), nav: true, preload: loaders.missions },
   { id: 'events', labelKey: 'nav.events', icon: 'sparkle', component: lazy(loaders.events), nav: true, preload: loaders.events },
   { id: 'settings', labelKey: 'nav.settings', icon: 'settings', component: lazy(loaders.settings), nav: true, preload: loaders.settings },
-  // Reachable from Friends (trades), the version badge / Settings (changelog) and by URL (admin); not in the side rail.
-  { id: 'trades', labelKey: 'nav.trades', icon: 'reroll', component: lazy(loaders.trades), nav: false, preload: loaders.trades },
+  // Reachable from the version badge / Settings (changelog) and by URL (admin); not in the side rail.
   { id: 'changelog', labelKey: 'nav.changelog', icon: 'star', component: lazy(loaders.changelog), nav: false, preload: loaders.changelog },
   { id: 'admin', labelKey: 'nav.admin', icon: 'wrench', component: lazy(loaders.admin), nav: false },
 ]

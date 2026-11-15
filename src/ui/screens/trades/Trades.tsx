@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, tradeDustCostOf, type PlayerState } from '../../../engine'
-import type { FriendSummary, TradeOfferView, TradesResponse } from '../../../game/protocol'
-import { Button, EmptyState, Panel, PixelIcon, Tabs, TextField, toast } from '../../components'
+import type { FriendSummary, TradeOfferView, TradePokemonView, TradesResponse } from '../../../game/protocol'
+import { Button, Dialog, DialogClose, EmptyState, Panel, PixelIcon, Sprite, Tabs, TextField, toast } from '../../components'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
@@ -12,8 +12,8 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useFriends } from '../../store/social'
 import { useTrades } from '../../store/trades'
-import { friendTradeState, tradeWarnings } from './eligibility'
-import { MonPicker, TradeMonCard, tradeErrorText, WarningList } from './TradeParts'
+import { friendTradeState, tradeWarnings, type TradeWarning } from './eligibility'
+import { DustChip, MonPicker, TradeStage, tradeErrorText, WarningList } from './TradeParts'
 
 /**
  * Trades (`#/trades`, GDD §12.8): offers received and sent, and the history.
@@ -39,18 +39,73 @@ export default function Trades() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl">{t('trades.title')}</h1>
+          <h1 className="flex items-center gap-3 text-3xl">
+            <PixelIcon name="trade" size={30} className="text-volt-400" />
+            {t('trades.title')}
+          </h1>
           <p className="mt-1 max-w-[60ch] text-mist-300">{t('trades.subtitle')}</p>
         </div>
-        {data && (
-          <p className="font-display text-base text-mist-300" aria-live="polite">
-            {t('trades.today', { count: data.today, limit: data.dailyLimit })}
-          </p>
-        )}
+        {data && <TodayMeter used={data.today} limit={data.dailyLimit} />}
       </header>
       {newFor && player && data && (friend ? <NewOffer friend={friend} player={player} data={data} /> : friends && <p className="text-cheek-400">{t('trades.new.notFriend')}</p>)}
+      {!newFor && friends && <FriendPicker friends={friends} />}
       <TradesView data={data} error={error} player={player} onRetry={() => void load()} />
     </div>
+  )
+}
+
+/** Trades left today as three pips (the daily limit), not a bare number. */
+export function TodayMeter({ used, limit }: { used: number; limit: number }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex items-center gap-2" role="img" aria-label={t('trades.today', { count: used, limit })}>
+      <span className="font-display text-base text-mist-300" aria-hidden>
+        {t('trades.todayShort')}
+      </span>
+      <span className="flex gap-1" aria-hidden>
+        {Array.from({ length: limit }, (_, i) => (
+          <span key={i} className={cx('size-3.5 shadow-frame', i < used ? 'bg-dusk-600' : 'bg-volt-400')} />
+        ))}
+      </span>
+    </div>
+  )
+}
+
+/** "Offer to…": the friends I can trade with right now, one tap to start. */
+function FriendPicker({ friends }: { friends: FriendSummary[] }) {
+  const { t, i18n } = useTranslation()
+  const now = useNow()
+  const accepted = friends.filter((f) => f.status === 'friend')
+  if (accepted.length === 0) return null
+  return (
+    <Panel title={t('trades.pickFriend.title')} variant="frame" headingLevel={2}>
+      <ul className="flex flex-wrap gap-2">
+        {accepted.map((f) => {
+          const s = friendTradeState(f, now)
+          const lead = f.team?.[0]
+          return (
+            <li key={f.userId}>
+              {s.ok ? (
+                <a href={hrefTo('trades', 'new', f.userId)} className="flex min-h-12 items-center gap-2 bg-dusk-800 py-1 pr-3 pl-1 font-display text-lg shadow-frame hover:-translate-y-0.5 hover:bg-dusk-700">
+                  <span className="grid h-10 w-12 place-items-center bg-dusk-900">{lead && <Sprite kind="icon" slug={lead.speciesSlug} shiny={lead.shiny} alt="" />}</span>
+                  {f.trainerName}
+                </a>
+              ) : (
+                <span className="flex min-h-12 items-center gap-2 bg-dusk-900 py-1 pr-3 pl-2 text-mist-400 inset-shadow-well">
+                  <PixelIcon name="lock" size={14} />
+                  <span>
+                    <span className="block font-display text-lg leading-tight">{f.trainerName}</span>
+                    <span className="block text-xs">
+                      {s.reason === 'too_new' ? t('trades.pickFriend.from', { date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(s.readyAt) }) : ''}
+                    </span>
+                  </span>
+                </span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Panel>
   )
 }
 
@@ -73,29 +128,49 @@ export function TradesView({ data, error, player, onRetry }: { data: TradesRespo
       </p>
     )
   }
-  const empty = (key: 'incoming' | 'outgoing' | 'history') => (
-    <div className="bg-dusk-900 inset-shadow-well">
-      <EmptyState pose="point" title={t(`trades.empty.${key}`)} body={key === 'history' ? undefined : t('trades.empty.how')} />
-    </div>
-  )
+  const nothingYet = data.incoming.length + data.outgoing.length + data.history.length === 0
+  if (nothingYet) {
+    return (
+      <div className="bg-dusk-900 inset-shadow-well">
+        <EmptyState
+          pose="point"
+          title={t('trades.empty.title')}
+          body={t('trades.empty.body')}
+          action={
+            <a href={hrefTo('friends')} className="inline-flex min-h-10 items-center gap-2 bg-volt-400 px-4 font-display text-lg text-ink shadow-frame hover:bg-volt-300">
+              <PixelIcon name="friends" size={20} />
+              {t('trades.empty.toFriends')}
+            </a>
+          }
+        />
+      </div>
+    )
+  }
+  const empty = (key: 'incoming' | 'outgoing' | 'history') => <p className="bg-dusk-900 px-4 py-8 text-center text-mist-300 inset-shadow-well">{t(`trades.empty.${key}`)}</p>
   const list = (offers: TradeOfferView[], key: 'incoming' | 'outgoing') =>
     offers.length === 0 ? (
       empty(key)
     ) : (
-      <ul className="flex flex-col gap-4">
+      <ul className="flex flex-col gap-6">
         {offers.map((o) => (
           <OfferCard key={o.id} offer={o} player={player} data={data} />
         ))}
       </ul>
     )
   const turn = (offers: TradeOfferView[]) => offers.filter((o) => o.myTurn).length
+  const tabLabel = (text: string, n: number) => (
+    <span className="flex items-center gap-1.5">
+      {text}
+      {n > 0 && <span className="grid h-4 min-w-4 place-items-center bg-cheek-500 px-0.5 font-num text-sm leading-none text-mist-50">{n}</span>}
+    </span>
+  )
   return (
     <Tabs
       label={t('trades.tabs.label')}
       defaultValue={turn(data.outgoing) > turn(data.incoming) ? 'outgoing' : 'incoming'}
       items={[
-        { value: 'incoming', label: t('trades.tabs.incoming', { count: data.incoming.length }), content: list(data.incoming, 'incoming') },
-        { value: 'outgoing', label: t('trades.tabs.outgoing', { count: data.outgoing.length }), content: list(data.outgoing, 'outgoing') },
+        { value: 'incoming', label: tabLabel(t('trades.tabs.incoming', { count: data.incoming.length }), turn(data.incoming)), content: list(data.incoming, 'incoming') },
+        { value: 'outgoing', label: tabLabel(t('trades.tabs.outgoing', { count: data.outgoing.length }), turn(data.outgoing)), content: list(data.outgoing, 'outgoing') },
         {
           value: 'history',
           label: t('trades.tabs.history'),
@@ -133,6 +208,86 @@ function useRun() {
   return { busy, run }
 }
 
+/** What the other player sees of one of my Pokémon (to preview the stage before sending). */
+function viewOf(player: PlayerState, uid: string): TradePokemonView | null {
+  const p = player.pokemon[uid]
+  if (!p) return null
+  return {
+    uid,
+    speciesSlug: p.speciesSlug,
+    level: p.level,
+    ivs: p.ivs,
+    nature: p.nature,
+    ability: p.ability,
+    isShiny: p.isShiny,
+    equippedMoves: p.equippedMoves,
+    moves: [],
+    moveMasteryMinutes: p.moveMasteryMinutes,
+    traded: p.traded,
+    mintNature: p.mintNature,
+    bottleCapped: p.bottleCapped,
+    teraType: p.teraType,
+    teraUntil: p.teraUntil,
+  }
+}
+
+/** The final check before a trade step: the stage again, the cost and the warnings, in one dialog. */
+function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  give,
+  get,
+  partner,
+  cost,
+  warnings,
+  confirm,
+  busy,
+  onConfirm,
+  note,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  title: string
+  give: TradePokemonView | null
+  get: TradePokemonView | null
+  partner: string
+  cost: number | null
+  warnings: TradeWarning[]
+  confirm: string
+  busy: boolean
+  onConfirm: () => void
+  note?: string
+}) {
+  const { t } = useTranslation()
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      size="lg"
+      title={title}
+      description={note}
+      footer={
+        <>
+          <DialogClose render={<Button variant="secondary">{t('common.cancel')}</Button>} />
+          <Button icon="check" disabled={busy} onClick={onConfirm}>
+            {confirm}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <TradeStage
+          left={{ label: t('trades.card.youGive'), mon: give }}
+          right={{ label: t('trades.card.youGet'), mon: get, pending: t('trades.card.theyPick', { name: partner }) }}
+          center={cost !== null ? <DustChip cost={cost} /> : undefined}
+        />
+        <WarningList warnings={warnings} />
+      </div>
+    </Dialog>
+  )
+}
+
 /** Start an offer to a friend: pick my Pokémon, optional message, confirm. */
 function NewOffer({ friend, player, data }: { friend: FriendSummary; player: PlayerState; data: TradesResponse }) {
   const { t, i18n } = useTranslation()
@@ -141,14 +296,15 @@ function NewOffer({ friend, player, data }: { friend: FriendSummary; player: Pla
   const offer = useTrades((s) => s.offer)
   const [uid, setUid] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [confirming, setConfirming] = useState(false)
   const { busy, run } = useRun()
   const max = defaultContext().config.trade.messageMax
   const state = friendTradeState(friend, now)
   const mine = uid ? player.pokemon[uid] : undefined
   const minCost = mine ? tradeDustCostOf(mine) : null
-  const { warnings, blocking } = mine ? tradeWarnings(player, mine, uid, now) : { warnings: [], blocking: false }
-  // Only the warnings about what I give apply before the friend picks (theirs come with the counteroffer).
-  const mineOnly = warnings.filter((w) => w.kind === 'savedTeam' || w.kind === 'legendaryOnce' || w.kind === 'dailyLimit')
+  // Before the friend picks, only the warnings about what I give apply (theirs come with the counteroffer).
+  const mineOnly = mine ? tradeWarnings(player, mine, uid, now).warnings.filter((w) => w.kind === 'savedTeam' || w.kind === 'legendaryOnce' || w.kind === 'dailyLimit') : []
+  const limitReached = mineOnly.some((w) => w.kind === 'dailyLimit')
   return (
     <Panel title={t('trades.new.title', { name: friend.trainerName })} className="outline-2 -outline-offset-2 outline-volt-400/60">
       {!state.ok ? (
@@ -158,16 +314,17 @@ function NewOffer({ friend, player, data }: { friend: FriendSummary; player: Pla
             : t('trades.new.notFriend')}
         </p>
       ) : (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-mist-300">{t('trades.new.how', { name: friend.trainerName })}</p>
+        <div className="flex flex-col gap-5">
+          <p className="max-w-[65ch] text-mist-300">{t('trades.new.how', { name: friend.trainerName })}</p>
           <MonPicker player={player} lockedUids={data.lockedUids} selected={uid} onSelect={setUid} />
           {mine && (
-            <div className="flex flex-col gap-3">
-              <p className="font-display text-base">{t('trades.new.giving', { name: names.pokemonFull(mine) })}</p>
-              <WarningList warnings={mineOnly} />
-              <p className="text-sm text-mist-300">{t('trades.new.cost', { cost: fmtInt(minCost ?? 0, i18n.language) })}</p>
-            </div>
+            <TradeStage
+              left={{ label: t('trades.card.youGive'), mon: viewOf(player, mine.uid) }}
+              right={{ label: t('trades.card.youGet'), mon: null, pending: t('trades.card.theyPick', { name: friend.trainerName }) }}
+              center={<span className="text-sm text-mist-300">{t('trades.new.cost', { cost: fmtInt(minCost ?? 0, i18n.language) })}</span>}
+            />
           )}
+          {mine && <WarningList warnings={mineOnly} />}
           <TextField
             label={t('trades.new.message')}
             value={message}
@@ -177,30 +334,41 @@ function NewOffer({ friend, player, data }: { friend: FriendSummary; player: Pla
             autoComplete="off"
           />
           <div className="flex flex-wrap gap-2">
-            <Button
-              icon="check"
-              disabled={!mine || busy || (blocking && mineOnly.some((w) => w.kind === 'dailyLimit'))}
-              onClick={async () => {
-                if (!uid) return
-                const ok = await run(() => offer(friend.userId, uid, message.trim() || null), t('trades.new.sent', { name: friend.trainerName }))
-                if (ok) navigate('trades')
-              }}
-            >
-              {t('trades.new.send')}
+            <Button icon="trade" disabled={!mine || busy || limitReached} onClick={() => setConfirming(true)}>
+              {mine ? t('trades.new.sendNamed', { name: names.pokemon(mine) }) : t('trades.new.send')}
             </Button>
             <Button variant="ghost" onClick={() => navigate('trades')}>
               {t('common.cancel')}
             </Button>
           </div>
+          <ConfirmDialog
+            open={confirming}
+            onOpenChange={setConfirming}
+            title={t('trades.confirm.offerTitle', { name: friend.trainerName })}
+            note={t('trades.confirm.offerNote', { name: friend.trainerName })}
+            give={uid ? viewOf(player, uid) : null}
+            get={null}
+            partner={friend.trainerName}
+            cost={null}
+            warnings={mineOnly}
+            confirm={t('trades.new.send')}
+            busy={busy}
+            onConfirm={async () => {
+              if (!uid) return
+              const ok = await run(() => offer(friend.userId, uid, message.trim() || null), t('trades.new.sent', { name: friend.trainerName }))
+              setConfirming(false)
+              if (ok) navigate('trades')
+            }}
+          />
         </div>
       )}
     </Panel>
   )
 }
 
-/** An open offer: what each side gives, the cost, the warnings and the buttons of whoever has to act. */
+/** An open offer: the stage with both sides, the cost, the warnings and the buttons of whoever has to act. */
 export function OfferCard({ offer: o, player, data }: { offer: TradeOfferView; player: PlayerState; data: Pick<TradesResponse, 'lockedUids'> }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const names = useNames()
   const now = useNow()
   const counter = useTrades((s) => s.counter)
@@ -209,74 +377,96 @@ export function OfferCard({ offer: o, player, data }: { offer: TradeOfferView; p
   const cancel = useTrades((s) => s.cancel)
   const [picking, setPicking] = useState(false)
   const [uid, setUid] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
   const { busy, run } = useRun()
   const sender = o.role === 'sender'
   const partner = o.partner.trainerName
-  const mineView = sender ? o.offer : o.counter
-  const theirView = sender ? o.counter : o.offer
-  const left = Math.max(0, o.expiresAt - now)
-  const hours = Math.ceil(left / 3_600_000)
+  const hours = Math.max(1, Math.ceil((o.expiresAt - now) / 3_600_000))
 
-  // Receiver picking what to give back.
-  const picked = uid ? player.pokemon[uid] : undefined
+  // Receiver picking what to give back: the stage previews the pick.
+  const picked = uid ? viewOf(player, uid) : null
   const pickWarnings = !sender && o.status === 'offered' ? tradeWarnings(player, o.offer, uid, now) : null
   // Sender confirming the counteroffer.
   const confirmWarnings = sender && o.status === 'countered' && o.counter ? tradeWarnings(player, o.counter, o.offer.uid, now) : null
 
+  const mineView = sender ? o.offer : (o.counter ?? (picking ? picked : null))
+  const theirView = sender ? o.counter : o.offer
+  const cost = o.dustCost ?? (picked ? Math.max(tradeDustCostOf(picked), tradeDustCostOf(o.offer)) : null)
+
   return (
-    <li className={cx('flex flex-col gap-3 bg-dusk-800 p-4 shadow-frame', o.myTurn && 'outline-2 -outline-offset-2 outline-volt-400/60')}>
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="font-display text-lg leading-tight">
-          {sender ? t('trades.card.toFriend', { name: partner }) : t('trades.card.fromFriend', { name: partner })}
+    <li className={cx('flex flex-col gap-3 bg-dusk-800 p-3 shadow-frame sm:p-4', o.myTurn && 'outline-2 -outline-offset-2 outline-volt-400/70')}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-display text-xl leading-tight">{sender ? t('trades.card.toFriend', { name: partner }) : t('trades.card.fromFriend', { name: partner })}</p>
+        <p className="flex items-center gap-1 text-sm text-mist-400">
+          <PixelIcon name="clock" size={14} />
+          {t('trades.card.expires', { count: hours })}
         </p>
-        <p className="text-sm text-mist-400">{t('trades.card.expires', { count: hours })}</p>
       </div>
       {o.message && (
-        <blockquote className="border-l-4 border-dusk-600 pl-3 text-mist-100">
+        <p className="relative max-w-[60ch] self-start bg-mist-50 px-3 py-2 text-ink shadow-raised">
           <span className="sr-only">{t('trades.card.messageFrom', { name: sender ? t('trades.card.you') : partner })}</span>
           {o.message}
-        </blockquote>
+        </p>
       )}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {mineView ? <TradeMonCard mon={mineView} title={t('trades.card.youGive')} /> : <Placeholder text={t('trades.card.youPick')} />}
-        {theirView ? <TradeMonCard mon={theirView} title={t('trades.card.youGet')} /> : <Placeholder text={t('trades.card.theyPick', { name: partner })} />}
-      </div>
-      {o.dustCost !== null && <p className="text-sm text-mist-300">{t('trades.card.cost', { cost: fmtInt(o.dustCost, i18n.language) })}</p>}
+      <TradeStage
+        live={o.myTurn}
+        left={{ label: t('trades.card.youGive'), mon: mineView, pending: sender ? undefined : t('trades.card.youPick') }}
+        right={{ label: t('trades.card.youGet'), mon: theirView, pending: t('trades.card.theyPick', { name: partner }) }}
+        center={cost !== null ? <DustChip cost={cost} /> : undefined}
+      />
 
       {/* Receiver: pick and send the counteroffer. */}
       {!sender && o.status === 'offered' && (
         <div className="flex flex-col gap-3">
+          {pickWarnings && <WarningList warnings={pickWarnings.warnings.filter((w) => picking || w.kind !== 'savedTeam')} />}
           {picking ? (
             <>
+              <p className="font-display text-lg">{t('trades.card.pickTitle', { name: partner })}</p>
               <MonPicker player={player} lockedUids={data.lockedUids} selected={uid} onSelect={setUid} />
-              {picked && <p className="text-sm text-mist-300">{t('trades.card.cost', { cost: fmtInt(tradeWarningsCost(picked, o), i18n.language) })}</p>}
-              {pickWarnings && <WarningList warnings={pickWarnings.warnings} />}
               <div className="flex flex-wrap gap-2">
-                <Button
-                  icon="check"
-                  disabled={!picked || busy || pickWarnings?.blocking}
-                  onClick={() => uid && void run(() => counter(o.id, uid), t('trades.card.countered', { name: partner }))}
-                >
-                  {t('trades.card.sendCounter', { name: picked ? names.pokemon(picked) : '…' })}
+                <Button icon="trade" disabled={!picked || busy || pickWarnings?.blocking} onClick={() => setConfirming(true)}>
+                  {picked ? t('trades.card.sendCounter', { name: names.species(picked.speciesSlug) }) : t('trades.card.pickFirst')}
                 </Button>
-                <Button variant="ghost" onClick={() => setPicking(false)}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setPicking(false)
+                    setUid(null)
+                  }}
+                >
                   {t('common.cancel')}
                 </Button>
               </div>
             </>
           ) : (
-            <>
-              {pickWarnings && <WarningList warnings={pickWarnings.warnings.filter((w) => w.kind !== 'savedTeam')} />}
-              <div className="flex flex-wrap gap-2">
-                <Button icon="box" disabled={busy || o.offer.missing} onClick={() => setPicking(true)}>
-                  {t('trades.card.pick')}
-                </Button>
-                <Button variant="ghost" disabled={busy} onClick={() => void run(() => reject(o.id), t('trades.card.rejected'))}>
-                  {t('trades.card.reject')}
-                </Button>
-              </div>
-            </>
+            <div className="flex flex-wrap gap-2">
+              <Button icon="box" disabled={busy || o.offer.missing || pickWarnings?.warnings.some((w) => w.kind === 'overLevelCap' || w.kind === 'dailyLimit')} onClick={() => setPicking(true)}>
+                {t('trades.card.pick')}
+              </Button>
+              <Button variant="ghost" disabled={busy} onClick={() => void run(() => reject(o.id), t('trades.card.rejected'))}>
+                {t('trades.card.reject')}
+              </Button>
+            </div>
           )}
+          <ConfirmDialog
+            open={confirming}
+            onOpenChange={setConfirming}
+            title={t('trades.confirm.counterTitle', { name: partner })}
+            note={t('trades.confirm.counterNote', { name: partner })}
+            give={picked}
+            get={o.offer}
+            partner={partner}
+            cost={cost}
+            warnings={pickWarnings?.warnings ?? []}
+            confirm={t('trades.confirm.counterButton')}
+            busy={busy}
+            onConfirm={async () => {
+              if (!uid) return
+              const ok = await run(() => counter(o.id, uid), t('trades.card.countered', { name: partner }))
+              setConfirming(false)
+              if (ok) setPicking(false)
+            }}
+          />
         </div>
       )}
       {!sender && o.status === 'countered' && (
@@ -301,36 +491,33 @@ export function OfferCard({ offer: o, player, data }: { offer: TradeOfferView; p
         <div className="flex flex-col gap-3">
           {confirmWarnings && <WarningList warnings={confirmWarnings.warnings} />}
           <div className="flex flex-wrap gap-2">
-            <Button
-              icon="check"
-              disabled={busy || confirmWarnings?.blocking || o.counter?.missing || o.offer.missing}
-              onClick={() => void run(() => accept(o.id), t('trades.card.done', { name: partner }))}
-            >
+            <Button icon="check" disabled={busy || confirmWarnings?.blocking || o.counter?.missing || o.offer.missing} onClick={() => setConfirming(true)}>
               {t('trades.card.accept')}
             </Button>
             <Button variant="ghost" disabled={busy} onClick={() => void run(() => reject(o.id), t('trades.card.rejected'))}>
               {t('trades.card.rejectCounter')}
             </Button>
           </div>
+          <ConfirmDialog
+            open={confirming}
+            onOpenChange={setConfirming}
+            title={t('trades.confirm.acceptTitle', { name: partner })}
+            note={t('trades.confirm.acceptNote')}
+            give={o.offer}
+            get={o.counter}
+            partner={partner}
+            cost={o.dustCost}
+            warnings={confirmWarnings?.warnings ?? []}
+            confirm={t('trades.card.accept')}
+            busy={busy}
+            onConfirm={async () => {
+              await run(() => accept(o.id), t('trades.card.done', { name: partner }))
+              setConfirming(false)
+            }}
+          />
         </div>
       )}
     </li>
-  )
-}
-
-/** Cost preview while the receiver picks: the dearer of the offered Pokémon and the picked one. */
-function tradeWarningsCost(picked: { speciesSlug: string; isShiny: boolean }, o: TradeOfferView): number {
-  return Math.max(tradeDustCostOf(picked), tradeDustCostOf(o.offer))
-}
-
-function Placeholder({ text }: { text: string }) {
-  return (
-    <div className="grid min-h-32 place-items-center bg-dusk-900 p-3 text-center text-sm text-mist-400 inset-shadow-well">
-      <span className="flex flex-col items-center gap-2">
-        <PixelIcon name="help" size={20} />
-        {text}
-      </span>
-    </div>
   )
 }
 
@@ -342,29 +529,37 @@ export function HistoryRow({ offer: o }: { offer: TradeOfferView }) {
   const gave = sender ? o.offer : o.counter
   const got = sender ? o.counter : o.offer
   const gotEvolved = sender ? o.counterEvolvedTo : o.offerEvolvedTo
+  const done = o.status === 'completed'
   const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(o.completedAt ?? o.updatedAt)
-  const status =
-    o.status === 'rejected' || o.status === 'cancelled' ? t(`trades.status.${o.status}${o.closedByMe ? 'Me' : 'Them'}`, { name: o.partner.trainerName }) : t(`trades.status.${o.status}`)
+  const status = o.status === 'rejected' || o.status === 'cancelled' ? t(`trades.status.${o.status}${o.closedByMe ? 'Me' : 'Them'}`, { name: o.partner.trainerName }) : t(`trades.status.${o.status}`)
+  const icon = (m: TradePokemonView | null, evolved?: string | null) =>
+    m ? (
+      <span className="grid h-10 w-12 shrink-0 place-items-center bg-dusk-800">
+        <Sprite kind="icon" slug={evolved ?? m.speciesSlug} shiny={m.isShiny} alt="" />
+      </span>
+    ) : null
   return (
-    <li className="flex flex-wrap items-center gap-3 bg-dusk-900 p-3 inset-shadow-well">
-      <PixelIcon name={o.status === 'completed' ? 'check' : 'close'} size={16} className={o.status === 'completed' ? 'text-volt-400' : 'text-mist-400'} />
+    <li className={cx('flex flex-wrap items-center gap-3 bg-dusk-900 p-3 inset-shadow-well', !done && 'opacity-75')}>
+      <span className="flex items-center gap-1" aria-hidden>
+        {icon(gave)}
+        <PixelIcon name={done ? 'trade' : 'close'} size={14} className={done ? 'text-volt-400' : 'text-mist-400'} />
+        {done && icon(got, gotEvolved)}
+      </span>
       <div className="min-w-0 flex-1">
         <p className="font-display text-base leading-tight">{t('trades.history.with', { name: o.partner.trainerName })}</p>
         <p className="text-sm text-mist-300">
-          {o.status === 'completed' && gave && got
+          {done && gave && got
             ? t('trades.history.swap', {
                 gave: names.species(gave.speciesSlug),
-                got: gotEvolved ? `${names.species(got.speciesSlug)} → ${names.species(gotEvolved)}` : names.species(got.speciesSlug),
+                got: gotEvolved ? t('trades.history.evolved', { from: names.species(got.speciesSlug), to: names.species(gotEvolved) }) : names.species(got.speciesSlug),
               })
             : t('trades.history.offered', { name: names.species(o.offer.speciesSlug) })}
         </p>
       </div>
       <div className="text-right text-sm">
-        <p>{status}</p>
-        <p className="text-mist-400">
-          {date}
-          {o.status === 'completed' && o.dustCost !== null && <> · {t('trades.history.paid', { cost: fmtInt(o.dustCost, i18n.language) })}</>}
-        </p>
+        <p className={done ? 'text-volt-300' : 'text-mist-300'}>{status}</p>
+        <p className="text-mist-400">{date}</p>
+        {done && o.dustCost !== null && <p className="text-mist-400">{t('trades.history.paid', { cost: fmtInt(o.dustCost, i18n.language) })}</p>}
       </div>
     </li>
   )
@@ -375,7 +570,7 @@ export function TradesLink({ count }: { count: number }) {
   const { t } = useTranslation()
   return (
     <a href={hrefTo('trades')} className="inline-flex min-h-10 items-center gap-2 bg-dusk-800 px-3 font-display text-lg shadow-frame hover:bg-dusk-700">
-      <PixelIcon name="reroll" size={20} />
+      <PixelIcon name="trade" size={20} />
       {t('trades.title')}
       {count > 0 && (
         <span className="grid h-5 min-w-5 place-items-center bg-cheek-500 px-1 font-num text-sm leading-none text-mist-50 shadow-frame" aria-label={t('trades.badge', { count })}>
