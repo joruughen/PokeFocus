@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { baseContext } from '../../engine/context'
-import { atLeastOne, baseSpawn, oneInN, canAppearAt, featuredOdds, speciesReach, trainerLevelForWildLevel, wavesPerAppearance } from './spawnOdds'
+import { atLeastOne, baseSpawn, exampleWaveSizes, oneInN, canAppearAt, featuredOdds, speciesReach, trainerLevelForWildLevel, wavesPerAppearance } from './spawnOdds'
 import { spawnPreview } from './preview'
 
 const ctx = baseContext()
@@ -94,6 +94,11 @@ describe('friendly phrasing helpers', () => {
     expect(oneInN(1 / 18)).toEqual({ n: 20, tiny: false })
     expect(oneInN(1 / 2000)).toEqual({ n: 500, tiny: true })
     expect(oneInN(0)).toBeNull()
+  })
+
+  it('example wave sizes come from the config (min, middle, top league)', () => {
+    const e = ctx.config.encounters
+    expect(exampleWaveSizes(ctx)).toEqual([e.minWaveSize, 6, Math.max(...Object.values(e.leagueMaxWaveSize))])
   })
 
   it('at least one in a wave: 1 − (1 − p)^n', () => {

@@ -159,8 +159,15 @@ export function wavesPerAppearance(probability: number, waveSize: number): numbe
 /** Trainer level above which a featured species that cannot spawn counts as a risky pick for the admin (validator warning). */
 export const FEATURED_REACH_TRAINER_LEVEL = 20
 
-/** Wave sizes the help texts give examples for (a small, a typical and a big wave). */
-export const EXAMPLE_WAVE_SIZES = [3, 6, 10] as const
+/**
+ * Wave sizes the help texts give examples for, from the config: the smallest wave, the biggest one of the
+ * top league and the one in between (3, 6 and 8 with the shipped config).
+ */
+export function exampleWaveSizes(ctx: EngineContext): number[] {
+  const e = ctx.config.encounters
+  const max = Math.max(e.minWaveSize, ...Object.values(e.leagueMaxWaveSize))
+  return [...new Set([e.minWaveSize, Math.round((e.minWaveSize + max) / 2), max])]
+}
 
 /** Above this "1 in N" the number stops being meaningful: it is shown as "fewer than 1 in N". */
 export const ONE_IN_MAX = 500

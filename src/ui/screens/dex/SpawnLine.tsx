@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { defaultContext } from '../../../engine'
-import { atLeastOne, baseSpawn, EXAMPLE_WAVE_SIZES, oneInN, type BaseSpawn } from '../../../game/content/spawnOdds'
+import { atLeastOne, baseSpawn, exampleWaveSizes, oneInN, type BaseSpawn } from '../../../game/content/spawnOdds'
 import { InfoTip } from '../../components'
 import { fmtChance } from '../events/model'
 
@@ -41,7 +41,7 @@ export function SpawnLine({ slug, trainerLevel }: { slug: string; trainerLevel: 
           <span className="flex flex-col gap-1.5">
             <span>{t(`dex.spawn.${help}`)}</span>
             {chance !== null &&
-              EXAMPLE_WAVE_SIZES.map((size) => (
+              exampleWaveSizes(defaultContext()).map((size) => (
                 <span key={size}>{t('dex.spawn.example', { size, pct: fmtChance(atLeastOne(chance!, size), i18n.language) })}</span>
               ))}
             {chance !== null && <span>{t('dex.spawn.dependsOn')}</span>}
