@@ -67,6 +67,8 @@ Panel de desarrollo contra un servidor de producción: con `?dev` el panel se ab
 
 Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
 
+**F5 (intercambios entre amigos) hecha (2026-11-15, sin versión):** pantalla `#/trades` (también en la hoja «Más»), botón «Intercambiar» en Amigos, tabla `trade_offers` (migración **0012**, añade `friendships.accepted_at`), rutas `/api/trades`, reglas en `src/engine/trade.ts` (config `trade.*`). Decisiones en GDD §12.8. Por revisar en navegador a 390 px: la ficha doble del intercambio y la ventana de llegada. Por decidir: si el coste «el más caro de los dos» convence o se prefiere «cada uno paga lo que entrega».
+
 **F4 (progresión profunda) hecha (2026-11-14, sin versión):** Teracristalización, MT, Mentas, Chapas y Cápsula Habilidad (`src/engine/advanced.ts`, acciones `useTera`/`useTm`/`useMint`/`useBottleCap`/`useAbilityCapsule`), sección «Objetos avanzados» en la ficha, insignia Tera en ficha/equipo/sesión, categoría «Entrenamiento» en la Mochila, fuentes en misiones semanales y regalos al desbloquear (config `advanced.*`, editable en el admin). Economía: `npx tsx scripts/simulate-advanced.ts` y `docs/balance-report.md` §12. Por decidir: si la menta al azar (1 de 21) frustra; alternativa, menta elegible. Sin probar en navegador a 390 px.
 
 **`main` = v0.11.0** (subido a `origin/main` el 2026-11-11). **Fase E terminada** (E0–E13): contenido en vivo con borradores, validación, simulación, publicar/programar/rollback; eventos (página `#/events`, banner, destacadas, drops, misiones de evento, imágenes con `sharp`); soporte de jugadores; métricas. Guía de administración en `docs/admin.md`. Typecheck limpio y 1294 tests.
@@ -272,7 +274,7 @@ Pendiente de esta tanda:
   perfil sonoro con el micrófono (se mide el ruido en el navegador, sin enviar audio; activa Volador con ruido y Psíquico con silencio) y, opcional, clima real con Open-Meteo para Fuego/Hielo. El micrófono exige un contexto seguro: funciona en `localhost` (dev y Docker local) y en HTTPS, pero no en `http://<ip-tailscale>`. Sin dominio: `tailscale serve` da HTTPS en `https://<máquina>.<tailnet>.ts.net`. Con dominio: proxy inverso con HTTPS automático (p. ej. Caddy). Sin permiso o sin contexto seguro, la sesión sigue sin perfil sonoro.
   - **Descartado (2026-11-05):** capturas de pantalla clasificadas con IA. El Foco se queda en la etiqueta neutra; `focus.model` en la config queda sin uso.
 - ~~**F4 — Progresión profunda**~~: hecha (2026-11-14), ver «Para continuar».
-- **F5:** intercambios entre amigos (evoluciones por intercambio) y más packs de especies (proceso de curación en GDD §20.1).
+- **F5:** ~~intercambios entre amigos~~ hechos (2026-11-15); falta: más packs de especies (proceso de curación en GDD §20.1).
 - **graphify: HECHO (2026-11-06).** Grafo en `graphify-out/`. Lo que reveló y ya está arreglado:
   - **Ciclo de imports en el motor** (`context` → `missions` → `individual` → `context` y variantes): eliminado moviendo `MISSION_KINDS` a `src/engine/mission-kinds.ts`. `src/engine/no-cycles.test.ts` falla si vuelve un ciclo de imports de valores.
   - **Documentación desactualizada:** el GDD, `docs/ui-foundation.md` (§4 y Persistencia) y el README describen ya lo que existe (servidor propio, rankings por país, Foco neutro sin capturas, `useGame` como caché del servidor). El diseño original se conserva marcado como «Diseño original (reemplazado por F2…)».

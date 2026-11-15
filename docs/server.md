@@ -20,6 +20,7 @@ server/
   routes/social.ts    /api/friends/*, /api/leaderboard
   routes/events.ts    /api/events (SSE)
   routes/groups.ts    /api/groups (study groups)
+  routes/trades.ts    /api/trades (trades between friends, GDD §12.8)
   groups.ts           study-group helpers (membership hooks, overlap at claim, views, events)
   routes/weather.ts   /api/weather
   routes/announcements.ts  /api/announcements (public: scheduled maintenance windows)
@@ -169,6 +170,21 @@ Tables `study_groups` (lobby → started / ended), `study_group_members` (one ro
 - **Claim**: `friendOverlap` = time of my in-group interval during which at least one other member was in theirs ÷ my session minutes (`src/game/group.ts`), passed to the reducer as `ActionEnv.friendOverlap` (never from the client) and stored in `SessionResult.friendOverlap`. Fairy multiplier = `1 + (fairy − 1) × friendOverlap`.
 - Rate limits per user: create + invite 20 / 15 min; other group writes 120 / 15 min.
 
+### Trades between friends (GDD §12.8)
+
+Table `trade_offers` (migration `0012_trades`, which also adds `friendships.accepted_at`, backfilled with `created_at` for friendships accepted before it). One row per offer, open or closed; the closed rows are each player's trade history. Contract and error codes: `src/game/protocol.ts` «Trades»; rules: `src/engine/trade.ts`; config `trade.*` (`src/engine/config.ts`, not editable live).
+
+Flow: A offers one Pokémon to B (`offered`, optional message up to 80 graphemes) → B picks one of theirs (`countered`: B's confirmation) → A accepts (`completed`) or rejects. A can `cancel` and B can `reject` any open offer; A can also reject a counteroffer. An open offer lapses 72 h after it was made or countered (`expired`, swept lazily on every trades request of either player). Unfriending cancels the open offers between the two.
+
+- `GET /trades` → `TradesResponse { incoming, outgoing, history (last 50 closed), lockedUids, today, dailyLimit, serverNow }`. Open offers show the Pokémon as they are now in their owners' docs (`missing: true` if one is gone); closed ones the snapshot taken at completion.
+- `POST /trades { toUserId, uid, message? }` → 201 `TradeOfferView`. `POST /trades/:id/counter { uid }`, `/accept`, `/reject`, `/cancel` → `TradeOfferView`.
+- Rules, checked at every step and all again on completion: accepted friendship of at least `trade.minFriendshipDays` (3) days (`friendship_too_new` + `readyAt`); not a team member, a member of the running session or the last Pokémon; a legendary/mythical only once in its life (`OwnedPokemon.traded.count`); one open offer per Pokémon (also enforced by two partial unique indexes); at most 10 open offers sent; the receiver's level cap (§12.5); 3 completed trades per player and local day (`PlayerState.trades`); Dust. Errors carry `side: 'me' | 'partner'`.
+- **Cost:** both players pay the same Dust, that of the dearer of the two Pokémon (100, ×5 shiny, ×10 legendary/mythical, multiplied together). Charged only on completion; not enough Dust → 409 and nothing changes, the offer stays open.
+- **Completion** (`accept`): locks both `player_docs` rows `FOR UPDATE` in user-id order, then the offer row (every other route locks at most one doc, always before the offer, so there is no lock cycle); re-checks everything; the Pokémon must still have the species and shininess both players saw (`pokemon_changed`); applies both sides with `applyTrade` or none; bumps both doc versions; publishes `game` to both.
+- What moves: the whole individual (level, EXP, IVs, nature, mint, Bottle Caps, ability, techniques incl. TMs, Mastery, shiny, Tera until it lapses); Bond back to 0, nickname cleared, a pending Rest dropped, `traded { originalTrainer, receivedFrom, receivedAt, count }` recorded; Kadabra, Machoke, Graveler and Haunter evolve on arrival; the species (and its evolution) count as seen and caught; `pendingTrades` queues the arrival window (`ackTrade` empties it). No trainer EXP for a new species received by trade.
+- SSE `{ type: 'trade', offerId, status, userId, trainerName }` to both players on every change; a best-effort Web Push («X te ofrece un intercambio» / counteroffer) to the player whose turn it is, when push is configured.
+- Rate limits per user: new offers 20 / 15 min; other trade writes 120 / 15 min.
+
 ### Live content (public)
 
 Design: `docs/admin-plan.md` §1. Code: `server/content/service.ts`, `server/routes/content.ts`. Operating guide for the admin: `docs/admin.md`.
@@ -243,6 +259,7 @@ Testing locally: set the three `VAPID_*` in `.env`, enable notifications in Sett
 - `{ type: 'group', groupId, kind, userId, trainerName, reason? }` to every participant of a study group on invite / accept / decline / start / join / leave / disband / failed (`kind`); `reason` on `leave` (`pause | cancel | leave | finished`). Refetch `GET /api/groups`.
 - `{ type: 'content', hash }` to **every** connection when the active live content changes (publication, scheduled version, an event starting or ending, publishing/archiving/editing an event: the 30 s tick compares the hash and `GET /api/live-events` follows it). Refetch `GET /api/content`; screens of a pinned session keep their hash.
 - `{ type: 'event_announce', eventId, rev }` to **every** connection when an admin presses «Notify players» on a published event (`POST /api/admin/events/:id/announce`). The client refetches `GET /api/live-events` and shows the event window again for `rev` (see *Live events (public)*).
+- `{ type: 'trade', offerId, status, userId, trainerName }` to both players of a trade offer on every change (offered, countered, completed, rejected, cancelled, expired). Refetch `GET /api/trades`.
 - `{ type: 'logout' }` to the connections of a revoked session (logout-all, password change, DELETE /auth/sessions/:id), then the stream closes.
 
 The stream starts with `retry: 5000` and sends a `: ping` comment every 25 s. 401 if there is no session.

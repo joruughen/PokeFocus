@@ -121,7 +121,7 @@ export function TradeArrivalBody({ arrival }: { arrival: TradeArrival }) {
         <span className="absolute inset-0 m-auto size-48 motion-safe:animate-burst bg-[radial-gradient(circle,var(--color-volt-200)_0_30%,transparent_31%)]" aria-hidden />
         <Platform width={170} night className="absolute bottom-4" />
         <Sprite kind="showdown" slug={arrival.toSpecies} shiny={arrival.shiny} scale={2} maxHeight={130} maxWidth={200} alt={names.species(arrival.toSpecies)} className="relative mb-8 motion-safe:animate-pop-in" />
-        <Mascot pose="cheer" size={72} className="absolute right-2 bottom-1" />
+        <Mascot pose="cheer" size={48} className="absolute right-2 bottom-1" />
       </div>
       <p className="text-sm text-mist-300">{t('trades.arrival.note')}</p>
     </div>
