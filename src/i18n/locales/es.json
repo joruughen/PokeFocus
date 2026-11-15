@@ -58,7 +58,8 @@
       "trades_one": "{{count}} intercambio te espera",
       "trades_other": "{{count}} intercambios te esperan"
     },
-    "trades": "Intercambios"
+    "trades": "Intercambios",
+    "profile": "Perfil"
   },
   "trainer": {
     "level": "Entrenador nv. {{level}}",
@@ -66,7 +67,8 @@
     "streak_other": "Racha de {{count}} días",
     "bag": "Tu mochila",
     "ballCount_one": "{{count}} disponible",
-    "ballCount_other": "{{count}} disponibles"
+    "ballCount_other": "{{count}} disponibles",
+    "openProfile": "Abrir tu perfil"
   },
   "mascot": {
     "name": "Pikachu estudioso"
@@ -930,7 +932,12 @@
     "audioLab": "Laboratorio de audio",
     "weather": "Clima (sustituye al real)",
     "weatherReal": "Real",
-    "weatherNote": "Solo con DEV_TOOLS=1 en el servidor."
+    "weatherNote": "Solo con DEV_TOOLS=1 en el servidor.",
+    "trainerExp": "EXP de entrenador",
+    "trainerExpNow": "Nv. {{level}} · {{exp}} EXP",
+    "trainerExpNote": "Subir paga los premios del nivel y abre la ventana de felicitación. Bajar no quita premios ya dados (si vuelves a subir, se pagan otra vez).",
+    "trainerLevelUp": "Subir 1 nivel",
+    "trainerLevelDown": "Bajar 1 nivel"
   },
   "hints": {
     "home": {
@@ -4116,6 +4123,135 @@
       "counterButton": "Enviar mi elección",
       "acceptTitle": "Intercambio con {{name}}",
       "acceptNote": "Al confirmar, los dos Pokémon cambian de entrenador y cada uno paga el Polvo."
+    }
+  },
+  "profile": {
+    "pageTitle": "Perfil",
+    "subtitle": "Tu carné de entrenador: nivel, racha y todo lo que has estudiado.",
+    "hero": {
+      "label": "Carné de entrenador",
+      "since": "Entrenador desde el {{date}}",
+      "country": "País: {{country}}",
+      "anonymous": "Anónimo en los rankings",
+      "anonymousTip": "En los rankings global y de país los demás ven «Entrenador anónimo». Tus amigos sí ven tu nombre. Puedes cambiarlo en Ajustes.",
+      "companion": "Tu compañero",
+      "companionLeader": "Lidera tu equipo",
+      "companionBond": "Tu Pokémon con más vínculo",
+      "levelWord": "Nivel"
+    },
+    "level": {
+      "title": "Nivel de entrenador",
+      "reached": "Nivel {{level}}",
+      "expLabel": "EXP de entrenador",
+      "expText": "{{into}} / {{span}} EXP",
+      "missing_one": "Te falta {{exp}} EXP para el nivel {{next}}",
+      "missing_other": "Te faltan {{exp}} EXP para el nivel {{next}}",
+      "approx": "≈ {{time}} de estudio",
+      "orSpecies_one": "o {{count}} especie nueva",
+      "orSpecies_other": "o {{count}} especies nuevas",
+      "max": "¡Nivel máximo!",
+      "maxBody": "Llegaste al nivel {{max}}, el tope. Tu EXP total sigue sumando.",
+      "totalExp": "EXP total: {{exp}}",
+      "howAria": "Cómo se gana EXP de entrenador",
+      "howTitle": "Cómo se gana EXP de entrenador",
+      "howMinutes": "Estudiar: cada minuto de una sesión da {{count}} EXP.",
+      "howSpecies": "Capturar una especie que aún no tenías en la Pokédex: {{count}} EXP.",
+      "howNo": "Repetidas, intercambios y misiones no dan EXP de entrenador.",
+      "howReward": "Cada nivel que subes te da un premio.",
+      "nextReward": "Premio del nivel {{level}}",
+      "rewardNothing": "Este nivel no trae premio.",
+      "rewardAdded": "Se ingresa al instante, en cuanto subes."
+    },
+    "unlocks": {
+      "title": "Desbloqueos por nivel",
+      "untilNext_one": "Falta {{count}} nivel para el siguiente desbloqueo, en el nivel {{level}}.",
+      "untilNext_other": "Faltan {{count}} niveles para el siguiente desbloqueo, en el nivel {{level}}.",
+      "allDone": "Ya tienes todo desbloqueado. ¡Buen trabajo!",
+      "level": "Nivel {{level}}",
+      "unlocked": "Desbloqueado",
+      "locked": "Aún bloqueado",
+      "next": "Siguiente",
+      "gift": "Regalo al llegar: {{count}} × {{item}}",
+      "kind": {
+        "mint": {
+          "name": "Mentas",
+          "body": "Cambian el efecto de la naturaleza de un Pokémon."
+        },
+        "tera": {
+          "name": "Teracristalización",
+          "body": "Cambia el tipo de un Pokémon durante un tiempo."
+        },
+        "bottleCap": {
+          "name": "Chapas",
+          "body": "Llevan una estadística al máximo de IV."
+        },
+        "abilityCapsule": {
+          "name": "Cápsula Habilidad",
+          "body": "Cambia la habilidad de un Pokémon por la otra que tenga."
+        },
+        "missions": {
+          "name": "Mejores premios en misiones",
+          "body": "Las misiones empiezan a dar más y mejores objetos."
+        },
+        "missionsItem": "Las misiones empiezan a dar objetos como {{item}}.",
+        "wild": {
+          "name": "Salvajes más fuertes",
+          "body": "Los Pokémon salvajes aparecen entre los niveles {{min}} y {{max}}."
+        }
+      }
+    },
+    "streak": {
+      "title": "Racha de estudio",
+      "current": "Racha actual",
+      "days_one": "{{count}} día",
+      "days_other": "{{count}} días",
+      "best": "Tu mejor racha",
+      "state": {
+        "none": "Aún no tienes racha. Completa una sesión para empezarla.",
+        "today": "Hoy ya sumaste. Vuelve mañana para sumar otro día.",
+        "atRisk": "Estudiaste ayer: haz una sesión hoy para seguir sumando.",
+        "lapsed": "Ayer no estudiaste. Si llevas un Pokémon con {{move}} (una vez por semana), una sesión hoy salva la racha; si no, empieza de nuevo.",
+        "lost": "La racha se reinició, pero tu mejor marca sigue ahí. Una sesión hoy empieza otra."
+      },
+      "howAria": "Cómo se mantiene la racha",
+      "howTitle": "Cómo se mantiene la racha",
+      "howDay": "Cuenta cada día en que completas una sesión.",
+      "howMiss": "Si pasa un día entero sin estudiar, la racha vuelve a empezar en 1.",
+      "howProtect": "Un Pokémon con {{move}} en tu equipo la protege si faltas un día (una vez por semana).",
+      "howDragon": "Con {{count}} días seguidos se activa la condición de tipo {{type}} en tus sesiones.",
+      "unit_one": "día",
+      "unit_other": "días",
+      "dayStudied": "{{day}}: con sesión",
+      "dayEmpty": "{{day}}: sin sesión"
+    },
+    "stats": {
+      "title": "Tus números",
+      "hours": "Estudiado en total",
+      "sessions": "Sesiones",
+      "sessionsNote": "Promedio: {{minutes}} min",
+      "longest": "Sesión más larga",
+      "focus": "Foco medio",
+      "days": "Días estudiados",
+      "dex": "Pokédex",
+      "dexNote_one": "{{count}} especie vista",
+      "dexNote_other": "{{count}} especies vistas",
+      "shiny": "Shiny en tu caja",
+      "legendary": "Legendarios capturados",
+      "traded": "Recibidos por intercambio",
+      "tradedNote": "En tu caja",
+      "league": "Mejor liga",
+      "dust": "Polvo ganado",
+      "dustNote": "En sesiones",
+      "bond": "Más tiempo juntos",
+      "capped": "Los totales cuentan tus últimas {{count}} sesiones guardadas.",
+      "empty": {
+        "title": "Aún no hay sesiones",
+        "body": "Cuando completes tu primera sesión verás aquí tus horas, tu foco y tus semanas de estudio."
+      },
+      "weeksTitle": "Minutos por semana",
+      "weeksLabel": "Minutos estudiados en las últimas {{count}} semanas",
+      "weekTip": "Semana del {{date}}: {{minutes}} min",
+      "weeksNote": "Cada columna es una semana (de lunes a domingo); la última es la actual."
     }
   }
 }

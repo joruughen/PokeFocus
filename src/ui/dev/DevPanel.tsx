@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DAY_MS, HOUR_MS, type FocusLabel } from '../../engine'
+import { DAY_MS, defaultContext, HOUR_MS, trainerExpForLevel, type FocusLabel } from '../../engine'
 import { Button, IconButton, PixelIcon, Segmented, toast } from '../components'
 import { cx } from '../lib/cx'
 import { WEATHER_PRESETS, weatherKind, type WeatherKind } from '../lib/conditions'
@@ -189,6 +189,31 @@ export function DevPanel() {
             {t('dev.addPokemon')}
           </Button>
         </div>
+      </Section>
+
+      <Section title={t('dev.trainerExp')}>
+        {player && (
+          <>
+            <p className="mb-2 font-num text-xl leading-none">{t('dev.trainerExpNow', { level: player.trainer.level, exp: player.trainer.exp })}</p>
+            <div className="flex flex-wrap gap-2">
+              {[100, 1000].map((n) => (
+                <Button key={n} size="sm" variant="secondary" disabled={busy} onClick={() => void run(game.devAddTrainerExp(n))}>
+                  +{n}
+                </Button>
+              ))}
+              <Button size="sm" variant="secondary" disabled={busy || player.trainer.exp <= 0} onClick={() => void run(game.devAddTrainerExp(-Math.min(100, player.trainer.exp)))}>
+                −100
+              </Button>
+              <Button size="sm" variant="secondary" disabled={busy || player.trainer.level >= defaultContext().config.trainer.maxLevel} onClick={() => void run(game.devAddTrainerExp(Math.max(1, trainerExpForLevel(player.trainer.level + 1) - player.trainer.exp)))}>
+                {t('dev.trainerLevelUp')}
+              </Button>
+              <Button size="sm" variant="secondary" disabled={busy || player.trainer.level <= 1} onClick={() => void run(game.devAddTrainerExp(trainerExpForLevel(player.trainer.level - 1) - player.trainer.exp))}>
+                {t('dev.trainerLevelDown')}
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-mist-400">{t('dev.trainerExpNote')}</p>
+          </>
+        )}
       </Section>
 
       <Section title={t('dev.rng')}>
