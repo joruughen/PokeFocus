@@ -21,7 +21,7 @@
 import type { EngineContext } from '../../engine/context'
 import type { ResolvedSpawn } from '../../engine/content'
 import { isLegendarySpecies } from '../../engine/individual'
-import { minWildLevel, wildLevelRange } from '../../engine/waves'
+import { minWildLevel } from '../../engine/waves'
 import type { Species } from '../../engine/data-types'
 import { spawnPreview } from './preview'
 
@@ -64,11 +64,6 @@ function neutralShares(ctx: EngineContext, trainerLevel: number): Shares {
     byLevel.set(trainerLevel, hit)
   }
   return hit
-}
-
-/** Highest wild level any trainer level reaches (last row of the config table). */
-function highestWildLevel(ctx: EngineContext): number {
-  return Math.max(0, ...ctx.config.encounters.wildLevelByTrainerLevel.map((r) => r.max))
 }
 
 /** Lowest trainer level whose wild band reaches `wildLevel`, or null when none does. */
