@@ -64,63 +64,24 @@ Balance a vigilar:
 
 Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
 
-## ▶ Para continuar (estado al 2026-11-10, noche)
+## ▶ Para continuar (estado al 2026-11-15)
 
 Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
 
-**F5 (intercambios entre amigos) hecha (2026-11-15, sin versión):** pantalla `#/trades` (también en la hoja «Más»), botón «Intercambiar» en Amigos, tabla `trade_offers` (migración **0012**, añade `friendships.accepted_at`), rutas `/api/trades`, reglas en `src/engine/trade.ts` (config `trade.*`). Decisiones en GDD §12.8. Por revisar en navegador a 390 px: la ficha doble del intercambio y la ventana de llegada. Por decidir: si el coste «el más caro de los dos» convence o se prefiere «cada uno paga lo que entrega».
+**`main` = v0.12.0** (commit local; ver `git status -sb` para saber si falta el push). Sobre la v0.11.0 desplegada añade: F5 intercambios entre amigos (migración 0012), F4 objetos avanzados (MT 15, Tera 20, Menta a elegir 25, Cápsula 30, Chapa 40 solo de eventos; Teralitos desde el nivel 15), recompensas y ventana de subida de nivel, página Perfil (`#/profile`, con acciones dev de EXP), Mochila como página, selección múltiple para soltar en la Caja, importar/exportar JSON en el admin (`docs/admin-json.md`), buscador con filtro para especies y objetos, viñetas de color en las descripciones, probabilidad de aparición en la Pokédex y destacadas «Desde nv. N», menú «Más» móvil, cola de avisos y sprites grandes que caben. Typecheck limpio y 1720 tests.
 
-**F4 (progresión profunda) hecha (2026-11-14, sin versión):** Teracristalización, MT, Mentas, Chapas y Cápsula Habilidad (`src/engine/advanced.ts`, acciones `useTera`/`useTm`/`useMint`/`useBottleCap`/`useAbilityCapsule`), sección «Objetos avanzados» en la ficha, insignia Tera en ficha/equipo/sesión, categoría «Entrenamiento» en la Mochila, fuentes en misiones semanales y regalos al desbloquear (config `advanced.*`, editable en el admin). Economía: `npx tsx scripts/simulate-advanced.ts` y `docs/balance-report.md` §12. Niveles de desbloqueo decididos (2026-11-15): MT 15, Teracristalización 20, Menta 25, Cápsula Habilidad 30, Chapa 40; las misiones dan cada objeto desde su nivel, **las Chapas son solo de evento** (sin regalo de desbloqueo) y **las semanales ya no dan Ultra Balls** (compensado en los premios por nivel). Decidido (2026-11-15): las misiones dan la «Menta a elegir» (`choice-mint`, la naturaleza se elige al usarla; las 21 mentas concretas siguen valiendo) y los Teralitos de misiones solo caen desde el nivel de entrenador 15. Sin probar en navegador a 390 px.
+**Para desplegar v0.12.0:** `git pull` y `docker compose up -d --build` (migración 0012 automática). **No tocar `PASSWORD_PEPPER`** (ya está en el `.env`).
 
-**`main` = v0.11.0** (subido a `origin/main` el 2026-11-11). **Fase E terminada** (E0–E13): contenido en vivo con borradores, validación, simulación, publicar/programar/rollback; eventos (página `#/events`, banner, destacadas, drops, misiones de evento, imágenes con `sharp`); soporte de jugadores; métricas. Guía de administración en `docs/admin.md`. Typecheck limpio y 1294 tests.
+**Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2`. Los agentes se cortan con el límite de uso de 5 h: se retoman con un mensaje.
 
-**Recursos:** máximo 2 agentes a la vez y vitest con `--maxWorkers=2` (VS Code murió por falta de RAM con 8 y con 4). Los agentes se cortan con el límite de uso de 5 h: se retoman con un mensaje y siguen.
+**Decididas por el usuario (2026-11-15):** intercambios: los dos pagan el Polvo del Pokémon más caro, el mote se conserva, no da EXP de entrenador por especie nueva, máximo 10 ofertas abiertas; Menta a elegir; Ultra Balls: se quitan de las misiones semanales y cada 5 niveles de entrenador se da 1 extra (los hitos de Pokédex 25/50 siguen dando Ultra); multiplicadores de destacadas sin cambios (las descripciones de eventos dicen la probabilidad real, ver memoria `feedback-event-odds`).
 
-**Migraciones:** 0005 roles, 0006 contenido, 0007 `session_log`, 0008 eventos y subidas, 0009 simulación, 0010 `announce_rev` de eventos (ventana del evento y botón «Notificar a los jugadores»). Se aplican solas al arrancar.
-
-**Para desplegar v0.11.0:** `PASSWORD_PEPPER` (obligatorio en producción, `npm run pepper`, guardarlo aparte), `ADMIN_EMAILS`, volumen `uploads` en las copias de seguridad junto con PostgreSQL.
-
-**Pulido tras la QA de admin y eventos: hecho** (drops en Resultados y marca «Destacada», el admin ya no se remonta al publicar, aviso ×3/×5 contra lo vivo, `unschedule`, diálogo de nombre para borradores nuevos, fechas al editar eventos publicados). 1311 tests.
-
-**Siguiente:** decisiones de balance abiertas (más abajo), F5 (intercambios), recuperación de contraseña por correo, probar PostgreSQL real y micrófono real.
-
-**Decisiones a confirmar de v0.10.0:**
-- C: cancelar una sesión de 25 min o menos sigue sin dar nada; una cancelada no da las 2 Poké Balls por sesión.
-- E11: solo admin (con reautenticación) puede conceder objetos y Polvo; support no. El plan se contradecía.
-- E11: «últimas 20 sesiones» de la ficha sale del documento; podría pasar a leer `session_log`.
-
-**Por revisar de v0.9.0:**
-- **Navegador a 390 px:** sin probar la ventana «¿Qué hay de nuevo?», las oleadas con la Energía del equipo, los motes, los equipos guardados ni la ventana de comparación.
-- **Parálisis:** dormido **o** paralizado = sin contraataque, siempre. El agente quitó `capture.counter.paralysisSkipChance`, que era un 25 %. Confirmar que esa es la regla.
-- **Noctámbulo +14 % de puntos semanales** con la nueva Energía; el resto de perfiles van de −4 % a +5 % (`docs/balance-report.md` §11). La palanca es `energy.costBase`: con 0,45 el Pokémon se agota en 4,2–4,4 sesiones, sin simular el efecto en los puntos.
-- **Oleadas guardadas con la regla anterior,** a mitad de una oleada: sus asignaciones cuentan como ataques sin contraataque.
-- **Motes:** no se ven en los rankings ni en las pantallas sociales, a propósito. 12 emojis pueden verse anchos a 390 px.
-- **`ADMIN_EMAILS`** en el servidor desplegado para promover tu cuenta. `ADMIN_TOKEN` sigue aceptándose para el mantenimiento (queda en la auditoría como `token`); quitarlo en la versión siguiente.
-- **Copias de seguridad:** cuando lleguen las imágenes de eventos, incluir `.data/uploads` junto con PostgreSQL.
-
-**Lo siguiente, en este orden:**
-- **B** («que se entienda») y **C** (sesiones largas cancelables): A ya está en `main`, se pueden empezar.
-- **Fase E, tanda 2:**
-  - E1 validación (Opus)
-  - E3 servicio de contenido y fijado por sesión (Opus, después de A y D)
-  - E4 cliente en vivo (Sonnet)
-  - E11 soporte de jugadores (Sonnet)
-  - E12 métricas (Sonnet)
-- Tandas siguientes de E: según `docs/admin-plan.md` §7.
-
-**Decisiones tomadas el 2026-11-09:**
-- Energía: agotado en ~4–6 sesiones seguidas.
-- Al cancelar una sesión larga se conservan los bloques de 25 min y los minutos estudiados.
-- Motes de 12 caracteres como máximo.
-- Admin en vivo desde la base de datos, con versiones.
-- Imágenes de eventos con `sharp`, guardadas en disco (`UPLOADS_DIR`, por defecto `.data/uploads`, con un volumen de Docker). **Hay que incluir esa carpeta en las copias de seguridad** junto con PostgreSQL. Alternativa que se habló: guardarlas en PostgreSQL.
-- Roles `player`/`support`/`admin`, con tu cuenta promovida mediante `ADMIN_EMAILS`. `ADMIN_TOKEN` desaparece en la versión siguiente.
-
-**Decisiones de balance aún abiertas** (ver más abajo):
-- reescalado ×0,85 del Foco;
-- `legendaryChance`;
-- Ultra Balls para el maratonista;
-- suelo de Foco Interno.
+**Pendiente:**
+- Decisiones de balance: reescalado ×0,85 del Foco, `legendaryChance`, suelo de Foco Interno, +14 % del noctámbulo, +35 % de capturas del casual por las recompensas de nivel, regla de la parálisis.
+- Recuperar la contraseña por correo (opción A: enlace desde el admin; opción B: servicio de correo gratuito); paquetes de especies nuevos; detección de anomalías; push para eventos con la app cerrada; aviso cuando un objeto propio ya lo usa otro evento; nota para jugadores al publicar contenido; mensaje al regalar desde Jugadores.
+- Revisar en navegador lo que nadie ha visto aún: Perfil, intercambios con dos cuentas reales, Pokédex con probabilidad, ventanas de nivel y de evento.
+- Detalles menores: horas con punto decimal en Vínculo y Dominio, ventana de llegada de intercambio lenta (≈2,5 s), barra de EXP vacía en la ficha de algunos Pokémon, ayuda del modo Seleccionar con «Mayús/Esc» en móvil.
+- Pruebas en real: PostgreSQL, micrófono, avisos push, sonido con dos pestañas.
 
 ## Hecho: C, sesiones largas cancelables (2026-11-10, sin versión)
 
