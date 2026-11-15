@@ -29,6 +29,15 @@ Usa `grep -n` o rangos de líneas. Pesan 20-90 KB cada uno.
 - Números de balance → `docs/balance-report.md`; QA → `docs/qa-report.md`
 - Estructura del código ya indexada: `graphify-out/GRAPH_REPORT.md` (puede estar desactualizado; compara con `git rev-parse HEAD`).
 
+## Ahorro de tokens (para el agente)
+- Al terminar una tarea grande o cuando la conversación ya es larga, di una línea al usuario: «tarea cerrada: conviene `/clear` (o `/compact` si sigue el mismo tema) y `/usage` para ver el gasto». No lo repitas en cada turno.
+- Si el usuario cambia de tema a algo no relacionado en una sesión ya larga, sugiérele `/clear` antes de seguir.
+- No explores a ciegas: usa el mapa de arriba, `grep` y lecturas por rango. No releas archivos que ya tienes en contexto ni los que acabas de editar.
+- Los docs grandes (`GDD`, `server`, `balance-report`, `ui-foundation`, `engine-api`) se leen por sección, nunca enteros.
+- Tareas pequeñas o mecánicas (JSON de admin, textos, un cambio en un archivo): hazlas directamente, sin subagentes ni planes largos. Respuestas cortas: sin repetir lo ya dicho ni resumir lo que muestra el diff.
+- Subagentes: solo si la tarea es grande y separable. Prompt con los archivos exactos, resultado esperado y límite de alcance; modelo barato para lo mecánico.
+- El nivel de esfuerzo no se controla desde aquí: si una tarea es trivial, recuerda al usuario que puede bajarlo con `/effort`.
+
 ## Reglas del proyecto
 - **Nunca tocar ni volver a añadir `PASSWORD_PEPPER`** en producción. Al responder sobre despliegue, recuérdalo.
 - Cada versión nueva: entrada en `src/ui/changelog/entries.ts` y subir `version` en `package.json` (hay un test que lo comprueba).
