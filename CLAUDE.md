@@ -30,7 +30,7 @@ Usa `grep -n` o rangos de líneas. Pesan 20-90 KB cada uno.
 - Estructura del código ya indexada: `graphify-out/GRAPH_REPORT.md`.
 
 ## graphify (grafo del código en `graphify-out/`)
-No se actualiza solo. Antes de usarlo, si hay commits nuevos desde `Built from commit` de `GRAPH_REPORT.md`, corre `graphify update .` (≈6 s, solo AST, sin coste de tokens).
+Se reconstruye solo tras cada commit (git hooks `post-commit/checkout/merge`, solo AST, sin coste de tokens; no corre en worktrees de subagentes). Si dudas de si está al día, o tras cambios sin commitear: `graphify update .` (≈6 s). Desactivar un commit: `GRAPHIFY_SKIP_HOOK=1`.
 - **Úsalo para estructura, no para buscar texto.** Antes de cambiar una función o módulo compartido: `graphify affected "nombre()"` (quién la llama o importa) y `graphify explain "archivo.ts"` (conexiones). Para «cómo se conectan A y B»: `graphify path "A" "B"`. Los hubs: `graphify god-nodes`.
 - **No lo uses para localizar un fragmento de código o un texto:** ahí `grep` es más barato y más preciso. `graphify query "..."` en preguntas amplias devuelve cientos de nodos mezclados con tests; si lo usas, pon `--budget 800` y `--seed <nodo>`.
 - Si el grafo contradice al código, manda el código.
