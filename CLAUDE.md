@@ -27,9 +27,16 @@ Usa `grep -n` o rangos de líneas. Pesan 20-90 KB cada uno.
 - Sistema de diseño y componentes → `docs/ui-foundation.md`
 - Admin y eventos → `docs/admin.md`, `docs/admin-plan.md`; importar JSON → `docs/admin-json.md`
 - Números de balance → `docs/balance-report.md`; QA → `docs/qa-report.md`
-- Estructura del código ya indexada: `graphify-out/GRAPH_REPORT.md` (puede estar desactualizado; compara con `git rev-parse HEAD`).
+- Estructura del código ya indexada: `graphify-out/GRAPH_REPORT.md`.
+
+## graphify (grafo del código en `graphify-out/`)
+No se actualiza solo. Antes de usarlo, si hay commits nuevos desde `Built from commit` de `GRAPH_REPORT.md`, corre `graphify update .` (≈6 s, solo AST, sin coste de tokens).
+- **Úsalo para estructura, no para buscar texto.** Antes de cambiar una función o módulo compartido: `graphify affected "nombre()"` (quién la llama o importa) y `graphify explain "archivo.ts"` (conexiones). Para «cómo se conectan A y B»: `graphify path "A" "B"`. Los hubs: `graphify god-nodes`.
+- **No lo uses para localizar un fragmento de código o un texto:** ahí `grep` es más barato y más preciso. `graphify query "..."` en preguntas amplias devuelve cientos de nodos mezclados con tests; si lo usas, pon `--budget 800` y `--seed <nodo>`.
+- Si el grafo contradice al código, manda el código.
 
 ## Ahorro de tokens (para el agente)
+- **Al inicio de cada sesión** (en tu primera respuesta, una sola vez, en una línea): recuerda al usuario «ahorro: `/clear` entre temas, `/effort` bajo en tareas simples, `/usage` al cerrar». Si la primera petición ya es una tarea, haz la tarea y pon el recordatorio al final.
 - Al terminar una tarea grande o cuando la conversación ya es larga, di una línea al usuario: «tarea cerrada: conviene `/clear` (o `/compact` si sigue el mismo tema) y `/usage` para ver el gasto». No lo repitas en cada turno.
 - Si el usuario cambia de tema a algo no relacionado en una sesión ya larga, sugiérele `/clear` antes de seguir.
 - No explores a ciegas: usa el mapa de arriba, `grep` y lecturas por rango. No releas archivos que ya tienes en contexto ni los que acabas de editar.
