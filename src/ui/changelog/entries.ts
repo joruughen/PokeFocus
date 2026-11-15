@@ -43,8 +43,15 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
-          es: 'Objetos avanzados en la ficha de cada Pokémon: Teracristalización (nivel 20), MT, Mentas (nivel 10), Chapas (nivel 25) y Cápsula Habilidad (nivel 30). Salen en las misiones semanales según tu nivel de entrenador; la Menta es «a elegir» y los Teralitos empiezan a salir en el nivel 15.',
-          en: 'Advanced items on each Pokémon’s page: Terastallization (level 20), TMs, Mints (level 10), Bottle Caps (level 25) and Ability Capsule (level 30). They come from weekly missions depending on your trainer level; the Mint is a “Choice Mint” and Tera Shards start dropping at level 15.',
+          es: 'Objetos avanzados en la ficha de cada Pokémon: MT (nivel 15), Teracristalización (nivel 20), Menta a elegir (nivel 25), Cápsula Habilidad (nivel 30) y Chapas (nivel 40, solo en eventos). Salen en las misiones semanales según tu nivel de entrenador; los Teralitos empiezan a salir en el nivel 15.',
+          en: 'Advanced items on each Pokémon’s page: TMs (level 15), Terastallization (level 20), Choice Mint (level 25), Ability Capsule (level 30) and Bottle Caps (level 40, events only). They come from weekly missions depending on your trainer level; Tera Shards start dropping at level 15.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Las misiones semanales ya no dan Ultra Balls (ahora dan Super Balls, pociones y Polvo); a cambio, cada 5 niveles de entrenador recibes una Ultra Ball extra.',
+          en: 'Weekly missions no longer give Ultra Balls (they now give Great Balls, potions and Dust); in exchange, every 5 trainer levels you get an extra Ultra Ball.',
         },
       },
       {
