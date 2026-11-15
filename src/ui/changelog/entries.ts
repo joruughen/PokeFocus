@@ -36,15 +36,15 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
-          es: 'Intercambios con amigos: ofrece un Pokémon, tu amigo elige qué te da a cambio y los dos confirman. Kadabra, Machoke, Graveler y Haunter evolucionan al llegar. Necesitas 3 días de amistad y cuesta algo de Polvo.',
-          en: 'Trades with friends: offer a Pokémon, your friend picks what to give you back and you both confirm. Kadabra, Machoke, Graveler and Haunter evolve when they arrive. You need 3 days of friendship and it costs some Dust.',
+          es: 'Intercambios con amigos: ofrece un Pokémon, tu amigo elige qué te da a cambio y los dos confirman. Kadabra, Machoke, Graveler y Haunter evolucionan al llegar. Necesitas 3 días de amistad y cuesta algo de Polvo. El Pokémon conserva su mote.',
+          en: 'Trades with friends: offer a Pokémon, your friend picks what to give you back and you both confirm. Kadabra, Machoke, Graveler and Haunter evolve when they arrive. You need 3 days of friendship and it costs some Dust. The Pokémon keeps its nickname.',
         },
       },
       {
         kind: 'new',
         text: {
-          es: 'Objetos avanzados en la ficha de cada Pokémon: Teracristalización (nivel 20), MT, Mentas (nivel 10), Chapas (nivel 25) y Cápsula Habilidad (nivel 30). Salen en las misiones semanales según tu nivel de entrenador.',
-          en: 'Advanced items on each Pokémon’s page: Terastallization (level 20), TMs, Mints (level 10), Bottle Caps (level 25) and Ability Capsule (level 30). They come from weekly missions depending on your trainer level.',
+          es: 'Objetos avanzados en la ficha de cada Pokémon: Teracristalización (nivel 20), MT, Mentas (nivel 10), Chapas (nivel 25) y Cápsula Habilidad (nivel 30). Salen en las misiones semanales según tu nivel de entrenador; la Menta es «a elegir» y los Teralitos empiezan a salir en el nivel 15.',
+          en: 'Advanced items on each Pokémon’s page: Terastallization (level 20), TMs, Mints (level 10), Bottle Caps (level 25) and Ability Capsule (level 30). They come from weekly missions depending on your trainer level; the Mint is a “Choice Mint” and Tera Shards start dropping at level 15.',
         },
       },
       {
