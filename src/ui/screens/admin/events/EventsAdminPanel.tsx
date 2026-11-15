@@ -11,6 +11,8 @@ import type { EventDraft, EventGroup } from './draft'
 import { eventGroup } from './draft'
 import { EventEditor } from './EventEditor'
 import { eventsErrorText } from './errors'
+import { EventImportDialog, type EventImported } from '../import/EventImportDialog'
+import type { ImportInfo } from '../import/logic'
 
 const GROUPS: EventGroup[] = ['active', 'scheduled', 'draft', 'past']
 
@@ -26,7 +28,7 @@ export function groupEvents(items: readonly AdminEvent[]): Record<EventGroup, Ad
 }
 
 /** `key` stays the same while one form is open (a new event keeps its form after its first save). */
-type Selection = { kind: 'none' } | { kind: 'edit'; key: string; event: AdminEvent | null; seed: EventDraft | null }
+type Selection = { kind: 'none' } | { kind: 'edit'; key: string; event: AdminEvent | null; seed: EventDraft | null; prefill?: EventDraft | null; info?: ImportInfo | null }
 
 /**
  * Events tab of the admin screen (`#/admin`): the list of events by state and the editor. Needs the admin
@@ -37,6 +39,7 @@ export default function EventsAdminPanel() {
   const [error, setError] = useState<string | null>(null)
   const [sel, setSel] = useState<Selection>({ kind: 'none' })
   const [elevated, setElevated] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -67,6 +70,8 @@ export default function EventsAdminPanel() {
         key={sel.key}
         event={sel.event}
         seed={sel.seed}
+        prefill={sel.prefill}
+        importInfo={sel.info}
         elevated={elevated}
         onElevated={setElevated}
         onSaved={upsert}
@@ -83,14 +88,26 @@ export default function EventsAdminPanel() {
     )
   }
 
+  /** An import became a draft: the editor opens with the imported fields unsaved (on a new event, or on the draft it updates). */
+  const imported = ({ draft, target, info }: EventImported) =>
+    setSel(
+      target
+        ? { kind: 'edit', key: `${target.id}-import-${Date.now()}`, event: target, seed: null, prefill: draft, info }
+        : { kind: 'edit', key: `new-${Date.now()}`, event: null, seed: null, prefill: draft, info },
+    )
+
   return (
-    <EventsList
-      items={items}
-      error={error}
-      onRetry={() => void load()}
-      onNew={() => setSel({ kind: 'edit', key: `new-${Date.now()}`, event: null, seed: null })}
-      onOpen={(ev) => setSel({ kind: 'edit', key: ev.id, event: ev, seed: null })}
-    />
+    <>
+      <EventsList
+        items={items}
+        error={error}
+        onRetry={() => void load()}
+        onNew={() => setSel({ kind: 'edit', key: `new-${Date.now()}`, event: null, seed: null })}
+        onImport={items ? () => setImporting(true) : undefined}
+        onOpen={(ev) => setSel({ kind: 'edit', key: ev.id, event: ev, seed: null })}
+      />
+      <EventImportDialog open={importing} onOpenChange={setImporting} mode="list" events={items ?? []} onImported={imported} />
+    </>
   )
 }
 
@@ -99,11 +116,13 @@ export interface EventsListProps {
   error: string | null
   onRetry: () => void
   onNew: () => void
+  /** Open the JSON import (absent while the list is loading). */
+  onImport?: () => void
   onOpen: (e: AdminEvent) => void
 }
 
 /** The events by state (running, scheduled, drafts, past), each one a button that opens the editor. */
-export function EventsList({ items, error, onRetry, onNew, onOpen }: EventsListProps) {
+export function EventsList({ items, error, onRetry, onNew, onImport, onOpen }: EventsListProps) {
   const { t, i18n } = useTranslation()
   const lng = asLocale(i18n.language)
   const grouped = useMemo(() => (items ? groupEvents(items) : null), [items])
@@ -111,9 +130,16 @@ export function EventsList({ items, error, onRetry, onNew, onOpen }: EventsListP
     <Panel
       title={t('eventsAdmin.list.title')}
       actions={
-        <Button size="sm" icon="plus" onClick={onNew}>
-          {t('eventsAdmin.list.new')}
-        </Button>
+        <>
+          {onImport && (
+            <Button size="sm" variant="secondary" icon="plus" onClick={onImport}>
+              {t('adminJson.import.button')}
+            </Button>
+          )}
+          <Button size="sm" icon="plus" onClick={onNew}>
+            {t('eventsAdmin.list.new')}
+          </Button>
+        </>
       }
     >
       <div className="flex flex-col gap-6">

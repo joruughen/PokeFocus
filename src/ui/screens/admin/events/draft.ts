@@ -158,13 +158,14 @@ function missionToDraft(m: EventMissionDef): DraftMission {
   }
 }
 
-/** The form for a saved event. */
-export function draftFromEvent(e: AdminEvent): EventDraft {
+/** What the form keeps about a saved event that is not an input (where the draft lives and its image). */
+export type DraftMeta = Pick<EventDraft, 'id' | 'status' | 'revision' | 'imageId' | 'image'>
+
+/** The form for an event's data (`AdminEvent`, or an imported JSON), kept on the given draft identity. */
+export function draftFromBody(e: Pick<EventRequestBody, 'slug' | 'name' | 'description' | 'startsAt' | 'endsAt' | 'overlay'>, meta: DraftMeta): EventDraft {
   const o = e.overlay
   return {
-    id: e.id,
-    status: e.status,
-    revision: e.revision,
+    ...meta,
     slug: e.slug,
     nameEs: e.name.es,
     nameEn: e.name.en,
@@ -172,8 +173,6 @@ export function draftFromEvent(e: AdminEvent): EventDraft {
     descEn: e.description.en,
     startsAt: toLocalInput(e.startsAt),
     endsAt: toLocalInput(e.endsAt),
-    imageId: e.imageId,
-    image: e.image,
     featured: o.featured.map((f) => ({ species: f.species, weightMult: String(f.weightMult) })),
     shinyOn: o.shiny !== undefined,
     shinyPct: o.shiny ? toPct(o.shiny.chance) : '0.5',
@@ -184,6 +183,11 @@ export function draftFromEvent(e: AdminEvent): EventDraft {
     missions: o.missions.map(missionToDraft),
     items: Object.entries(o.items ?? {}).map(([slug, it]) => ({ slug, nameEs: it.names.es, nameEn: it.names.en, ...(it.description && { description: it.description }) })),
   }
+}
+
+/** The form for a saved event. */
+export function draftFromEvent(e: AdminEvent): EventDraft {
+  return draftFromBody(e, { id: e.id, status: e.status, revision: e.revision, imageId: e.imageId, image: e.image })
 }
 
 export interface DraftProblem {

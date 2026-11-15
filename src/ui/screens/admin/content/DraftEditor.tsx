@@ -17,6 +17,8 @@ import { DiffList, IssueList, issuesToSet, ValidationSummary } from './ReviewPan
 import { SimRuns } from './SimRuns'
 import { SpawnPreview } from './SpawnPreview'
 import { versionName } from './versions'
+import { ExportDialog } from '../import/ExportDialog'
+import { contentExportText, exportFileName } from '../import/logic'
 
 export interface DraftEditorProps {
   first: AdminContentVersionResponse
@@ -56,6 +58,7 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
   )
   const [validating, setValidating] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [exported, setExported] = useState<string | null>(null)
 
   // Save what is pending when the editor closes.
   useEffect(
@@ -157,9 +160,14 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
       <Panel
         title={t('admin.content.editor.title', { name: versionName(state.server) })}
         actions={
-          <Button variant="ghost" size="sm" icon="back" onClick={onClose}>
-            {t('admin.content.editor.back')}
-          </Button>
+          <>
+            <Button variant="secondary" size="sm" icon="copy" onClick={() => void contentExportText({ title: state.title || versionName(state.server), note: state.note, patch: state.patch }).then(setExported)}>
+              {t('adminJson.export.button')}
+            </Button>
+            <Button variant="ghost" size="sm" icon="back" onClick={onClose}>
+              {t('admin.content.editor.back')}
+            </Button>
+          </>
         }
       >
         <div className="grid gap-4 md:grid-cols-2">
@@ -193,6 +201,8 @@ export function DraftEditor({ first, live, onClose, onPublished }: DraftEditorPr
           </Button>
         </div>
       </div>
+
+      <ExportDialog open={exported !== null} onOpenChange={(o) => !o && setExported(null)} text={exported ?? ''} fileName={exportFileName(state.title || versionName(state.server), 'content')} kind="content" />
 
       <PublishDialog
         open={publishing}
