@@ -14,6 +14,11 @@ export interface MonTileProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Energy fraction 0–1 (shows a thin meter); omit to hide. */
   energy?: number
   selected?: boolean
+  /**
+   * Selection mode (Box multi-select): the tile becomes a checkbox. With `blockedReason` it
+   * cannot be checked (still focusable, the reason is read out and shown as a tooltip).
+   */
+  select?: { checked: boolean; blockedReason?: string }
 }
 
 /**
@@ -21,7 +26,7 @@ export interface MonTileProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * leader marker, shiny star, a thin Energy meter. A single button (no nested
  * focusables) with a full aria-label.
  */
-export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonTile({ mon, teamSlot: slot, energy, selected, className, ...rest }, ref) {
+export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonTile({ mon, teamSlot: slot, energy, selected, select, className, ...rest }, ref) {
   const { t } = useTranslation()
   const names = useNames()
   const sp = defaultContext().speciesBySlug.get(mon.speciesSlug)
@@ -33,6 +38,7 @@ export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonT
     mon.isShiny ? t('pokemon.shiny') : '',
     slot === 0 ? t('team.leader') : slot !== null ? t('box.inTeam') : '',
     energy !== undefined && energy <= 0 ? t('box.exhaustedShort') : '',
+    select?.blockedReason ?? '',
   ]
     .filter(Boolean)
     .join(', ')
@@ -41,10 +47,13 @@ export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonT
       ref={ref}
       type="button"
       aria-label={label}
+      {...(select ? { role: 'checkbox', 'aria-checked': select.checked, 'aria-disabled': select.blockedReason ? true : undefined, title: select.blockedReason } : {})}
       className={cx(
         'group relative flex flex-col items-stretch bg-dusk-800 text-left shadow-frame transition-[background-color,translate] duration-75',
         'hover:-translate-y-0.5 hover:bg-dusk-700 active:translate-y-0',
         selected && 'bg-dusk-700 outline-3 outline-offset-2 outline-volt-400',
+        select?.checked && 'bg-dusk-700 outline-3 -outline-offset-3 outline-cheek-400',
+        select?.blockedReason && 'opacity-55 hover:translate-y-0 hover:bg-dusk-800',
         className,
       )}
       {...rest}
@@ -60,6 +69,14 @@ export const MonTile = forwardRef<HTMLButtonElement, MonTileProps>(function MonT
         {mon.isShiny && (
           <span className="absolute top-1 right-1 bg-shiny-300 px-1 font-display text-sm leading-tight text-ink shadow-frame" aria-hidden>
             ★
+          </span>
+        )}
+        {select && (
+          <span
+            className={cx('absolute right-1 bottom-1 grid size-6 place-items-center shadow-frame', select.checked ? 'bg-cheek-500 text-mist-50' : select.blockedReason ? 'bg-dusk-700 text-mist-400' : 'bg-dusk-900 text-transparent')}
+            aria-hidden
+          >
+            {select.blockedReason ? <PixelIcon name="lock" size={14} /> : <PixelIcon name="check" size={14} />}
           </span>
         )}
         <span className="absolute bottom-1 left-1 flex gap-0.5" aria-hidden>

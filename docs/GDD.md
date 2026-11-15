@@ -701,6 +701,7 @@ Además, con las horas de estudio (no con el nivel) crecen el **Vínculo** (§8)
 
 - **Capturar** da 3 caramelos de esa línea evolutiva (Bulbasaur, Ivysaur y Venusaur comparten caramelos).
 - **Soltar** da 1 caramelo (2 si estaba en 2.ª etapa, 3 si en 3.ª).
+- En la Caja, **Seleccionar** permite marcar varios Pokémon (los del equipo no) y soltarlos de una vez (máx. 200, todo o nada). La confirmación resume los caramelos por línea y avisa de shiny, legendarios/míticos, nivel ≥ 30, motes y equipos guardados.
 - **1 caramelo = 300 EXP** (media sesión de estudio) para cualquier Pokémon de esa línea.
 
 ### 12.3 Polvo de Estudio: el freno

@@ -735,6 +735,9 @@
       "unknown_pokemon": "Ese Pokémon ya no está.",
       "session_active": "Termina la sesión antes de cambiar el equipo o sus técnicas.",
       "in_team": "No puedes soltar a un miembro del equipo.",
+      "empty_selection": "No hay ningún Pokémon seleccionado.",
+      "too_many_selected": "Puedes soltar como máximo 200 Pokémon a la vez.",
+      "duplicate_selection": "La selección tiene Pokémon repetidos.",
       "team_too_large": "El equipo tiene un máximo de 6.",
       "team_empty": "El equipo necesita al menos un Pokémon.",
       "duplicate_in_team": "Ese Pokémon ya está en el equipo.",
@@ -989,7 +992,7 @@
     "box": {
       "intro": {
         "title": "Tu Caja",
-        "body": "Aquí vive cada Pokémon que capturas. Toca uno para ver su ficha: técnicas, caramelos, evolución y si se suma al equipo."
+        "body": "Aquí vive cada Pokémon que capturas. Toca uno para ver su ficha: técnicas, caramelos, evolución y si se suma al equipo. Con «Seleccionar» puedes soltar varios a la vez."
       },
       "filters": {
         "title": "Filtra y ordena",
@@ -1313,7 +1316,49 @@
       "title": "Ningún Pokémon coincide",
       "body": "Prueba con otro nombre, tipo o rol, o quita los filtros para ver toda la Caja."
     },
-    "bagLink": "Abrir la mochila ({{dust}} de Polvo de Estudio)"
+    "bagLink": "Abrir la mochila ({{dust}} de Polvo de Estudio)",
+    "select": {
+      "start": "Seleccionar",
+      "startTip": "Marca varios Pokémon para soltarlos de una vez y quedarte con sus caramelos.",
+      "bar": "Selección de Pokémon",
+      "help": "Toca los Pokémon para marcarlos; con Mayús + clic marcas un rango. Esc para salir.",
+      "count_one": "{{count}} seleccionado",
+      "count_other": "{{count}} seleccionados",
+      "hidden_one": "{{count}} fuera del filtro",
+      "hidden_other": "{{count}} fuera del filtro",
+      "visible": "Seleccionar visibles",
+      "clear": "Quitar selección",
+      "release": "Soltar…",
+      "cancel": "Cancelar",
+      "inTeam": "En el equipo: no se puede soltar. Quítalo del equipo primero.",
+      "none": "No hay Pokémon que se puedan seleccionar con estos filtros.",
+      "dialogTitle_one": "¿Soltar {{count}} Pokémon?",
+      "dialogTitle_other": "¿Soltar {{count}} Pokémon?",
+      "dialogBody": "Volverán a la naturaleza y recibirás sus caramelos. No se puede deshacer.",
+      "gains": "Caramelos que recibes",
+      "gain_one": "{{count}} Pokémon",
+      "gain_other": "{{count}} Pokémon",
+      "total_one": "Total: +{{count}} caramelo",
+      "total_other": "Total: +{{count}} caramelos",
+      "warnTitle": "Revisa antes de soltar",
+      "more": "y {{count}} más",
+      "keep": "Quitar de la selección",
+      "warn": {
+        "shiny_one": "{{count}} es shiny",
+        "shiny_other": "{{count}} son shiny",
+        "legendary_one": "{{count}} es legendario o mítico",
+        "legendary_other": "{{count}} son legendarios o míticos",
+        "preset_one": "{{count}} está en un equipo guardado",
+        "preset_other": "{{count}} están en equipos guardados",
+        "nickname_one": "{{count}} tiene mote",
+        "nickname_other": "{{count}} tienen mote",
+        "highLevel_one": "{{count}} es de nivel {{level}} o más",
+        "highLevel_other": "{{count}} son de nivel {{level}} o más"
+      },
+      "confirm": "Soltar {{count}}",
+      "done_one": "Soltaste {{count}} Pokémon: +{{total}} caramelos",
+      "done_other": "Soltaste {{count}} Pokémon: +{{total}} caramelos"
+    }
   },
   "detail": {
     "nav": "Navegar por la Caja",

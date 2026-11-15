@@ -82,6 +82,9 @@ type BoxError =
   | 'wrong_chain'
   | 'wrong_type'
   | 'invalid_count'
+  | 'empty_selection'
+  | 'too_many_selected'
+  | 'duplicate_selection'
   | EquipError
   | EvolutionBlock
   | 'no_such_evolution'
@@ -92,17 +95,60 @@ function sessionLocks(state: PlayerState, uid?: string): boolean {
   return state.activeSession !== null && (uid === undefined || state.activeSession.teamUids.includes(uid))
 }
 
+/** Candies of its line a Pokémon of this species gives when released (1/2/3 by stage). */
+export function releaseCandyGain(speciesSlug: string, ctx: EngineContext = defaultContext()): { chainId: string; gain: number } {
+  const sp = getSpecies(speciesSlug, ctx)
+  return { chainId: String(sp.evolutionChainId), gain: ctx.config.progression.candiesOnRelease[sp.stage - 1] ?? 1 }
+}
+
 /** Release a Pokémon: gives 1/2/3 candies of its line by stage. Team members cannot be released. */
 export function releasePokemon(state: PlayerState, uid: string, ctx: EngineContext = defaultContext()): Result<PlayerState, BoxError> {
   const p = state.pokemon[uid]
   if (!p) return err('unknown_pokemon')
   if (state.team.includes(uid)) return err('in_team')
-  const sp = getSpecies(p.speciesSlug, ctx)
-  const gain = ctx.config.progression.candiesOnRelease[sp.stage - 1] ?? 1
-  const key = String(sp.evolutionChainId)
+  const { chainId: key, gain } = releaseCandyGain(p.speciesSlug, ctx)
   const pokemon = { ...state.pokemon }
   delete pokemon[uid]
   return ok({ ...state, pokemon, candies: { ...state.candies, chains: { ...state.candies.chains, [key]: (state.candies.chains[key] ?? 0) + gain } } })
+}
+
+/** Most Pokémon one `releaseMany` request may release. */
+export const MAX_RELEASE_BATCH = 200
+
+export interface ReleaseManyResult {
+  state: PlayerState
+  /** How many were released (= `uids.length`). */
+  released: number
+  /** Candies gained per evolution chain id. */
+  candies: Record<string, number>
+  /** Sum of `candies`. */
+  totalCandies: number
+}
+
+/**
+ * Release several Pokémon at once, all or nothing: if any uid is unknown or in
+ * the team, or the list is empty, has repeats or more than `MAX_RELEASE_BATCH`,
+ * it fails and nothing changes. Each one goes through `releasePokemon`, so the
+ * rules are the same as releasing them one by one (saved teams keep the uid of
+ * a released member; applying one reports it as missing).
+ */
+export function releaseMany(state: PlayerState, uids: readonly string[], ctx: EngineContext = defaultContext()): Result<ReleaseManyResult, BoxError> {
+  if (uids.length === 0) return err('empty_selection')
+  if (uids.length > MAX_RELEASE_BATCH) return err('too_many_selected')
+  if (new Set(uids).size !== uids.length) return err('duplicate_selection')
+  let s = state
+  const candies: Record<string, number> = {}
+  let totalCandies = 0
+  for (const uid of uids) {
+    const p = s.pokemon[uid]
+    const r = releasePokemon(s, uid, ctx)
+    if (!r.ok) return err(r.error)
+    s = r.value
+    const { chainId, gain } = releaseCandyGain(p!.speciesSlug, ctx)
+    candies[chainId] = (candies[chainId] ?? 0) + gain
+    totalCandies += gain
+  }
+  return ok({ state: s, released: uids.length, candies, totalCandies })
 }
 
 export type CandyKind = { kind: 'species' } | { kind: 'type'; type: TypeSlug }

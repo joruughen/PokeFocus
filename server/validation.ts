@@ -1,6 +1,6 @@
 /** zod schemas for every request body (auth, friends, game actions). */
 import { z } from 'zod'
-import { ALL_TYPES, defaultContext, type TypeSlug } from '../src/engine'
+import { ALL_TYPES, defaultContext, MAX_RELEASE_BATCH, type TypeSlug } from '../src/engine'
 import { MAINTENANCE_MAX_MS, MAINTENANCE_NOTE_MAX, type GameAction } from '../src/game/protocol'
 import { PASSWORD_MAX, PASSWORD_MIN } from './auth/password'
 
@@ -116,6 +116,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('nextWave', {}),
   act('finishWaves', {}),
   act('release', { uid: id }),
+  act('releaseMany', { uids: z.array(id).min(1).max(MAX_RELEASE_BATCH).refine((a) => new Set(a).size === a.length, 'duplicate uids') }),
   act('feedCandy', {
     uid: id,
     candy: z.discriminatedUnion('kind', [z.object({ kind: z.literal('species') }), z.object({ kind: z.literal('type'), type: typeSlug })]),

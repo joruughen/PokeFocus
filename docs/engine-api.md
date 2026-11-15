@@ -146,6 +146,7 @@ Other calls:
 
 All return `Result<…, BoxError>`; Pokémon in the active session are locked.
 - `releasePokemon(state, uid)` → candies by stage (1/2/3); team members can't be released.
+- `releaseMany(state, uids)` → releases up to `MAX_RELEASE_BATCH` (200) unique uids through `releasePokemon`, all or nothing (`empty_selection`, `too_many_selected`, `duplicate_selection`, `in_team`, `unknown_pokemon`); returns `{ state, released, candies (per chain id), totalCandies }`. `releaseCandyGain(slug)` gives the chain id and candies of one Pokémon. Saved teams keep the uid of a released member (applying the preset reports it as missing), as with `release`.
 - `useCandy(state, uid, { kind: 'species' } | { kind: 'type', type }, count)` → `{ state, events, dustSpent }`. Cost `25 + 3·level` per candy at the current level; stops at the level cap (`level_cap` if none could be used).
 - `equipMoves(state, uid, moves)` → validates slots (`techniqueSlots(level)`), duplicates, known (learned ∪ extra), unlocked (`move_locked` for an extra move below its unlock level) and usable.
 - `setTeam(state, uids, now)` / `setLeader(state, uid, now)` → 1–6 distinct uids, only between sessions; refreshes energy first.

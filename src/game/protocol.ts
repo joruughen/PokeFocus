@@ -118,6 +118,8 @@ export type GameAction =
   | { type: 'finishWaves' }
   // Box
   | { type: 'release'; uid: string }
+  /** Release up to `MAX_RELEASE_BATCH` Pokémon at once (all or nothing; none may be in the team). */
+  | { type: 'releaseMany'; uids: string[] }
   | { type: 'feedCandy'; uid: string; candy: CandyKind; count: number }
   | { type: 'equip'; uid: string; moves: string[] }
   | { type: 'setTeam'; uids: string[] }
@@ -172,6 +174,8 @@ export interface ActionResults {
   nextWave: null
   finishWaves: null
   release: null
+  /** `candies`: gained per evolution chain id. */
+  releaseMany: { released: number; candies: Record<string, number>; totalCandies: number }
   feedCandy: { events: ProgressEvent[]; dustSpent: number; used: number }
   equip: null
   setTeam: null
