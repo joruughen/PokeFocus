@@ -1,7 +1,8 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
-import { BALL_ORDER, missionsView } from '../engine'
+import { BALL_ORDER, missionsView, toLocal } from '../engine'
+import { streakStatus } from './screens/profile/profileModel'
 import { DevToggle } from './dev/DevPanel'
 import { StageBadge } from './changelog/StageBadge'
 import { WhatsNewDialog } from './changelog/WhatsNewDialog'
@@ -252,7 +253,9 @@ function TrainerCard() {
   const user = useAuth((s) => s.user)
   const logout = useAuth((s) => s.logout)
   const route = useRoute()
-  const streak = player.streak.current
+  // Same rule as the Profile page: a streak missed for 2+ days no longer shows as running.
+  const now = useNow()
+  const streak = streakStatus(player.streak, toLocal(now, player.profile.timezone).dayKey).current
   const onProfile = route === 'profile'
   return (
     <div className="flex flex-col gap-3 bg-dusk-800 p-3 shadow-frame max-xl:items-center max-xl:p-2">
