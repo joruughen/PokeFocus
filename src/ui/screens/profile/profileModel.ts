@@ -156,17 +156,25 @@ export function trainerUnlocks(level: number, ctx: EngineContext = defaultContex
     })
   }
 
-  // Missions: the first item each improved reward tier brings (random picks are not listed).
-  const missionItems = new Map<number, string>()
+  // Missions: the levels where a reward tier improves, with the item that most missions start giving there (an item
+  // their lower tiers did not give; random picks are not listed).
+  const gained = new Map<number, Map<string, number>>()
   for (const def of ctx.missions.pool) {
-    for (const tier of def.rewards) {
+    const before = new Set<string>()
+    for (const tier of [...def.rewards].sort((x, y) => (x.minTrainerLevel ?? 1) - (y.minTrainerLevel ?? 1))) {
       const lvl = tier.minTrainerLevel ?? 1
-      if (lvl <= 1) continue
-      const first = Object.entries(tier.items ?? {}).find(([, n]) => n > 0)?.[0]
-      if (!missionItems.has(lvl)) missionItems.set(lvl, first ?? '')
+      const counts = gained.get(lvl) ?? new Map<string, number>()
+      for (const [slug, n] of Object.entries(tier.items ?? {})) {
+        if (n > 0 && !before.has(slug)) counts.set(slug, (counts.get(slug) ?? 0) + 1)
+      }
+      gained.set(lvl, counts)
+      for (const [slug, n] of Object.entries(tier.items ?? {})) if (n > 0) before.add(slug)
     }
   }
-  for (const [lvl, item] of missionItems) add(lvl, { kind: 'missions', ...(item ? { item } : {}) })
+  for (const [lvl, counts] of gained) {
+    const top = [...counts].sort((x, y) => y[1] - x[1])[0]?.[0]
+    add(lvl, { kind: 'missions', ...(top ? { item: top } : {}) })
+  }
 
   for (const w of ctx.config.encounters.wildLevelByTrainerLevel) add(w.trainerLevel, { kind: 'wild', wild: { min: w.min, max: w.max } })
 

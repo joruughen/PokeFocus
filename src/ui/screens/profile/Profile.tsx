@@ -23,6 +23,29 @@ export function fmtStudy(min: number, lng: string): string {
   return m === 0 ? `${fmtInt(h, lng)} h` : `${fmtInt(h, lng)} h ${m} min`
 }
 
+/** Study time for a tile: big numbers, small units («4 h 10 min»). */
+function Duration({ min }: { min: number }) {
+  const h = Math.floor(min / 60)
+  const m = Math.round(min % 60)
+  const unit = (u: string) => <span className="mr-1.5 ml-1 font-display text-base text-mist-300">{u}</span>
+  return (
+    <>
+      {h > 0 && (
+        <>
+          {h}
+          {unit('h')}
+        </>
+      )}
+      {(m > 0 || h === 0) && (
+        <>
+          {m}
+          {unit('min')}
+        </>
+      )}
+    </>
+  )
+}
+
 function fmtLongDate(ts: number, tz: PlayerState['profile']['timezone'], lng: string): string {
   const base: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
   try {
@@ -100,11 +123,6 @@ export function TrainerCard({ player }: { player: PlayerState }) {
                 alt={names.pokemonFull(mon)}
                 className="relative mb-7"
               />
-              <p className="absolute top-3 left-3 max-w-[calc(100%-1.5rem)] bg-dusk-950/70 px-2 py-1 text-xs text-mist-100">
-                <span className="block font-display text-sm text-volt-300">{t('profile.hero.companion')}</span>
-                <span className="block truncate">{names.pokemon(mon)}</span>
-                <span className="block text-mist-300">{isLeader ? t('profile.hero.companionLeader') : t('profile.hero.companionBond')}</span>
-              </p>
             </>
           ) : (
             <Mascot pose="idle" size={96} className="mb-4" />
@@ -121,6 +139,12 @@ export function TrainerCard({ player }: { player: PlayerState }) {
                   </span>
                 )}
               </h2>
+              {mon && (
+                <p className="mt-2 text-sm text-mist-100">
+                  <span className="font-display text-base text-volt-300">{t('profile.hero.companion')}</span> {names.pokemon(mon)}
+                  <span className="text-mist-400"> · {isLeader ? t('profile.hero.companionLeader') : t('profile.hero.companionBond')}</span>
+                </p>
+              )}
               <p className="mt-1 text-mist-300">{t('profile.hero.since', { date: fmtLongDate(since, player.profile.timezone, lng) })}</p>
               {user?.anonymousRankings && (
                 <p className="mt-3">
@@ -282,7 +306,10 @@ export function StreakPanel({ player }: { player: PlayerState }) {
         </div>
         <div className="text-right">
           <p className="text-sm text-mist-300">{t('profile.streak.best')}</p>
-          <p className="mt-1 font-num text-3xl leading-none tabular">{t('profile.streak.days', { count: s.best })}</p>
+          <p className="mt-1 flex items-baseline justify-end gap-1.5 leading-none">
+            <span className="font-num text-3xl tabular">{s.best}</span>
+            <span className="font-display text-base text-mist-300">{t('profile.streak.unit', { count: s.best })}</span>
+          </p>
         </div>
       </div>
       <ol className="mt-5 grid grid-cols-7 gap-1.5" aria-label={t('profile.streak.title')}>
@@ -373,7 +400,7 @@ function Tile({ label, value, note, icon }: { label: string; value: React.ReactN
   return (
     <li className="flex flex-col bg-dusk-800 p-4 shadow-frame">
       <p className="text-sm text-mist-300">{label}</p>
-      <p className="mt-1 flex items-center gap-2 font-num text-4xl leading-none tabular">
+      <p className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 font-num text-3xl leading-none tabular sm:text-4xl">
         {icon}
         <span className="min-w-0">{value}</span>
       </p>
@@ -398,7 +425,8 @@ export function StatsSection({ player }: { player: PlayerState }) {
     return dateFmt.format(Date.UTC(y!, m! - 1, d!)).replace('.', '')
   }
   const chart = weeks.map((w, i) => ({
-    label: dateOf(w.weekKey),
+    // Every other week is labeled so the labels never crowd a phone-width chart.
+    label: (weeks.length - 1 - i) % 2 === 0 ? dateOf(w.weekKey) : '',
     value: w.minutes,
     highlight: i === weeks.length - 1,
     tip: t('profile.stats.weekTip', { date: dateOf(w.weekKey), minutes: fmtInt(w.minutes, lng) }),
@@ -412,10 +440,10 @@ export function StatsSection({ player }: { player: PlayerState }) {
       <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {has && (
           <>
-            <Tile label={t('profile.stats.hours')} value={fmtStudy(st.totalMinutes, lng)} />
+            <Tile label={t('profile.stats.hours')} value={<Duration min={st.totalMinutes} />} />
             <Tile label={t('profile.stats.sessions')} value={fmtInt(st.sessions, lng)} note={t('profile.stats.sessionsNote', { minutes: st.avgMinutes })} />
-            <Tile label={t('profile.stats.longest')} value={fmtStudy(st.longestMinutes, lng)} />
-            <Tile label={t('profile.stats.focus')} value={st.avgFocus === null ? '—' : fmtPct(st.avgFocus, lng)} />
+            <Tile label={t('profile.stats.longest')} value={<Duration min={st.longestMinutes} />} />
+            <Tile label={t('profile.stats.focus')} value={st.avgFocus === null ? '—' : fmtPct(st.avgFocus, lng).replace(/\s/g, '')} />
             <Tile label={t('profile.stats.days')} value={fmtInt(st.studyDays, lng)} />
           </>
         )}
@@ -423,12 +451,12 @@ export function StatsSection({ player }: { player: PlayerState }) {
         <Tile label={t('profile.stats.shiny')} value={fmtInt(st.shinyOwned, lng)} />
         <Tile label={t('profile.stats.legendary')} value={fmtInt(st.legendaryCaught, lng)} />
         <Tile label={t('profile.stats.traded')} value={fmtInt(st.tradedOwned, lng)} note={t('profile.stats.tradedNote')} />
-        <Tile label={t('profile.stats.league')} value={t(`league.names.${st.bestLeague}`)} />
+        <Tile label={t('profile.stats.league')} value={<span className="font-display text-2xl">{t(`league.names.${st.bestLeague}`)}</span>} />
         {has && <Tile label={t('profile.stats.dust')} value={fmtInt(st.dustEarned, lng)} note={t('profile.stats.dustNote')} icon={<PixelIcon name="dust" size={20} className="text-exp-400" />} />}
         {bond && (
           <Tile
             label={t('profile.stats.bond')}
-            value={fmtStudy(bond.bondMinutes, lng)}
+            value={<Duration min={bond.bondMinutes} />}
             note={names.pokemon(bond)}
             icon={<Sprite kind="icon" slug={bond.speciesSlug} shiny={bond.isShiny} alt="" maxHeight={32} maxWidth={40} />}
           />
