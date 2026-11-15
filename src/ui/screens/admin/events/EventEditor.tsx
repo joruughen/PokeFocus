@@ -28,6 +28,7 @@ import {
 } from './draft'
 import { eventsErrorText, issuesOf, issueText, type IssueLike } from './errors'
 import { ItemInput, Row, RowList, SpeciesInput } from './fields'
+import { FeaturedOddsNote, oddsOfDraft, ReferenceLevelPicker, type ReferenceLevel } from './FeaturedOdds'
 import { ImagePicker } from './ImagePicker'
 import { RichField } from './RichField'
 import { SpawnPreview } from './SpawnPreview'
@@ -85,6 +86,8 @@ export function EventEditor({ event, seed, prefill, importInfo, elevated, onElev
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [audience, setAudience] = useState<{ players: number; connections: number } | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  /** Trainer level the featured-species odds are estimated for. */
+  const [refLevel, setRefLevel] = useState<ReferenceLevel>(10)
   /** Content versions tied to this event (loaded with the saved event; refreshed by every save). */
   const [linked, setLinked] = useState<AdminEventLinkedContent[] | null>(null)
 
@@ -131,6 +134,7 @@ export function EventEditor({ event, seed, prefill, importInfo, elevated, onElev
   }, [d])
 
   const preview = useMemo(() => draftToPublic(d), [d])
+  const featuredOdds = useMemo(() => oddsOfDraft(d.featured, refLevel), [d.featured, refLevel])
   const startMs = fromLocalInput(d.startsAt)
   const endMs = fromLocalInput(d.endsAt)
   const startsInFuture = !Number.isNaN(startMs) && startMs > now
@@ -407,6 +411,7 @@ export function EventEditor({ event, seed, prefill, importInfo, elevated, onElev
             max={20}
             disabled={dis}
           >
+            {d.featured.length > 0 && <ReferenceLevelPicker value={refLevel} onChange={setRefLevel} />}
             <ul className="flex flex-col gap-3">
               {d.featured.map((f, i) => (
                 <Row key={i} removeLabel={t('eventsAdmin.remove', { n: i + 1 })} onRemove={() => set('featured', d.featured.filter((_, j) => j !== i))} disabled={dis}>
@@ -419,6 +424,9 @@ export function EventEditor({ event, seed, prefill, importInfo, elevated, onElev
                     error={problemFor(`featured.${i}.weightMult`)}
                     hint={t('eventsAdmin.featured.multHint')}
                   />
+                  <div className="sm:col-span-2" aria-live="polite">
+                    <FeaturedOddsNote odds={featuredOdds.get(f.species)} level={refLevel} />
+                  </div>
                 </Row>
               ))}
             </ul>

@@ -1,6 +1,7 @@
 import i18n from 'i18next'
 import { isApiError } from '../../../api'
 import { errorText } from '../../../lib/errors'
+import { asLocale, speciesName } from '../../../lib/names'
 
 /** Server codes of the event / upload routes that have their own copy under `eventsAdmin.errors`. */
 const OWN = [
@@ -56,5 +57,8 @@ export function issuesOf(e: unknown, key: 'errors' | 'warnings'): IssueLike[] {
 /** One issue as a sentence: the translated copy of its code when there is one, else the server's English message. */
 export function issueText(i: IssueLike): string {
   const key = `eventsAdmin.issues.${i.code}`
-  return i18n.exists(key) ? i18n.t(key, { ...i.params, path: i.path }) : i.message
+  if (!i18n.exists(key)) return i.message
+  // A species slug in the params reads as the species' name.
+  const species = typeof i.params?.species === 'string' ? speciesName(i.params.species, asLocale(i18n.language)) : undefined
+  return i18n.t(key, { ...i.params, ...(species !== undefined && { species }), path: i.path })
 }
