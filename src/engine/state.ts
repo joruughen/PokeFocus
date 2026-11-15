@@ -76,6 +76,20 @@ export interface OwnedPokemon extends IndividualCore {
   caughtAt: number
   caughtBall: BallSlug | 'study-ball' | 'starter'
   metLevel: number
+  /** Trade record (GDD §12.8, trade.ts). Absent = never traded. */
+  traded?: TradeRecord
+}
+
+/** Where a traded Pokémon comes from (shown on its sheet). */
+export interface TradeRecord {
+  /** Original trainer: who had it before its first trade (kept on later trades). */
+  originalTrainer: string
+  /** Trainer it came from in its last trade. */
+  receivedFrom: string
+  /** When the last trade completed (ms). */
+  receivedAt: number
+  /** Trades completed in its life (a legendary or mythical can only be traded once). */
+  count: number
 }
 
 // ---------------------------------------------------------------------------
@@ -377,6 +391,24 @@ export interface PlayerState {
    * `inventory`/`dust`). Emptied by the `ackLevelUp` action. Absent in older saves = none.
    */
   pendingLevelUps?: PendingLevelUp[]
+  /** Completed trades of the local day `dayKey` (GDD §12.8 daily limit). Absent = none yet. */
+  trades?: { dayKey: string; count: number }
+  /** Pokémon received by trade whose arrival window has not been closed yet (`ackTrade`). Absent = none. */
+  pendingTrades?: TradeArrival[]
+}
+
+/** A Pokémon that arrived by trade: what the arrival window (and the evolution moment) shows. */
+export interface TradeArrival {
+  /** Uid of the received Pokémon in this player's box. */
+  uid: string
+  /** Species it was sent as. */
+  fromSpecies: string
+  /** Species it is now (≠ `fromSpecies` when it evolved on arrival). */
+  toSpecies: string
+  shiny: boolean
+  /** Trainer it came from. */
+  partnerName: string
+  at: number
 }
 
 /** A trainer level-up awaiting its window: levels `from`→`to`, the rewards granted (summed) and when (ms). */

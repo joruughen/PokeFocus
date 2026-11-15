@@ -107,6 +107,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('claim', { devFocusLabel: z.string().max(32).nullable().optional(), soundProfile: soundProfileSchema.nullable().optional() }),
   act('dismissResults', {}),
   act('ackLevelUp', {}),
+  act('ackTrade', {}),
   act('throwBall', { ref, ball }),
   act('applyStatus', { chargeId: id, ref }),
   act('reroll', { chargeId: id, ref }),

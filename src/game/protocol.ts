@@ -104,6 +104,8 @@ export type GameAction =
   | { type: 'dismissResults' }
   /** The trainer level-up window was closed: empties `PlayerState.pendingLevelUps` (idempotent). */
   | { type: 'ackLevelUp' }
+  /** The trade arrival window was closed: empties `PlayerState.pendingTrades` (idempotent; GDD §12.8). */
+  | { type: 'ackTrade' }
   // Waves
   | { type: 'throwBall'; ref: WildRef; ball: ThrowBall }
   | { type: 'applyStatus'; chargeId: string; ref: WildRef }
@@ -165,6 +167,7 @@ export interface ActionResults {
   claim: { outcome: LastOutcome }
   dismissResults: null
   ackLevelUp: null
+  ackTrade: null
   throwBall: { outcome: ThrowOutcome }
   applyStatus: null
   reroll: null
