@@ -15,6 +15,7 @@ import type { Db, Tx } from '../db/client'
 import { friendships, leagueScores, playerDocs, users } from '../db/schema'
 import { ApiError, readBody, requireAuth, UUID_RE, type AppEnv, type Deps } from '../http'
 import { friendRequestBody } from '../validation'
+import { cancelTradesBetween } from './trades'
 
 /** Max friendships (any status) per user. */
 const MAX_FRIENDS = 200
@@ -61,6 +62,7 @@ export function friendRoutes(deps: Deps) {
       if (!u) continue
       const status: FriendStatus = r.status === 'accepted' ? 'friend' : r.requesterId === me.id ? 'outgoing' : 'incoming'
       const f: FriendSummary = { userId: u.id, trainerName: u.trainerName, country: u.country, friendCode: u.friendCode, status }
+      if (status === 'friend') f.friendsSince = (r.acceptedAt ?? r.createdAt).getTime()
       const player = status === 'friend' ? docOf.get(u.id)?.player : null
       if (player) {
         const wp = weeklyPoints(player, now)
@@ -100,7 +102,7 @@ export function friendRoutes(deps: Deps) {
         // They already asked me: accept directly.
         await tx
           .update(friendships)
-          .set({ status: 'accepted' })
+          .set({ status: 'accepted', acceptedAt: new Date(deps.clock()) })
           .where(and(eq(friendships.requesterId, target.id), eq(friendships.addresseeId, me.id)))
         return 'friend' as const
       }
@@ -123,7 +125,7 @@ export function friendRoutes(deps: Deps) {
     if (!UUID_RE.test(other)) throw new ApiError(404, 'not_found')
     const done = await db
       .update(friendships)
-      .set({ status: 'accepted' })
+      .set({ status: 'accepted', acceptedAt: new Date(deps.clock()) })
       .where(and(eq(friendships.requesterId, other), eq(friendships.addresseeId, me.id), eq(friendships.status, 'pending')))
       .returning({ id: friendships.requesterId })
     if (done.length === 0) throw new ApiError(404, 'not_found')
@@ -146,6 +148,8 @@ export function friendRoutes(deps: Deps) {
       )
       .returning({ id: friendships.requesterId })
     if (gone.length === 0) throw new ApiError(404, 'not_found')
+    // Open trade offers between them close (a trade needs a friendship).
+    for (const e of await cancelTradesBetween(db, me.id, other, deps.clock(), me)) bus.publish(e.to, e.event)
     bus.publish(me.id, { type: 'friends' })
     bus.publish(other, { type: 'friends' })
     return c.body(null, 204)

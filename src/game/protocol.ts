@@ -7,6 +7,7 @@
  * (plus tiny constants), no runtime imports besides the engine's types.
  */
 import type {
+  BaseStats,
   BoxError,
   CandyKind,
   ChargeError,
@@ -27,6 +28,7 @@ import type {
   ThrowError,
   ThrowOutcome,
   TimeZoneSpec,
+  TradeRecord,
   WeatherInput,
   WildRef,
 } from '../engine'
@@ -352,6 +354,8 @@ export interface FriendSummary {
   league?: string
   /** Species slugs of the team, leader first. */
   team?: { speciesSlug: string; shiny: boolean; level: number }[]
+  /** Accepted friends: since when (ms). Trades need `trade.minFriendshipDays` of friendship (GDD §12.8). */
+  friendsSince?: number
 }
 
 export type LeaderboardScope = 'global' | 'country' | 'friends'
@@ -440,6 +444,85 @@ export interface GroupsResponse {
   serverNow: number
 }
 
+// ---------------------------------------------------------------------------
+// Trades between friends (GDD §12.8): /api/trades
+// ---------------------------------------------------------------------------
+
+/**
+ *   GET  /api/trades                 → TradesResponse (open offers + last 50 closed)
+ *   POST /api/trades                 { toUserId, uid, message? } → 201 TradeOfferView (status offered)
+ *   POST /api/trades/:id/counter     { uid } → TradeOfferView (receiver picks; status countered)
+ *   POST /api/trades/:id/accept      → TradeOfferView (sender; completes the trade, both docs at once)
+ *   POST /api/trades/:id/reject      → TradeOfferView (receiver any open; sender when countered)
+ *   POST /api/trades/:id/cancel      → TradeOfferView (sender withdraws)
+ * Errors (409 unless noted): not_friends, friendship_too_new, unknown_pokemon, in_team,
+ * session_active, last_pokemon, legendary_traded, pokemon_in_offer, too_many_offers,
+ * over_level_cap (+ `side`), daily_limit (+ `side`), not_enough_dust (+ `side`),
+ * pokemon_changed, offer_closed, offer_expired, not_your_turn; 404 not_found; 429 rate_limited.
+ * `side` is 'me' or 'partner': which player the rule failed for.
+ */
+export type TradeStatus = 'offered' | 'countered' | 'completed' | 'rejected' | 'cancelled' | 'expired'
+
+/** What the other player sees of a Pokémon in a trade (no nickname: the receiver names it). */
+export interface TradePokemonView {
+  uid: string
+  speciesSlug: string
+  level: number
+  ivs: BaseStats
+  nature: string
+  ability: string | null
+  isShiny: boolean
+  equippedMoves: string[]
+  /** Usable techniques it knows (level-up + extra). */
+  moves: string[]
+  /** Minutes of Mastery per technique. */
+  moveMasteryMinutes: Record<string, number>
+  traded?: TradeRecord
+  /** Open offers: it is no longer in its owner's box (released or traded): the offer cannot complete. */
+  missing?: boolean
+}
+
+export interface TradeOfferView {
+  id: string
+  status: TradeStatus
+  /** The caller's side: 'sender' offered first (A), 'receiver' answers with a counter (B). */
+  role: 'sender' | 'receiver'
+  partner: { userId: string; trainerName: string }
+  /** The sender's Pokémon. */
+  offer: TradePokemonView
+  /** The receiver's Pokémon, once picked. */
+  counter: TradePokemonView | null
+  message: string | null
+  /** Dust EACH player pays: the dearer of the two (paid amount once completed; null before a counter). */
+  dustCost: number | null
+  offerEvolvedTo: string | null
+  counterEvolvedTo: string | null
+  /** The caller has to act (receiver: offered; sender: countered). */
+  myTurn: boolean
+  /** Rejected/cancelled by the caller. */
+  closedByMe: boolean
+  createdAt: number
+  updatedAt: number
+  expiresAt: number
+  completedAt: number | null
+}
+
+/** GET /api/trades */
+export interface TradesResponse {
+  /** Open offers sent to me. */
+  incoming: TradeOfferView[]
+  /** Open offers I sent. */
+  outgoing: TradeOfferView[]
+  /** Closed offers (newest first, last 50). */
+  history: TradeOfferView[]
+  /** My uids in an open offer (they cannot be offered again). */
+  lockedUids: string[]
+  /** Trades I completed today (my local day) and the daily limit. */
+  today: number
+  dailyLimit: number
+  serverNow: number
+}
+
 export type GroupEventKind = 'invite' | 'accept' | 'decline' | 'start' | 'join' | 'leave' | 'disband' | 'failed'
 
 /** Server-sent events on GET /api/events (EventSource). */
@@ -453,6 +536,8 @@ export type ServerEvent =
   | { type: 'content'; hash: string }
   /** Broadcast: an admin notified the players about a live event (reload GET /api/live-events; the pop-up shows again for `rev`). */
   | { type: 'event_announce'; eventId: string; rev: number }
+  /** A trade offer I am part of changed (refetch GET /api/trades). `userId`/`trainerName`: who changed it. */
+  | { type: 'trade'; offerId: string; status: TradeStatus; userId: string; trainerName: string }
 
 /** Header names used only when the server runs with DEV_TOOLS=1. */
 export const DEV_NOW_HEADER = 'x-dev-now'
@@ -602,7 +687,7 @@ export interface PushSubscribeRequest {
 
 /** JSON body of every push the server sends (already localized to the player's language). */
 export interface PushPayload {
-  type: 'session-end' | 'test'
+  type: 'session-end' | 'test' | 'trade'
   title: string
   body: string
   tag: string
