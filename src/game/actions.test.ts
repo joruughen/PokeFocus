@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createRng, MINUTE_MS, weeklyPoints } from '../engine'
+import { createRng, defaultContext, MINUTE_MS, trainerExpForLevel, trainerLevelRewards, weeklyPoints } from '../engine'
 import { applyAction, type ActionEnv } from './actions'
 import { EMPTY_DOC, type GameAction, type GameDoc } from './protocol'
 
@@ -229,6 +229,7 @@ describe('dev gating', () => {
       { type: 'devAddItems', items: { 'poke-ball': 3 } },
       { type: 'devAddCandies', amount: 3 },
       { type: 'devLevelUp', levels: 3 },
+      { type: 'devAddTrainerExp', amount: 100 },
       { type: 'devAddRandomPokemon', count: 2 },
       { type: 'resetAll' },
     ] as GameAction[]) {
@@ -244,6 +245,43 @@ describe('dev gating', () => {
     expect(Object.keys(doc.player!.pokemon)).toHaveLength(4)
     doc = must(doc, { type: 'resetAll' }, d)
     expect(doc).toEqual(EMPTY_DOC)
+  })
+})
+
+describe('devAddTrainerExp', () => {
+  const d = env(T0, { dev: true })
+  const ctx = defaultContext()
+
+  it('recomputes the level from the EXP and, going up, pays the rewards and queues the level-up window', () => {
+    const doc = newPlayer()
+    const p0 = doc.player!
+    const need = trainerExpForLevel(4, ctx) - p0.trainer.exp
+    const up = must(doc, { type: 'devAddTrainerExp', amount: need }, d).player!
+    expect(up.trainer).toEqual({ level: 4, exp: trainerExpForLevel(4, ctx) })
+    const r = trainerLevelRewards(p0.trainer.level, 4, ctx)
+    expect(up.dust).toBe(p0.dust + r.dust)
+    expect(up.inventory['poke-ball']).toBe((p0.inventory['poke-ball'] ?? 0) + (r.items['poke-ball'] ?? 0))
+    expect(up.pendingLevelUps).toEqual([{ from: p0.trainer.level, to: 4, items: r.items, dust: r.dust, at: T0 }])
+  })
+
+  it('going down lowers the level and takes nothing back; climbing again pays again', () => {
+    let doc = must(newPlayer(), { type: 'devAddTrainerExp', amount: 5000 }, d)
+    const high = doc.player!
+    expect(high.trainer.level).toBeGreaterThan(5)
+    const down = must(doc, { type: 'devAddTrainerExp', amount: -5000 }, d).player!
+    expect(down.trainer).toEqual({ level: 1, exp: 0 })
+    expect(down.dust).toBe(high.dust)
+    expect(down.inventory).toEqual(high.inventory)
+    expect(down.pendingLevelUps).toEqual(high.pendingLevelUps)
+    doc = must({ ...doc, player: down }, { type: 'devAddTrainerExp', amount: 5000 }, d)
+    expect(doc.player!.dust).toBeGreaterThan(down.dust)
+  })
+
+  it('never goes below 0 EXP and keeps the level within the maximum', () => {
+    const doc = newPlayer()
+    expect(must(doc, { type: 'devAddTrainerExp', amount: -999 }, d).player!.trainer).toEqual({ level: 1, exp: 0 })
+    const max = must(doc, { type: 'devAddTrainerExp', amount: 1_000_000 }, d).player!
+    expect(max.trainer.level).toBe(ctx.config.trainer.maxLevel)
   })
 })
 
