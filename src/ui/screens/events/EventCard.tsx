@@ -4,7 +4,8 @@ import type { LiveEventPublic } from '../../../game/protocol'
 import { PixelIcon, ProgressBar, RichText, Sprite } from '../../components'
 import { cx } from '../../lib/cx'
 import { fmtInt } from '../../lib/format'
-import { asLocale, itemName, speciesName, typeName } from '../../lib/names'
+import { asLocale, itemName, typeName } from '../../lib/names'
+import { FeaturedList } from './FeaturedList'
 import { eventItemName, eventPhase, eventText, fmtChance, fmtMult, formatEventWhen, imageSrcSet, missionLines, remainingKey, remainingParts, shinyBoost, type EventPhase } from './model'
 
 export interface EventCardProps {
@@ -17,6 +18,7 @@ export interface EventCardProps {
   baseShinyChance: number
   /** The player's own slots for this event (`missionsView().event[i].missions`); absent = show the event's missions as defined. */
   missionViews?: readonly MissionView[]
+  /** The player's trainer level: featured species that cannot show up at it yet are dimmed and tagged. Absent (the admin's preview) = no marks. */
   trainerLevel?: number
   /** Heading level of the event name. */
   headingLevel?: 2 | 3
@@ -36,14 +38,14 @@ const PHASE_BADGE: Record<EventPhase, string> = {
  * (the 480 px version in lists, `srcset` for wide screens), dates in the player's zone, a countdown,
  * featured species, shiny / legendary boosts, drops and the event's missions.
  */
-export function EventCard({ event, now, tz, baseShinyChance, missionViews, trainerLevel = 1, headingLevel = 3, phase, className }: EventCardProps) {
+export function EventCard({ event, now, tz, baseShinyChance, missionViews, trainerLevel, headingLevel = 3, phase, className }: EventCardProps) {
   const { t, i18n } = useTranslation()
   const lng = asLocale(i18n.language)
   const ph = phase ?? eventPhase(event, now)
   const H = headingLevel === 2 ? 'h2' : 'h3'
   const name = eventText(event.name, lng)
   const shiny = shinyBoost(event, baseShinyChance)
-  const missions = missionLines(event, missionViews, lng, trainerLevel, (ty) => typeName(ty, lng))
+  const missions = missionLines(event, missionViews, lng, trainerLevel ?? 1, (ty) => typeName(ty, lng))
   const ctxItems = defaultContext().data.items
 
   const remain = ph === 'active' ? event.endsAt - now : ph === 'upcoming' ? event.startsAt - now : 0
@@ -109,18 +111,7 @@ export function EventCard({ event, now, tz, baseShinyChance, missionViews, train
         {event.featured.length > 0 && (
           <section aria-label={t('events.featured')} className="flex flex-col gap-2">
             <h4 className="font-display text-base text-mist-300">{t('events.featured')}</h4>
-            <ul className="flex flex-wrap gap-2">
-              {event.featured.map((f) => (
-                <li key={f.species} className="flex min-w-[5.5rem] flex-col items-center gap-0.5 bg-dusk-900 px-2 py-1.5 inset-shadow-well">
-                  <span className="grid h-10 place-items-center">
-                    <Sprite kind="icon" slug={f.species} scale={1} alt="" />
-                  </span>
-                  <span className="text-center text-sm leading-tight">{speciesName(f.species, lng)}</span>
-                  <span className="font-num text-lg leading-none text-volt-300">×{fmtMult(f.weightMult)}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs text-mist-400">{t('events.featuredNote')}</p>
+            <FeaturedList featured={event.featured} trainerLevel={trainerLevel} note />
           </section>
         )}
 
