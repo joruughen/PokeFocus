@@ -3979,6 +3979,7 @@
       "giving": "You offer {{name}}",
       "cost": "It will cost each of you at least {{cost}} Dust (paid when it completes).",
       "message": "Message (optional)",
+      "messagePlaceholder": "E.g. I'll trade you for your Pikachu!",
       "messageHint": "Up to {{max}} characters. Your friend will see it.",
       "send": "Send offer",
       "sent": "Offer sent to {{name}}",
@@ -3991,9 +3992,12 @@
       "history": "History"
     },
     "empty": {
-      "incoming": "Nobody has offered you anything yet.",
-      "outgoing": "No offers waiting for an answer.",
-      "history": "Your finished trades will show here.",
+      "incoming": "Nobody has offered you anything yet",
+      "incomingBody": "When a friend offers you a Pokémon, it shows up here so you can pick what to give back.",
+      "outgoing": "No offers waiting for an answer",
+      "outgoingBody": "Offer a Pokémon to a friend (above) and follow their answer here.",
+      "history": "No finished trades yet",
+      "historyBody": "Completed, rejected and cancelled trades are kept here.",
       "title": "No trades yet",
       "body": "Pick a friend and offer them a Pokémon. They will pick one to give you back.",
       "toFriends": "Go to Friends"
@@ -4077,6 +4081,7 @@
     "picker": {
       "label": "Your Pokémon",
       "search": "Search by name",
+      "searchPlaceholder": "Pokémon name",
       "onlyOk": "Only the ones I can give",
       "hidden_one": "{{count}} hidden: in the team, in an offer or not tradable.",
       "hidden_other": "{{count}} hidden: in the team, in an offer or not tradable.",
@@ -4090,7 +4095,7 @@
       "note": "It keeps its level, IVs, nature, ability, techniques and Mastery. Its Bond starts from zero with you, and you can give it a nickname.",
       "ok": "Welcome!"
     },
-    "todayShort": "Today",
+    "todayShort": "Left today",
     "pickFriend": {
       "title": "Offer to a friend",
       "from": "from {{date}}"

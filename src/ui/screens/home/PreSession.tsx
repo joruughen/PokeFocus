@@ -16,7 +16,7 @@ import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { conditionsNow } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
-import { clampMinutes, fmtClock, fmtInt, fmtWeekday } from '../../lib/format'
+import { clampMinutes, fmtClock, fmtInt, fmtNum, fmtWeekday } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { primeSignals } from '../../lib/notify'
 import { scheduleSessionEnd, sfx } from '../../lib/sound'
@@ -252,7 +252,7 @@ function ConditionsPanel({ rows, minutes }: { rows: ReturnType<typeof conditions
             <TypeBadge type={r.type} size="md" muted={!r.active} />
             <p className="text-sm leading-snug text-mist-300">{t(`conditions.rule.${r.type}`, values)}</p>
             {r.active ? (
-              <span className="font-num text-2xl leading-none text-leaf-400">×{r.mult.toFixed(2)}</span>
+              <span className="font-num text-2xl leading-none text-leaf-400">×{fmtNum(r.mult)}</span>
             ) : (
               <span className="pt-0.5 text-sm text-mist-400">{t('conditions.off')}</span>
             )}
@@ -266,7 +266,7 @@ function ConditionsPanel({ rows, minutes }: { rows: ReturnType<typeof conditions
             {others.map((r) => (
               <span key={r.type} className="inline-flex items-center gap-1.5">
                 <TypeBadge type={r.type} />
-                <span className="font-num text-lg leading-none text-leaf-400">×{r.mult.toFixed(2)}</span>
+                <span className="font-num text-lg leading-none text-leaf-400">×{fmtNum(r.mult)}</span>
               </span>
             ))}
           </div>

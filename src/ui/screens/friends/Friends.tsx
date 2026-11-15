@@ -162,9 +162,10 @@ function MyCode() {
   return (
     <Panel title={t('friends.myCode')} {...hintAnchor('friends.code')}>
       <div className="flex flex-wrap items-center gap-4 bg-mist-50 p-4 text-ink shadow-raised">
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-base">{user.trainerName}</p>
-          <p className="font-num text-[2.5rem] leading-none tracking-[0.12em] whitespace-nowrap tabular select-all" aria-label={t('friends.codeAria', { code: user.friendCode.split('').join(' ') })}>
+        {/* The code never shrinks (it used to hide its last characters under the button); the button wraps below it when there is no room. */}
+        <div className="min-w-max flex-1">
+          <p className="max-w-[16rem] truncate font-display text-base">{user.trainerName}</p>
+          <p className="font-num text-[2rem] leading-none sm:text-[2.5rem] tracking-[0.12em] whitespace-nowrap tabular select-all" aria-label={t('friends.codeAria', { code: user.friendCode.split('').join(' ') })}>
             {spaced(user.friendCode)}
           </p>
         </div>

@@ -6,7 +6,7 @@ import { makeMon, makePlayer, T0 } from '../../../engine/test-helpers'
 import type { FriendSummary, TradeOfferView, TradePokemonView, TradesResponse } from '../../../game/protocol'
 import { TradeArrivalBody } from '../../trades/TradeArrival'
 import { friendTradeState, offerOptions, pendingCount, tradeWarnings } from './eligibility'
-import { HistoryRow, TodayMeter, TradesView } from './Trades'
+import { defaultTradeTab, HistoryRow, TodayMeter, TradesView } from './Trades'
 import { TradeStage } from './TradeParts'
 
 const DAY = 86_400_000
@@ -77,6 +77,16 @@ describe('eligibility', () => {
     expect(w(view('caterpie', 5), 'c1', full)).toEqual({ warnings: [{ kind: 'dailyLimit', limit: 3 }], blocking: true })
   })
 
+  it('opens on the list where something waits for me, else on the first one that has anything', () => {
+    const d = (over: Partial<TradesResponse>) => ({ incoming: [], outgoing: [], history: [], ...over })
+    expect(defaultTradeTab(d({}))).toBe('incoming')
+    expect(defaultTradeTab(d({ incoming: [offer()], outgoing: [offer({ role: 'sender', myTurn: true })] }))).toBe('incoming')
+    expect(defaultTradeTab(d({ incoming: [offer({ myTurn: false })], outgoing: [offer({ role: 'sender', myTurn: true })] }))).toBe('outgoing')
+    // Only an offer I sent, waiting on my friend: not the empty «Received» tab.
+    expect(defaultTradeTab(d({ outgoing: [offer({ role: 'sender', myTurn: false })] }))).toBe('outgoing')
+    expect(defaultTradeTab(d({ history: [offer({ status: 'completed' })] }))).toBe('history')
+  })
+
   it('counts the offers waiting for me', () => {
     expect(pendingCount(null)).toBe(0)
     expect(pendingCount({ incoming: [offer(), offer({ myTurn: false })], outgoing: [offer({ role: 'sender', myTurn: true })] })).toBe(2)
@@ -107,6 +117,12 @@ describe('markup (ES + EN)', () => {
       expect(full).toContain('¿Cambiamos?')
       expect(full).toContain(i18n.t('trades.card.pick'))
       expect(full).not.toMatch(RAW_KEY)
+
+      // A controlled tab opens that list (after sending an offer the screen jumps to «Sent»), and an empty list says how it fills up.
+      const sent = renderToStaticMarkup(<TradesView data={data({ history: [offer({ id: 'o4', status: 'rejected' })] })} error={null} player={p} tab="outgoing" />)
+      expect(sent).toContain(i18n.t('trades.empty.outgoing'))
+      expect(sent).toContain(i18n.t('trades.empty.outgoingBody'))
+      expect(sent).not.toMatch(RAW_KEY)
 
       const stage = renderToStaticMarkup(
         <TradeStage left={{ label: 'A', mon: view('caterpie', 5, { mintNature: 'modest', bottleCapped: ['speed'] }) }} right={{ label: 'B', mon: null, pending: 'wait' }} />,

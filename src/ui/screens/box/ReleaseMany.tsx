@@ -36,20 +36,21 @@ export function SelectionBar({ count, hidden, selectableVisible, onSelectVisible
         {t('box.select.count', { count })}
         {hidden > 0 && <span className="ml-2 text-base text-amber-400">({t('box.select.hidden', { count: hidden })})</span>}
       </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="secondary" icon="plus" disabled={selectableVisible === 0} onClick={onSelectVisible}>
+      {/* Phones: the count and "Cancel" share the first row, the actions get the second (the bar stays two rows tall, not four). */}
+      <div className="flex items-center gap-2 max-sm:order-3 max-sm:w-full">
+        <Button size="sm" variant="secondary" icon="plus" disabled={selectableVisible === 0} onClick={onSelectVisible} className="max-sm:flex-1">
           {t('box.select.visible')}
         </Button>
-        <Button size="sm" variant="secondary" icon="minus" disabled={count === 0} onClick={onClear}>
-          {t('box.select.clear')}
+        <Button size="sm" variant="secondary" icon="minus" disabled={count === 0} onClick={onClear} aria-label={t('box.select.clear')} title={t('box.select.clear')}>
+          <span className="max-sm:sr-only">{t('box.select.clear')}</span>
         </Button>
         <Button size="sm" variant="danger" icon="trash" disabled={count === 0} onClick={onRelease}>
           {t('box.select.release')}
         </Button>
-        <Button size="sm" variant="ghost" icon="close" onClick={onCancel}>
-          {t('box.select.cancel')}
-        </Button>
       </div>
+      <Button size="sm" variant="ghost" icon="close" onClick={onCancel} className="max-sm:order-2">
+        {t('box.select.cancel')}
+      </Button>
     </div>
   )
 }

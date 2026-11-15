@@ -56,7 +56,7 @@ export function MoreList({ routes, route, badges, onNavigate }: { routes: readon
               onClick={onNavigate}
               {...hintAnchor(`nav.${r.id}`)}
               className={cx(
-                'flex min-h-12 items-center gap-3 px-3 py-2 font-display text-lg transition-colors',
+                'relative flex min-h-12 items-center gap-3 px-3 py-2 font-display text-lg transition-colors',
                 active ? 'bg-volt-400 text-ink shadow-frame' : 'bg-dusk-800 text-mist-100 shadow-frame hover:bg-dusk-700',
               )}
             >
@@ -64,8 +64,9 @@ export function MoreList({ routes, route, badges, onNavigate }: { routes: readon
                 <PixelIcon name={r.icon} size={20} />
               </span>
               <span className="min-w-0 flex-1 truncate">{t(r.labelKey)}</span>
+              {/* On the corner, not in the row: a badge beside the label squeezed «Intercambios» into «Intercam…». */}
               {n > 0 && (
-                <span className={BADGE_CLASS} aria-label={t(`nav.badge.${r.id}`, { count: n, defaultValue: String(n) })}>
+                <span className={cx(BADGE_CLASS, 'absolute -top-1.5 -right-1.5', active && 'bg-ink text-volt-300')} aria-label={t(`nav.badge.${r.id}`, { count: n, defaultValue: String(n) })}>
                   {n}
                 </span>
               )}
@@ -122,7 +123,7 @@ export function MoreNav({
         <span className="relative">
           <PixelIcon name="more" size={20} />
           {total > 0 && (
-            <span aria-hidden className={cx('absolute -top-2 -left-2', BADGE_CLASS, inside && 'bg-ink text-volt-300')}>
+            <span aria-hidden className={cx('absolute -top-2.5 -right-3', BADGE_CLASS, inside && 'bg-ink text-volt-300')}>
               {total}
             </span>
           )}

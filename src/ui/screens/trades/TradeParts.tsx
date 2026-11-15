@@ -48,7 +48,7 @@ export interface StageSide {
  */
 export function TradeStage({ left, right, center, live }: { left: StageSide; right: StageSide; center?: ReactNode; live?: boolean }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-2">
       <div className="relative grid grid-cols-2 overflow-hidden bg-[radial-gradient(ellipse_at_center,var(--color-dusk-700),var(--color-dusk-950)_75%)] shadow-plate">
         <StageSpot side={left} facing="right" />
         <StageSpot side={right} facing="left" />
@@ -243,7 +243,7 @@ export function MonPicker({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-3">
-        <TextField className="min-w-48 flex-1" label={t('trades.picker.search')} value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off" />
+        <TextField className="min-w-48 flex-1" label={t('trades.picker.search')} placeholder={t('trades.picker.searchPlaceholder')} value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off" />
         <label className="flex items-center gap-2 pb-2 text-sm text-mist-300">
           <Switch checked={onlyOk} onChange={setOnlyOk} label={t('trades.picker.onlyOk')} />
           <span aria-hidden>{t('trades.picker.onlyOk')}</span>
@@ -253,7 +253,7 @@ export function MonPicker({
       {shown.length === 0 ? (
         <p className="py-6 text-center text-mist-400">{t('trades.picker.none')}</p>
       ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-2" aria-label={t('trades.picker.label')}>
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(8.25rem,1fr))] gap-2" aria-label={t('trades.picker.label')}>
           {shown.map((o) => {
             const slot = player.team.indexOf(o.uid)
             return (

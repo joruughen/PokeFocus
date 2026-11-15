@@ -5,7 +5,7 @@ import { Button, CategoryChip, HelpDot, Panel, PixelIcon, Stars, toast, Tooltip,
 import { hintAnchor } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
-import { fmtPct } from '../../lib/format'
+import { fmtNum, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useGame } from '../../store/game'
@@ -169,7 +169,7 @@ function TechCard({ info, view, lng, dim }: { info: TechniqueInfo; view: Pokemon
             content={
               <span className="flex flex-col gap-1">
                 <span className="font-display text-base">{t('tech.masteryTitle', { stars: m.stars })}</span>
-                <span>{t('tech.masteryBody', { hours: (m.minutes / 60).toFixed(1), mult: m.mult.toFixed(2) })}</span>
+                <span>{t('tech.masteryBody', { hours: (m.minutes / 60).toFixed(1), mult: fmtNum(m.mult) })}</span>
                 {nextTier && <span className="text-xs text-dusk-500">{t('tech.masteryNext', { hours: nextTier.hours, stars: m.stars + 1 })}</span>}
               </span>
             }

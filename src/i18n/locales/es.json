@@ -3979,6 +3979,7 @@
       "giving": "Ofreces a {{name}}",
       "cost": "Costará al menos {{cost}} de Polvo a cada uno (se cobra al completarse).",
       "message": "Mensaje (opcional)",
+      "messagePlaceholder": "Ej.: ¡Te lo cambio por tu Pikachu!",
       "messageHint": "Hasta {{max}} caracteres. Lo verá tu amigo.",
       "send": "Enviar oferta",
       "sent": "Oferta enviada a {{name}}",
@@ -3991,9 +3992,12 @@
       "history": "Historial"
     },
     "empty": {
-      "incoming": "Nadie te ha ofrecido nada por ahora.",
-      "outgoing": "No tienes ofertas esperando respuesta.",
-      "history": "Aquí verás tus intercambios terminados.",
+      "incoming": "Nadie te ha ofrecido nada por ahora",
+      "incomingBody": "Cuando un amigo te ofrezca un Pokémon, aparecerá aquí para que elijas qué darle a cambio.",
+      "outgoing": "No tienes ofertas esperando respuesta",
+      "outgoingBody": "Ofrece un Pokémon a un amigo (arriba) y sigue aquí cómo responde.",
+      "history": "Aún no hay intercambios terminados",
+      "historyBody": "Los intercambios completados, rechazados o cancelados quedan guardados aquí.",
       "title": "Aún no tienes intercambios",
       "body": "Elige un amigo y ofrécele un Pokémon. Él elegirá cuál darte a cambio.",
       "toFriends": "Ir a Amigos"
@@ -4077,6 +4081,7 @@
     "picker": {
       "label": "Tus Pokémon",
       "search": "Buscar por nombre",
+      "searchPlaceholder": "Nombre del Pokémon",
       "onlyOk": "Solo los que puedo dar",
       "hidden_one": "{{count}} oculto: está en el equipo, en una oferta o no se puede intercambiar.",
       "hidden_other": "{{count}} ocultos: están en el equipo, en una oferta o no se pueden intercambiar.",
@@ -4090,7 +4095,7 @@
       "note": "Conserva su nivel, IVs, naturaleza, habilidad, técnicas y Dominio. Su Vínculo empieza de cero contigo, y puedes ponerle un mote.",
       "ok": "¡Bienvenido!"
     },
-    "todayShort": "Hoy",
+    "todayShort": "Libres hoy",
     "pickFriend": {
       "title": "Ofrecer a un amigo",
       "from": "desde el {{date}}"

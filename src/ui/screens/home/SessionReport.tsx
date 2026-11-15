@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import i18n from 'i18next'
 import { useTranslation } from 'react-i18next'
 import {
   pointsBreakdown,
@@ -13,7 +14,7 @@ import {
   type TypeSlug,
 } from '../../../engine'
 import { Button, Dialog, InfoTip, PixelIcon, Sprite, TypeBadge } from '../../components'
-import { fmtInt, fmtPct } from '../../lib/format'
+import { fmtInt, fmtNum, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { whenText } from '../../lib/whenText'
 import { useGame } from '../../store/game'
@@ -28,7 +29,8 @@ type T = (k: string, o?: Record<string, unknown>) => string
 function fmtChance(f: number, lng: string): string {
   return new Intl.NumberFormat(lng, { style: 'percent', maximumFractionDigits: f < 0.1 ? 1 : 0 }).format(f)
 }
-const fmtMult = (m: number, lng?: string) => `×${lng ? new Intl.NumberFormat(lng, { maximumFractionDigits: 2 }).format(m) : Number(m.toFixed(2))}`
+/** "×1,35" in the UI language (most call sites do not carry `lng`: it used to print "×1.35" in Spanish). */
+const fmtMult = (m: number, lng: string = i18n.language) => `×${fmtNum(m, lng)}`
 
 /**
  * "Informe de la sesión" button: opens the report of the session whose

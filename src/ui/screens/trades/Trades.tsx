@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { defaultContext, tradeDustCostOf, type PlayerState } from '../../../engine'
 import type { FriendSummary, TradeOfferView, TradePokemonView, TradesResponse } from '../../../game/protocol'
-import { Button, Dialog, DialogClose, EmptyState, Panel, PixelIcon, Sprite, Tabs, TextField, toast } from '../../components'
+import { Button, Dialog, DialogClose, EmptyState, Mascot, Panel, PixelIcon, Sprite, Tabs, TextField, toast } from '../../components'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
@@ -32,6 +32,8 @@ export default function Trades() {
     void load()
   }, [load])
 
+  // Which list is open. null = the default (where something waits for me); after sending an offer it jumps to «Sent».
+  const [tab, setTab] = useState<TradeTab | null>(null)
   const newFor = params[0] === 'new' ? params[1] : undefined
   const friend = newFor ? friends?.find((f) => f.userId === newFor) : undefined
 
@@ -47,9 +49,10 @@ export default function Trades() {
         </div>
         {data && <TodayMeter used={data.today} limit={data.dailyLimit} />}
       </header>
-      {newFor && player && data && (friend ? <NewOffer friend={friend} player={player} data={data} /> : friends && <p className="text-cheek-400">{t('trades.new.notFriend')}</p>)}
+      {newFor && player && data && (friend ? <NewOffer friend={friend} player={player} data={data} onSent={() => setTab('outgoing')} /> : friends && <p className="text-cheek-400">{t('trades.new.notFriend')}</p>)}
       {!newFor && friends && <FriendPicker friends={friends} />}
-      <TradesView data={data} error={error} player={player} onRetry={() => void load()} />
+      {/* While composing the very first offer the big «no trades yet» state would only repeat the form above. */}
+      {!(newFor && data && data.incoming.length + data.outgoing.length + data.history.length === 0) && <TradesView data={data} error={error} player={player} onRetry={() => void load()} tab={tab} onTab={setTab} />}
     </div>
   )
 }
@@ -109,8 +112,35 @@ function FriendPicker({ friends }: { friends: FriendSummary[] }) {
   )
 }
 
+export type TradeTab = 'incoming' | 'outgoing' | 'history'
+
+/** The list to open on: where something waits for my answer, else the first one that has anything (never an empty tab with another full). */
+export function defaultTradeTab(data: Pick<TradesResponse, 'incoming' | 'outgoing' | 'history'>): TradeTab {
+  const turn = (offers: TradeOfferView[]) => offers.filter((o) => o.myTurn).length
+  if (turn(data.incoming) > 0) return 'incoming'
+  if (turn(data.outgoing) > 0) return 'outgoing'
+  if (data.incoming.length > 0) return 'incoming'
+  if (data.outgoing.length > 0) return 'outgoing'
+  return data.history.length > 0 ? 'history' : 'incoming'
+}
+
 /** The three lists (server-renderable: everything comes in through props). */
-export function TradesView({ data, error, player, onRetry }: { data: TradesResponse | null; error: string | null; player: PlayerState | null; onRetry?: () => void }) {
+export function TradesView({
+  data,
+  error,
+  player,
+  onRetry,
+  tab = null,
+  onTab,
+}: {
+  data: TradesResponse | null
+  error: string | null
+  player: PlayerState | null
+  onRetry?: () => void
+  /** Controlled tab (null = let the view pick: the list where something waits for me). */
+  tab?: TradeTab | null
+  onTab?: (tab: TradeTab) => void
+}) {
   const { t } = useTranslation()
   if (!data || !player) {
     return error ? (
@@ -146,10 +176,31 @@ export function TradesView({ data, error, player, onRetry }: { data: TradesRespo
       </div>
     )
   }
-  const empty = (key: 'incoming' | 'outgoing' | 'history') => <p className="bg-dusk-900 px-4 py-8 text-center text-mist-300 inset-shadow-well">{t(`trades.empty.${key}`)}</p>
+  return <TradeTabs data={data} player={player} tab={tab} onTab={onTab} />
+}
+
+/** What each empty list says: where the offers will show up and how to get one going (not a bare "nothing"). */
+function TabEmpty({ kind }: { kind: TradeTab }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex flex-col items-center gap-2 bg-dusk-900 px-6 py-8 text-center inset-shadow-well">
+      <Mascot pose={kind === 'history' ? 'idle' : 'think'} size={48} />
+      <p className="font-display text-lg">{t(`trades.empty.${kind}`)}</p>
+      <p className="max-w-[44ch] text-sm text-mist-300">{t(`trades.empty.${kind}Body`)}</p>
+    </div>
+  )
+}
+
+function TradeTabs({ data, player, tab, onTab }: { data: TradesResponse; player: PlayerState; tab: TradeTab | null; onTab?: (tab: TradeTab) => void }) {
+  const { t } = useTranslation()
+  const turn = (offers: TradeOfferView[]) => offers.filter((o) => o.myTurn).length
+  // Frozen at first render: open where something waits for me, then stay put until the player (or sending an offer) moves it.
+  const [initial] = useState<TradeTab>(() => defaultTradeTab(data))
+  const [own, setOwn] = useState<TradeTab | null>(null)
+  const value = tab ?? own ?? initial
   const list = (offers: TradeOfferView[], key: 'incoming' | 'outgoing') =>
     offers.length === 0 ? (
-      empty(key)
+      <TabEmpty kind={key} />
     ) : (
       <ul className="flex flex-col gap-6">
         {offers.map((o) => (
@@ -157,7 +208,6 @@ export function TradesView({ data, error, player, onRetry }: { data: TradesRespo
         ))}
       </ul>
     )
-  const turn = (offers: TradeOfferView[]) => offers.filter((o) => o.myTurn).length
   const tabLabel = (text: string, n: number) => (
     <span className="flex items-center gap-1.5">
       {text}
@@ -167,7 +217,11 @@ export function TradesView({ data, error, player, onRetry }: { data: TradesRespo
   return (
     <Tabs
       label={t('trades.tabs.label')}
-      defaultValue={turn(data.outgoing) > turn(data.incoming) ? 'outgoing' : 'incoming'}
+      value={value}
+      onValueChange={(v) => {
+        setOwn(v as TradeTab)
+        onTab?.(v as TradeTab)
+      }}
       items={[
         { value: 'incoming', label: tabLabel(t('trades.tabs.incoming', { count: data.incoming.length }), turn(data.incoming)), content: list(data.incoming, 'incoming') },
         { value: 'outgoing', label: tabLabel(t('trades.tabs.outgoing', { count: data.outgoing.length }), turn(data.outgoing)), content: list(data.outgoing, 'outgoing') },
@@ -176,7 +230,7 @@ export function TradesView({ data, error, player, onRetry }: { data: TradesRespo
           label: t('trades.tabs.history'),
           content:
             data.history.length === 0 ? (
-              empty('history')
+              <TabEmpty kind="history" />
             ) : (
               <ul className="flex flex-col gap-2">
                 {data.history.map((o) => (
@@ -289,7 +343,7 @@ function ConfirmDialog({
 }
 
 /** Start an offer to a friend: pick my Pokémon, optional message, confirm. */
-function NewOffer({ friend, player, data }: { friend: FriendSummary; player: PlayerState; data: TradesResponse }) {
+function NewOffer({ friend, player, data, onSent }: { friend: FriendSummary; player: PlayerState; data: TradesResponse; onSent?: () => void }) {
   const { t, i18n } = useTranslation()
   const names = useNames()
   const now = useNow()
@@ -327,6 +381,7 @@ function NewOffer({ friend, player, data }: { friend: FriendSummary; player: Pla
           {mine && <WarningList warnings={mineOnly} />}
           <TextField
             label={t('trades.new.message')}
+            placeholder={t('trades.new.messagePlaceholder')}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             maxLength={max * 2}
@@ -357,7 +412,10 @@ function NewOffer({ friend, player, data }: { friend: FriendSummary; player: Pla
               if (!uid) return
               const ok = await run(() => offer(friend.userId, uid, message.trim() || null), t('trades.new.sent', { name: friend.trainerName }))
               setConfirming(false)
-              if (ok) navigate('trades')
+              if (ok) {
+                onSent?.()
+                navigate('trades')
+              }
             }}
           />
         </div>
@@ -539,24 +597,27 @@ export function HistoryRow({ offer: o }: { offer: TradeOfferView }) {
       </span>
     ) : null
   return (
-    <li className={cx('flex flex-wrap items-center gap-3 bg-dusk-900 p-3 inset-shadow-well', !done && 'opacity-75')}>
-      <span className="flex items-center gap-1" aria-hidden>
-        {icon(gave)}
-        <PixelIcon name={done ? 'trade' : 'close'} size={14} className={done ? 'text-volt-400' : 'text-mist-400'} />
-        {done && icon(got, gotEvolved)}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="font-display text-base leading-tight">{t('trades.history.with', { name: o.partner.trainerName })}</p>
-        <p className="text-sm text-mist-300">
-          {done && gave && got
-            ? t('trades.history.swap', {
-                gave: names.species(gave.speciesSlug),
-                got: gotEvolved ? t('trades.history.evolved', { from: names.species(got.speciesSlug), to: names.species(gotEvolved) }) : names.species(got.speciesSlug),
-              })
-            : t('trades.history.offered', { name: names.species(o.offer.speciesSlug) })}
-        </p>
+    <li className={cx('flex flex-col gap-2 bg-dusk-900 p-3 inset-shadow-well sm:flex-row sm:items-center sm:gap-3', !done && 'opacity-75')}>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <span className="flex shrink-0 items-center gap-1" aria-hidden>
+          {icon(gave)}
+          <PixelIcon name={done ? 'trade' : 'close'} size={14} className={done ? 'text-volt-400' : 'text-mist-400'} />
+          {done && icon(got, gotEvolved)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-base leading-tight">{t('trades.history.with', { name: o.partner.trainerName })}</p>
+          <p className="text-sm text-mist-300">
+            {done && gave && got
+              ? t('trades.history.swap', {
+                  gave: names.species(gave.speciesSlug),
+                  got: gotEvolved ? t('trades.history.evolved', { from: names.species(got.speciesSlug), to: names.species(gotEvolved) }) : names.species(got.speciesSlug),
+                })
+              : t('trades.history.offered', { name: names.species(o.offer.speciesSlug) })}
+          </p>
+        </div>
       </div>
-      <div className="text-right text-sm">
+      {/* Phones: status, date and Dust on one line under the text, not a column that squeezes it. */}
+      <div className="flex flex-wrap items-baseline gap-x-3 text-sm sm:block sm:text-right">
         <p className={done ? 'text-volt-300' : 'text-mist-300'}>{status}</p>
         <p className="text-mist-400">{date}</p>
         {done && o.dustCost !== null && <p className="text-mist-400">{t('trades.history.paid', { cost: fmtInt(o.dustCost, i18n.language) })}</p>}

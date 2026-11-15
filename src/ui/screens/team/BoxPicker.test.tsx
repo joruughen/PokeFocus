@@ -37,7 +37,7 @@ describe('BoxPicker', () => {
       expect(html).toContain(i18n.t('team.pick.asleep'))
       expect(html).toContain(i18n.t('team.add'))
       // Bulbasaur is Grass and it is morning (T0 is 10:00 UTC): its boost shows next to the type.
-      expect(html).toMatch(/×1\.\d\d/)
+      expect(html).toMatch(lng === 'es' ? /×1,\d\d/ : /×1\.\d\d/) // decimals follow the UI language
       expect(html).toContain(i18n.t('conditions.memberBoost', { type: lng === 'es' ? 'Planta' : 'Grass', mult: '1.10' }).slice(0, 20))
       expect(html).not.toContain(i18n.t('team.pick.swap'))
       // Unavailable ones go last: the ready one comes first.

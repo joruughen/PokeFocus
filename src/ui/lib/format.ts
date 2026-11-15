@@ -1,3 +1,4 @@
+import i18n from 'i18next'
 import type { TimeZoneSpec } from '../../engine'
 
 const nf = new Map<string, Intl.NumberFormat>()
@@ -10,6 +11,11 @@ export function fmtInt(n: number, lng: string): string {
     nf.set(lng, f)
   }
   return f.format(Math.round(n))
+}
+
+/** A multiplier or small decimal in the UI language, at most two decimals: 1.35 → "1,35" (es) / "1.35" (en). */
+export function fmtNum(n: number, lng: string = i18n.language): string {
+  return new Intl.NumberFormat(lng, { maximumFractionDigits: 2 }).format(n)
 }
 
 export function fmtPct(f: number, lng: string): string {

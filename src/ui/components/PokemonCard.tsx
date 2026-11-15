@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PokemonView, TypeSlug } from '../../engine'
 import { cx } from '../lib/cx'
+import { fmtNum } from '../lib/format'
 import { useNames } from '../lib/names'
 import { PixelIcon } from './PixelIcon'
 import { ProgressBar } from './ProgressBar'
@@ -66,9 +67,9 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
         ))}
         {view.tera && <TeraBadge tera={view.tera} />}
         {condition && condition.mult > 1 && condition.type && (
-          <Tooltip content={t('conditions.memberBoost', { type: names.type(condition.type), mult: condition.mult.toFixed(2) })}>
+          <Tooltip content={t('conditions.memberBoost', { type: names.type(condition.type), mult: fmtNum(condition.mult) })}>
             <span tabIndex={0} className="ml-auto font-num text-lg leading-none text-leaf-600">
-              ×{condition.mult.toFixed(2)}
+              ×{fmtNum(condition.mult)}
             </span>
           </Tooltip>
         )}

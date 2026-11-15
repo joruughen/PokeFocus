@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { spriteScale } from './Sprite'
+import { spriteScale, spriteUrl } from './Sprite'
 
 describe('spriteScale', () => {
   it('keeps the integer scale when it fits, drops to a smaller integer when it does not', () => {
@@ -17,5 +17,13 @@ describe('spriteScale', () => {
     expect(spriteScale(181, 2, 220, 217, 150)).toBeCloseTo(150 / 217) // Moltres in a narrow box: fractional by width
     expect(spriteScale(181, 3, 150, 217, 300)).toBeCloseTo(150 / 181) // ... or by height
     expect(spriteScale(80, 2, undefined, 300, undefined)).toBe(2)
+  })
+})
+
+describe('spriteUrl', () => {
+  it('items PokeAPI has no sprite for are drawn SVGs shipped in public/', () => {
+    expect(spriteUrl('item', 'tera-shard')).toBe('/sprites/items/tera-shard.svg')
+    expect(spriteUrl('item', 'technical-machine')).toBe('/sprites/items/technical-machine.svg')
+    expect(spriteUrl('item', 'potion')).toBe('/sprites/items/potion.png')
   })
 })

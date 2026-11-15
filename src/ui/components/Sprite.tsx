@@ -43,8 +43,11 @@ export function spriteScale(naturalHeight: number, scale: number, maxHeight?: nu
   return Math.min(limitH ? maxHeight! / naturalHeight : Infinity, limitW ? maxWidth! / naturalWidth : Infinity)
 }
 
+/** Items PokeAPI has no sprite for: drawn here as pixel-art SVGs (public/sprites/items/<slug>.svg). */
+const SVG_ITEMS: ReadonlySet<string> = new Set(['tera-shard', 'technical-machine'])
+
 export function spriteUrl(kind: SpriteKind, slug: string, shiny = false): string {
-  if (kind === 'item') return `/sprites/items/${slug}.png`
+  if (kind === 'item') return `/sprites/items/${slug}.${SVG_ITEMS.has(slug) ? 'svg' : 'png'}`
   const id = defaultContext().speciesBySlug.get(slug)?.id ?? 0
   if (kind === 'icon') return `/sprites/icons/${id}.png`
   return shiny ? `/sprites/showdown-shiny/${id}.gif` : `/sprites/showdown/${id}.gif`
