@@ -339,6 +339,23 @@ describe('game', () => {
     expect((devDust.json as unknown as GameSnapshot).doc.player?.dust).toBeGreaterThanOrEqual(100)
   })
 
+  it('devAddTrainerExp: 403 without DEV_TOOLS, applies with it, refuses 0 and out-of-range amounts', async () => {
+    const u = await register()
+    await act(u.cookie, { type: 'createPlayer', locale: 'en', timezone: 0, starterSlug: 'bulbasaur' })
+    const off = await act(u.cookie, { type: 'devAddTrainerExp', amount: 500 })
+    expect(off.status).toBe(403)
+    expect(off.json).toEqual({ error: 'dev_disabled' })
+    const on = await act(u.cookie, { type: 'devAddTrainerExp', amount: 500 }, { app: dev })
+    expect(on.status).toBe(200)
+    const trainer = (on.json as unknown as GameSnapshot).doc.player?.trainer
+    expect(trainer?.exp).toBe(500)
+    expect(trainer?.level).toBeGreaterThan(1)
+    expect((await act(u.cookie, { type: 'devAddTrainerExp', amount: 0 }, { app: dev })).status).toBe(400)
+    expect((await act(u.cookie, { type: 'devAddTrainerExp', amount: 2_000_000 }, { app: dev })).status).toBe(400)
+    const down = await act(u.cookie, { type: 'devAddTrainerExp', amount: -9999 }, { app: dev })
+    expect((down.json as unknown as GameSnapshot).doc.player?.trainer).toEqual({ level: 1, exp: 0 })
+  })
+
   it('GET /api/config announces the developer tools (public, no-store; never on in production)', async () => {
     const off = await call('GET', '/api/config')
     expect(off.status).toBe(200)

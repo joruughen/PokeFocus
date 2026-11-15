@@ -31,6 +31,7 @@ const loaders = {
   trades: () => import('./screens/trades/Trades'),
   missions: () => import('./screens/missions/Missions'),
   events: () => import('./screens/events/Events'),
+  profile: () => import('./screens/profile/Profile'),
   settings: () => import('./screens/Settings'),
   changelog: () => import('./changelog/Changelog'),
   admin: () => import('./screens/admin/Admin'),
@@ -48,6 +49,8 @@ export const ROUTES: RouteDef[] = [
   { id: 'missions', labelKey: 'nav.missions', icon: 'missions', component: lazy(loaders.missions), nav: true, preload: loaders.missions },
   { id: 'events', labelKey: 'nav.events', icon: 'sparkle', component: lazy(loaders.events), nav: true, preload: loaders.events },
   { id: 'settings', labelKey: 'nav.settings', icon: 'settings', component: lazy(loaders.settings), nav: true, preload: loaders.settings },
+  // Reachable from the trainer card in the side rail and from «More» on phones (MoreNav.splitNav), not as a rail section.
+  { id: 'profile', labelKey: 'nav.profile', icon: 'user', component: lazy(loaders.profile), nav: false, preload: loaders.profile },
   // Reachable from the version badge / Settings (changelog) and by URL (admin); not in the side rail.
   { id: 'changelog', labelKey: 'nav.changelog', icon: 'star', component: lazy(loaders.changelog), nav: false, preload: loaders.changelog },
   { id: 'admin', labelKey: 'nav.admin', icon: 'wrench', component: lazy(loaders.admin), nav: false },
