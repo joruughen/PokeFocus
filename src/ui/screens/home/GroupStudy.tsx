@@ -12,7 +12,7 @@ import { fairyMultiplier, groupOverlap } from '../../../game/group'
 import type { StudyGroupMember, StudyGroupView } from '../../../game/protocol'
 import { Button, Panel, PixelIcon, toast, TypeBadge } from '../../components'
 import { cx } from '../../lib/cx'
-import { fmtPct } from '../../lib/format'
+import { fmtNum, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { hrefTo } from '../../router'
 import { useAuth } from '../../store/auth'
@@ -309,7 +309,7 @@ export function GroupSessionStatus() {
         <TypeBadge type="fairy" />
         <span>{t('group.session.accompanied', { x, y })}</span>
         <span aria-hidden>·</span>
-        <span className="font-num text-2xl leading-none text-leaf-400">{t('group.session.estimate', { mult: mult.toFixed(2) })}</span>
+        <span className="font-num text-2xl leading-none text-leaf-400">{t('group.session.estimate', { mult: fmtNum(mult) })}</span>
       </p>
       <p className="mt-2 text-sm text-mist-400">
         {iLeft
@@ -352,11 +352,11 @@ export function GroupFairyNote({ result }: { result: SessionResult }) {
       <p className="flex flex-wrap items-center gap-2 font-display text-base text-ink">
         <TypeBadge type="fairy" />
         <span>{t('group.results.title')}</span>
-        <span className="font-num text-xl leading-none">×{mult.toFixed(2)}</span>
+        <span className="font-num text-xl leading-none">×{fmtNum(mult)}</span>
       </p>
       <p className="mt-1">{t('group.results.accompanied', { x, y, pct: fmtPct(overlap, inst.language) })}</p>
       <p className="mt-1">{why}</p>
-      <p className="mt-1 text-xs text-dusk-600">{t('group.results.formula', { max: FAIRY.toFixed(2) })}</p>
+      <p className="mt-1 text-xs text-dusk-600">{t('group.results.formula', { max: fmtNum(FAIRY) })}</p>
     </div>
   )
 }

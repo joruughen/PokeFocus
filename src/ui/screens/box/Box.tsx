@@ -148,7 +148,7 @@ export function Box() {
         {selecting && <p className="text-sm text-mist-300">{t('box.select.help')}</p>}
         <Panel variant="frame" padded={false} className="flex flex-col gap-4 p-4" {...hintAnchor('box.filters')}>
           <div className="flex flex-wrap items-end gap-4">
-            <label className="flex min-w-48 flex-1 flex-col gap-1.5">
+            <label className="flex min-w-48 flex-1 flex-col gap-1.5 max-sm:basis-full">
               <span className="font-display text-base text-mist-300">{t('box.search')}</span>
               <span className="flex min-h-11 items-center gap-2 bg-dusk-900 px-3 shadow-frame inset-shadow-well focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-volt-400">
                 <PixelIcon name="search" size={20} className="text-mist-400" />
@@ -161,9 +161,10 @@ export function Box() {
                 />
               </span>
             </label>
-            <Select className="w-44" label={t('box.filter.type')} options={typeOptions} value={f.type} onChange={(v) => f.set({ type: v as TypeSlug | 'any' })} />
-            <Select className="w-44" label={t('box.filter.role')} options={roleOptions} value={f.role} onChange={(v) => f.set({ role: v as SpeciesRole | 'any' })} />
-            <Select className="w-44" label={t('box.sort.label')} options={sortOptions} value={f.sort} onChange={(v) => f.set({ sort: v as BoxSort })} />
+            {/* Phones: type and role side by side, then the sort; three stacked selects used to push the grid off the first screen. */}
+            <Select className="w-[calc(50%-0.5rem)] sm:w-44" label={t('box.filter.type')} options={typeOptions} value={f.type} onChange={(v) => f.set({ type: v as TypeSlug | 'any' })} />
+            <Select className="w-[calc(50%-0.5rem)] sm:w-44" label={t('box.filter.role')} options={roleOptions} value={f.role} onChange={(v) => f.set({ role: v as SpeciesRole | 'any' })} />
+            <Select className="w-full sm:w-44" label={t('box.sort.label')} options={sortOptions} value={f.sort} onChange={(v) => f.set({ sort: v as BoxSort })} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Segmented<BoxWhere>

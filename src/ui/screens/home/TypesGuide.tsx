@@ -12,7 +12,7 @@ import {
 import { Button, Dialog, PixelIcon, Segmented, Select, TypeBadge } from '../../components'
 import { teamConditionTypes } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
-import { fmtWeekday } from '../../lib/format'
+import { fmtNum, fmtWeekday } from '../../lib/format'
 import { useNow } from '../../store/clock'
 import { useSessionWeather } from '../../lib/weather'
 import { usePlayer } from '../../store/selectors'
@@ -181,12 +181,12 @@ function GuideBody({ minutes }: { minutes: number }) {
                 <div className="ml-auto text-right">
                   <p className="flex items-baseline justify-end gap-1.5">
                     {variable && !o.active && <span className="text-sm text-mist-400">{t('typesGuide.upToWord')}</span>}
-                    <span className={cx('font-num text-2xl leading-none tabular', o.active ? 'text-leaf-400' : 'text-mist-400')}>×{shown.toFixed(2)}</span>
+                    <span className={cx('font-num text-2xl leading-none tabular', o.active ? 'text-leaf-400' : 'text-mist-400')}>×{fmtNum(shown)}</span>
                   </p>
                   <p className={cx('flex items-center justify-end gap-1 text-sm', o.active ? 'text-leaf-400' : 'text-mist-400')}>
                     {o.active && <PixelIcon name="check" size={10} />}
                     {o.active ? t('typesGuide.active') : t('typesGuide.inactive')}
-                    {variable && o.active && <span className="text-mist-400">, {t('typesGuide.upTo', { mult: o.maxMult.toFixed(2) })}</span>}
+                    {variable && o.active && <span className="text-mist-400">, {t('typesGuide.upTo', { mult: fmtNum(o.maxMult) })}</span>}
                   </p>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import { ALL_TYPES, type TypeSlug } from '../../../engine'
 import { Button, Dialog, Panel, PixelIcon, ProgressBar, RoleBadge, Select, Sprite, TypeBadge } from '../../components'
 import { hintAnchor } from '../../hints'
 import { conditionEnvNow } from '../../lib/conditions'
+import { fmtNum } from '../../lib/format'
 import { cx } from '../../lib/cx'
 import { pokemonName, typeName, useNames } from '../../lib/names'
 import { useSessionWeather } from '../../lib/weather'
@@ -157,12 +158,12 @@ export const BoxPicker = memo(BoxPickerPanel)
 function Boost({ type, mult }: { type: TypeSlug; mult: number }) {
   const { t } = useTranslation()
   const names = useNames()
-  const text = t('conditions.memberBoost', { type: names.type(type), mult: mult.toFixed(2) })
+  const text = t('conditions.memberBoost', { type: names.type(type), mult: fmtNum(mult) })
   return (
     <span className="inline-flex items-center gap-1" title={text}>
       <TypeBadge type={type} />
       <span className="font-num text-lg leading-none text-leaf-400" aria-hidden="true">
-        ×{mult.toFixed(2)}
+        ×{fmtNum(mult)}
       </span>
       <span className="sr-only">{text}</span>
     </span>
@@ -269,7 +270,7 @@ function SwapMember({ row, index, incomingName, disabled, onPick }: { row: PickR
               {t('pokemon.levelShort')}
               {mon.level}
             </span>
-            {row.condType && <span className="font-num text-lg leading-none text-leaf-400">×{row.mult.toFixed(2)}</span>}
+            {row.condType && <span className="font-num text-lg leading-none text-leaf-400">×{fmtNum(row.mult)}</span>}
           </span>
           <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
             <ProgressBar className="w-16 shrink-0" size="sm" variant="energy" value={row.energy} max={row.maxEnergy} label={t('pokemon.energyOf', { name })} />

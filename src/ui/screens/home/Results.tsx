@@ -6,7 +6,7 @@ import { BallIcon, Button, Panel, PixelIcon, ProgressBar, Sprite, Stage, StageTe
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
-import { fmtInt, fmtPct } from '../../lib/format'
+import { fmtInt, fmtNum, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
@@ -68,7 +68,7 @@ export function Results() {
     why.push(
       <WhyChip key={`c-${type}`} tip={t('results.whyCondition', { type: names.type(type), who: c.who.join(', ') })}>
         <TypeBadge type={type} />
-        <span className="font-num text-xl leading-none text-leaf-400">×{c.mult.toFixed(2)}</span>
+        <span className="font-num text-xl leading-none text-leaf-400">×{fmtNum(c.mult, lng)}</span>
       </WhyChip>,
     )
   }
@@ -93,7 +93,7 @@ export function Results() {
     why.push(
       <WhyChip key="late" tip={t('results.whyLate')} tone="warn">
         <PixelIcon name="clock" size={16} />
-        <span>{t('results.late', { mult: cfg.session.lateClaimMultiplier })}</span>
+        <span>{t('results.late', { mult: fmtNum(cfg.session.lateClaimMultiplier, lng) })}</span>
       </WhyChip>,
     )
   if (result.valid && result.rewardFactor < 1)
