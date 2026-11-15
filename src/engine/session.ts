@@ -55,6 +55,7 @@ import {
   techniqueMultiplier,
 } from './stats'
 import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from './time'
+import { activeTera } from './advanced'
 import { toManualWave } from './damage'
 import { rollEventDrops } from './spawn'
 import { blockIndexAt, damageFromHits, fullBlocks, hpFractionAfter, rollWaveSize, rollWild, waveCount } from './waves'
@@ -65,7 +66,8 @@ import { blockIndexAt, damageFromHits, fullBlocks, hpFractionAfter, rollWaveSize
 
 /** Types used for conditions: the Tera type while active, else the species types. */
 export function conditionTypes(p: OwnedPokemon, at: number, ctx: EngineContext = defaultContext()): TypeSlug[] {
-  if (p.teraType && p.teraUntil !== null && at < p.teraUntil && p.teraSessionsLeft > 0) return [p.teraType]
+  const tera = activeTera(p, at)
+  if (tera) return [tera]
   return getSpecies(p.speciesSlug, ctx).types
 }
 
@@ -508,7 +510,10 @@ interface Sim {
   max: number
   energy: number
   energyStart: number
+  /** Types for the conditions: the Tera type while active, else the species types. */
   types: TypeSlug[]
+  /** Types that give STAB: the species types plus the active Tera type. */
+  stabTypes: TypeSlug[]
   asleep: boolean
   passives: SourcedEffect[]
   /** statMods gained from activations (rest of the session). */
@@ -584,7 +589,7 @@ function assignHits(
         damageClass,
         level: a.sim.p.level,
         attack: damageClass === 'special' ? a.sim.stats.specialAttack : a.sim.stats.attack,
-        stab: a.sim.types.includes(type),
+        stab: a.sim.stabTypes.includes(type),
         units: 0,
         unitsVsLegendary: 0,
         effectivenessFloors: floorsOf(a.sim),
@@ -705,6 +710,7 @@ export function completeSession(
       energy: energyStart,
       energyStart,
       types: conditionTypes(p, session.startedAt, ctx),
+      stabTypes: [...new Set([...getSpecies(p.speciesSlug, ctx).types, ...conditionTypes(p, session.startedAt, ctx)])],
       asleep: session.asleepUids.includes(p.uid),
       passives,
       activated: [],
@@ -1257,7 +1263,8 @@ export function applySessionResult(
       asleepSetAt: m.rested ? result.endedAt : m.asleep ? null : (p.asleepSetAt ?? null),
       bondMinutes: p.bondMinutes + m.bondMinutes,
       moveMasteryMinutes: { ...p.moveMasteryMinutes },
-      teraSessionsLeft: p.teraType && result.valid ? Math.max(0, p.teraSessionsLeft - 1) : p.teraSessionsLeft,
+      // A session spends one of the Tera sessions when the Tera was active at its start (GDD §9.4).
+      teraSessionsLeft: activeTera(p, result.startedAt) && result.valid ? Math.max(0, p.teraSessionsLeft - 1) : p.teraSessionsLeft,
     }
     for (const [mv, min] of Object.entries(m.masteryMinutes)) p.moveMasteryMinutes[mv] = (p.moveMasteryMinutes[mv] ?? 0) + min
     const g = gainExp(p, m.exp, cap, ctx)

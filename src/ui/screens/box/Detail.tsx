@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { pokemonView } from '../../../engine'
-import { Button, Dialog, DialogClose, EmptyState, IconButton, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, toast, Tooltip, TypeBadge } from '../../components'
+import { effectiveNature, pokemonView } from '../../../engine'
+import { Button, Dialog, DialogClose, EmptyState, IconButton, PixelIcon, Platform, ProgressBar, RoleBadge, Sprite, Stage, TeraBadge, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
@@ -21,6 +21,7 @@ import { roleNatureFit } from './roleNature'
 import { StatsPanel } from './StatsPanel'
 import { SwapDialog } from './SwapCompare'
 import { Techniques } from './Techniques'
+import { Training } from './Training'
 import { useContent } from '../../store/content'
 
 /** Pokémon detail sheet (`#/box/<uid>`): everything about one individual, and what you can do with it. */
@@ -66,7 +67,7 @@ export function Detail({ uid }: { uid: string }) {
   const idx = order.indexOf(uid)
   const prev = idx > 0 ? order[idx - 1] : undefined
   const next = idx >= 0 && idx < order.length - 1 ? order[idx + 1] : undefined
-  const nature = ctx.naturesBySlug.get(p.nature)
+  const nature = ctx.naturesBySlug.get(effectiveNature(p))
   const fit = roleNatureFit(view.species.role, nature)
   const root = lineRoot(view.species)
   const releaseGain = cfg.progression.candiesOnRelease[view.species.stage - 1] ?? 1
@@ -117,6 +118,7 @@ export function Detail({ uid }: { uid: string }) {
               {view.types.map((ty) => (
                 <TypeBadge key={ty} type={ty} size="md" />
               ))}
+              {view.tera && <TeraBadge tera={view.tera} size="md" />}
               {inTeam && (
                 <span className={cx('inline-flex h-7 items-center gap-1 px-2 font-display text-base shadow-frame', slot === 0 ? 'bg-volt-400' : 'bg-dusk-600 text-mist-50')}>
                   <PixelIcon name={slot === 0 ? 'crown' : 'team'} size={10} />
@@ -133,7 +135,7 @@ export function Detail({ uid }: { uid: string }) {
             {fit && (
               <p className="mt-2 flex items-start gap-1.5 text-sm text-ink">
                 <PixelIcon name={fit.kind === 'against' ? 'down' : 'up'} size={10} className={cx('mt-[5px] shrink-0', fit.kind === 'against' ? 'text-cheek-700' : 'text-leaf-600')} />
-                <span>{t(`roleInfo.${fit.kind}.${fit.role}`, { nature: names.nature(p.nature) })}</span>
+                <span>{t(`roleInfo.${fit.kind}.${fit.role}`, { nature: names.nature(effectiveNature(p)) })}</span>
               </p>
             )}
             <div className="mt-3">
@@ -217,6 +219,7 @@ export function Detail({ uid }: { uid: string }) {
         <div className="flex min-w-0 flex-col gap-8">
           <StatsPanel view={view} />
           <EnergyBond view={view} inSession={inSession} />
+          <Training view={view} locked={locked} />
         </div>
       </div>
 

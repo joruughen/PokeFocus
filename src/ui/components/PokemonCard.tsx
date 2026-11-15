@@ -8,7 +8,7 @@ import { ProgressBar } from './ProgressBar'
 import { Sprite } from './Sprite'
 import { Platform } from './Stage'
 import { Tooltip } from './Tooltip'
-import { TypeBadge } from './TypeBadge'
+import { TeraBadge, TypeBadge } from './TypeBadge'
 
 export interface PokemonCardProps {
   /** From the engine: `pokemonView(state, uid, now)`. */
@@ -64,6 +64,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
         {view.types.map((ty) => (
           <TypeBadge key={ty} type={ty} />
         ))}
+        {view.tera && <TeraBadge tera={view.tera} />}
         {condition && condition.mult > 1 && condition.type && (
           <Tooltip content={t('conditions.memberBoost', { type: names.type(condition.type), mult: condition.mult.toFixed(2) })}>
             <span tabIndex={0} className="ml-auto font-num text-lg leading-none text-leaf-600">

@@ -760,7 +760,20 @@
       "unsupported": "That evolution isn't available yet.",
       "no_such_evolution": "It can't evolve into that species.",
       "nickname_too_long": "That nickname is too long (12 characters at most).",
-      "nickname_invalid": "That nickname has characters that can't be used."
+      "nickname_invalid": "That nickname has characters that can't be used.",
+      "trainer_level_too_low": "Not yet: raise your trainer level to unlock it.",
+      "no_item": "You don't have that item (or not enough of it).",
+      "invalid_type": "That type doesn't exist.",
+      "same_type": "It already has that type.",
+      "move_not_compatible": "Its species can't learn that technique from a TM.",
+      "move_already_known": "It already knows that technique.",
+      "invalid_nature": "That nature doesn't exist.",
+      "same_nature": "That mint would change nothing: it already has that effect.",
+      "invalid_stat": "That stat doesn't exist.",
+      "iv_maxed": "That IV is already at the max.",
+      "invalid_ability": "Its species can't get that ability from the capsule.",
+      "same_ability": "It already has that ability.",
+      "no_other_ability": "Its species has no other ability to choose."
     },
     "heal": {
       "unknown_pokemon": "That Pokémon is gone.",
@@ -1198,7 +1211,7 @@
     "statLabel": "{{stat}}: {{word}}",
     "max": "Max",
     "what": "IVs are values from 0 to 31, one per stat, that every Pokémon is born with. Here you see the number, its quality and how much it adds to that stat today.",
-    "fixed": "They are fixed for life: they do not change with level, evolution or nature. The stats are what change.",
+    "fixed": "They don't change on leveling up, evolving or with the nature. Only a Bottle Cap (an advanced item) can raise one to the max.",
     "effect": "A high IV adds a little to that one stat at every level, and it shows more the higher the level.",
     "label": "Quality: {{word}}",
     "tier": {
@@ -1230,7 +1243,8 @@
       "evolution": "Evolution",
       "candy": "Candies",
       "event": "Missions & events",
-      "other": "Other"
+      "other": "Other",
+      "training": "Training"
     },
     "sort": {
       "label": "Sort by",
@@ -1260,7 +1274,14 @@
       "event": "An item from a mission or an event. For now it is just kept in your bag.",
       "other": "A collectible. It has no use in the game yet.",
       "lineCandy": "Gives {{exp}} EXP to a Pokémon of the {{name}} line. Each candy costs Study Dust; use it on the Pokémon's page.",
-      "typeCandy": "Gives {{exp}} EXP to a {{type}}-type Pokémon. Each candy costs Study Dust; use it on the Pokémon's page."
+      "typeCandy": "Gives {{exp}} EXP to a {{type}}-type Pokémon. Each candy costs Study Dust; use it on the Pokémon's page.",
+      "tera_one": "Terastallizes a Pokémon: for {{hours}} h or {{sessions}} sessions its conditions use the type you choose. Each use costs {{count}} Tera Shard; use it on the Pokémon's page.",
+      "tera_other": "Terastallizes a Pokémon: for {{hours}} h or {{sessions}} sessions its conditions use the type you choose. Each use costs {{count}} Tera Shards; use it on the Pokémon's page.",
+      "tm": "Teaches a Pokémon a TM technique its species can learn. Used up when used, on the Pokémon's page.",
+      "mint": "Changes the effect of a Pokémon's nature to {{nature}}'s ({{effect}}). Its original nature is kept. Use it on the Pokémon's page.",
+      "mintNeutral": "neutral: raises and lowers nothing",
+      "bottleCap": "Raises one IV of a Pokémon to {{max}}, the one you choose. Use it on the Pokémon's page.",
+      "abilityCapsule": "Switches a Pokémon's ability to another one of its species (not the hidden one). Use it on the Pokémon's page."
     },
     "users": {
       "heal": "Need it now:",
@@ -1269,14 +1290,25 @@
       "typeCandy": "Of this type in your Box:",
       "more": "+{{count}} more",
       "less": "Show less",
-      "notReady": "Cannot evolve yet: open its page to see what it is missing."
+      "notReady": "Cannot evolve yet: open its page to see what it is missing.",
+      "tera": "Your team:",
+      "tm": "Can learn a technique with it:",
+      "mint": "Suits their role:",
+      "bottleCap": "In your team, with IVs to raise:",
+      "abilityCapsule": "Can change their ability:"
     },
     "noUsers": {
       "heal": "None of your Pokémon needs it right now.",
       "evolution": "None of your Pokémon evolves with it for now.",
       "chainCandy": "You no longer have Pokémon of this line.",
-      "typeCandy": "You have no Pokémon of this type."
-    }
+      "typeCandy": "You have no Pokémon of this type.",
+      "tera": "Use it from any Pokémon's page.",
+      "tm": "None of your Pokémon can learn a new TM technique right now.",
+      "mint": "It doesn't improve the role of any of your Pokémon, but you can use it on any of them from their page.",
+      "bottleCap": "Your team's IVs are already maxed. Use it from another Pokémon's page.",
+      "abilityCapsule": "None of your Pokémon has another ability to choose."
+    },
+    "lockedAt": "Unlocks at trainer level {{level}}."
   },
   "box": {
     "count_one": "{{count}} Pokémon, {{team}} in your team.",
@@ -3071,6 +3103,26 @@
         "dark": "Dark condition multiplier",
         "steel": "Steel condition multiplier",
         "fairy": "Fairy condition multiplier"
+      },
+      "advanced": {
+        "mint": {
+          "minTrainerLevel": "Mints: trainer level to use them"
+        },
+        "tera": {
+          "minTrainerLevel": "Terastallization: trainer level",
+          "unlockGift": "Terastallization: Tera Shards given when it unlocks",
+          "shardCost": "Terastallization: Tera Shards per use",
+          "hours": "Terastallization: length in hours",
+          "sessions": "Terastallization: length in sessions"
+        },
+        "bottleCap": {
+          "minTrainerLevel": "Bottle Caps: trainer level to use them",
+          "unlockGift": "Bottle Caps: given when they unlock"
+        },
+        "abilityCapsule": {
+          "minTrainerLevel": "Ability Capsule: trainer level",
+          "unlockGift": "Ability Capsule: given when it unlocks"
+        }
       }
     },
     "errors": {
@@ -3683,5 +3735,83 @@
     "nextTarget": "Takes the next counterattack",
     "wavesNote": "Attacking a wild Pokémon is final, and it strikes back at its attacker (unless it is asleep or paralyzed). If a Ball fails, the counterattack goes to the leader (outlined).",
     "sessionNote": "Energy at the start of the session. Each action spends a little, and in the waves each Pokémon takes the counterattack of the wild Pokémon it attacks."
+  },
+  "training": {
+    "title": "Advanced items",
+    "intro": "Permanent upgrades (and Terastallization, which is temporary). Used between sessions.",
+    "lockedAt": "Unlocks at trainer level {{level}}",
+    "have": "You have {{count}}",
+    "use": "Use",
+    "toBag": "Open the Bag",
+    "tera": {
+      "name": "Terastallization",
+      "body": "Its conditions use a single type for {{hours}} h or {{sessions}} sessions, whichever ends first. Its techniques keep their type and STAB.",
+      "cost_one": "Costs {{count}} Tera Shard.",
+      "cost_other": "Costs {{count}} Tera Shards.",
+      "need_one": "You need {{count}} Tera Shard (you have {{have}}).",
+      "need_other": "You need {{count}} Tera Shards (you have {{have}}).",
+      "active": "Terastallized to {{type}} type",
+      "left_one": "{{time}} or {{count}} session left, whichever ends first.",
+      "left_other": "{{time}} or {{count}} sessions left, whichever ends first.",
+      "dialogTitle": "Terastallize {{name}}",
+      "pick": "Choose the Tera type",
+      "pickHelp": "That type decides which condition boosts it (for example, Dark after days without studying).",
+      "replaces": "Replaces the active Terastallization ({{type}} type) and restarts the count.",
+      "confirm": "Terastallize",
+      "done": "{{name}} terastallized to {{type}} type!",
+      "badge": "Tera",
+      "tip_one": "Terastallized to {{type}} type: its conditions use that type. {{time}} or {{count}} session left.",
+      "tip_other": "Terastallized to {{type}} type: its conditions use that type. {{time}} or {{count}} sessions left."
+    },
+    "tm": {
+      "name": "TM",
+      "body": "Teaches a TM technique its species can learn. The TM is used up and the technique is learned for good.",
+      "noneLeft": "It already knows every TM technique its species can learn in PokeFocus.",
+      "count_one": "{{count}} TM technique available.",
+      "count_other": "{{count}} TM techniques available.",
+      "learned": "Learned from TMs: {{moves}}",
+      "dialogTitle": "Teach a TM to {{name}}",
+      "pick": "Choose the technique",
+      "confirm": "Teach",
+      "done": "{{name}} learned {{move}}. Equip it in Techniques.",
+      "tag": "TM"
+    },
+    "mint": {
+      "name": "Mints",
+      "body": "They change the effect of the nature: it raises and lowers what the mint says. The original nature is kept.",
+      "current": "Current effect: {{nature}}",
+      "original": "Original nature: {{nature}}",
+      "noneOwned": "You have no mint that would change its effect.",
+      "owned_one": "You have {{count}} mint that works on it.",
+      "owned_other": "You have {{count}} mints that work on it.",
+      "dialogTitle": "Use a mint on {{name}}",
+      "pick": "Choose the mint",
+      "restore": "Back to its original nature",
+      "confirm": "Use mint",
+      "done": "{{name}} now has the effect of {{nature}}.",
+      "byMint": "from a mint ({{nature}})"
+    },
+    "bottleCap": {
+      "name": "Bottle Caps",
+      "body": "Raise one IV to {{max}}, the max.",
+      "allMax": "All its IVs are already at the max.",
+      "dialogTitle": "Use a Bottle Cap on {{name}}",
+      "pick": "Choose the IV that goes up to {{max}}",
+      "ivNow": "IV {{iv}}",
+      "confirm": "Use Bottle Cap",
+      "done": "{{name}}'s {{stat}} IV goes up to {{max}}.",
+      "capped": "Raised with a Bottle Cap"
+    },
+    "abilityCapsule": {
+      "name": "Ability Capsule",
+      "body": "Switches to another ability of its species. The hidden one can't be chosen.",
+      "only": "Its species has no other ability to choose.",
+      "dialogTitle": "Change {{name}}'s ability",
+      "pick": "Choose the new ability",
+      "now": "Now: {{ability}}",
+      "loseHidden": "It has its hidden ability: if it switches, the capsule can't bring it back.",
+      "confirm": "Change ability",
+      "done": "{{name}} now has {{ability}}."
+    }
   }
 }

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PokemonView } from '../../../engine'
-import { PixelIcon, ProgressBar, Sprite } from '../../components'
+import { PixelIcon, ProgressBar, Sprite, TeraBadge } from '../../components'
 import { cx } from '../../lib/cx'
 import { useNames } from '../../lib/names'
 
@@ -76,6 +76,7 @@ export function TeamEnergy({
                 <span className="flex items-baseline justify-between gap-1">
                   <span className="flex min-w-0 items-center gap-1">
                     {uid === leaderUid && <PixelIcon name="crown" size={10} className="shrink-0 text-volt-300" label={t('team.leader')} />}
+                    {v.tera && <TeraBadge tera={v.tera} compact />}
                     <span title={v.pokemon.nickname ? fullName : undefined} className={cx('truncate font-display text-sm leading-tight', out ? 'text-mist-400' : 'text-mist-50')}>
                       {name}
                     </span>

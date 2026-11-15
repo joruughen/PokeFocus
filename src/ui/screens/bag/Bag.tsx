@@ -176,7 +176,15 @@ function EntryIcon({ entry: e, ctx }: { entry: BagEntry; ctx: ReturnType<typeof 
 function Users({ entry: e }: { entry: BagEntry }) {
   const { t } = useTranslation()
   const [all, setAll] = useState(false)
-  const kind = e.kind === 'item' ? e.category : e.kind
+  const kind = e.usersKey ?? (e.kind === 'item' ? e.category : e.kind)
+  if (e.lockedLevel !== undefined) {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-amber-400">
+        <PixelIcon name="lock" size={10} className="shrink-0" />
+        {t('bag.lockedAt', { level: e.lockedLevel })}
+      </p>
+    )
+  }
   if (e.users.length === 0) return <p className="text-xs text-mist-400">{t(`bag.noUsers.${kind}`)}</p>
   const list = all ? e.users : e.users.slice(0, USERS_SHOWN)
   const hidden = e.users.length - list.length

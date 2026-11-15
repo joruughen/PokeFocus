@@ -220,6 +220,17 @@ export interface GameConfig {
     weeklyThresholds: Record<LeagueId, number>
     monthlyMultiplier: number
   }
+  /**
+   * Advanced items (GDD F4: §9.4 Tera, §7 TMs, §6.2 Mints, §6.1 Bottle Caps, §6.3 Ability Capsule).
+   * `minTrainerLevel` unlocks the use; `unlockGift` items are given once, with the reward of the trainer
+   * level that unlocks it (`trainerLevelRewards`). TMs have no lock and no gift.
+   */
+  advanced: {
+    tera: { minTrainerLevel: number; shardCost: number; hours: number; sessions: number; unlockGift: number }
+    mint: { minTrainerLevel: number }
+    bottleCap: { minTrainerLevel: number; unlockGift: number }
+    abilityCapsule: { minTrainerLevel: number; unlockGift: number }
+  }
   starters: string[]
   starterLevel: number
   starterPokeBalls: number
@@ -247,6 +258,12 @@ export const ENGINE_DEFAULTS = {
   capture: { counter: { immuneHealPct: 0.25, damageMult: 1 } },
   progression: { maxLevel: 100 },
   trainer: { expCoef: 100, expExponent: 1.5, expPerMinute: 1, expPerNewSpecies: 60, maxLevel: 50, levelRewards: { dustBase: 0, dustPerLevel: 0, tiers: [] } },
+  advanced: {
+    tera: { minTrainerLevel: 20, shardCost: 2, hours: 24, sessions: 5, unlockGift: 2 },
+    mint: { minTrainerLevel: 10 },
+    bottleCap: { minTrainerLevel: 25, unlockGift: 1 },
+    abilityCapsule: { minTrainerLevel: 30, unlockGift: 1 },
+  },
   historyLimit: 1000,
 } as const
 

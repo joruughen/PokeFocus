@@ -7,6 +7,7 @@
  * (plus tiny constants), no runtime imports besides the engine's types.
  */
 import type {
+  AdvancedError,
   BoxError,
   CandyKind,
   ChargeError,
@@ -21,12 +22,14 @@ import type {
   PresetError,
   ProgressEvent,
   SoundProfile,
+  StatKey,
   SessionResult,
   StartSessionError,
   ThrowBall,
   ThrowError,
   ThrowOutcome,
   TimeZoneSpec,
+  TypeSlug,
   WeatherInput,
   WildRef,
 } from '../engine'
@@ -128,6 +131,17 @@ export type GameAction =
   | { type: 'heal'; uid: string; item: string }
   /** Nickname: up to 12 graphemes, trimmed; empty text or null removes it. Allowed at any time. */
   | { type: 'setNickname'; uid: string; nickname: string | null }
+  // Advanced items (F4; refused for members of the active session)
+  /** Terastallize: spend Tera Shards to set the type of its conditions for a while (trainer level `advanced.tera`). */
+  | { type: 'useTera'; uid: string; teraType: TypeSlug }
+  /** Teach a TM move of its species (spends one TM). */
+  | { type: 'useTm'; uid: string; move: string }
+  /** Use the mint of `nature`: the stats follow that nature's effect (trainer level `advanced.mint`). */
+  | { type: 'useMint'; uid: string; nature: string }
+  /** Bottle Cap: one IV to the max (trainer level `advanced.bottleCap`). */
+  | { type: 'useBottleCap'; uid: string; stat: StatKey }
+  /** Ability Capsule: another defined, non-hidden ability of its species (trainer level `advanced.abilityCapsule`). */
+  | { type: 'useAbilityCapsule'; uid: string; ability: string }
   // Saved teams (max 10). `applyPreset` only between sessions.
   | { type: 'savePreset'; name: string }
   | { type: 'renamePreset'; id: string; name: string }
@@ -183,6 +197,11 @@ export interface ActionResults {
   evolve: { pokemon: OwnedPokemon }
   heal: null
   setNickname: null
+  useTera: null
+  useTm: null
+  useMint: null
+  useBottleCap: null
+  useAbilityCapsule: null
   savePreset: { id: string }
   renamePreset: null
   overwritePreset: null
@@ -209,6 +228,7 @@ export type GameActionError =
   | ChargeError
   | DamageError
   | BoxError
+  | AdvancedError
   | NicknameError
   | PresetError
   | 'no_player'

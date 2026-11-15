@@ -6,6 +6,7 @@ import type { BaseStats, Species, TypeSlug } from './data-types'
 import { energyAt } from './energy'
 import { equippableMoves, extraMoveUnlockLevel, getTechnique, lockedExtraMoves, techniqueSlots, type TechniqueInfo } from './moves'
 import { bondBonus, evolutionOptions, expForLevel, type EvolutionOption } from './progression'
+import { activeTera } from './advanced'
 import type { OwnedPokemon, PlayerState } from './state'
 import {
   actionIntervalSeconds,
@@ -21,7 +22,10 @@ import {
 export interface PokemonView {
   pokemon: OwnedPokemon
   species: Species
+  /** Species types (the Tera type, when active, is in `tera`). */
   types: TypeSlug[]
+  /** Active Terastallization at `now` (GDD §9.4): type, end time and time left (ms), sessions left; null = none. */
+  tera: { type: TypeSlug; until: number; msLeft: number; sessionsLeft: number } | null
   stats: BaseStats
   /** Energy right now (daily reset / box regen applied) and max. */
   energy: number
@@ -69,6 +73,7 @@ export function pokemonView(state: PlayerState, uid: string, now: number, ctx: E
     pokemon: p,
     species,
     types: species.types,
+    tera: teraOf(p, now),
     stats,
     energy,
     maxEnergy: stats.hp,
@@ -96,4 +101,9 @@ export function pokemonView(state: PlayerState, uid: string, now: number, ctx: E
     expForNextLevel: expForLevel(p.level + 1, ctx) - expForLevel(p.level, ctx),
     evolutions: evolutionOptions(state, p, now, ctx),
   }
+}
+
+function teraOf(p: OwnedPokemon, now: number): PokemonView['tera'] {
+  const type = activeTera(p, now)
+  return type && p.teraUntil !== null ? { type, until: p.teraUntil, msLeft: p.teraUntil - now, sessionsLeft: p.teraSessionsLeft } : null
 }

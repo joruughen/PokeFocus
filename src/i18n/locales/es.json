@@ -760,7 +760,20 @@
       "unsupported": "Esa evolución aún no está disponible.",
       "no_such_evolution": "No puede evolucionar a esa especie.",
       "nickname_too_long": "Ese mote es demasiado largo (máximo 12 caracteres).",
-      "nickname_invalid": "Ese mote tiene caracteres que no se pueden usar."
+      "nickname_invalid": "Ese mote tiene caracteres que no se pueden usar.",
+      "trainer_level_too_low": "Aún no: sube tu nivel de entrenador para desbloquearlo.",
+      "no_item": "No tienes ese objeto (o no tienes suficientes).",
+      "invalid_type": "Ese tipo no existe.",
+      "same_type": "Ya tiene ese tipo.",
+      "move_not_compatible": "Su especie no puede aprender esa técnica con una MT.",
+      "move_already_known": "Ya conoce esa técnica.",
+      "invalid_nature": "Esa naturaleza no existe.",
+      "same_nature": "Esa menta no cambiaría nada: ya tiene ese efecto.",
+      "invalid_stat": "Esa estadística no existe.",
+      "iv_maxed": "Ese IV ya está al máximo.",
+      "invalid_ability": "Su especie no puede tener esa habilidad con la cápsula.",
+      "same_ability": "Ya tiene esa habilidad.",
+      "no_other_ability": "Su especie no tiene otra habilidad que elegir."
     },
     "heal": {
       "unknown_pokemon": "Ese Pokémon ya no está.",
@@ -1198,7 +1211,7 @@
     "statLabel": "{{stat}}: {{word}}",
     "max": "Máximo",
     "what": "Los IVs son valores de 0 a 31, uno por estadística, que cada Pokémon recibe al nacer. Aquí ves el número, su calidad y cuánto suma hoy a esa estadística.",
-    "fixed": "Son fijos de por vida: no cambian al subir de nivel, al evolucionar ni por la naturaleza. Lo que sí cambia son las estadísticas.",
+    "fixed": "No cambian al subir de nivel, al evolucionar ni por la naturaleza. Solo una Chapa (objeto avanzado) puede subir uno al máximo.",
     "effect": "Un IV alto suma un poco a esa estadística en cada nivel, y se nota más cuanto más alto es el nivel.",
     "label": "Calidad: {{word}}",
     "tier": {
@@ -1230,7 +1243,8 @@
       "evolution": "Evolución",
       "candy": "Caramelos",
       "event": "Misiones y eventos",
-      "other": "Otros"
+      "other": "Otros",
+      "training": "Entrenamiento"
     },
     "sort": {
       "label": "Ordenar por",
@@ -1260,7 +1274,14 @@
       "event": "Objeto de una misión o un evento. Por ahora solo se guarda en la mochila.",
       "other": "Objeto de colección. Por ahora no tiene un uso en el juego.",
       "lineCandy": "Da {{exp}} EXP a un Pokémon de la línea de {{name}}. Cada caramelo cuesta Polvo de Estudio; se usa en la ficha del Pokémon.",
-      "typeCandy": "Da {{exp}} EXP a un Pokémon de tipo {{type}}. Cada caramelo cuesta Polvo de Estudio; se usa en la ficha del Pokémon."
+      "typeCandy": "Da {{exp}} EXP a un Pokémon de tipo {{type}}. Cada caramelo cuesta Polvo de Estudio; se usa en la ficha del Pokémon.",
+      "tera_one": "Teracristaliza a un Pokémon: durante {{hours}} h o {{sessions}} sesiones sus condiciones usan el tipo que elijas. Cada uso cuesta {{count}} Teralito; se usa en la ficha del Pokémon.",
+      "tera_other": "Teracristaliza a un Pokémon: durante {{hours}} h o {{sessions}} sesiones sus condiciones usan el tipo que elijas. Cada uso cuesta {{count}} Teralitos; se usa en la ficha del Pokémon.",
+      "tm": "Enseña a un Pokémon una técnica de MT que su especie puede aprender. Se gasta al usarla, en la ficha del Pokémon.",
+      "mint": "Cambia el efecto de la naturaleza de un Pokémon al de {{nature}} ({{effect}}). Su naturaleza original se conserva. Se usa en la ficha del Pokémon.",
+      "mintNeutral": "neutra: no sube ni baja nada",
+      "bottleCap": "Sube a {{max}} un IV de un Pokémon, el que elijas. Se usa en la ficha del Pokémon.",
+      "abilityCapsule": "Cambia la habilidad de un Pokémon por otra de su especie (no la oculta). Se usa en la ficha del Pokémon."
     },
     "users": {
       "heal": "Lo necesitan ahora:",
@@ -1269,14 +1290,25 @@
       "typeCandy": "De este tipo en tu Caja:",
       "more": "+{{count}} más",
       "less": "Ver menos",
-      "notReady": "Aún no puede evolucionar: mira su ficha para ver qué le falta."
+      "notReady": "Aún no puede evolucionar: mira su ficha para ver qué le falta.",
+      "tera": "Tu equipo:",
+      "tm": "Pueden aprender una técnica con ella:",
+      "mint": "Les va bien por su rol:",
+      "bottleCap": "En tu equipo, con IVs por subir:",
+      "abilityCapsule": "Pueden cambiar de habilidad:"
     },
     "noUsers": {
       "heal": "Ninguno de tus Pokémon lo necesita ahora.",
       "evolution": "Ninguno de tus Pokémon evoluciona con él por ahora.",
       "chainCandy": "Ya no tienes Pokémon de esta línea.",
-      "typeCandy": "No tienes Pokémon de este tipo."
-    }
+      "typeCandy": "No tienes Pokémon de este tipo.",
+      "tera": "Úsalo desde la ficha de cualquier Pokémon.",
+      "tm": "Ninguno de tus Pokémon puede aprender ahora una técnica de MT nueva.",
+      "mint": "A ninguno de tus Pokémon le cambia a mejor su rol, pero puedes usarla en cualquiera desde su ficha.",
+      "bottleCap": "Los IVs de tu equipo ya están al máximo. Úsala desde la ficha de otro Pokémon.",
+      "abilityCapsule": "Ninguno de tus Pokémon tiene otra habilidad que elegir."
+    },
+    "lockedAt": "Se desbloquea con el nivel de entrenador {{level}}."
   },
   "box": {
     "count_one": "{{count}} Pokémon, {{team}} en el equipo.",
@@ -3071,6 +3103,26 @@
         "dark": "Multiplicador de condición Siniestro",
         "steel": "Multiplicador de condición Acero",
         "fairy": "Multiplicador de condición Hada"
+      },
+      "advanced": {
+        "mint": {
+          "minTrainerLevel": "Mentas: nivel de entrenador para usarlas"
+        },
+        "tera": {
+          "minTrainerLevel": "Teracristalización: nivel de entrenador",
+          "unlockGift": "Teracristalización: Teralitos de regalo al desbloquearla",
+          "shardCost": "Teracristalización: Teralitos por uso",
+          "hours": "Teracristalización: duración en horas",
+          "sessions": "Teracristalización: duración en sesiones"
+        },
+        "bottleCap": {
+          "minTrainerLevel": "Chapas: nivel de entrenador para usarlas",
+          "unlockGift": "Chapas: de regalo al desbloquearlas"
+        },
+        "abilityCapsule": {
+          "minTrainerLevel": "Cápsula Habilidad: nivel de entrenador",
+          "unlockGift": "Cápsula Habilidad: de regalo al desbloquearla"
+        }
       }
     },
     "errors": {
@@ -3683,5 +3735,83 @@
     "nextTarget": "Recibirá el próximo contraataque",
     "wavesNote": "Atacar a un salvaje es definitivo y el salvaje contraataca a quien le atacó (salvo si está dormido o paralizado). Si falla una Ball, el contraataque va al líder (marcado).",
     "sessionNote": "Energía al empezar la sesión. Cada acción gasta un poco, y en las oleadas cada Pokémon recibe el contraataque del salvaje al que ataque."
+  },
+  "training": {
+    "title": "Objetos avanzados",
+    "intro": "Mejoras permanentes (y la Teracristalización, temporal). Se usan entre sesiones.",
+    "lockedAt": "Se desbloquea con el nivel de entrenador {{level}}",
+    "have": "Tienes {{count}}",
+    "use": "Usar",
+    "toBag": "Ver la Mochila",
+    "tera": {
+      "name": "Teracristalización",
+      "body": "Sus condiciones usan un único tipo durante {{hours}} h o {{sessions}} sesiones, lo que ocurra antes. Sus técnicas mantienen su tipo y su STAB.",
+      "cost_one": "Cuesta {{count}} Teralito.",
+      "cost_other": "Cuesta {{count}} Teralitos.",
+      "need_one": "Necesitas {{count}} Teralito (tienes {{have}}).",
+      "need_other": "Necesitas {{count}} Teralitos (tienes {{have}}).",
+      "active": "Teracristalizado a tipo {{type}}",
+      "left_one": "Quedan {{time}} o {{count}} sesión, lo que ocurra antes.",
+      "left_other": "Quedan {{time}} o {{count}} sesiones, lo que ocurra antes.",
+      "dialogTitle": "Teracristalizar a {{name}}",
+      "pick": "Elige el tipo Tera",
+      "pickHelp": "Ese tipo decide qué condición le da bonus (por ejemplo, Siniestro tras días sin estudiar).",
+      "replaces": "Sustituye la Teracristalización activa (tipo {{type}}) y vuelve a empezar la cuenta.",
+      "confirm": "Teracristalizar",
+      "done": "¡{{name}} se teracristalizó a tipo {{type}}!",
+      "badge": "Tera",
+      "tip_one": "Teracristalizado a tipo {{type}}: sus condiciones usan ese tipo. Quedan {{time}} o {{count}} sesión.",
+      "tip_other": "Teracristalizado a tipo {{type}}: sus condiciones usan ese tipo. Quedan {{time}} o {{count}} sesiones."
+    },
+    "tm": {
+      "name": "MT",
+      "body": "Enseña una técnica de MT que su especie puede aprender. Se gasta la MT y la técnica queda aprendida para siempre.",
+      "noneLeft": "Ya conoce todas las técnicas de MT que su especie puede aprender en PokeFocus.",
+      "count_one": "{{count}} técnica de MT disponible.",
+      "count_other": "{{count}} técnicas de MT disponibles.",
+      "learned": "Aprendidas con MT: {{moves}}",
+      "dialogTitle": "Enseñar una MT a {{name}}",
+      "pick": "Elige la técnica",
+      "confirm": "Enseñar",
+      "done": "{{name}} aprendió {{move}}. Equípala en Técnicas.",
+      "tag": "MT"
+    },
+    "mint": {
+      "name": "Mentas",
+      "body": "Cambian el efecto de la naturaleza: sube y baja lo que diga la menta. La naturaleza original se conserva.",
+      "current": "Efecto actual: {{nature}}",
+      "original": "Naturaleza original: {{nature}}",
+      "noneOwned": "No tienes ninguna menta que le cambie el efecto.",
+      "owned_one": "Tienes {{count}} menta útil para él.",
+      "owned_other": "Tienes {{count}} mentas útiles para él.",
+      "dialogTitle": "Usar una menta con {{name}}",
+      "pick": "Elige la menta",
+      "restore": "Vuelve a su naturaleza original",
+      "confirm": "Usar menta",
+      "done": "{{name}} ahora tiene el efecto de {{nature}}.",
+      "byMint": "por menta ({{nature}})"
+    },
+    "bottleCap": {
+      "name": "Chapas",
+      "body": "Suben un IV a {{max}}, el máximo.",
+      "allMax": "Todos sus IVs ya están al máximo.",
+      "dialogTitle": "Usar una Chapa con {{name}}",
+      "pick": "Elige el IV que sube a {{max}}",
+      "ivNow": "IV {{iv}}",
+      "confirm": "Usar Chapa",
+      "done": "El IV de {{stat}} de {{name}} sube a {{max}}.",
+      "capped": "Subido con Chapa"
+    },
+    "abilityCapsule": {
+      "name": "Cápsula Habilidad",
+      "body": "Cambia a otra habilidad de su especie. La oculta no se puede elegir.",
+      "only": "Su especie no tiene otra habilidad que elegir.",
+      "dialogTitle": "Cambiar la habilidad de {{name}}",
+      "pick": "Elige la habilidad nueva",
+      "now": "Ahora: {{ability}}",
+      "loseHidden": "Tiene su habilidad oculta: si la cambia, no podrá recuperarla con la cápsula.",
+      "confirm": "Cambiar habilidad",
+      "done": "{{name}} ahora tiene {{ability}}."
+    }
   }
 }

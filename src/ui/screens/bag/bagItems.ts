@@ -3,15 +3,37 @@
  * category of each one, and the search / filter / sort used by the Bag page.
  * Names come from the game data (`lib/names`), copy from the i18n dictionaries.
  */
-import { energyAt, evolutionOptions, maxEnergyOf, type EngineContext, type LocaleCode, type OwnedPokemon, type PlayerState, type TypeSlug } from '../../../engine'
+import {
+  abilityCapsuleChoices,
+  ABILITY_CAPSULE,
+  BOTTLE_CAP,
+  bottleCapStats,
+  effectiveNature,
+  energyAt,
+  evolutionOptions,
+  isUnlocked,
+  maxEnergyOf,
+  mintNatureOf,
+  TECHNICAL_MACHINE,
+  TERA_SHARD,
+  tmCandidates,
+  unlockLevel,
+  type AdvancedUnlock,
+  type EngineContext,
+  type LocaleCode,
+  type OwnedPokemon,
+  type PlayerState,
+  type TypeSlug,
+} from '../../../engine'
 import { fmtPct } from '../../lib/format'
-import { itemName, pick, pokemonName, speciesName, typeName } from '../../lib/names'
+import { itemName, natureName, pick, pokemonName, speciesName, typeName } from '../../lib/names'
 import { lineRoot } from '../shared/EvoLine'
+import { roleNatureFit } from '../box/roleNature'
 
-export type BagCategory = 'ball' | 'heal' | 'evolution' | 'candy' | 'event' | 'other'
+export type BagCategory = 'ball' | 'heal' | 'evolution' | 'candy' | 'training' | 'event' | 'other'
 
 /** Display order of the categories (also the default sort). */
-export const BAG_CATEGORIES: readonly BagCategory[] = ['ball', 'heal', 'evolution', 'candy', 'event', 'other']
+export const BAG_CATEGORIES: readonly BagCategory[] = ['ball', 'heal', 'evolution', 'candy', 'training', 'event', 'other']
 
 export type BagFilter = BagCategory | 'all'
 export type BagSort = 'category' | 'name' | 'quantity'
@@ -39,6 +61,21 @@ export interface BagEntry {
   description: string
   count: number
   users: BagUser[]
+  /** i18n key suffix of the users line (`bag.users.<key>` / `bag.noUsers.<key>`); default: the category or kind. */
+  usersKey?: string
+  /** Trainer level that unlocks its use, while the player is below it (advanced items). */
+  lockedLevel?: number
+}
+
+/** Advanced item kind (F4) of an item slug, or null. */
+export type TrainingKind = 'tera' | 'tm' | 'mint' | 'bottleCap' | 'abilityCapsule'
+
+export function trainingKind(slug: string, ctx: EngineContext): TrainingKind | null {
+  if (slug === TERA_SHARD) return 'tera'
+  if (slug === TECHNICAL_MACHINE) return 'tm'
+  if (slug === BOTTLE_CAP) return 'bottleCap'
+  if (slug === ABILITY_CAPSULE) return 'abilityCapsule'
+  return mintNatureOf(slug, ctx) ? 'mint' : null
 }
 
 /** Translator shape of `i18next.t` that the builder needs. */
@@ -65,6 +102,7 @@ function evolutionItems(ctx: EngineContext): Set<string> {
 export function categorizeItem(slug: string, ctx: EngineContext): BagCategory {
   if (slug in ctx.config.energy.potions || slug === 'revive') return 'heal'
   if (evolutionItems(ctx).has(slug)) return 'evolution'
+  if (trainingKind(slug, ctx)) return 'training'
   const known = ctx.data.items.some((i) => i.slug === slug)
   if (!known && slug in ctx.missions.placeholderItems) return 'event'
   if (slug.endsWith('-ball')) return 'ball'
@@ -109,7 +147,57 @@ function itemUsers(player: PlayerState, slug: string, category: BagCategory, ctx
     }
     return sortUsers(out, lng)
   }
+  if (category === 'training') return trainingUsers(player, slug, ctx, lng)
   return []
+}
+
+/**
+ * Who an advanced item is for: Tera → the team; TM → those with a TM move left to learn; mint → those whose
+ * role it suits better (it raises their role stat and their effect does not yet); Bottle Cap → team members
+ * with an IV below the max; Ability Capsule → those with another ability to choose.
+ */
+function trainingUsers(player: PlayerState, slug: string, ctx: EngineContext, lng: LocaleCode): BagUser[] {
+  const kind = trainingKind(slug, ctx)
+  const mons = Object.values(player.pokemon)
+  const team = player.team.map((u) => player.pokemon[u]).filter((p): p is OwnedPokemon => Boolean(p))
+  let list: OwnedPokemon[] = []
+  if (kind === 'tera') list = team
+  else if (kind === 'tm') list = mons.filter((p) => tmCandidates(p, ctx).length > 0)
+  else if (kind === 'bottleCap') list = team.filter((p) => bottleCapStats(p, ctx).length > 0)
+  else if (kind === 'abilityCapsule') list = mons.filter((p) => abilityCapsuleChoices(p, ctx).length > 0)
+  else if (kind === 'mint') {
+    const target = ctx.naturesBySlug.get(mintNatureOf(slug, ctx) ?? '')
+    list = mons.filter((p) => {
+      const role = ctx.speciesBySlug.get(p.speciesSlug)?.role
+      return roleNatureFit(role, target)?.kind === 'with' && roleNatureFit(role, ctx.naturesBySlug.get(effectiveNature(p)))?.kind !== 'with'
+    })
+  }
+  return sortUsers(list.map((p) => userOf(p, lng, true)), lng)
+}
+
+const UNLOCK_OF: Partial<Record<TrainingKind, AdvancedUnlock>> = { tera: 'tera', mint: 'mint', bottleCap: 'bottleCap', abilityCapsule: 'abilityCapsule' }
+
+function trainingDescription(slug: string, ctx: EngineContext, lng: LocaleCode, text: BagText): string {
+  const kind = trainingKind(slug, ctx)
+  const a = ctx.config.advanced
+  switch (kind) {
+    case 'tera':
+      return text('bag.desc.tera', { count: a.tera.shardCost, hours: a.tera.hours, sessions: a.tera.sessions })
+    case 'tm':
+      return text('bag.desc.tm')
+    case 'bottleCap':
+      return text('bag.desc.bottleCap', { max: ctx.config.progression.ivMax })
+    case 'abilityCapsule':
+      return text('bag.desc.abilityCapsule')
+    case 'mint': {
+      const n = ctx.naturesBySlug.get(mintNatureOf(slug, ctx) ?? '')
+      const effect =
+        n?.increased && n.decreased ? `+${text(`stats.${n.increased}.name`)} −${text(`stats.${n.decreased}.name`)}` : text('bag.desc.mintNeutral')
+      return text('bag.desc.mint', { nature: natureName(n?.slug ?? '', lng), effect })
+    }
+    default:
+      return text('bag.desc.other')
+  }
 }
 
 function itemDescription(slug: string, category: BagCategory, ctx: EngineContext, lng: LocaleCode, text: BagText): string {
@@ -123,6 +211,8 @@ function itemDescription(slug: string, category: BagCategory, ctx: EngineContext
     }
     case 'evolution':
       return text('bag.desc.evolution')
+    case 'training':
+      return trainingDescription(slug, ctx, lng, text)
     case 'event':
       return pick(ctx.missions.placeholderItems[slug]?.description, lng) || text('bag.desc.event')
     default:
@@ -139,6 +229,9 @@ export function buildBagEntries(player: PlayerState, ctx: EngineContext, lng: Lo
   for (const [slug, count] of Object.entries(player.inventory)) {
     if (count <= 0) continue
     const category = categorizeItem(slug, ctx)
+    const training = category === 'training' ? trainingKind(slug, ctx) : null
+    const unlock = training ? UNLOCK_OF[training] : undefined
+    const locked = unlock && !isUnlocked(player, unlock, ctx) ? unlockLevel(unlock, ctx) : undefined
     out.push({
       id: `item:${slug}`,
       kind: 'item',
@@ -147,7 +240,9 @@ export function buildBagEntries(player: PlayerState, ctx: EngineContext, lng: Lo
       name: itemName(slug, lng),
       description: itemDescription(slug, category, ctx, lng, text),
       count,
-      users: itemUsers(player, slug, category, ctx, lng, now),
+      users: locked ? [] : itemUsers(player, slug, category, ctx, lng, now),
+      ...(training && { usersKey: training }),
+      ...(locked !== undefined && { lockedLevel: locked }),
     })
   }
   const mons = Object.values(player.pokemon)
@@ -205,7 +300,7 @@ export function filterBag(entries: BagEntry[], query: string, category: BagFilte
 /** Entries per category (and `all`) after the search, for the chip counters. */
 export function bagCounts(entries: BagEntry[], query: string): Record<BagFilter, number> {
   const found = searchBag(entries, query)
-  const out: Record<BagFilter, number> = { all: found.length, ball: 0, heal: 0, evolution: 0, candy: 0, event: 0, other: 0 }
+  const out: Record<BagFilter, number> = { all: found.length, ball: 0, heal: 0, evolution: 0, candy: 0, training: 0, event: 0, other: 0 }
   for (const e of found) out[e.category]++
   return out
 }

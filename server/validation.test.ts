@@ -68,3 +68,23 @@ describe('releaseMany (validation)', () => {
     expect(ok({ type: 'releaseMany' })).toBe(false)
   })
 })
+
+describe('advanced item actions (validation, F4)', () => {
+  it('accepts well-formed bodies', () => {
+    expect(ok({ type: 'useTera', uid: 'p1', teraType: 'water' })).toBe(true)
+    expect(ok({ type: 'useTm', uid: 'p1', move: 'thunderbolt' })).toBe(true)
+    expect(ok({ type: 'useMint', uid: 'p1', nature: 'modest' })).toBe(true)
+    expect(ok({ type: 'useBottleCap', uid: 'p1', stat: 'specialAttack' })).toBe(true)
+    expect(ok({ type: 'useAbilityCapsule', uid: 'p1', ability: 'tangled-feet' })).toBe(true)
+  })
+  it('rejects malformed ones (unknown type or stat, missing fields, long slugs)', () => {
+    expect(ok({ type: 'useTera', uid: 'p1', teraType: 'stellar' })).toBe(false)
+    expect(ok({ type: 'useTera', uid: 'p1' })).toBe(false)
+    expect(ok({ type: 'useTm', uid: 'p1', move: '' })).toBe(false)
+    expect(ok({ type: 'useTm', uid: 'p1', move: 'x'.repeat(65) })).toBe(false)
+    expect(ok({ type: 'useMint', uid: '', nature: 'modest' })).toBe(false)
+    expect(ok({ type: 'useBottleCap', uid: 'p1', stat: 'luck' })).toBe(false)
+    expect(ok({ type: 'useBottleCap', uid: 'p1' })).toBe(false)
+    expect(ok({ type: 'useAbilityCapsule', uid: 'p1', ability: 7 })).toBe(false)
+  })
+})

@@ -69,3 +69,50 @@ describe('Detail: Stats | IVs card and the evolution preview', () => {
     })
   }
 })
+
+describe('Detail: advanced items (F4)', () => {
+  function loadAdvanced(level: number) {
+    const bird = makeMon('pidgey', 30, {
+      uid: 'bird',
+      nature: 'relaxed',
+      mintNature: 'jolly',
+      ability: 'keen-eye',
+      teraType: 'dark',
+      teraUntil: Date.now() + 5 * 3_600_000, // the sheet uses the real clock
+      teraSessionsLeft: 3,
+      bottleCapped: ['speed'],
+      tmMoves: [],
+    })
+    const player = makePlayer([bird], {
+      trainer: { level, exp: 0 },
+      pokemon: { bird },
+      inventory: { 'tera-shard': 2, 'technical-machine': 1, 'modest-mint': 1, 'bottle-cap': 1, 'ability-capsule': 1 },
+    })
+    Object.assign(useGame.getInitialState(), { player })
+  }
+
+  for (const lng of ['es', 'en'] as const) {
+    it(`shows the five items, the active Tera and the mint effect, without raw keys (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      loadAdvanced(30)
+      const html = render()
+      expect(html).not.toMatch(/training\.|bag\.|errors\./)
+      for (const k of ['tera', 'tm', 'mint', 'bottleCap', 'abilityCapsule']) expect(html).toContain(i18n.t(`training.${k}.name`))
+      expect(html).toContain(i18n.t('training.title'))
+      // Tera badge on the nameplate and its time/sessions left.
+      expect(html).toContain(`${i18n.t('training.tera.badge')} ${lng === 'es' ? 'Siniestro' : 'Dark'}`)
+      // (the sheet rounds "now" down to the minute, so it may read 5 h 1 min)
+      expect(html).toMatch(lng === 'es' ? /Quedan 5 h( 1 min)? o 3 sesiones, lo que ocurra antes/ : /5 h( 1 min)? or 3 sessions left, whichever ends first/)
+      // Relaxed Pidgey with a Jolly mint: original nature shown, effect from the mint.
+      expect(html).toContain(i18n.t('training.mint.byMint', { nature: lng === 'es' ? 'Alegre' : 'Jolly' }))
+      expect(html).not.toContain(i18n.t('training.lockedAt', { level: 20 }))
+    })
+
+    it(`shows the trainer level each item needs while locked (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      loadAdvanced(1)
+      const html = render()
+      for (const level of [10, 20, 25, 30]) expect(html).toContain(i18n.t('training.lockedAt', { level }))
+    })
+  }
+})

@@ -1,6 +1,6 @@
 /** zod schemas for every request body (auth, friends, game actions). */
 import { z } from 'zod'
-import { ALL_TYPES, defaultContext, MAX_RELEASE_BATCH, type TypeSlug } from '../src/engine'
+import { ALL_TYPES, defaultContext, MAX_RELEASE_BATCH, STAT_KEYS, type StatKey, type TypeSlug } from '../src/engine'
 import { MAINTENANCE_MAX_MS, MAINTENANCE_NOTE_MAX, type GameAction } from '../src/game/protocol'
 import { PASSWORD_MAX, PASSWORD_MIN } from './auth/password'
 
@@ -129,6 +129,11 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('heal', { uid: id, item: slug }),
   // Raw text only bounded here; the reducer trims and counts graphemes (nickname 12, preset name 20).
   act('setNickname', { uid: id, nickname: z.string().max(200).nullable() }),
+  act('useTera', { uid: id, teraType: typeSlug }),
+  act('useTm', { uid: id, move: slug }),
+  act('useMint', { uid: id, nature: slug }),
+  act('useBottleCap', { uid: id, stat: z.enum(STAT_KEYS as readonly [StatKey, ...StatKey[]]) }),
+  act('useAbilityCapsule', { uid: id, ability: slug }),
   act('savePreset', { name: z.string().max(200) }),
   act('renamePreset', { id, name: z.string().max(200) }),
   act('overwritePreset', { id }),

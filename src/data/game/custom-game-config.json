@@ -375,6 +375,13 @@
       ]
     }
   },
+  "advanced": {
+    "_note": "Objetos avanzados (F4, GDD §6.1–6.3, §7, §9.4). minTrainerLevel = nivel de entrenador que desbloquea su uso; unlockGift = unidades que se regalan al alcanzar ese nivel (con el premio del nivel). Las MT no tienen bloqueo.",
+    "tera": { "minTrainerLevel": 20, "shardCost": 2, "hours": 24, "sessions": 5, "unlockGift": 2 },
+    "mint": { "minTrainerLevel": 10 },
+    "bottleCap": { "minTrainerLevel": 25, "unlockGift": 1 },
+    "abilityCapsule": { "minTrainerLevel": 30, "unlockGift": 1 }
+  },
   "starters": [
     "bulbasaur",
     "charmander",

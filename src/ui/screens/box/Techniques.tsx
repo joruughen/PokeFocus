@@ -183,6 +183,7 @@ function TechCard({ info, view, lng, dim }: { info: TechniqueInfo; view: Pokemon
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <CategoryChip kind={info.kind} outlook={techniqueOutlook(view.pokemon, info.slug)} pokemonName={names.pokemon(view.pokemon)} />
         <TypeBadge type={info.type} />
+        {view.pokemon.tmMoves?.includes(info.slug) && <span className="bg-dusk-600 px-1.5 font-display text-sm leading-5 text-mist-50 shadow-frame">{t('training.tm.tag')}</span>}
       </div>
       <p className="mt-1 text-sm leading-snug text-mist-300">{desc}</p>
       <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-mist-400">
