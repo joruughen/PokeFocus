@@ -59,13 +59,15 @@ Decisión tomada: **se puede iniciar una sesión con todo el equipo agotado**. S
 Balance a vigilar:
 - El maratonista se queda sin Ultra Balls para los legendarios: captura el 21% en el primer encuentro, frente al 52% del jugador constante. Opción: dar Ultra Balls como recompensa al subir de liga en la semana.
 - Los puntos de los grinders crecen mucho, porque su equipo sube más rápido de nivel. **Aceptado (2026-11-05):** no se compensa. La ventana de 5 min para reclamar ya frena a quien deja el temporizador corriendo sin estudiar.
-- Los objetos Teralito y MT ya se ganan en misiones, pero todavía no sirven para nada (la Teracristalización y las MT llegan en F4).
+- Objetos avanzados (F4): vigilar en uso real que ≈ 1,5 Teralitos y ≈ 1 menta por semana no sean demasiados (`docs/balance-report.md` §12).
 
 Panel de desarrollo contra un servidor de producción: con `?dev` el panel se abre aunque el servidor tenga `DEV_TOOLS` apagado (Docker, `npm start`). El reloj adelantado y "Terminar la sesión ya" solo cambian la hora del cliente, el servidor ignora `x-dev-now` y responde `409 not_finished` al reclamar (y `403 dev_disabled` en los botones de objetos). Propuesta: que el servidor anuncie si tiene herramientas de desarrollo y que el panel se desactive si no las tiene; y un texto de error específico para `not_finished`.
 
 ## ▶ Para continuar (estado al 2026-11-10, noche)
 
 Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
+
+**F4 (progresión profunda) hecha (2026-11-14, sin versión):** Teracristalización, MT, Mentas, Chapas y Cápsula Habilidad (`src/engine/advanced.ts`, acciones `useTera`/`useTm`/`useMint`/`useBottleCap`/`useAbilityCapsule`), sección «Objetos avanzados» en la ficha, insignia Tera en ficha/equipo/sesión, categoría «Entrenamiento» en la Mochila, fuentes en misiones semanales y regalos al desbloquear (config `advanced.*`, editable en el admin). Economía: `npx tsx scripts/simulate-advanced.ts` y `docs/balance-report.md` §12. Por decidir: si la menta al azar (1 de 21) frustra; alternativa, menta elegible. Sin probar en navegador a 390 px.
 
 **`main` = v0.11.0** (subido a `origin/main` el 2026-11-11). **Fase E terminada** (E0–E13): contenido en vivo con borradores, validación, simulación, publicar/programar/rollback; eventos (página `#/events`, banner, destacadas, drops, misiones de evento, imágenes con `sharp`); soporte de jugadores; métricas. Guía de administración en `docs/admin.md`. Typecheck limpio y 1294 tests.
 
@@ -77,7 +79,7 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 
 **Pulido tras la QA de admin y eventos: hecho** (drops en Resultados y marca «Destacada», el admin ya no se remonta al publicar, aviso ×3/×5 contra lo vivo, `unschedule`, diálogo de nombre para borradores nuevos, fechas al editar eventos publicados). 1311 tests.
 
-**Siguiente:** decisiones de balance abiertas (más abajo), F4 (progresión profunda) y F5 (intercambios), recuperación de contraseña por correo, probar PostgreSQL real y micrófono real.
+**Siguiente:** decisiones de balance abiertas (más abajo), F5 (intercambios), recuperación de contraseña por correo, probar PostgreSQL real y micrófono real.
 
 **Decisiones a confirmar de v0.10.0:**
 - C: cancelar una sesión de 25 min o menos sigue sin dar nada; una cancelada no da las 2 Poké Balls por sesión.
@@ -269,7 +271,7 @@ Pendiente de esta tanda:
 - **F3 — Foco real: HECHA** (micrófono con calibración y clima real, ver arriba). Texto original:
   perfil sonoro con el micrófono (se mide el ruido en el navegador, sin enviar audio; activa Volador con ruido y Psíquico con silencio) y, opcional, clima real con Open-Meteo para Fuego/Hielo. El micrófono exige un contexto seguro: funciona en `localhost` (dev y Docker local) y en HTTPS, pero no en `http://<ip-tailscale>`. Sin dominio: `tailscale serve` da HTTPS en `https://<máquina>.<tailnet>.ts.net`. Con dominio: proxy inverso con HTTPS automático (p. ej. Caddy). Sin permiso o sin contexto seguro, la sesión sigue sin perfil sonoro.
   - **Descartado (2026-11-05):** capturas de pantalla clasificadas con IA. El Foco se queda en la etiqueta neutra; `focus.model` en la config queda sin uso.
-- **F4 — Progresión profunda:** Teracristalización, MT, Mentas, Chapas, Cápsula Habilidad.
+- ~~**F4 — Progresión profunda**~~: hecha (2026-11-14), ver «Para continuar».
 - **F5:** intercambios entre amigos (evoluciones por intercambio) y más packs de especies (proceso de curación en GDD §20.1).
 - **graphify: HECHO (2026-11-06).** Grafo en `graphify-out/`. Lo que reveló y ya está arreglado:
   - **Ciclo de imports en el motor** (`context` → `missions` → `individual` → `context` y variantes): eliminado moviendo `MISSION_KINDS` a `src/engine/mission-kinds.ts`. `src/engine/no-cycles.test.ts` falla si vuelve un ciclo de imports de valores.

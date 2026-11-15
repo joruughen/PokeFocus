@@ -3,14 +3,14 @@
   "dailyCount": 3,
   "weeklyCount": 3,
   "placeholderItems": {
-    "_note": "Objetos que solo dan las misiones y que el motor aún no usa (nombres para la UI).",
+    "_note": "Objetos que solo dan las misiones y que no están en los datos de PokeAPI (nombres y descripción para la UI).",
     "tera-shard": {
       "names": { "es": "Teralito", "en": "Tera Shard" },
-      "description": { "es": "Para la Teracristalización (próximamente).", "en": "For Terastallization (coming soon)." }
+      "description": { "es": "Teracristaliza a un Pokémon: fija un tipo para sus condiciones durante un tiempo.", "en": "Terastallizes a Pokémon: sets one type for its conditions for a while." }
     },
     "technical-machine": {
       "names": { "es": "MT", "en": "TM" },
-      "description": { "es": "Enseña una técnica (próximamente).", "en": "Teaches a technique (coming soon)." }
+      "description": { "es": "Enseña a un Pokémon una técnica de MT compatible con su especie. Se gasta al usarla.", "en": "Teaches a Pokémon a TM technique its species can learn. Used up when used." }
     }
   },
   "pool": [
@@ -109,7 +109,10 @@
       "weight": 3,
       "title": { "es": "Especialista en tipo {type}", "en": "{type}-type specialist" },
       "description": { "es": "Captura {n} Pokémon de tipo {type}", "en": "Catch {n} {type}-type Pokémon" },
-      "rewards": [{ "minTrainerLevel": 1, "typeCandies": 5 }]
+      "rewards": [
+        { "minTrainerLevel": 1, "typeCandies": 5 },
+        { "minTrainerLevel": 30, "typeCandies": 5, "items": { "ability-capsule": 1 } }
+      ]
     },
     {
       "id": "weekly-days",
@@ -119,7 +122,10 @@
       "weight": 3,
       "title": { "es": "Semana constante", "en": "Steady week" },
       "description": { "es": "Estudia {n} días distintos esta semana", "en": "Study on {n} different days this week" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1, "great-ball": 1 } }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "ultra-ball": 1, "great-ball": 1 } },
+        { "minTrainerLevel": 20, "items": { "ultra-ball": 1, "great-ball": 1, "tera-shard": 1 } }
+      ]
     },
     {
       "id": "weekly-techniques",
@@ -139,7 +145,10 @@
       "weight": 2,
       "title": { "es": "Maratón semanal", "en": "Weekly marathon" },
       "description": { "es": "Estudia {n} minutos esta semana", "en": "Study for {n} minutes this week" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1 }, "dust": 300 }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "ultra-ball": 1 }, "dust": 300 },
+        { "minTrainerLevel": 25, "items": { "ultra-ball": 1, "bottle-cap": 1 }, "dust": 300 }
+      ]
     },
     {
       "id": "weekly-long-sessions",
@@ -150,7 +159,10 @@
       "weight": 2,
       "title": { "es": "Fondo", "en": "Stamina" },
       "description": { "es": "Haz {n} sesiones de al menos {minutes} minutos", "en": "Finish {n} sessions of at least {minutes} minutes" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1, "hyper-potion": 1 } }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "ultra-ball": 1, "hyper-potion": 1 } },
+        { "minTrainerLevel": 10, "items": { "ultra-ball": 1, "hyper-potion": 1 }, "randomItem": { "pool": ["lonely-mint", "adamant-mint", "naughty-mint", "brave-mint", "bold-mint", "impish-mint", "lax-mint", "relaxed-mint", "modest-mint", "mild-mint", "rash-mint", "quiet-mint", "calm-mint", "gentle-mint", "careful-mint", "sassy-mint", "timid-mint", "hasty-mint", "jolly-mint", "naive-mint", "serious-mint"], "count": 1 } }
+      ]
     },
     {
       "id": "weekly-catch",
@@ -160,7 +172,11 @@
       "weight": 2,
       "title": { "es": "Gran cosecha", "en": "Big haul" },
       "description": { "es": "Captura {n} Pokémon esta semana", "en": "Catch {n} Pokémon this week" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "great-ball": 3 }, "dust": 200 }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "great-ball": 3 }, "dust": 200 },
+        { "minTrainerLevel": 10, "items": { "great-ball": 3 }, "dust": 200, "randomItem": { "pool": ["lonely-mint", "adamant-mint", "naughty-mint", "brave-mint", "bold-mint", "impish-mint", "lax-mint", "relaxed-mint", "modest-mint", "mild-mint", "rash-mint", "quiet-mint", "calm-mint", "gentle-mint", "careful-mint", "sassy-mint", "timid-mint", "hasty-mint", "jolly-mint", "naive-mint", "serious-mint"], "count": 1 } },
+        { "minTrainerLevel": 15, "items": { "great-ball": 3, "technical-machine": 1 }, "dust": 200, "randomItem": { "pool": ["lonely-mint", "adamant-mint", "naughty-mint", "brave-mint", "bold-mint", "impish-mint", "lax-mint", "relaxed-mint", "modest-mint", "mild-mint", "rash-mint", "quiet-mint", "calm-mint", "gentle-mint", "careful-mint", "sassy-mint", "timid-mint", "hasty-mint", "jolly-mint", "naive-mint", "serious-mint"], "count": 1 } }
+      ]
     },
     {
       "id": "weekly-evolve",

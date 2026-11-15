@@ -36,10 +36,18 @@ export function statValue(stat: StatKey, base: number, iv: number, level: number
   return Math.floor((core + 5) * natureMult)
 }
 
-/** Final stats of an individual. */
-export function computeStats(ind: Pick<IndividualCore, 'speciesSlug' | 'level' | 'ivs' | 'nature'>, ctx: EngineContext = defaultContext()): BaseStats {
+/** What `computeStats` reads: an individual, plus the Mint nature of an owned Pokémon (GDD §6.2). */
+export type StatsInput = Pick<IndividualCore, 'speciesSlug' | 'level' | 'ivs' | 'nature'> & { mintNature?: string }
+
+/** Nature whose effect applies to the stats: the Mint's if one was used, else the original. */
+export function effectiveNature(ind: Pick<StatsInput, 'nature' | 'mintNature'>): string {
+  return ind.mintNature ?? ind.nature
+}
+
+/** Final stats of an individual (with its Mint nature, if any). */
+export function computeStats(ind: StatsInput, ctx: EngineContext = defaultContext()): BaseStats {
   const sp = getSpecies(ind.speciesSlug, ctx)
-  const nature = ctx.naturesBySlug.get(ind.nature)
+  const nature = ctx.naturesBySlug.get(effectiveNature(ind))
   const out = {} as BaseStats
   for (const k of STAT_KEYS) {
     out[k] = statValue(k, effectiveBase(k, sp.baseStats[k], ctx.config), ind.ivs[k], ind.level, natureMultiplier(nature, k))
@@ -48,7 +56,7 @@ export function computeStats(ind: Pick<IndividualCore, 'speciesSlug' | 'level' |
 }
 
 /** Max daily energy (= HP stat). */
-export function maxEnergyOf(ind: Pick<IndividualCore, 'speciesSlug' | 'level' | 'ivs' | 'nature'>, ctx: EngineContext = defaultContext()): number {
+export function maxEnergyOf(ind: StatsInput, ctx: EngineContext = defaultContext()): number {
   return computeStats(ind, ctx).hp
 }
 

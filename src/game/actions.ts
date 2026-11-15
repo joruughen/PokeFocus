@@ -45,8 +45,13 @@ import {
   startSession,
   throwBall,
   toOwnedPokemon,
+  useAbilityCapsule,
+  useBottleCap,
   useCandy,
   useHealItem,
+  useMint,
+  useTera,
+  useTm,
   validatedMinutes,
   type ActiveSession,
   type EngineContext,
@@ -362,6 +367,28 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
 
     case 'setNickname': {
       const r = setNickname(p, a.uid, a.nickname ?? '')
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+
+    // ---- Advanced items (F4) -------------------------------------------------
+    case 'useTera': {
+      const r = useTera(p, a.uid, a.teraType, t, ctx)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'useTm': {
+      const r = useTm(p, a.uid, a.move, ctx)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'useMint': {
+      const r = useMint(p, a.uid, a.nature, ctx)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'useBottleCap': {
+      const r = useBottleCap(p, a.uid, a.stat, ctx)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'useAbilityCapsule': {
+      const r = useAbilityCapsule(p, a.uid, a.ability, ctx)
       return r.ok ? withPlayer(r.value) : fail(r.error)
     }
 

@@ -3,7 +3,7 @@
  * booleans, null). Persisted by zustand now and by Supabase later. All reducers
  * in the engine are pure: they return a new state and never mutate their input.
  */
-import type { BaseStats, LocaleCode, TypeSlug } from './data-types'
+import type { BaseStats, LocaleCode, StatKey, TypeSlug } from './data-types'
 import type { BallSlug, FocusLabel, LeagueId, WildStatus } from './config'
 import type { TimeZoneSpec } from './time'
 import type { MissionsState } from './missions'
@@ -70,9 +70,19 @@ export interface OwnedPokemon extends IndividualCore {
   asleepNextSession: boolean
   /** When Rest put it to sleep (ms; absent in older saves). */
   asleepSetAt?: number | null
+  /** Terastallization (GDD §9.4, `useTera`): the type its conditions use until `teraUntil` (ms) or `teraSessionsLeft` sessions, whichever comes first. */
   teraType: TypeSlug | null
   teraUntil: number | null
   teraSessionsLeft: number
+  /**
+   * Mint (GDD §6.2, `useMint`): nature whose effect replaces the original one in the stats. `nature`
+   * stays as caught (shown, and used by Synchronize). Absent = no mint (older saves too).
+   */
+  mintNature?: string
+  /** Stats whose IV a Bottle Cap raised to the max (GDD §6.1, `useBottleCap`), for the UI. Absent = none. */
+  bottleCapped?: StatKey[]
+  /** Moves taught by a TM (GDD §7, `useTm`); they are also in `learnedMoves`. Absent = none. */
+  tmMoves?: string[]
   caughtAt: number
   caughtBall: BallSlug | 'study-ball' | 'starter'
   metLevel: number

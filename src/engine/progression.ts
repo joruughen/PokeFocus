@@ -69,7 +69,8 @@ export interface TrainerLevelRewards {
 /**
  * Rewards for reaching trainer levels `from + 1 … to` (summed; `to` is capped at `trainer.maxLevel`). Each level L
  * gives `dustBase + dustPerLevel · L` Dust and the items of every tier whose `step` divides L
- * (`trainer.levelRewards`). Pure: no RNG, no state.
+ * (`trainer.levelRewards`), plus the one-time gift of an advanced item unlocked at L (`UNLOCK_GIFT_ITEMS`).
+ * Pure: no RNG, no state.
  */
 export function trainerLevelRewards(from: number, to: number, ctx: EngineContext = defaultContext()): TrainerLevelRewards {
   const cfg = ctx.config.trainer
@@ -85,9 +86,19 @@ export function trainerLevelRewards(from: number, to: number, ctx: EngineContext
         if (slug !== 'step' && n > 0) out.items[slug] = (out.items[slug] ?? 0) + Math.floor(n)
       }
     }
+    for (const [kind, item] of Object.entries(UNLOCK_GIFT_ITEMS) as [keyof typeof UNLOCK_GIFT_ITEMS, string][]) {
+      const a = ctx.config.advanced?.[kind]
+      if (a && a.minTrainerLevel === lvl && a.unlockGift > 0) out.items[item] = (out.items[item] ?? 0) + Math.floor(a.unlockGift)
+    }
   }
   return out
 }
+
+/**
+ * Item each advanced unlock gives once, with the reward of the trainer level that unlocks it
+ * (`config.advanced.<kind>.unlockGift`; F4). Mints have no gift: there is one per nature.
+ */
+export const UNLOCK_GIFT_ITEMS = { tera: 'tera-shard', bottleCap: 'bottle-cap', abilityCapsule: 'ability-capsule' } as const
 
 /** Most pending level-up notices kept (older ones are merged into the oldest kept). */
 export const MAX_PENDING_LEVEL_UPS = 20

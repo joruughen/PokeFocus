@@ -36,15 +36,17 @@ describe('categorizeItem', () => {
     expect(categorizeItem('rare-candy', ctx)).toBe('candy')
   })
 
+  it('sends the advanced items (F4) to training', () => {
+    for (const slug of ['tera-shard', 'technical-machine', 'bottle-cap', 'ability-capsule', 'adamant-mint', 'serious-mint']) expect(categorizeItem(slug, ctx)).toBe('training')
+  })
+
   it('sends mission-only items to the event category', () => {
-    expect(categorizeItem('tera-shard', ctx)).toBe('event')
     const withEvent = { ...ctx, missions: { ...ctx.missions, placeholderItems: { ...ctx.missions.placeholderItems, 'gold-leaf': { names: { es: 'Hoja', en: 'Leaf' } } } } }
     expect(categorizeItem('gold-leaf', withEvent)).toBe('event')
   })
 
   it('sends unknown or unused items to other', () => {
-    expect(categorizeItem('bottle-cap', ctx)).toBe('other')
-    expect(categorizeItem('adamant-mint', ctx)).toBe('other')
+    expect(categorizeItem('fake-mint', ctx)).toBe('other')
     expect(categorizeItem('something-new', ctx)).toBe('other')
   })
 
@@ -82,8 +84,38 @@ describe('buildBagEntries', () => {
     expect(by('revive').users.map((u) => u.uid)).toEqual(['out'])
     expect(by('moon-stone').users.map((u) => u.uid)).toEqual(['clef'])
     expect(by('moon-stone').users[0]!.ready).toBe(true)
-    expect(by('tera-shard').description).toBe('Para la Teracristalización (próximamente).')
-    expect(by('bottle-cap').description).toMatch(/no tiene un uso/)
+    // Advanced items: real descriptions, locked below their trainer level (the test player is level 1).
+    expect(by('tera-shard').description).toContain('Teracristaliza')
+    expect(by('tera-shard').description).toContain('2 Teralitos')
+    expect(by('tera-shard').lockedLevel).toBe(20)
+    expect(by('tera-shard').users).toEqual([])
+    expect(by('bottle-cap').description).toContain('31')
+    expect(by('bottle-cap').lockedLevel).toBe(25)
+  })
+
+  it('links the advanced items to the Pokémon that can use them once unlocked', () => {
+    const pidgey = makeMon('pidgey', 20, { uid: 'pid', ability: 'keen-eye', nature: 'relaxed' })
+    const pika = makeMon('pikachu', 20, { uid: 'pika', ability: 'static', ivs: { hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 } })
+    const player = makePlayer([pika], {
+      trainer: { level: 30, exp: 0 },
+      pokemon: { pika, pid: pidgey },
+      inventory: { 'tera-shard': 2, 'technical-machine': 1, 'bottle-cap': 1, 'ability-capsule': 1, 'timid-mint': 1, 'modest-mint': 1 },
+    })
+    const entries = buildBagEntries(player, ctx, 'es', text, T0)
+    const by = (slug: string) => entries.find((e) => e.id === `item:${slug}`)!
+    expect(by('tera-shard').users.map((u) => u.uid)).toEqual(['pika'])
+    expect(by('tera-shard').usersKey).toBe('tera')
+    expect(by('tera-shard').lockedLevel).toBeUndefined()
+    expect(by('technical-machine').users.map((u) => u.uid).sort()).toEqual(['pid', 'pika'])
+    // Pikachu's IVs are maxed: no Bottle Cap user in the team.
+    expect(by('bottle-cap').users).toEqual([])
+    // Only Pidgey has a second defined ability.
+    expect(by('ability-capsule').users.map((u) => u.uid)).toEqual(['pid'])
+    // Timid raises Pace: both are Sprinters (Relaxed Pidgey, Hardy Pikachu); Modest suits no one here.
+    expect(by('timid-mint').users.map((u) => u.uid)).toEqual(['pid', 'pika'])
+    expect(by('timid-mint').description).toContain('Miedosa')
+    expect(by('timid-mint').description).toContain('+Ritmo')
+    expect(by('modest-mint').users).toEqual([])
   })
 })
 
@@ -129,7 +161,8 @@ describe('filterBag, bagCounts and sortBag', () => {
     expect(all.ball).toBe(2)
     expect(all.heal).toBe(2)
     expect(all.evolution).toBe(1)
-    expect(all.event).toBe(1)
+    expect(all.training).toBe(2)
+    expect(all.event).toBe(0)
     const searched = bagCounts(entries, 'pocion')
     expect(searched.all).toBe(1)
     expect(searched.heal).toBe(1)

@@ -386,5 +386,39 @@ describe('trade arrival window (ackTrade)', () => {
     expect(acked.player!.pendingTrades).toBeUndefined()
     expect(must(acked, { type: 'ackTrade' }, env(T0 + 2)).player).toEqual(acked.player)
     expect(applyAction(EMPTY_DOC, { type: 'ackTrade' }, env(T0))).toEqual({ ok: false, error: 'no_player' })
+describe('advanced items (F4)', () => {
+  function withItems(level: number, items: Record<string, number>): GameDoc {
+    const doc = newPlayer()
+    return { ...doc, player: { ...doc.player!, trainer: { level, exp: 0 }, inventory: { ...doc.player!.inventory, ...items } } }
+  }
+
+  it('useTera sets the Tera type with server time and spends the shards', () => {
+    const doc = must(withItems(20, { 'tera-shard': 2 }), { type: 'useTera', uid: 'p1', teraType: 'water' }, env(T0))
+    expect(doc.player?.pokemon.p1?.teraType).toBe('water')
+    expect(doc.player?.pokemon.p1?.teraUntil).toBe(T0 + 24 * 3_600_000)
+    expect(doc.player?.inventory['tera-shard']).toBe(0)
+  })
+
+  it('returns clear rule errors (locked, no item, in session)', () => {
+    expect(applyAction(withItems(19, { 'tera-shard': 2 }), { type: 'useTera', uid: 'p1', teraType: 'water' }, env(T0))).toEqual({ ok: false, error: 'trainer_level_too_low' })
+    expect(applyAction(withItems(10, {}), { type: 'useMint', uid: 'p1', nature: 'modest' }, env(T0))).toEqual({ ok: false, error: 'no_item' })
+    const capsule = applyAction(withItems(30, { 'ability-capsule': 1 }), { type: 'useAbilityCapsule', uid: 'p1', ability: 'levitate' }, env(T0))
+    expect(capsule.ok).toBe(false)
+    if (!capsule.ok) expect(['no_other_ability', 'invalid_ability']).toContain(capsule.error)
+    const inSession = must(withItems(25, { 'bottle-cap': 1 }), { type: 'start', minutes: 25 }, env(T0))
+    expect(applyAction(inSession, { type: 'useBottleCap', uid: 'p1', stat: 'attack' }, env(T0 + 1000))).toEqual({ ok: false, error: 'session_active' })
+  })
+
+  it('useMint, useBottleCap and useTm change the Pokémon', () => {
+    let doc = withItems(30, { 'bottle-cap': 1, 'technical-machine': 1 })
+    const p = doc.player!.pokemon.p1!
+    const nature = p.nature === 'modest' ? 'jolly' : 'modest'
+    doc = { ...doc, player: { ...doc.player!, inventory: { ...doc.player!.inventory, [`${nature}-mint`]: 1 } } }
+    doc = must(doc, { type: 'useMint', uid: 'p1', nature }, env(T0))
+    expect(doc.player?.pokemon.p1?.mintNature).toBe(nature)
+    const stat = (['hp', 'attack', 'defense', 'specialAttack', 'specialDefense', 'speed'] as const).find((k) => p.ivs[k] < 31)!
+    doc = must(doc, { type: 'useBottleCap', uid: 'p1', stat }, env(T0))
+    expect(doc.player?.pokemon.p1?.ivs[stat]).toBe(31)
+    expect(applyAction(doc, { type: 'useTm', uid: 'p1', move: 'not-a-move' }, env(T0))).toEqual({ ok: false, error: 'move_not_compatible' })
   })
 })

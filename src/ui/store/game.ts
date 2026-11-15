@@ -27,9 +27,11 @@ import {
   type OwnedPokemon,
   type ProgressEvent,
   type StartSessionError,
+  type StatKey,
   type ThrowBall,
   type ThrowOutcome,
   type TimeZoneSpec,
+  type TypeSlug,
   type WeatherInput,
   type WildRef,
 } from '../../engine'
@@ -119,6 +121,11 @@ export interface GameState extends GameDoc {
   setLeader: (uid: string) => Promise<GameActionError | null>
   evolve: (uid: string, to: string) => Promise<{ ok: true; pokemon: OwnedPokemon } | { ok: false; error: GameActionError }>
   heal: (uid: string, item: string) => Promise<GameActionError | null>
+  useTera: (uid: string, teraType: TypeSlug) => Promise<GameActionError | null>
+  useTm: (uid: string, move: string) => Promise<GameActionError | null>
+  useMint: (uid: string, nature: string) => Promise<GameActionError | null>
+  useBottleCap: (uid: string, stat: StatKey) => Promise<GameActionError | null>
+  useAbilityCapsule: (uid: string, ability: string) => Promise<GameActionError | null>
   /** Nickname (empty text or null removes it). */
   setNickname: (uid: string, nickname: string | null) => Promise<GameActionError | null>
 
@@ -321,6 +328,11 @@ export const useGame = create<GameState>()((set, get) => {
       return { ok: true, pokemon: r.result.pokemon }
     },
     heal: async (uid, item) => errOf(await dispatch({ type: 'heal', uid, item })),
+    useTera: async (uid, teraType) => errOf(await dispatch({ type: 'useTera', uid, teraType })),
+    useTm: async (uid, move) => errOf(await dispatch({ type: 'useTm', uid, move })),
+    useMint: async (uid, nature) => errOf(await dispatch({ type: 'useMint', uid, nature })),
+    useBottleCap: async (uid, stat) => errOf(await dispatch({ type: 'useBottleCap', uid, stat })),
+    useAbilityCapsule: async (uid, ability) => errOf(await dispatch({ type: 'useAbilityCapsule', uid, ability })),
     setNickname: async (uid, nickname) => errOf(await dispatch({ type: 'setNickname', uid, nickname })),
 
     savePreset: async (name) => {

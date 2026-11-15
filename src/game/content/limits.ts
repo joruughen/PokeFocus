@@ -184,6 +184,17 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
   scalar(X, 'progression.candyDustPerLevel', b('number', 0, 100), 'owned'),
   scalar(X, 'progression.candiesOnCatch', b('int', 0, 20)),
   scalar(X, 'progression.hiddenAbilityChance', b('prob', 0, 0.5, '%')),
+  // Advanced items (F4): unlock level, one-time gift at that level and the Tera rules.
+  scalar(X, 'advanced.mint.minTrainerLevel', b('int', 1, 100, 'lv')),
+  scalar(X, 'advanced.tera.minTrainerLevel', b('int', 1, 100, 'lv')),
+  scalar(X, 'advanced.tera.unlockGift', b('int', 0, 20)),
+  scalar(X, 'advanced.tera.shardCost', b('int', 1, 20)),
+  scalar(X, 'advanced.tera.hours', b('number', 1, 168, 'h', 1)),
+  scalar(X, 'advanced.tera.sessions', b('int', 1, 50)),
+  scalar(X, 'advanced.bottleCap.minTrainerLevel', b('int', 1, 100, 'lv')),
+  scalar(X, 'advanced.bottleCap.unlockGift', b('int', 0, 20)),
+  scalar(X, 'advanced.abilityCapsule.minTrainerLevel', b('int', 1, 100, 'lv')),
+  scalar(X, 'advanced.abilityCapsule.unlockGift', b('int', 0, 20)),
 
   // --- Leagues ------------------------------------------------------------
   // `base` stays 0: everybody starts in it.

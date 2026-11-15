@@ -307,7 +307,7 @@ Cada Pokémon capturado es **único**. No existen "duplicados" idénticos.
 
 - De 0 a 31 en cada una de las 6 estadísticas, al azar al capturar.
 - Los legendarios y míticos tienen garantizados **3 IVs en 31**.
-- Las **Chapas** (objeto avanzado) suben un IV a 31.
+- Las **Chapas** (objeto avanzado, `bottle-cap`, nivel de entrenador 25) suben **un IV elegido** a 31 (`ivMax`). No sirven en un IV que ya está en 31. Si el IV es el de PS, la Energía máxima sube y la actual sube lo mismo. La ficha marca los IVs subidos con Chapa. **No hay Chapa de Oro** (todos los IVs a la vez): no está en los datos de PokeAPI que importamos y, con una Chapa por IV, el objeto sigue siendo raro.
 
 **Rangos resultantes.** La estadística final de un individuo = base de la especie + IV + nivel + naturaleza (§5.1). Ejemplo con Bulbasaur al nivel 50:
 
@@ -346,7 +346,7 @@ Cada naturaleza sube una estadística un 10% y baja otra un 10%. Con los roles d
 | Grosera | DefEsp | Vel | Más técnicas, menos acciones |
 | Cauta | DefEsp | AtEsp | Más técnicas, menos puntos |
 
-Las **Mentas** (objeto avanzado) cambian el efecto de la naturaleza.
+Las **Mentas** (objeto avanzado, nivel de entrenador 10) cambian el efecto de la naturaleza. Hay **una menta por naturaleza** (las 21 reales de PokeAPI, `<naturaleza>-mint`): la Menta Modesta hace que sus estadísticas suban y bajen como una Modesta. La **naturaleza original se conserva** y se muestra («Fuerte, por menta (Modesta)»); Sincronía sigue usando la original. Usar la menta de la naturaleza original quita el cambio. No se puede usar una menta que no cambie nada (mismo efecto que el actual, por ejemplo dos neutras). La PS no cambia nunca (las naturalezas no la tocan).
 
 ### 6.3 Habilidades
 
@@ -368,7 +368,7 @@ La lista completa del Pack 1 está en `data/overrides/custom-abilities.json` y s
 | Despiste | Los salvajes se despistan al contraatacar: el 15% de sus contraataques falla contra cualquier miembro del equipo (no se acumula: si quien recibe el golpe ya tiene Velo Arena o Manto Níveo, vale el mayor de los dos) |
 | Sebo | Gasta un 15% menos de Energía por acción |
 
-La **Cápsula Habilidad** (objeto avanzado) cambia la habilidad.
+La **Cápsula Habilidad** (objeto avanzado, nivel de entrenador 30) cambia a **otra habilidad definida y no oculta** de su especie, la que elija el jugador. La oculta no se puede conseguir con la cápsula (sí se puede cambiar la oculta por una normal, con aviso de que no se recupera). Si la especie solo tiene una habilidad normal definida (y es la que tiene), no se puede usar. Así sirve también para el caso de arriba: una habilidad definida más tarde.
 
 ---
 
@@ -386,7 +386,7 @@ La **Cápsula Habilidad** (objeto avanzado) cambia la habilidad.
 | 50+ | 4 |
 
 - Cualquier técnica (de daño, pasiva o activable) ocupa un hueco. Si el Pokémon **no lleva ninguna técnica de daño**, sus acciones generan Energía de tipo Normal al 50%. Al principio hay una decisión real: ¿equipar el ataque para capturar o la técnica para potenciar la sesión?
-- Las **MT** (drops raros) enseñan una técnica de MT compatible con la especie.
+- Las **MT** (drops raros, objeto genérico `technical-machine`) enseñan una técnica de MT compatible con la especie: cualquiera de su learnset `machine` de PokeAPI que exista en PokeFocus y que aún no pueda equipar. Se gasta la MT; la técnica queda aprendida para siempre y equipable al momento (si era una técnica extra todavía bloqueada por nivel, la MT la desbloquea antes). No tiene bloqueo por nivel de entrenador. Al evolucionar se conserva, como el resto de técnicas aprendidas.
 
 ### 7.1 Tipos de efecto
 
@@ -532,6 +532,9 @@ Se guarda la celda redondeada en el perfil, y no se envía con cada `start`, por
 - Se desbloquea con el nivel de entrenador 20 **[calibrar]**.
 - Cuesta **Teralitos** (de misiones). Cambia el tipo del Pokémon a un tipo único durante **24 h o 5 sesiones**, lo que ocurra primero.
 - Afecta a las condiciones. Las técnicas siguen produciendo Energía de su propio tipo.
+- **Decidido (F4):** se puede elegir **cualquiera de los 18 tipos** (el Teralito es genérico, no hay uno por tipo), salvo el único tipo de una especie monotipo; un doble tipo sí puede quedarse en uno de los suyos. Cuesta **2 Teralitos** (`advanced.tera.shardCost`) y dura **24 h o 5 sesiones** (`hours`, `sessions`), lo primero que ocurra. Solo entre sesiones. Volver a usarlo cambia el tipo y reinicia la cuenta. Una sesión gasta una de las 5 si empezó con la Tera activa.
+- El tipo Tera también da **STAB** a las técnicas de ese tipo, sin quitar el de los tipos de la especie. El tipo defensivo contra los contraataques y los tipos del equipo para los encuentros siguen siendo los de la especie.
+- Se ve en la ficha, en el equipo y durante la sesión (insignia «Tera» con el tiempo y las sesiones que quedan).
 - Permite usar a tu favorito en cualquier situación, o estrategias como un Gengar teracristalizado a Siniestro durante una semana irregular.
 
 ---
@@ -758,6 +761,8 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 | 25 | Chapas |
 | 30 | Cápsula Habilidad |
 
+Los niveles de las Mentas, la Teracristalización, las Chapas y la Cápsula están en `advanced.<objeto>.minTrainerLevel` (editables en el panel de administración). Al llegar al nivel que los desbloquea se regalan, con el premio de ese nivel, **2 Teralitos** (nivel 20), **1 Chapa** (25) y **1 Cápsula Habilidad** (30) (`unlockGift`). Por debajo del nivel, los objetos se pueden tener pero no usar: la Mochila y la ficha dicen a qué nivel se desbloquean.
+
 **Recompensa por subir de nivel.** Cada nivel de entrenador alcanzado da **Polvo** (`50 + 10 · nivel`) y **3 Poké Balls**; cada **5** niveles además **3 Super Balls y 1 Poción**, y cada **10** además **2 Ultra Balls** (`trainer.levelRewards`, editable desde el panel de administración). Si un solo estudio o una captura sube varios niveles, se pagan todos (suma de los niveles intermedios); el tope es `trainer.maxLevel`. Las vías que suben el nivel son dos: los minutos de una sesión (al reclamarla) y la **especie nueva** capturada. El premio se ingresa al instante y, cuando el jugador está tranquilo (nunca en sesión, oleadas o descanso, ni encima de pistas, «¿Qué hay de nuevo?» o la ventana de un evento), sale una ventana **«¡Felicidades!»** con la mascota, el nivel alcanzado (o «del N al M» si fueron varios, en una sola ventana), los objetos con su imagen y el Polvo; el botón «¡Genial!» la cierra. En Resultados, la línea de subida de nivel también cuenta el premio. No cambia el azar de ninguna sesión ni captura (solo suma inventario y Polvo).
 
 ### 12.8 Intercambios entre amigos
@@ -778,9 +783,11 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 | Tipo | Ejemplos | Recompensas |
 |---|---|---|
 | Diarias (3) | Completa 3 sesiones · Captura 2 Pokémon · Haz una sesión ≥ 50 min | Poké/Super Balls, Polvo, Pociones |
-| Semanales (3) | Captura 10 tipo Bicho · Estudia 5 días · Activa 20 técnicas | Caramelos de tipo, Ultra Ball, Teralitos |
+| Semanales (3) | Captura 10 tipo Bicho · Estudia 5 días · Activa 20 técnicas | Caramelos de tipo, Ultra Ball, Teralitos; Mentas (nv 10+), MT (nv 15+), Chapas (nv 25+), Cápsula Habilidad (nv 30+) |
 | Pokédex | Registra 10/25/50 especies | Piedras, MT |
 | Evento | Lista fija de cada evento activo (sin sorteo) | Las que defina el evento |
+
+**Fuentes de los objetos avanzados (F4).** Con escalones nuevos de recompensa por nivel de entrenador en las semanales (nada cambia en las Balls, el Polvo ni los caramelos): «Semana constante» +1 Teralito desde el nivel 20 (además de «Repertorio» y «Metamorfosis», que ya los daban); «Fondo» y «Gran cosecha» +1 menta al azar desde el nivel 10; «Gran cosecha» +1 MT desde el 15; «Maratón semanal» +1 Chapa desde el 25; «Especialista en tipo» +1 Cápsula Habilidad desde el 30. Más los regalos de desbloqueo de §12.7. Medido en `docs/balance-report.md` §12: ≈ 1,5 Teralitos, ≈ 1 menta, ≈ 0,5–1 Chapa y ≈ 0,25 Cápsulas por semana una vez desbloqueados.
 
 Las **misiones de evento** avanzan mientras el evento está activo; una sesión (y las capturas de sus oleadas) cuenta si empezó durante el evento, aunque se reclame después. Se pueden reclamar hasta 7 días después de que termine.
 
@@ -983,7 +990,7 @@ trades(id, from_id, to_id, offered_pokemon_id, requested_pokemon_id, status, cre
 | **F1 — Núcleo local** | Datos del Pack 1, temporizador, equipo y técnicas, encuentros, captura, caja y Pokédex. Sin backend (localStorage). |
 | **F2 — Online** | **Hecha, con servidor propio** (Node + Hono + PostgreSQL), no con Supabase: registro con correo y contraseña (país al registrarse), inicio de sesión con cookie `HttpOnly`, onboarding con inicial, amigos (solicitudes, código de amigo), progreso, sesiones y tiradas en el servidor, Puntos de Equipo, ligas y rankings semanal y mensual de amigos, país y global. Ver `docs/F2-plan.md`. Pendientes: recuperación de contraseña por correo, probar con PostgreSQL real (`docs/PENDING.md`). |
 | **F3 — Foco** | **Hecha.** Reclamar, perfil sonoro con el micrófono (con calibración), clima real con Open-Meteo y gráficas (ver `docs/PENDING.md`, F3). **Descartada (2026-11-05): la captura de pantalla con IA**; el Foco se queda como una etiqueta neutra (§4). |
-| **F4 — Progresión profunda** | Los objetos avanzados y lo que se hace con ellos: la **Teracristalización** (§9.4) y las **MT** (§7), cuyos objetos (Teralitos y MT) ya caen de misiones pero todavía no sirven para nada, y las **Mentas** (§6.2), las **Chapas** (§6.1) y la **Cápsula Habilidad** (§6.3), que aún no existen. Salvo las MT, se desbloquean con el nivel de entrenador (§12.7). Lo demás que decía esta fase (Caramelos, Polvo, naturalezas, habilidades, límite de nivel, misiones, evoluciones especiales y nivel de entrenador) salió en F1. Ver `docs/PENDING.md`. |
+| **F4 — Progresión profunda** | **Hecha (2026-11-14).** Los objetos avanzados y lo que se hace con ellos: la **Teracristalización** (§9.4), las **MT** (§7), las **Mentas** (§6.2), las **Chapas** (§6.1) y la **Cápsula Habilidad** (§6.3). Salvo las MT, se desbloquean con el nivel de entrenador (§12.7). Acciones del motor y del servidor, sección «Objetos avanzados» en la ficha del Pokémon, insignia Tera en ficha, equipo y sesión, Mochila con enlaces, fuentes en misiones semanales y regalos de desbloqueo (§13). Ver `docs/engine-api.md` «Advanced items». |
 | **Fase E — Administración en vivo y eventos** | **Hecha (2026-11-10).** Contenido en vivo con versiones (borrador, validar, simular, publicar o programar, rollback), eventos con imagen (especies destacadas, shiny, legendario, drops y misiones de evento, §10 y §13), página `#/events` y banner, panel de administración (contenido, eventos, jugadores, métricas, mantenimiento) con roles, reautenticación y auditoría. Ver `docs/admin-plan.md`, `docs/admin.md` y `docs/server.md`. |
 | **F5 — Contenido y social** | Más packs, intercambios entre amigos, detección de anomalías. La condición Hada ya existe: llegó con las sesiones de estudio en grupo (`docs/session-depth-plan.md`, paquete C). |
 
