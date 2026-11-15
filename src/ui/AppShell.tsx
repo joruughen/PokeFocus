@@ -251,24 +251,43 @@ function TrainerCard() {
   const player = usePlayer()
   const user = useAuth((s) => s.user)
   const logout = useAuth((s) => s.logout)
+  const route = useRoute()
   const streak = player.streak.current
+  const onProfile = route === 'profile'
   return (
     <div className="flex flex-col gap-3 bg-dusk-800 p-3 shadow-frame max-xl:items-center max-xl:p-2">
       <div className="flex items-start gap-2 max-xl:hidden">
-        <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-lg leading-tight">
-          {user?.trainerName ?? player.profile.trainerName}
-          {user && (
-            <span aria-hidden className="ml-1.5 text-base">
-              {flagEmoji(user.country)}
-            </span>
-          )}
-        </p>
-        <p className="text-xs text-mist-300">{t('trainer.level', { level: player.trainer.level })}</p>
-        {streak > 0 && <p className="text-xs text-volt-300">{t('trainer.streak', { count: streak })}</p>}
-        </div>
+        {/* The name, level and streak open the profile; the sign-out button stays outside the link. */}
+        <a
+          href={hrefTo('profile')}
+          aria-current={onProfile ? 'page' : undefined}
+          title={t('trainer.openProfile')}
+          {...hintAnchor('nav.profile')}
+          className={cx('-m-1 min-w-0 flex-1 p-1 transition-colors', onProfile ? 'bg-volt-400 text-ink' : 'hover:bg-dusk-700')}
+        >
+          <span className="sr-only">{t('nav.profile')}: </span>
+          <p className="truncate font-display text-lg leading-tight">
+            {user?.trainerName ?? player.profile.trainerName}
+            {user && (
+              <span aria-hidden className="ml-1.5 text-base">
+                {flagEmoji(user.country)}
+              </span>
+            )}
+          </p>
+          <p className={cx('text-xs', onProfile ? 'text-ink/80' : 'text-mist-300')}>{t('trainer.level', { level: player.trainer.level })}</p>
+          {streak > 0 && <p className={cx('text-xs', onProfile ? 'text-ink/80' : 'text-volt-300')}>{t('trainer.streak', { count: streak })}</p>}
+        </a>
         <IconButton icon="logout" size="sm" variant="ghost" label={t('account.logout')} onClick={() => void logout()} className="-mt-1 -mr-1 shrink-0" />
       </div>
+      {/* Icon-only rail (sm–xl): the name is hidden, so the profile gets its own icon. */}
+      <a
+        href={hrefTo('profile')}
+        aria-current={onProfile ? 'page' : undefined}
+        aria-label={t('trainer.openProfile')}
+        className={cx('grid size-10 place-items-center transition-colors xl:hidden', onProfile ? 'bg-volt-400 text-ink' : 'text-mist-300 hover:bg-dusk-700 hover:text-mist-50')}
+      >
+        <PixelIcon name="user" size={20} />
+      </a>
       <IconButton icon="logout" size="sm" variant="ghost" label={t('account.logout')} onClick={() => void logout()} className="xl:hidden" />
       <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 max-xl:flex-col" aria-label={t('trainer.bag')}>
         {BALL_ORDER.map((b) => (

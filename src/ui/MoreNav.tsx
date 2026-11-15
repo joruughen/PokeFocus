@@ -20,12 +20,15 @@ export interface NavSplit {
 }
 
 /**
- * Splits the navigation for the phone bar: the main sections stay as buttons, the rest (and
+ * Splits the navigation for the phone bar: the main sections stay as buttons, the rest (plus Profile, and
  * Administration for staff, who otherwise only reach it by URL) goes into the «More» sheet.
  */
 export function splitNav(routes: readonly RouteDef[], role?: UserRole | null): NavSplit {
   const primary = PRIMARY_NAV.map((id) => routes.find((r) => r.id === id && r.nav)).filter((r): r is RouteDef => Boolean(r))
   const more = routes.filter((r) => r.nav && !(PRIMARY_NAV as readonly string[]).includes(r.id))
+  // Profile is not a rail section (desktop opens it from the trainer card), so phones get it first in «More».
+  const profile = routes.find((r) => r.id === 'profile')
+  if (profile) more.unshift(profile)
   const admin = routes.find((r) => r.id === 'admin')
   if (admin && role && STAFF.includes(role)) more.push(admin)
   return { primary, more }

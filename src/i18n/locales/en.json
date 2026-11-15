@@ -58,7 +58,8 @@
       "trades_one": "{{count}} trade waiting",
       "trades_other": "{{count}} trades waiting"
     },
-    "trades": "Trades"
+    "trades": "Trades",
+    "profile": "Profile"
   },
   "trainer": {
     "level": "Trainer lv. {{level}}",
@@ -66,7 +67,8 @@
     "streak_other": "{{count}}-day streak",
     "bag": "Your bag",
     "ballCount_one": "{{count}} left",
-    "ballCount_other": "{{count}} left"
+    "ballCount_other": "{{count}} left",
+    "openProfile": "Open your profile"
   },
   "mascot": {
     "name": "Study Pikachu"
@@ -930,7 +932,12 @@
     "audioLab": "Audio lab",
     "weather": "Weather (overrides the real one)",
     "weatherReal": "Real",
-    "weatherNote": "Only with DEV_TOOLS=1 on the server."
+    "weatherNote": "Only with DEV_TOOLS=1 on the server.",
+    "trainerExp": "Trainer EXP",
+    "trainerExpNow": "Lv. {{level}} · {{exp}} EXP",
+    "trainerExpNote": "Going up pays the level rewards and opens the congratulations window. Going down does not take back rewards already given (climbing again pays them again).",
+    "trainerLevelUp": "Level up once",
+    "trainerLevelDown": "Level down once"
   },
   "hints": {
     "home": {
@@ -4154,6 +4161,135 @@
       "counterButton": "Send my pick",
       "acceptTitle": "Trade with {{name}}",
       "acceptNote": "When you confirm, both Pokémon change trainers and each of you pays the Dust."
+    }
+  },
+  "profile": {
+    "pageTitle": "Profile",
+    "subtitle": "Your trainer card: level, streak and everything you have studied.",
+    "hero": {
+      "label": "Trainer card",
+      "since": "Trainer since {{date}}",
+      "country": "Country: {{country}}",
+      "anonymous": "Anonymous in rankings",
+      "anonymousTip": "In the global and country rankings others see «Anonymous trainer». Your friends still see your name. You can change it in Settings.",
+      "companion": "Your partner",
+      "companionLeader": "Leads your team",
+      "companionBond": "Your Pokémon with the most Bond",
+      "levelWord": "Level"
+    },
+    "level": {
+      "title": "Trainer level",
+      "reached": "Level {{level}}",
+      "expLabel": "Trainer EXP",
+      "expText": "{{into}} / {{span}} EXP",
+      "missing_one": "You need {{exp}} more EXP for level {{next}}",
+      "missing_other": "You need {{exp}} more EXP for level {{next}}",
+      "approx": "≈ {{time}} of study",
+      "orSpecies_one": "or {{count}} new species",
+      "orSpecies_other": "or {{count}} new species",
+      "max": "Max level!",
+      "maxBody": "You reached level {{max}}, the cap. Your total EXP keeps adding up.",
+      "totalExp": "Total EXP: {{exp}}",
+      "howAria": "How trainer EXP is earned",
+      "howTitle": "How trainer EXP is earned",
+      "howMinutes": "Studying: every minute of a session gives {{count}} EXP.",
+      "howSpecies": "Catching a species you did not have in the Pokédex yet: {{count}} EXP.",
+      "howNo": "Duplicates, trades and missions give no trainer EXP.",
+      "howReward": "Every level you gain pays a reward.",
+      "nextReward": "Level {{level}} reward",
+      "rewardNothing": "This level has no reward.",
+      "rewardAdded": "It is added right away, as soon as you level up."
+    },
+    "unlocks": {
+      "title": "Unlocks by level",
+      "untilNext_one": "{{count}} level to go until the next unlock, at level {{level}}.",
+      "untilNext_other": "{{count}} levels to go until the next unlock, at level {{level}}.",
+      "allDone": "You have unlocked everything. Nice work!",
+      "level": "Level {{level}}",
+      "unlocked": "Unlocked",
+      "locked": "Still locked",
+      "next": "Next",
+      "gift": "Gift on arrival: {{count}} × {{item}}",
+      "kind": {
+        "mint": {
+          "name": "Mints",
+          "body": "Change the effect of a Pokémon's nature."
+        },
+        "tera": {
+          "name": "Terastallization",
+          "body": "Changes a Pokémon's type for a while."
+        },
+        "bottleCap": {
+          "name": "Bottle Caps",
+          "body": "Raise one stat's IV to the maximum."
+        },
+        "abilityCapsule": {
+          "name": "Ability Capsule",
+          "body": "Swaps a Pokémon's ability for its other one."
+        },
+        "missions": {
+          "name": "Better mission rewards",
+          "body": "Missions start giving more and better items."
+        },
+        "missionsItem": "Missions start giving items such as {{item}}.",
+        "wild": {
+          "name": "Stronger wild Pokémon",
+          "body": "Wild Pokémon appear between levels {{min}} and {{max}}."
+        }
+      }
+    },
+    "streak": {
+      "title": "Study streak",
+      "current": "Current streak",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "best": "Your best streak",
+      "state": {
+        "none": "No streak yet. Complete a session to start one.",
+        "today": "You already counted today. Come back tomorrow to add another day.",
+        "atRisk": "You studied yesterday: do a session today to keep it growing.",
+        "lapsed": "You skipped yesterday. If your team carries a Pokémon with {{move}} (once a week), a session today saves the streak; otherwise it starts over.",
+        "lost": "The streak reset, but your best mark is still there. A session today starts a new one."
+      },
+      "howAria": "How the streak is kept",
+      "howTitle": "How the streak is kept",
+      "howDay": "Every day you complete a session counts.",
+      "howMiss": "If a whole day goes by without studying, the streak starts again at 1.",
+      "howProtect": "A Pokémon with {{move}} on your team protects it if you miss a day (once a week).",
+      "howDragon": "With {{count}} days in a row the {{type}}-type condition turns on in your sessions.",
+      "unit_one": "day",
+      "unit_other": "days",
+      "dayStudied": "{{day}}: session done",
+      "dayEmpty": "{{day}}: no session"
+    },
+    "stats": {
+      "title": "Your numbers",
+      "hours": "Total studied",
+      "sessions": "Sessions",
+      "sessionsNote": "Average: {{minutes}} min",
+      "longest": "Longest session",
+      "focus": "Average Focus",
+      "days": "Days studied",
+      "dex": "Pokédex",
+      "dexNote_one": "{{count}} species seen",
+      "dexNote_other": "{{count}} species seen",
+      "shiny": "Shiny in your box",
+      "legendary": "Legendaries caught",
+      "traded": "Received in trades",
+      "tradedNote": "In your box",
+      "league": "Best league",
+      "dust": "Dust earned",
+      "dustNote": "From sessions",
+      "bond": "Most time together",
+      "capped": "Totals count your last {{count}} saved sessions.",
+      "empty": {
+        "title": "No sessions yet",
+        "body": "When you complete your first session your hours, Focus and study weeks will show up here."
+      },
+      "weeksTitle": "Minutes per week",
+      "weeksLabel": "Minutes studied in the last {{count}} weeks",
+      "weekTip": "Week of {{date}}: {{minutes}} min",
+      "weeksNote": "Each column is one week (Monday to Sunday); the last one is this week."
     }
   }
 }
