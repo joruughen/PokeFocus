@@ -48,6 +48,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         },
       },
       {
+        kind: 'new',
+        text: {
+          es: 'Nueva página de Perfil (toca tu tarjeta de entrenador): tu nivel y la EXP que te falta, el premio del próximo nivel, tu racha, lo que desbloqueas en cada nivel y tus estadísticas de estudio.',
+          en: 'New Profile page (tap your trainer card): your level and the EXP you still need, the next level’s reward, your streak, what each level unlocks and your study stats.',
+        },
+      },
+      {
         kind: 'improved',
         text: {
           es: 'Las misiones semanales ya no dan Ultra Balls (ahora dan Super Balls, pociones y Polvo); a cambio, cada 5 niveles de entrenador recibes una Ultra Ball extra.',
