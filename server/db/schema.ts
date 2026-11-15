@@ -2,7 +2,7 @@
 import { sql } from 'drizzle-orm'
 import { bigserial, boolean, char, check, doublePrecision, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import type { ContentPatch, ContentItem, EventOverlay } from '../../src/engine/content'
-import type { AdminContentValidation, AdminSimParams, AdminSimReport, EventOverlayBody, GameDoc, LiveEventText } from '../../src/game/protocol'
+import type { AdminContentValidation, AdminSimParams, AdminSimReport, EventOverlayBody, GameDoc, LiveEventText, TradePokemonView } from '../../src/game/protocol'
 
 /** What `resolveContent` takes (stored in content_snapshots.resolved). */
 export interface ResolvedContentInput {
@@ -97,6 +97,8 @@ export const friendships = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     status: text('status', { enum: ['pending', 'accepted'] }).notNull(),
     createdAt: ts('created_at').notNull().defaultNow(),
+    /** When the request was accepted (null while pending). Trades need `trade.minFriendshipDays` of it (GDD §12.8). */
+    acceptedAt: ts('accepted_at'),
   },
   (t) => [
     primaryKey({ columns: [t.requesterId, t.addresseeId] }),
@@ -446,5 +448,55 @@ export const sessionLog = pgTable(
   (t) => [uniqueIndex('session_log_user_session_idx').on(t.userId, t.sessionId), index('session_log_ended_idx').on(t.endedAt)],
 )
 
+/**
+ * Trades between friends (GDD §12.8, server/routes/trades.ts). One row per offer,
+ * open or closed: closed rows are the players' trade history.
+ *   offered    → A offered `offer_uid` to B (B picks one to give back)
+ *   countered  → B picked `counter_uid` (B's confirmation); A accepts or rejects
+ *   completed  → both sides applied in one transaction
+ *   rejected / cancelled / expired → closed without changes
+ * `*_snapshot`: the Pokémon as it was when offered/picked (refreshed at
+ * completion), for the other player's view and the history. A Pokémon can be in
+ * one open offer at a time (partial unique indexes below + checks under the doc lock).
+ */
+export const tradeOffers = pgTable(
+  'trade_offers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    fromUserId: uuid('from_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    toUserId: uuid('to_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: text('status', { enum: ['offered', 'countered', 'completed', 'rejected', 'cancelled', 'expired'] }).notNull(),
+    offerUid: text('offer_uid').notNull(),
+    offerSnapshot: jsonb('offer_snapshot').$type<TradePokemonView>().notNull(),
+    counterUid: text('counter_uid'),
+    counterSnapshot: jsonb('counter_snapshot').$type<TradePokemonView>(),
+    message: text('message'),
+    /** Dust each side paid (set when completed). */
+    dustCost: integer('dust_cost'),
+    /** Species each side's Pokémon became on arrival (trade evolution), null if none. */
+    offerEvolvedTo: text('offer_evolved_to'),
+    counterEvolvedTo: text('counter_evolved_to'),
+    /** Who closed it (rejected/cancelled), null otherwise. */
+    closedBy: uuid('closed_by'),
+    createdAt: ts('created_at').notNull(),
+    updatedAt: ts('updated_at').notNull(),
+    expiresAt: ts('expires_at').notNull(),
+    completedAt: ts('completed_at'),
+  },
+  (t) => [
+    index('trade_offers_from_idx').on(t.fromUserId, t.status),
+    index('trade_offers_to_idx').on(t.toUserId, t.status),
+    uniqueIndex('trade_offers_open_offer_uid_idx').on(t.fromUserId, t.offerUid).where(sql`${t.status} in ('offered', 'countered')`),
+    uniqueIndex('trade_offers_open_counter_uid_idx').on(t.toUserId, t.counterUid).where(sql`${t.status} = 'countered'`),
+    check('trade_offers_not_self', sql`${t.fromUserId} <> ${t.toUserId}`),
+    check('trade_offers_status_check', sql`${t.status} in ('offered', 'countered', 'completed', 'rejected', 'cancelled', 'expired')`),
+  ],
+)
+
 export type UserRow = typeof users.$inferSelect
 export type AuthSessionRow = typeof authSessions.$inferSelect
+export type TradeOfferRow = typeof tradeOffers.$inferSelect

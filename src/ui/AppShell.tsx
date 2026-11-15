@@ -22,6 +22,8 @@ import { useNow } from './store/clock'
 import { useAuth } from './store/auth'
 import { timerOf, useGame } from './store/game'
 import { useIncomingCount } from './store/social'
+import { useTradeTurnCount } from './store/trades'
+import { TradeArrivalHost } from './trades/TradeArrival'
 import { useLiveEvents } from './store/liveEvents'
 import { eventPhase } from './screens/events/model'
 import { usePhase, usePlayer } from './store/selectors'
@@ -50,6 +52,7 @@ export function AppShell() {
       <GroupInviteNotice />
       <WhatsNewDialog />
       <LevelUpHost />
+      <TradeArrivalHost />
       <EventPopupHost />
       <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
@@ -98,12 +101,13 @@ function ScreenLoading() {
 /** Alert counts of the sections that live inside the phone's «More» sheet (friend requests, live events). */
 function useMoreBadges(): NavBadges {
   const friends = useIncomingCount()
+  const trades = useTradeTurnCount()
   const active = useLiveEvents((s) => s.active)
   const skew = useLiveEvents((s) => s.skew)
   const now = useNow() + skew
   const minute = Math.floor(now / 60_000)
   const events = useMemo(() => active.filter((e) => eventPhase(e, minute * 60_000) === 'active').length, [active, minute])
-  return { friends, events }
+  return { friends, trades, events }
 }
 
 function Rail({ route, focusing }: { route: string; focusing: boolean }) {
@@ -151,6 +155,7 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
                   <PixelIcon name={r.icon} size={20} />
                   {r.id === 'missions' && <MissionsBadge active={active} />}
                   {r.id === 'friends' && <FriendsBadge active={active} />}
+                  {r.id === 'trades' && <TradesBadge active={active} />}
                 </span>
                 <span className="max-xl:sr-only">{t(r.labelKey)}</span>
               </a>
@@ -183,6 +188,21 @@ function MissionsBadge({ active }: { active: boolean }) {
     <span
       className={cx('absolute -top-2 -left-2 grid h-4 min-w-4 place-items-center px-0.5 font-num text-sm leading-none shadow-frame', active ? 'bg-ink text-volt-300' : 'bg-cheek-500 text-mist-50')}
       aria-label={t('missions.badge', { count: n })}
+    >
+      {n}
+    </span>
+  )
+}
+
+/** Trade offers waiting for my answer (received, or a counteroffer to confirm), on the nav icon. */
+function TradesBadge({ active }: { active: boolean }) {
+  const { t } = useTranslation()
+  const n = useTradeTurnCount()
+  if (n === 0) return null
+  return (
+    <span
+      className={cx('absolute -top-2 -left-2 grid h-4 min-w-4 place-items-center px-0.5 font-num text-sm leading-none shadow-frame', active ? 'bg-ink text-volt-300' : 'bg-cheek-500 text-mist-50')}
+      aria-label={t('trades.badge', { count: n })}
     >
       {n}
     </span>

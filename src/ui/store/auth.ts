@@ -15,6 +15,7 @@ import { connectEvents, disconnectEvents, onServerEvent } from '../api/events'
 import { forgetPushOnSignOut, syncPushOnSignIn } from '../lib/push'
 import { useGame } from './game'
 import { useFriends } from './social'
+import { useTrades } from './trades'
 
 export type AuthStatus = 'loading' | 'anon' | 'authed'
 
@@ -61,8 +62,10 @@ function signedIn(user: PublicUser) {
   if (!sameUser) {
     useGame.getState().clear()
     useFriends.getState().clear()
+    useTrades.getState().clear()
     void useGame.getState().load()
     void useFriends.getState().load()
+    void useTrades.getState().load()
     // This browser's push subscription (if any) now belongs to this account.
     void syncPushOnSignIn()
   }
@@ -73,6 +76,7 @@ function signedOut() {
   disconnectEvents()
   useGame.getState().clear()
   useFriends.getState().clear()
+  useTrades.getState().clear()
   useAuth.setState({ status: 'anon', user: null })
 }
 

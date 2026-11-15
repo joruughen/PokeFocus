@@ -377,6 +377,18 @@ describe('trainer level-up window (ackLevelUp)', () => {
   })
 })
 
+describe('trade arrival window (ackTrade)', () => {
+  it('empties pendingTrades, is idempotent and needs a player', () => {
+    const doc = newPlayer()
+    const arrival = { uid: 'p9', fromSpecies: 'kadabra', toSpecies: 'alakazam', shiny: false, partnerName: 'Ash', at: T0 }
+    const withPending: GameDoc = { ...doc, player: { ...doc.player!, pendingTrades: [arrival] } }
+    const acked = must(withPending, { type: 'ackTrade' }, env(T0 + 1))
+    expect(acked.player!.pendingTrades).toBeUndefined()
+    expect(must(acked, { type: 'ackTrade' }, env(T0 + 2)).player).toEqual(acked.player)
+    expect(applyAction(EMPTY_DOC, { type: 'ackTrade' }, env(T0))).toEqual({ ok: false, error: 'no_player' })
+  })
+})
+
 describe('advanced items (F4)', () => {
   function withItems(level: number, items: Record<string, number>): GameDoc {
     const doc = newPlayer()

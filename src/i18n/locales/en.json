@@ -54,8 +54,11 @@
       "events_one": "{{count}} event running",
       "events_other": "{{count}} events running",
       "missions_one": "{{count}} mission ready",
-      "missions_other": "{{count}} missions ready"
-    }
+      "missions_other": "{{count}} missions ready",
+      "trades_one": "{{count}} trade waiting",
+      "trades_other": "{{count}} trades waiting"
+    },
+    "trades": "Trades"
   },
   "trainer": {
     "level": "Trainer lv. {{level}}",
@@ -857,6 +860,30 @@
       "preset_empty": "None of that team's Pokémon are left.",
       "session_active": "You can't switch teams during a session.",
       "team_empty": "The team needs at least one Pokémon."
+    },
+    "trades": {
+      "not_friends": "You can only trade with your friends.",
+      "friendship_too_new": "You have not been friends for 3 days yet: you can trade from {{date}}.",
+      "unknown_pokemon": "That Pokémon is no longer in your Box.",
+      "in_team": "You cannot give a team member. Move it to the Box first.",
+      "session_active": "That Pokémon is in your study session.",
+      "last_pokemon": "You cannot give your only Pokémon.",
+      "legendary_traded": "That legendary was already traded once and cannot be traded again.",
+      "pokemon_in_offer": "That Pokémon is already in another open offer.",
+      "too_many_offers": "You have too many open offers. Wait for answers or cancel one.",
+      "over_level_cap": "That Pokémon is above your level cap.",
+      "over_level_cap_partner": "That Pokémon is above your friend's level cap.",
+      "daily_limit": "You already made 3 trades today.",
+      "daily_limit_partner": "Your friend already made 3 trades today. Try tomorrow.",
+      "not_enough_dust": "You do not have enough Dust for this trade.",
+      "not_enough_dust_partner": "Your friend does not have enough Dust right now. The offer stays open.",
+      "pokemon_changed": "Your Pokémon changed or is gone since the offer was made.",
+      "pokemon_changed_partner": "Your friend's Pokémon changed or is gone. Decline the offer if you no longer want it.",
+      "offer_closed": "This offer is already closed.",
+      "offer_expired": "This offer expired.",
+      "not_your_turn": "It is not your turn to answer this offer.",
+      "no_player": "You have no game yet.",
+      "no_player_partner": "Your friend has no game yet."
     }
   },
   "dev": {
@@ -1447,7 +1474,9 @@
     "caughtWith": "Caught at Lv {{level}} with a {{ball}} on {{date}}.",
     "swapTeam": "Swap for…",
     "swapTip": "The team is full: pick who it replaces and compare the two before you confirm.",
-    "swapLocked": "You can't change the team during a session."
+    "swapLocked": "You can't change the team during a session.",
+    "traded": "Trade",
+    "tradedFrom": "Sent to you by {{name}} on {{date}}. Original trainer: {{ot}}."
   },
   "tech": {
     "title": "Techniques",
@@ -1531,7 +1560,7 @@
       "bond": "Needs +{{pct}} Bond (now +{{now}}). Keep studying with it in the team.",
       "day": "Only by day (05:00 to 18:00).",
       "night": "Only at night (18:00 to 05:00).",
-      "trade": "Trading will come with friends.",
+      "trade": "It evolves when received in a trade with a friend.",
       "other": "Not available in the prototype yet."
     },
     "whatTitle": "What? {{name}} is evolving!",
@@ -3930,6 +3959,150 @@
       "loseHidden": "It has its hidden ability: if it switches, the capsule can't bring it back.",
       "confirm": "Change ability",
       "done": "{{name}} now has {{ability}}."
+    }
+  },
+  "trades": {
+    "title": "Trades",
+    "subtitle": "Swap Pokémon with your friends, one for one. You offer, your friend picks what to give back and you confirm.",
+    "today": "Today's trades: {{count}} of {{limit}}",
+    "badge_one": "{{count}} trade waiting for you",
+    "badge_other": "{{count}} trades waiting for you",
+    "friend": {
+      "button": "Trade",
+      "buttonOf": "Trade with {{name}}",
+      "tooNew": "You can trade after 3 days of friendship: from {{date}}."
+    },
+    "new": {
+      "title": "New offer for {{name}}",
+      "how": "Pick the Pokémon you offer. {{name}} will see its summary and pick one of theirs to give back; then you confirm.",
+      "notFriend": "You can only trade with your friends.",
+      "giving": "You offer {{name}}",
+      "cost": "It will cost each of you at least {{cost}} Dust (paid when it completes).",
+      "message": "Message (optional)",
+      "messageHint": "Up to {{max}} characters. Your friend will see it.",
+      "send": "Send offer",
+      "sent": "Offer sent to {{name}}",
+      "sendNamed": "Offer {{name}}"
+    },
+    "tabs": {
+      "label": "Trade offers",
+      "incoming": "Received ({{count}})",
+      "outgoing": "Sent ({{count}})",
+      "history": "History"
+    },
+    "empty": {
+      "incoming": "Nobody has offered you anything yet.",
+      "outgoing": "No offers waiting for an answer.",
+      "history": "Your finished trades will show here.",
+      "title": "No trades yet",
+      "body": "Pick a friend and offer them a Pokémon. They will pick one to give you back.",
+      "toFriends": "Go to Friends"
+    },
+    "card": {
+      "toFriend": "Your offer to {{name}}",
+      "fromFriend": "{{name}} offers you",
+      "expires_one": "Expires in {{count}} h",
+      "expires_other": "Expires in {{count}} h",
+      "messageFrom": "Message from {{name}}:",
+      "you": "you",
+      "youGive": "You give",
+      "youGet": "You get",
+      "youPick": "Pick what you give back",
+      "theyPick": "{{name}} will pick what to give you",
+      "cost": "Cost: {{cost}} Dust each.",
+      "pick": "Pick what to give",
+      "sendCounter": "Give {{name}} back",
+      "countered": "You sent your pick to {{name}}",
+      "reject": "Decline",
+      "rejected": "Offer declined",
+      "rejectCounter": "Decline",
+      "waitingConfirm": "Waiting for {{name}} to confirm.",
+      "withdraw": "Withdraw",
+      "withdrawn": "You withdrew from the trade",
+      "waitingPick": "Waiting for {{name}} to pick what to give you.",
+      "cancel": "Cancel offer",
+      "cancelled": "Offer cancelled",
+      "accept": "Confirm trade",
+      "done": "Trade with {{name}} complete!",
+      "missing": "It is no longer in its trainer's Box: the trade cannot complete.",
+      "evolvedTo": "Evolved into {{name}} on arrival.",
+      "nature": "Nature",
+      "ability": "Ability",
+      "moves": "Techniques",
+      "masteryHours_one": "{{count}} h of Mastery",
+      "masteryHours_other": "{{count}} h of Mastery",
+      "ot": "Original trainer",
+      "tradedTimes_one": "traded {{count}} time, last on {{date}}",
+      "tradedTimes_other": "traded {{count}} times, last on {{date}}",
+      "pickTitle": "What do you give {{name}}?",
+      "pickFirst": "Pick a Pokémon",
+      "costChip": "{{cost}} Dust each",
+      "mint": "{{nature}} (mint: {{mint}})",
+      "capped_one": "{{count}} IV maxed with a Bottle Cap",
+      "capped_other": "{{count}} IVs maxed with Bottle Caps",
+      "tera": "Terastallized: {{type}}"
+    },
+    "status": {
+      "completed": "Completed",
+      "expired": "Expired",
+      "rejectedMe": "You declined",
+      "rejectedThem": "{{name}} declined",
+      "cancelledMe": "You cancelled",
+      "cancelledThem": "{{name}} cancelled"
+    },
+    "history": {
+      "with": "With {{name}}",
+      "swap": "You gave {{gave}} and got {{got}}",
+      "offered": "Offer of {{name}}",
+      "paid": "{{cost}} Dust",
+      "evolved": "{{from}}, which evolved into {{to}}"
+    },
+    "block": {
+      "unknown_pokemon": "No longer here",
+      "in_team": "In your team",
+      "session_active": "In the session",
+      "last_pokemon": "Your only Pokémon",
+      "legendary_traded": "Legendary already traded",
+      "in_offer": "Already in another offer"
+    },
+    "warnings": {
+      "label": "Warnings",
+      "evolves": "It will evolve into {{name}} on arrival.",
+      "overLevelCap": "Above your level cap ({{cap}}): you cannot receive it. Register more species to raise it.",
+      "legendaryOnce": "Legendary and mythical Pokémon can only be traded once in their life.",
+      "savedTeam": "It is in your saved teams ({{teams}}): it will show there as «gone».",
+      "notEnoughDust": "You need {{cost}} Dust and have {{have}}.",
+      "dailyLimit": "You already made {{limit}} trades today. Come back tomorrow."
+    },
+    "picker": {
+      "label": "Your Pokémon",
+      "search": "Search by name",
+      "onlyOk": "Only the ones I can give",
+      "hidden_one": "{{count}} hidden: in the team, in an offer or not tradable.",
+      "hidden_other": "{{count}} hidden: in the team, in an offer or not tradable.",
+      "none": "No Pokémon match.",
+      "inPreset": "In a saved team"
+    },
+    "arrival": {
+      "title": "{{name}} arrived!",
+      "body": "{{name}} sent it to you in a trade.",
+      "evolved": "{{name}} sent you {{from}}, and it evolved into {{to}} on arrival.",
+      "note": "It keeps its level, IVs, nature, ability, techniques and Mastery. Its Bond starts from zero with you, and you can give it a nickname.",
+      "ok": "Welcome!"
+    },
+    "todayShort": "Today",
+    "pickFriend": {
+      "title": "Offer to a friend",
+      "from": "from {{date}}"
+    },
+    "confirm": {
+      "offerTitle": "Send the offer to {{name}}?",
+      "offerNote": "{{name}} will see your Pokémon and pick one of theirs. Nothing moves until you confirm.",
+      "counterTitle": "Give this to {{name}}?",
+      "counterNote": "{{name}} gets your pick and has the last word. Dust is only paid if it completes.",
+      "counterButton": "Send my pick",
+      "acceptTitle": "Trade with {{name}}",
+      "acceptNote": "When you confirm, both Pokémon change trainers and each of you pays the Dust."
     }
   }
 }

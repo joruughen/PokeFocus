@@ -11,6 +11,11 @@ import { fmtInt } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { useAuth } from '../../store/auth'
 import { useFriends } from '../../store/social'
+import { useNow } from '../../store/clock'
+import { useTradeTurnCount } from '../../store/trades'
+import { hrefTo } from '../../router'
+import { friendTradeState } from '../trades/eligibility'
+import { TradesLink } from '../trades/Trades'
 
 const LEAGUE_STYLE: Record<string, string> = {
   base: 'bg-dusk-600 text-mist-100',
@@ -50,15 +55,19 @@ export default function Friends() {
   const incoming = friends?.filter((f) => f.status === 'incoming') ?? []
   const outgoing = friends?.filter((f) => f.status === 'outgoing') ?? []
   const sorted = [...accepted].sort((a, b) => (b.weeklyPoints ?? 0) - (a.weeklyPoints ?? 0))
+  const tradeTurns = useTradeTurnCount()
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="flex items-center gap-3 text-3xl">
-          {t('friends.title')}
-          <HelpDot hint="friends.code" />
-        </h1>
-        <p className="mt-1 max-w-[60ch] text-mist-300">{t('friends.subtitle')}</p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl">
+            {t('friends.title')}
+            <HelpDot hint="friends.code" />
+          </h1>
+          <p className="mt-1 max-w-[60ch] text-mist-300">{t('friends.subtitle')}</p>
+        </div>
+        <TradesLink count={tradeTurns} />
       </header>
 
       <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
@@ -314,6 +323,7 @@ function FriendCard({ friend }: { friend: FriendSummary }) {
           ))}
         </ul>
         <div className="flex items-center gap-2">
+          <TradeButton friend={friend} />
           <Tooltip content={t(`league.names.${league as LeagueId}`, { defaultValue: league })}>
             <span tabIndex={0} className={cx('inline-flex h-7 items-center px-2 font-display text-base shadow-frame', LEAGUE_STYLE[league] ?? LEAGUE_STYLE.base)}>
               {t(`league.short.${league as LeagueId}`, { defaultValue: league })}
@@ -352,5 +362,29 @@ function FriendCard({ friend }: { friend: FriendSummary }) {
         }
       />
     </li>
+  )
+}
+
+/** «Trade» with this friend: a link to a new offer, or disabled with the reason (friends for less than 3 days). */
+function TradeButton({ friend }: { friend: FriendSummary }) {
+  const { t, i18n } = useTranslation()
+  const now = useNow()
+  const state = friendTradeState(friend, now)
+  if (state.ok) {
+    return (
+      <a href={hrefTo('trades', 'new', friend.userId)} className="inline-flex h-8 items-center gap-1.5 bg-dusk-700 px-2 font-display text-base shadow-frame hover:bg-dusk-600" aria-label={t('trades.friend.buttonOf', { name: friend.trainerName })}>
+        <PixelIcon name="trade" size={14} />
+        {t('trades.friend.button')}
+      </a>
+    )
+  }
+  const reason = state.reason === 'too_new' ? t('trades.friend.tooNew', { date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(state.readyAt) }) : t('trades.new.notFriend')
+  return (
+    <Tooltip content={reason}>
+      <span tabIndex={0} role="button" aria-disabled="true" aria-label={`${t('trades.friend.buttonOf', { name: friend.trainerName })}. ${reason}`} className="inline-flex h-8 cursor-not-allowed items-center gap-1.5 bg-dusk-800 px-2 font-display text-base text-mist-400 opacity-70 shadow-frame">
+        <PixelIcon name="lock" size={14} />
+        {t('trades.friend.button')}
+      </span>
+    </Tooltip>
   )
 }

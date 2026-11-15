@@ -178,6 +178,11 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       const { pendingLevelUps: _done, ...rest } = p
       return withPlayer(rest)
     }
+    case 'ackTrade': {
+      if (!p.pendingTrades) return withPlayer(p)
+      const { pendingTrades: _seen, ...rest } = p
+      return withPlayer(rest)
+    }
     case 'setWeather':
       return withPlayer({ ...p, profile: { ...p.profile, weather: a.weather } })
 

@@ -236,6 +236,26 @@ export interface GameConfig {
   starterPokeBalls: number
   /** Max session summaries kept in `PlayerState.history`. */
   historyLimit: number
+  /** Trades between friends (GDD §12.8, see trade.ts). Not editable live. */
+  trade: TradeConfig
+}
+
+/** Trades between friends (GDD §12.8). */
+export interface TradeConfig {
+  /** Days of accepted friendship before two players can trade. */
+  minFriendshipDays: number
+  /** An open offer lapses after this many hours without completing. */
+  offerTtlHours: number
+  /** Completed trades per player and local day. */
+  dailyLimit: number
+  /** Dust each side pays: `dustBase` × `shinyMult` (shiny) × `legendaryMult` (legendary/mythical), of the dearer Pokémon. */
+  dustBase: number
+  shinyMult: number
+  legendaryMult: number
+  /** Longest optional message of an offer (graphemes). */
+  messageMax: number
+  /** Open offers (offered or countered) a player may have sent at once. */
+  maxOpenSent: number
 }
 
 /** Parameters the engine needs that are not (yet) in custom-game-config.json. */
@@ -265,6 +285,7 @@ export const ENGINE_DEFAULTS = {
     abilityCapsule: { minTrainerLevel: 30, unlockGift: 1 },
   },
   historyLimit: 1000,
+  trade: { minFriendshipDays: 3, offerTtlHours: 72, dailyLimit: 3, dustBase: 100, shinyMult: 5, legendaryMult: 10, messageMax: 80, maxOpenSent: 10 },
 } as const
 
 type DeepPartial<T> = T extends readonly unknown[] ? T : T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T

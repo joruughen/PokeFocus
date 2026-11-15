@@ -94,6 +94,8 @@ export interface GameState extends GameDoc {
   dismissResults: () => Promise<GameActionError | null>
   /** The trainer level-up window was closed: the server empties `pendingLevelUps`. */
   ackLevelUp: () => Promise<GameActionError | null>
+  /** The trade arrival window was closed: the server empties `pendingTrades`. */
+  ackTrade: () => Promise<GameActionError | null>
 
   throwBall: (ref: WildRef, ball: ThrowBall) => Promise<{ ok: true; outcome: ThrowOutcome } | { ok: false; error: GameActionError }>
   applyStatus: (chargeId: string, ref: WildRef) => Promise<GameActionError | null>
@@ -287,6 +289,7 @@ export const useGame = create<GameState>()((set, get) => {
     },
     dismissResults: async () => errOf(await dispatch({ type: 'dismissResults' })),
     ackLevelUp: async () => errOf(await dispatch({ type: 'ackLevelUp' })),
+    ackTrade: async () => errOf(await dispatch({ type: 'ackTrade' })),
 
     throwBall: async (ref, ball) => {
       const r = await dispatch({ type: 'throwBall', ref, ball })

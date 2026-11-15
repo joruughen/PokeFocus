@@ -767,6 +767,9 @@ Los niveles de las Mentas, la Teracristalización, las Chapas y la Cápsula est�
 
 ### 12.8 Intercambios entre amigos
 
+**Hecho (F5, 2026-11-15).** Pantalla «Intercambios» (`#/trades`), botón «Intercambiar» en cada amigo; servidor en `docs/server.md` § Trades.
+
+
 - **Solo entre amigos**, con al menos **3 días** de amistad (evita crear cuentas para pasarse Pokémon).
 - **Asíncrono, 1 por 1**: uno ofrece, el otro elige qué dar a cambio, y los dos confirman.
 - **Costo en Polvo de Estudio** para ambos **[calibrar]**: 100 normal, ×5 si es shiny, ×10 si es legendario o mítico.
@@ -775,6 +778,15 @@ Los niveles de las Mentas, la Teracristalización, las Chapas y la Cápsula est�
 - **Qué conserva y qué pierde:** conserva nivel, IVs, naturaleza, habilidad, técnicas y su Dominio. Su **Vínculo vuelve a 0** con su nuevo entrenador.
 - Las evoluciones por intercambio ocurren al recibirlo (§12.6).
 - El Pokémon recibido cuenta para tu Pokédex.
+
+**Decisiones de la implementación:**
+- **Flujo:** A ofrece (con mensaje opcional de hasta 80 caracteres) → B elige qué da (eso es su confirmación) → A ve la contraoferta y la acepta o la rechaza. A puede cancelar y B rechazar mientras esté abierta. Una oferta abierta caduca a las **72 h** de hacerse o de recibir la contraoferta. Dejar de ser amigos cancela las ofertas abiertas.
+- **Amistad:** cuenta desde que se aceptó (`friendships.accepted_at`; las anteriores, desde la solicitud).
+- **Polvo:** los dos pagan **lo mismo, el del Pokémon más caro** de los dos (100, ×5 shiny, ×10 legendario o mítico; un legendario shiny, ×50). Así el intercambio es simétrico, nadie «regala» un shiny legendario barato a una cuenta nueva, y un intercambio valioso cuesta a los dos. Se cobra solo al completarse; si a alguien no le alcanza, falla sin cambiar nada y la oferta sigue abierta.
+- **Límite diario:** 3 intercambios **completados** por jugador y día local (su zona horaria).
+- **No se puede ofrecer:** un Pokémon del equipo, de la sesión en curso, tu último Pokémon, un legendario ya intercambiado, ni uno que ya está en otra oferta abierta (máx. 10 ofertas enviadas abiertas). Los de equipos guardados sí, con aviso; allí quedan como «ya no está».
+- **Qué conserva:** todo el estado individual (nivel, EXP, IVs, naturaleza y menta, Chapas, habilidad, técnicas y MT, Dominio, shiny, y una Tera activa hasta que caduque). **El mote se borra** (el nuevo entrenador pone el suyo), el **Vínculo vuelve a 0** y se registra el entrenador original, de quién llegó y la fecha (se ve en la ficha).
+- **Al recibirlo:** cuenta como visto y capturado en la Pokédex (también la evolución), pero **no da EXP de entrenador por especie nueva** (evita granjear nivel con cuentas de apoyo). Si evoluciona, avanza la misión «evolucionar». No hay misiones de «intercambiar».
 
 ---
 

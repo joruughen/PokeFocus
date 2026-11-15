@@ -76,6 +76,14 @@ export function normalizeNickname(raw: unknown): Result<string | null, NicknameE
   return ok(r.value === '' ? null : r.value)
 }
 
+/** Validate the optional message of a trade offer (GDD §12.8): at most `max` graphemes; empty = none (null). */
+export function normalizeTradeMessage(raw: unknown, max: number): Result<string | null, 'message_too_long' | 'message_invalid'> {
+  if (raw === null || raw === undefined) return ok(null)
+  const r = cleanLabel(raw, max)
+  if (!r.ok) return err(r.error === 'too_long' ? 'message_too_long' : 'message_invalid')
+  return ok(r.value === '' ? null : r.value)
+}
+
 /** Validate a preset name (1–20 graphemes after trimming). */
 export function normalizePresetName(raw: unknown): Result<string, PresetError> {
   const r = cleanLabel(raw, PRESET_NAME_MAX)

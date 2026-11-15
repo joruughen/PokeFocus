@@ -112,6 +112,14 @@ function StatsTab({ view }: { view: PokemonView }) {
               : t('detail.caughtWith', { level: p.metLevel, ball: p.caughtBall === 'study-ball' ? t('balls.study') : names.item(p.caughtBall), date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(p.caughtAt) })}
           </dd>
         </div>
+        {p.traded && (
+          <div>
+            <dt className="font-display text-base text-mist-300">{t('detail.traded')}</dt>
+            <dd className="mt-0.5 text-sm text-mist-300">
+              {t('detail.tradedFrom', { name: p.traded.receivedFrom, ot: p.traded.originalTrainer, date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(p.traded.receivedAt) })}
+            </dd>
+          </div>
+        )}
       </dl>
     </>
   )

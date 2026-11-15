@@ -41,6 +41,10 @@ export const RULES = {
   adminEventAnnounce: { limit: 5, windowMs: 60 * 60_000 },
   /** Image uploads per staff user (each one decodes and re-encodes an image: CPU and RAM). */
   adminUpload: { limit: 20, windowMs: 15 * 60_000 },
+  /** New trade offers per user (each one notifies a friend). */
+  tradeOfferUser: { limit: 20, windowMs: 15 * 60_000 },
+  /** Any other trade write (counter, accept, reject, cancel) per user. */
+  tradeWriteUser: { limit: 120, windowMs: 15 * 60_000 },
   /** Web Push subscribe + unsubscribe per user. */
   pushWriteUser: { limit: 30, windowMs: 15 * 60_000 },
   /** POST /api/push/test per user (each one sends real notifications). */

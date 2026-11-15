@@ -107,6 +107,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('claim', { devFocusLabel: z.string().max(32).nullable().optional(), soundProfile: soundProfileSchema.nullable().optional() }),
   act('dismissResults', {}),
   act('ackLevelUp', {}),
+  act('ackTrade', {}),
   act('throwBall', { ref, ball }),
   act('applyStatus', { chargeId: id, ref }),
   act('reroll', { chargeId: id, ref }),
@@ -170,6 +171,18 @@ export const groupCreateBody = z.object({
 })
 
 export const groupInviteBody = z.object({ friendIds: friendIdList })
+
+// ---------------------------------------------------------------------------
+// Trades (/api/trades, GDD §12.8). The message is re-checked in graphemes by the route.
+// ---------------------------------------------------------------------------
+
+export const tradeOfferBody = z.object({
+  toUserId: z.uuid(),
+  uid: id,
+  message: z.string().max(400).nullable().optional(),
+})
+
+export const tradeCounterBody = z.object({ uid: id })
 
 // ---------------------------------------------------------------------------
 // Admin: scheduled maintenance windows (/api/admin/maintenance)

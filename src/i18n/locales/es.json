@@ -54,8 +54,11 @@
       "events_one": "{{count}} evento en curso",
       "events_other": "{{count}} eventos en curso",
       "missions_one": "{{count}} misión lista",
-      "missions_other": "{{count}} misiones listas"
-    }
+      "missions_other": "{{count}} misiones listas",
+      "trades_one": "{{count}} intercambio te espera",
+      "trades_other": "{{count}} intercambios te esperan"
+    },
+    "trades": "Intercambios"
   },
   "trainer": {
     "level": "Entrenador nv. {{level}}",
@@ -857,6 +860,30 @@
       "preset_empty": "Ya no queda ninguno de los Pokémon de ese equipo.",
       "session_active": "No puedes cambiar de equipo durante una sesión.",
       "team_empty": "El equipo necesita al menos un Pokémon."
+    },
+    "trades": {
+      "not_friends": "Solo puedes intercambiar con tus amigos.",
+      "friendship_too_new": "Aún no llevan 3 días de amistad: podrán intercambiar desde el {{date}}.",
+      "unknown_pokemon": "Ese Pokémon ya no está en tu Caja.",
+      "in_team": "No puedes dar un Pokémon de tu equipo. Pásalo a la Caja primero.",
+      "session_active": "Ese Pokémon está en tu sesión de estudio.",
+      "last_pokemon": "No puedes dar tu único Pokémon.",
+      "legendary_traded": "Ese legendario ya se intercambió una vez y no puede volver a intercambiarse.",
+      "pokemon_in_offer": "Ese Pokémon ya está en otra oferta abierta.",
+      "too_many_offers": "Tienes demasiadas ofertas abiertas. Espera a que respondan o cancela alguna.",
+      "over_level_cap": "Ese Pokémon supera tu límite de nivel.",
+      "over_level_cap_partner": "Ese Pokémon supera el límite de nivel de tu amigo.",
+      "daily_limit": "Ya hiciste 3 intercambios hoy.",
+      "daily_limit_partner": "Tu amigo ya hizo 3 intercambios hoy. Prueba mañana.",
+      "not_enough_dust": "No tienes Polvo suficiente para este intercambio.",
+      "not_enough_dust_partner": "Tu amigo no tiene Polvo suficiente ahora mismo. La oferta sigue abierta.",
+      "pokemon_changed": "Tu Pokémon cambió o ya no está desde que se hizo la oferta.",
+      "pokemon_changed_partner": "El Pokémon de tu amigo cambió o ya no está. Rechaza la oferta si ya no te interesa.",
+      "offer_closed": "Esta oferta ya está cerrada.",
+      "offer_expired": "Esta oferta caducó.",
+      "not_your_turn": "Ahora no te toca responder a esta oferta.",
+      "no_player": "Aún no tienes partida.",
+      "no_player_partner": "Tu amigo aún no tiene partida."
     }
   },
   "dev": {
@@ -1447,7 +1474,9 @@
     "caughtWith": "Capturado al Nv {{level}} con {{ball}}, el {{date}}.",
     "swapTeam": "Cambiar por…",
     "swapTip": "El equipo está lleno: elige a quién sustituye y compara a los dos antes de confirmar.",
-    "swapLocked": "No puedes cambiar el equipo durante una sesión."
+    "swapLocked": "No puedes cambiar el equipo durante una sesión.",
+    "traded": "Intercambio",
+    "tradedFrom": "Te lo envió {{name}} el {{date}}. Entrenador original: {{ot}}."
   },
   "tech": {
     "title": "Técnicas",
@@ -1531,7 +1560,7 @@
       "bond": "Necesita +{{pct}} de Vínculo (ahora +{{now}}). Sigue estudiando con él en el equipo.",
       "day": "Solo de día (05:00 a 18:00).",
       "night": "Solo de noche (18:00 a 05:00).",
-      "trade": "Los intercambios llegarán con los amigos.",
+      "trade": "Evoluciona al recibirlo en un intercambio con un amigo.",
       "other": "Aún no disponible en el prototipo."
     },
     "whatTitle": "¿Qué? ¡{{name}} está evolucionando!",
@@ -3930,6 +3959,150 @@
       "loseHidden": "Tiene su habilidad oculta: si la cambia, no podrá recuperarla con la cápsula.",
       "confirm": "Cambiar habilidad",
       "done": "{{name}} ahora tiene {{ability}}."
+    }
+  },
+  "trades": {
+    "title": "Intercambios",
+    "subtitle": "Cambia Pokémon con tus amigos, uno por uno. Tú ofreces, tu amigo elige qué darte a cambio y tú confirmas.",
+    "today": "Intercambios de hoy: {{count}} de {{limit}}",
+    "badge_one": "{{count}} intercambio te espera",
+    "badge_other": "{{count}} intercambios te esperan",
+    "friend": {
+      "button": "Intercambiar",
+      "buttonOf": "Intercambiar con {{name}}",
+      "tooNew": "Podrán intercambiar cuando lleven 3 días de amistad: desde el {{date}}."
+    },
+    "new": {
+      "title": "Nueva oferta para {{name}}",
+      "how": "Elige qué Pokémon ofreces. {{name}} verá su ficha y elegirá uno de los suyos para darte a cambio; después tú confirmas.",
+      "notFriend": "Solo puedes intercambiar con tus amigos.",
+      "giving": "Ofreces a {{name}}",
+      "cost": "Costará al menos {{cost}} de Polvo a cada uno (se cobra al completarse).",
+      "message": "Mensaje (opcional)",
+      "messageHint": "Hasta {{max}} caracteres. Lo verá tu amigo.",
+      "send": "Enviar oferta",
+      "sent": "Oferta enviada a {{name}}",
+      "sendNamed": "Ofrecer a {{name}}"
+    },
+    "tabs": {
+      "label": "Ofertas de intercambio",
+      "incoming": "Recibidas ({{count}})",
+      "outgoing": "Enviadas ({{count}})",
+      "history": "Historial"
+    },
+    "empty": {
+      "incoming": "Nadie te ha ofrecido nada por ahora.",
+      "outgoing": "No tienes ofertas esperando respuesta.",
+      "history": "Aquí verás tus intercambios terminados.",
+      "title": "Aún no tienes intercambios",
+      "body": "Elige un amigo y ofrécele un Pokémon. Él elegirá cuál darte a cambio.",
+      "toFriends": "Ir a Amigos"
+    },
+    "card": {
+      "toFriend": "Tu oferta a {{name}}",
+      "fromFriend": "{{name}} te ofrece",
+      "expires_one": "Caduca en {{count}} h",
+      "expires_other": "Caduca en {{count}} h",
+      "messageFrom": "Mensaje de {{name}}:",
+      "you": "ti",
+      "youGive": "Das",
+      "youGet": "Recibes",
+      "youPick": "Elige qué das a cambio",
+      "theyPick": "{{name}} elegirá qué darte",
+      "cost": "Coste: {{cost}} de Polvo para cada uno.",
+      "pick": "Elegir qué dar",
+      "sendCounter": "Dar {{name}} a cambio",
+      "countered": "Enviaste tu elección a {{name}}",
+      "reject": "Rechazar",
+      "rejected": "Oferta rechazada",
+      "rejectCounter": "Rechazar",
+      "waitingConfirm": "Esperando a que {{name}} confirme.",
+      "withdraw": "Retirarme",
+      "withdrawn": "Te retiraste del intercambio",
+      "waitingPick": "Esperando a que {{name}} elija qué darte.",
+      "cancel": "Cancelar oferta",
+      "cancelled": "Oferta cancelada",
+      "accept": "Confirmar intercambio",
+      "done": "¡Intercambio con {{name}} completado!",
+      "missing": "Ya no está en la Caja de su entrenador: el intercambio no puede completarse.",
+      "evolvedTo": "Evolucionó al llegar a {{name}}.",
+      "nature": "Naturaleza",
+      "ability": "Habilidad",
+      "moves": "Técnicas",
+      "masteryHours_one": "{{count}} h de Dominio",
+      "masteryHours_other": "{{count}} h de Dominio",
+      "ot": "Entrenador original",
+      "tradedTimes_one": "intercambiado {{count}} vez, la última el {{date}}",
+      "tradedTimes_other": "intercambiado {{count}} veces, la última el {{date}}",
+      "pickTitle": "¿Qué le das a {{name}}?",
+      "pickFirst": "Elige un Pokémon",
+      "costChip": "{{cost}} de Polvo cada uno",
+      "mint": "{{nature}} (menta: {{mint}})",
+      "capped_one": "{{count}} IV al máximo con Chapa",
+      "capped_other": "{{count}} IVs al máximo con Chapas",
+      "tera": "Teracristalizado: {{type}}"
+    },
+    "status": {
+      "completed": "Completado",
+      "expired": "Caducado",
+      "rejectedMe": "Lo rechazaste",
+      "rejectedThem": "{{name}} lo rechazó",
+      "cancelledMe": "Lo cancelaste",
+      "cancelledThem": "{{name}} lo canceló"
+    },
+    "history": {
+      "with": "Con {{name}}",
+      "swap": "Diste {{gave}} y recibiste {{got}}",
+      "offered": "Oferta de {{name}}",
+      "paid": "{{cost}} de Polvo",
+      "evolved": "{{from}}, que evolucionó a {{to}}"
+    },
+    "block": {
+      "unknown_pokemon": "Ya no está",
+      "in_team": "Está en tu equipo",
+      "session_active": "Está en la sesión",
+      "last_pokemon": "Es tu único Pokémon",
+      "legendary_traded": "Legendario ya intercambiado",
+      "in_offer": "Ya está en otra oferta"
+    },
+    "warnings": {
+      "label": "Avisos",
+      "evolves": "Evolucionará a {{name}} al llegar.",
+      "overLevelCap": "Supera tu límite de nivel ({{cap}}): no puedes recibirlo. Registra más especies para subirlo.",
+      "legendaryOnce": "Los legendarios y míticos solo se pueden intercambiar una vez en su vida.",
+      "savedTeam": "Está en tus equipos guardados ({{teams}}): allí quedará como «ya no está».",
+      "notEnoughDust": "Necesitas {{cost}} de Polvo y tienes {{have}}.",
+      "dailyLimit": "Ya hiciste {{limit}} intercambios hoy. Vuelve mañana."
+    },
+    "picker": {
+      "label": "Tus Pokémon",
+      "search": "Buscar por nombre",
+      "onlyOk": "Solo los que puedo dar",
+      "hidden_one": "{{count}} oculto: está en el equipo, en una oferta o no se puede intercambiar.",
+      "hidden_other": "{{count}} ocultos: están en el equipo, en una oferta o no se pueden intercambiar.",
+      "none": "Ningún Pokémon coincide.",
+      "inPreset": "En un equipo guardado"
+    },
+    "arrival": {
+      "title": "¡{{name}} llegó!",
+      "body": "Te lo envió {{name}} en un intercambio.",
+      "evolved": "{{name}} te envió a {{from}} y evolucionó a {{to}} al llegar.",
+      "note": "Conserva su nivel, IVs, naturaleza, habilidad, técnicas y Dominio. Su Vínculo empieza de cero contigo, y puedes ponerle un mote.",
+      "ok": "¡Bienvenido!"
+    },
+    "todayShort": "Hoy",
+    "pickFriend": {
+      "title": "Ofrecer a un amigo",
+      "from": "desde el {{date}}"
+    },
+    "confirm": {
+      "offerTitle": "¿Enviar la oferta a {{name}}?",
+      "offerNote": "{{name}} verá tu Pokémon y elegirá uno de los suyos. Nada se mueve hasta que confirmes.",
+      "counterTitle": "¿Darle esto a {{name}}?",
+      "counterNote": "Le llegará tu elección y {{name}} tendrá la última palabra. El Polvo se cobra solo si se completa.",
+      "counterButton": "Enviar mi elección",
+      "acceptTitle": "Intercambio con {{name}}",
+      "acceptNote": "Al confirmar, los dos Pokémon cambian de entrenador y cada uno paga el Polvo."
     }
   }
 }
