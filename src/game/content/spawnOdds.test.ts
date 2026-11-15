@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { baseContext } from '../../engine/context'
-import { baseSpawn, canAppearAt, featuredOdds, speciesReach, trainerLevelForWildLevel, wavesPerAppearance } from './spawnOdds'
+import { atLeastOne, baseSpawn, oneInN, canAppearAt, featuredOdds, speciesReach, trainerLevelForWildLevel, wavesPerAppearance } from './spawnOdds'
 import { spawnPreview } from './preview'
 
 const ctx = baseContext()
@@ -84,5 +84,21 @@ describe('wavesPerAppearance', () => {
     expect(wavesPerAppearance(0.04, 4)).toBe(6)
     expect(wavesPerAppearance(0.5, 4)).toBe(1)
     expect(wavesPerAppearance(0, 4)).toBeNull()
+  })
+})
+
+describe('friendly phrasing helpers', () => {
+  it('1 in N: friendly rounding and the "fewer than" cap', () => {
+    expect(oneInN(1 / 71)).toEqual({ n: 70, tiny: false })
+    expect(oneInN(0.25)).toEqual({ n: 4, tiny: false })
+    expect(oneInN(1 / 18)).toEqual({ n: 20, tiny: false })
+    expect(oneInN(1 / 2000)).toEqual({ n: 500, tiny: true })
+    expect(oneInN(0)).toBeNull()
+  })
+
+  it('at least one in a wave: 1 − (1 − p)^n', () => {
+    expect(atLeastOne(0.015, 6)).toBeCloseTo(0.0869, 3)
+    expect(atLeastOne(0, 6)).toBe(0)
+    expect(atLeastOne(1, 3)).toBe(1)
   })
 })

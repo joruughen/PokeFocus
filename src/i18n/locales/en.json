@@ -1615,7 +1615,21 @@
     "seenOnly": "Seen in a wave, not caught yet.",
     "line": "Evolution line",
     "legendary": "Legendary",
-    "mythical": "Mythical"
+    "mythical": "Mythical",
+    "spawn": {
+      "chance": "Spawn: ≈1 in {{n}} wild Pokémon at your level",
+      "tiny": "Spawn: fewer than 1 in {{n}} wild Pokémon at your level",
+      "fromLevel": "Appears in the wild from level {{wild}} (trainer level {{trainer}})",
+      "evolution": "Only obtained by evolving",
+      "legendary": "Legendary: appears very rarely, always at level {{level}} or higher",
+      "help": "Each wave brings several wild Pokémon. This number is the chance that each one of them is this species.",
+      "example": "In a wave of {{size}} wild Pokémon, the chance of seeing at least one is ≈{{pct}}.",
+      "dependsOn": "It changes with your trainer level, the day's conditions, the weather and the hour (some species only show up at certain times) and events. It is an average, not a promise.",
+      "helpFrom": "Fully evolved species only show up in the wild at high levels. Raise your trainer level and they will start to appear; the day's conditions, weather, hour and events also count.",
+      "helpEvolution": "This species does not show up on its own among the wild ones: you get it by evolving its earlier form.",
+      "helpLegendary": "Legendaries are not part of the normal draw: every wild Pokémon has a very small chance of being one (depending on your Focus and the session length), shared among all of them.",
+      "helpLabel": "How the spawn chance is worked out"
+    }
   },
   "break": {
     "muteMusicHint": "Turns only the break music on or off. Sounds and the end chime keep playing.",
@@ -2520,7 +2534,13 @@
       "endsOn": "Until {{when}}",
       "view": "View event",
       "close": "Close"
-    }
+    },
+    "featuredFrom": "From lv. {{level}}",
+    "featuredEvolution": "Evolution only",
+    "featuredFromTitle": "Appears in the wild at level {{wild}} or higher (trainer level {{trainer}})",
+    "featuredEvolutionTitle": "Does not show up in the wild: only obtained by evolving",
+    "featuredFromNote": "The dimmed ones cannot show up at your level yet: they start appearing when you reach the trainer level shown.",
+    "featuredEvolutionNote": "\"Evolution only\": not found in the wild, you get it by evolving."
   },
   "maintenance": {
     "upcomingTitle": "Scheduled maintenance",
@@ -3394,7 +3414,9 @@
       "big_change": "Big change: it asks for confirmation when publishing.",
       "featured_legendary": "Featuring a legendary does not make it more frequent (use the legendary multiplier).",
       "item_shadows_base": "That item already exists in the game: use another identifier.",
-      "event_mission_id_shared": "An event mission uses the same id as a daily or weekly one."
+      "event_mission_id_shared": "An event mission uses the same id as a daily or weekly one.",
+      "featured_high_level": "{{species}} only appears in the wild from trainer level {{trainerLevel}} (wild level {{wildLevel}}): players below that will not see it. You can publish it, but say so in the description.",
+      "featured_evolution_only": "{{species}} does not appear in the wild (evolution only): featuring it changes nothing."
     },
     "sudo": {
       "title": {
@@ -3503,7 +3525,20 @@
       "add": "Add species",
       "species": "Species",
       "mult": "Multiplier",
-      "multHint": "From 1 to 10 times more likely."
+      "multHint": "From 1 to 10 times more likely.",
+      "odds": {
+        "refLevelLabel": "Reference trainer level",
+        "oneIn": "1 in {{n}}",
+        "oneInTiny": "fewer than 1 in {{n}}",
+        "none": "does not appear",
+        "line": "Each wild Pokémon: without the event {{without}} · with the event {{with}}",
+        "cadence": "For the description: each wild Pokémon has a {{p}} chance of being {{name}}; in a wave of ~{{size}} wild Pokémon the chance of seeing at least one is ≈{{pct}} (on average 1 every {{k}} waves).",
+        "cadenceEach": "For the description: each wild Pokémon has a {{p}} chance of being {{name}}; in a wave of ~{{size}} wild Pokémon the chance of seeing at least one is ≈{{pct}} (it shows up in almost every wave).",
+        "cannotWild": "At trainer level {{level}} it cannot appear: it shows up in the wild from level {{wild}} (trainer level {{trainer}}).",
+        "cannotEvolution": "Not found in the wild (evolution only): featuring it changes nothing.",
+        "legendary": "Legendary: featuring it does not change how often it shows up (use the legendary multiplier).",
+        "note": "Estimate under neutral conditions (hour 12, clear weather, no other rules or events). The table below uses the real content."
+      }
     },
     "boosts": {
       "title": "Shiny and legendaries",

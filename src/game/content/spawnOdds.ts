@@ -158,3 +158,27 @@ export function wavesPerAppearance(probability: number, waveSize: number): numbe
 
 /** Trainer level above which a featured species that cannot spawn counts as a risky pick for the admin (validator warning). */
 export const FEATURED_REACH_TRAINER_LEVEL = 20
+
+/** Wave sizes the help texts give examples for (a small, a typical and a big wave). */
+export const EXAMPLE_WAVE_SIZES = [3, 6, 10] as const
+
+/** Above this "1 in N" the number stops being meaningful: it is shown as "fewer than 1 in N". */
+export const ONE_IN_MAX = 500
+
+/**
+ * A probability as a friendly "1 in N": exact under 10, then rounded to the
+ * nearest 5 (under 30) or 10 (so 1.4 % reads "1 in 70", not "1 in 71").
+ * `tiny` = rarer than 1 in `ONE_IN_MAX`: show "fewer than 1 in 500".
+ */
+export function oneInN(probability: number): { n: number; tiny: boolean } | null {
+  if (!(probability > 0)) return null
+  const raw = 1 / probability
+  if (raw > ONE_IN_MAX) return { n: ONE_IN_MAX, tiny: true }
+  const step = raw < 10 ? 1 : raw < 30 ? 5 : 10
+  return { n: Math.max(1, Math.round(raw / step) * step), tiny: false }
+}
+
+/** Chance of at least one of the species in a wave of `size` wild Pokémon: 1 − (1 − p)^size. */
+export function atLeastOne(probability: number, size: number): number {
+  return 1 - Math.pow(1 - Math.min(1, Math.max(0, probability)), size)
+}
