@@ -11,8 +11,8 @@
  *   mythical can only be traded once in its life (`traded.count`).
  * - The receiver's level cap (§12.5) must allow the Pokémon's level.
  * - The Pokémon keeps all its individual state (level, EXP, IVs, nature,
- *   ability, techniques, Mastery, shiny, Tera…); its Bond restarts at 0, its
- *   nickname is cleared (the new trainer names it) and a pending Rest is dropped.
+ *   ability, techniques, Mastery, shiny, Tera, nickname…); its Bond restarts at 0
+ *   and a pending Rest is dropped. The new trainer can rename it.
  * - Trade evolutions (Kadabra, Machoke, Graveler, Haunter, §12.6) happen on arrival.
  */
 import { defaultContext, getSpecies, getSpeciesById, type EngineContext } from './context'
@@ -160,9 +160,9 @@ export function applyTrade(state: PlayerState, side: TradeSide, now: number, rng
   if (state.dust < side.dust) return err('not_enough_dust')
 
   const uid = `p${state.counters.pokemon + 1}`
-  const { nickname: _nick, ...rest } = side.receive
+  // The nickname travels with the Pokémon (user decision 2026-11-15); the new trainer can change it.
   let mon: OwnedPokemon = {
-    ...rest,
+    ...side.receive,
     uid,
     bondMinutes: 0,
     asleepNextSession: false,

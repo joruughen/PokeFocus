@@ -159,7 +159,7 @@ describe('trades', () => {
     const gotA = Object.values(pa.pokemon).find((p) => p.speciesSlug === 'caterpie')!
     const gotB = Object.values(pb.pokemon).find((p) => p.speciesSlug === 'alakazam')!
     expect(gotB).toMatchObject({ level: 20, bondMinutes: 0, traded: { originalTrainer: a.user.trainerName, receivedFrom: a.user.trainerName, receivedAt: now, count: 1 } })
-    expect(gotB.nickname).toBeUndefined()
+    expect(gotB.nickname).toBe('Spoon')
     expect(gotA.traded?.originalTrainer).toBe(b.user.trainerName)
     expect(pb.pokedex.caught).toEqual(expect.arrayContaining(['kadabra', 'alakazam']))
     expect(pa.pokedex.caught).toContain('caterpie')

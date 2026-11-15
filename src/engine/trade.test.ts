@@ -86,7 +86,7 @@ describe('receiveBlock and trade evolutions', () => {
 })
 
 describe('applyTrade', () => {
-  it('swaps the Pokémon, keeps its individual state, resets Bond and nickname, records the OT and pays Dust', () => {
+  it('swaps the Pokémon, keeps its individual state and nickname, resets Bond, records the OT and pays Dust', () => {
     const p = player(['caterpie'], { teamPresets: [{ id: 't1', name: 'Gym', uids: ['lead', 'b0'] }] })
     const got = makeMon('abra', 12, { uid: 'x9', nickname: 'Zippy', bondMinutes: 900, moveMasteryMinutes: { teleport: 120 }, isShiny: true })
     const r = applyTrade(p, side(got), T0, createRng(1), ctx)
@@ -107,7 +107,7 @@ describe('applyTrade', () => {
     expect(m.moveMasteryMinutes).toEqual({ teleport: 120 })
     expect(m.learnedMoves).toEqual(got.learnedMoves)
     expect(m.bondMinutes).toBe(0)
-    expect(m.nickname).toBeUndefined()
+    expect(m.nickname).toBe('Zippy')
     expect(m.traded).toEqual({ originalTrainer: 'Ash', receivedFrom: 'Ash', receivedAt: T0, count: 1 })
     expect(state.dust).toBe(900)
     expect(state.pokedex.caught).toContain('abra')
