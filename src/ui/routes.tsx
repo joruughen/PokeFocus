@@ -28,6 +28,7 @@ const loaders = {
   dex: () => import('./screens/dex/Dex'),
   league: () => import('./screens/league/League'),
   friends: () => import('./screens/friends/Friends'),
+  trades: () => import('./screens/trades/Trades'),
   missions: () => import('./screens/missions/Missions'),
   events: () => import('./screens/events/Events'),
   settings: () => import('./screens/Settings'),
@@ -46,7 +47,8 @@ export const ROUTES: RouteDef[] = [
   { id: 'missions', labelKey: 'nav.missions', icon: 'missions', component: lazy(loaders.missions), nav: true, preload: loaders.missions },
   { id: 'events', labelKey: 'nav.events', icon: 'sparkle', component: lazy(loaders.events), nav: true, preload: loaders.events },
   { id: 'settings', labelKey: 'nav.settings', icon: 'settings', component: lazy(loaders.settings), nav: true, preload: loaders.settings },
-  // Reachable from the version badge / Settings (changelog) and by URL (admin); not in the side rail.
+  // Reachable from Friends (trades), the version badge / Settings (changelog) and by URL (admin); not in the side rail.
+  { id: 'trades', labelKey: 'nav.trades', icon: 'reroll', component: lazy(loaders.trades), nav: false, preload: loaders.trades },
   { id: 'changelog', labelKey: 'nav.changelog', icon: 'star', component: lazy(loaders.changelog), nav: false, preload: loaders.changelog },
   { id: 'admin', labelKey: 'nav.admin', icon: 'wrench', component: lazy(loaders.admin), nav: false },
 ]

@@ -22,6 +22,8 @@ import { useNow } from './store/clock'
 import { useAuth } from './store/auth'
 import { timerOf, useGame } from './store/game'
 import { useIncomingCount } from './store/social'
+import { useTradeTurnCount } from './store/trades'
+import { TradeArrivalHost } from './trades/TradeArrival'
 import { useLiveEvents } from './store/liveEvents'
 import { eventPhase } from './screens/events/model'
 import { usePhase, usePlayer } from './store/selectors'
@@ -50,6 +52,7 @@ export function AppShell() {
       <GroupInviteNotice />
       <WhatsNewDialog />
       <LevelUpHost />
+      <TradeArrivalHost />
       <EventPopupHost />
       <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
@@ -97,7 +100,8 @@ function ScreenLoading() {
 
 /** Alert counts of the sections that live inside the phone's «More» sheet (friend requests, live events). */
 function useMoreBadges(): NavBadges {
-  const friends = useIncomingCount()
+  // Friend requests and trade offers waiting for me (both live under Friends).
+  const friends = useIncomingCount() + useTradeTurnCount()
   const active = useLiveEvents((s) => s.active)
   const skew = useLiveEvents((s) => s.skew)
   const now = useNow() + skew
@@ -189,16 +193,18 @@ function MissionsBadge({ active }: { active: boolean }) {
   )
 }
 
-/** Friend requests waiting for an answer, on the nav icon. */
+/** Friend requests and trade offers waiting for an answer, on the nav icon. */
 function FriendsBadge({ active }: { active: boolean }) {
   const { t } = useTranslation()
-  const n = useIncomingCount()
-  useHintEvent('friendRequest', n > 0 && !active)
+  const requests = useIncomingCount()
+  const trades = useTradeTurnCount()
+  const n = requests + trades
+  useHintEvent('friendRequest', requests > 0 && !active)
   if (n === 0) return null
   return (
     <span
       className={cx('absolute -top-2 -left-2 grid h-4 min-w-4 place-items-center px-0.5 font-num text-sm leading-none shadow-frame', active ? 'bg-ink text-volt-300' : 'bg-cheek-500 text-mist-50')}
-      aria-label={t('friends.badge', { count: n })}
+      aria-label={[requests > 0 ? t('friends.badge', { count: requests }) : '', trades > 0 ? t('trades.badge', { count: trades }) : ''].filter(Boolean).join(', ')}
     >
       {n}
     </span>
