@@ -41,7 +41,7 @@ import { roleNatureFit } from './roleNature'
 
 type Kind = 'tera' | 'tm' | 'mint' | 'bottleCap' | 'abilityCapsule'
 
-const UNLOCK: Partial<Record<Kind, AdvancedUnlock>> = { tera: 'tera', mint: 'mint', bottleCap: 'bottleCap', abilityCapsule: 'abilityCapsule' }
+const UNLOCK: Partial<Record<Kind, AdvancedUnlock>> = { tera: 'tera', tm: 'tm', mint: 'mint', bottleCap: 'bottleCap', abilityCapsule: 'abilityCapsule' }
 
 export function Training({ view, locked }: { view: PokemonView; locked: string | null }) {
   const ctx = useContent()

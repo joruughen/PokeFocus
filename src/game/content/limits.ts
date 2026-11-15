@@ -185,6 +185,7 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
   scalar(X, 'progression.candiesOnCatch', b('int', 0, 20)),
   scalar(X, 'progression.hiddenAbilityChance', b('prob', 0, 0.5, '%')),
   // Advanced items (F4): unlock level, one-time gift at that level and the Tera rules.
+  scalar(X, 'advanced.tm.minTrainerLevel', b('int', 1, 100, 'lv')),
   scalar(X, 'advanced.mint.minTrainerLevel', b('int', 1, 100, 'lv')),
   scalar(X, 'advanced.tera.minTrainerLevel', b('int', 1, 100, 'lv')),
   scalar(X, 'advanced.tera.unlockGift', b('int', 0, 20)),

@@ -40,20 +40,39 @@ const okState = <T,>(r: { ok: true; value: T } | { ok: false; error: string }): 
 }
 
 describe('config and unlocks', () => {
-  it('unlock levels follow GDD §12.7 (Mints 10, Tera 20, Bottle Caps 25, Ability Capsule 30)', () => {
-    expect(unlockLevel('mint', ctx)).toBe(10)
+  it('unlock levels follow GDD §12.7 (TMs 15, Tera 20, Mints 25, Ability Capsule 30, Bottle Caps 40)', () => {
+    expect(unlockLevel('tm', ctx)).toBe(15)
     expect(unlockLevel('tera', ctx)).toBe(20)
-    expect(unlockLevel('bottleCap', ctx)).toBe(25)
+    expect(unlockLevel('mint', ctx)).toBe(25)
     expect(unlockLevel('abilityCapsule', ctx)).toBe(30)
+    expect(unlockLevel('bottleCap', ctx)).toBe(40)
   })
 
-  it('the unlock levels give their one-time gift with the level reward', () => {
+  it('the unlock levels give their one-time gift with the level reward; Bottle Caps have none (event-only)', () => {
     expect(trainerLevelRewards(19, 20, ctx).items['tera-shard']).toBe(2)
-    expect(trainerLevelRewards(24, 25, ctx).items['bottle-cap']).toBe(1)
     expect(trainerLevelRewards(29, 30, ctx).items['ability-capsule']).toBe(1)
     expect(trainerLevelRewards(20, 24, ctx).items['tera-shard']).toBeUndefined()
     const none = createEngineContext({ config: { advanced: { tera: { unlockGift: 0 } } } })
     expect(trainerLevelRewards(19, 20, none).items['tera-shard']).toBeUndefined()
+  })
+
+  it('no level reward gives a Bottle Cap, at any level up to the maximum', () => {
+    expect(trainerLevelRewards(0, ctx.config.trainer.maxLevel, ctx).items['bottle-cap']).toBeUndefined()
+    expect(trainerLevelRewards(39, 40, ctx).items['bottle-cap']).toBeUndefined()
+    expect(ctx.config.trainer.levelRewards.tiers.every((t) => !('bottle-cap' in t))).toBe(true)
+  })
+
+  it('every use is refused one level before its unlock and accepted at it (TM 15, Mint 25, Bottle Cap 40)', () => {
+    const p = makeMon('pidgey', 20, { uid: 'a', ivs: { hp: 0, attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0 } })
+    const move = tmCandidates(p, ctx)[0]!
+    const inv = { 'technical-machine': 1, [CHOICE_MINT]: 1, 'bottle-cap': 1 }
+    const locked = { ok: false, error: 'trainer_level_too_low' }
+    expect(useTm(player([p], 14, inv), 'a', move, ctx)).toEqual(locked)
+    expect(useTm(player([p], 15, inv), 'a', move, ctx).ok).toBe(true)
+    expect(useMint(player([p], 24, inv), 'a', 'timid', ctx)).toEqual(locked)
+    expect(useMint(player([p], 25, inv), 'a', 'timid', ctx).ok).toBe(true)
+    expect(useBottleCap(player([p], 39, inv), 'a', 'attack', ctx)).toEqual(locked)
+    expect(useBottleCap(player([p], 40, inv), 'a', 'attack', ctx).ok).toBe(true)
   })
 })
 
@@ -128,7 +147,7 @@ describe('useTm', () => {
     const cands = tmCandidates(p, ctx)
     expect(cands.length).toBeGreaterThan(0)
     const move = cands[0]!
-    const s = okState(useTm(player([p], 1, { 'technical-machine': 1 }), 'a', move, ctx))
+    const s = okState(useTm(player([p], 15, { 'technical-machine': 1 }), 'a', move, ctx))
     expect(s.inventory['technical-machine']).toBe(0)
     expect(s.pokemon.a!.learnedMoves).toContain(move)
     expect(s.pokemon.a!.tmMoves).toEqual([move])
@@ -140,10 +159,10 @@ describe('useTm', () => {
   it('refuses: not compatible, already known, no TM, active session', () => {
     const p = mon()
     const move = tmCandidates(p, ctx)[0]!
-    expect(useTm(player([p], 1, { 'technical-machine': 1 }), 'a', 'surf', ctx)).toEqual({ ok: false, error: 'move_not_compatible' })
-    expect(useTm(player([p], 1, { 'technical-machine': 1 }), 'a', p.learnedMoves[0]!, ctx)).toEqual({ ok: false, error: 'move_already_known' })
-    expect(useTm(player([p], 1, {}), 'a', move, ctx)).toEqual({ ok: false, error: 'no_item' })
-    const st = okState(startSession(player([p], 1, { 'technical-machine': 1 }), { plannedMinutes: 25, startedAt: T0 }, ctx)).state
+    expect(useTm(player([p], 15, { 'technical-machine': 1 }), 'a', 'surf', ctx)).toEqual({ ok: false, error: 'move_not_compatible' })
+    expect(useTm(player([p], 15, { 'technical-machine': 1 }), 'a', p.learnedMoves[0]!, ctx)).toEqual({ ok: false, error: 'move_already_known' })
+    expect(useTm(player([p], 15, {}), 'a', move, ctx)).toEqual({ ok: false, error: 'no_item' })
+    const st = okState(startSession(player([p], 15, { 'technical-machine': 1 }), { plannedMinutes: 25, startedAt: T0 }, ctx)).state
     expect(useTm(st, 'a', move, ctx)).toEqual({ ok: false, error: 'session_active' })
   })
 })
@@ -153,7 +172,7 @@ describe('useMint', () => {
 
   it('changes the stats to the mint nature and keeps the original nature', () => {
     const p = mon()
-    const s = okState(useMint(player([p], 10, { 'modest-mint': 1 }), 'a', 'modest', ctx))
+    const s = okState(useMint(player([p], 25, { 'modest-mint': 1 }), 'a', 'modest', ctx))
     const m = s.pokemon.a!
     expect(m.nature).toBe('hardy')
     expect(m.mintNature).toBe('modest')
@@ -167,17 +186,17 @@ describe('useMint', () => {
   })
 
   it('the mint of the original nature removes the change', () => {
-    const s = okState(useMint(player([{ ...mon(), nature: 'jolly', mintNature: 'modest' }], 10, { 'jolly-mint': 1 }), 'a', 'jolly', ctx))
+    const s = okState(useMint(player([{ ...mon(), nature: 'jolly', mintNature: 'modest' }], 25, { 'jolly-mint': 1 }), 'a', 'jolly', ctx))
     expect(s.pokemon.a!.mintNature).toBeUndefined()
     expect('mintNature' in s.pokemon.a!).toBe(false)
   })
 
   it('refuses: locked level, unknown nature, same effect, no mint', () => {
-    expect(useMint(player([mon()], 9, { 'modest-mint': 1 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'trainer_level_too_low' })
-    expect(useMint(player([mon()], 10, { 'x-mint': 1 }), 'a', 'x', ctx)).toEqual({ ok: false, error: 'invalid_nature' })
+    expect(useMint(player([mon()], 24, { 'modest-mint': 1 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'trainer_level_too_low' })
+    expect(useMint(player([mon()], 25, { 'x-mint': 1 }), 'a', 'x', ctx)).toEqual({ ok: false, error: 'invalid_nature' })
     // Hardy → Serious: both neutral, same effect.
-    expect(useMint(player([mon()], 10, { 'serious-mint': 1 }), 'a', 'serious', ctx)).toEqual({ ok: false, error: 'same_nature' })
-    expect(useMint(player([mon()], 10, {}), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'no_item' })
+    expect(useMint(player([mon()], 25, { 'serious-mint': 1 }), 'a', 'serious', ctx)).toEqual({ ok: false, error: 'same_nature' })
+    expect(useMint(player([mon()], 25, {}), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'no_item' })
     expect(mintChoices(mon(), ctx)).toHaveLength(20)
     expect(mintItem('modest')).toBe('modest-mint')
     expect(mintNatureOf('modest-mint', ctx)).toBe('modest')
@@ -189,7 +208,7 @@ describe('useMint with the choice mint', () => {
   const mon = () => makeMon('pikachu', 30, { uid: 'a', nature: 'hardy' })
 
   it('sets the chosen nature and spends one choice mint', () => {
-    const s = okState(useMint(player([mon()], 10, { [CHOICE_MINT]: 2 }), 'a', 'timid', ctx))
+    const s = okState(useMint(player([mon()], 25, { [CHOICE_MINT]: 2 }), 'a', 'timid', ctx))
     expect(s.pokemon.a!.nature).toBe('hardy')
     expect(s.pokemon.a!.mintNature).toBe('timid')
     expect(s.inventory[CHOICE_MINT]).toBe(1)
@@ -198,26 +217,26 @@ describe('useMint with the choice mint', () => {
 
   it('choosing the original nature through the choice mint removes the change', () => {
     const p = { ...mon(), nature: 'jolly', mintNature: 'modest' }
-    const s = okState(useMint(player([p], 10, { [CHOICE_MINT]: 1 }), 'a', 'jolly', ctx))
+    const s = okState(useMint(player([p], 25, { [CHOICE_MINT]: 1 }), 'a', 'jolly', ctx))
     expect('mintNature' in s.pokemon.a!).toBe(false)
     expect(s.inventory[CHOICE_MINT]).toBe(0)
   })
 
   it('spends the specific mint of that nature before the choice mint (legacy stock keeps working)', () => {
-    const s = okState(useMint(player([mon()], 10, { 'modest-mint': 1, [CHOICE_MINT]: 1 }), 'a', 'modest', ctx))
+    const s = okState(useMint(player([mon()], 25, { 'modest-mint': 1, [CHOICE_MINT]: 1 }), 'a', 'modest', ctx))
     expect(s.inventory['modest-mint']).toBe(0)
     expect(s.inventory[CHOICE_MINT]).toBe(1)
-    const other = okState(useMint(player([mon()], 10, { 'modest-mint': 1, [CHOICE_MINT]: 1 }), 'a', 'jolly', ctx))
+    const other = okState(useMint(player([mon()], 25, { 'modest-mint': 1, [CHOICE_MINT]: 1 }), 'a', 'jolly', ctx))
     expect(other.inventory['modest-mint']).toBe(1)
     expect(other.inventory[CHOICE_MINT]).toBe(0)
   })
 
   it('refuses: locked level, unknown nature, same effect, no mint, member of a session', () => {
-    expect(useMint(player([mon()], 9, { [CHOICE_MINT]: 1 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'trainer_level_too_low' })
-    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 1 }), 'a', 'x', ctx)).toEqual({ ok: false, error: 'invalid_nature' })
-    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 1 }), 'a', 'serious', ctx)).toEqual({ ok: false, error: 'same_nature' })
-    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 0 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'no_item' })
-    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 1 }), 'zz', 'modest', ctx)).toEqual({ ok: false, error: 'unknown_pokemon' })
+    expect(useMint(player([mon()], 24, { [CHOICE_MINT]: 1 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'trainer_level_too_low' })
+    expect(useMint(player([mon()], 25, { [CHOICE_MINT]: 1 }), 'a', 'x', ctx)).toEqual({ ok: false, error: 'invalid_nature' })
+    expect(useMint(player([mon()], 25, { [CHOICE_MINT]: 1 }), 'a', 'serious', ctx)).toEqual({ ok: false, error: 'same_nature' })
+    expect(useMint(player([mon()], 25, { [CHOICE_MINT]: 0 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'no_item' })
+    expect(useMint(player([mon()], 25, { [CHOICE_MINT]: 1 }), 'zz', 'modest', ctx)).toEqual({ ok: false, error: 'unknown_pokemon' })
   })
 
   it('helpers: isMintItem, mintSourceFor and the choice mint has no fixed nature', () => {
@@ -234,7 +253,7 @@ describe('useMint with the choice mint', () => {
 describe('useBottleCap', () => {
   it('raises one IV to the max; HP also fills the extra Energy', () => {
     const p = makeMon('pikachu', 40, { uid: 'a' })
-    const s = okState(useBottleCap(player([p], 25, { 'bottle-cap': 2 }), 'a', 'hp', ctx))
+    const s = okState(useBottleCap(player([p], 40, { 'bottle-cap': 2 }), 'a', 'hp', ctx))
     const m = s.pokemon.a!
     expect(m.ivs.hp).toBe(31)
     expect(m.bottleCapped).toEqual(['hp'])
@@ -246,10 +265,10 @@ describe('useBottleCap', () => {
 
   it('refuses: locked level, IV already max, bad stat, no cap', () => {
     const p = makeMon('pikachu', 40, { uid: 'a', ivs: { hp: 31, attack: 10, defense: 10, specialAttack: 10, specialDefense: 10, speed: 10 } })
-    expect(useBottleCap(player([p], 24, { 'bottle-cap': 1 }), 'a', 'attack', ctx)).toEqual({ ok: false, error: 'trainer_level_too_low' })
-    expect(useBottleCap(player([p], 25, { 'bottle-cap': 1 }), 'a', 'hp', ctx)).toEqual({ ok: false, error: 'iv_maxed' })
-    expect(useBottleCap(player([p], 25, { 'bottle-cap': 1 }), 'a', 'luck' as never, ctx)).toEqual({ ok: false, error: 'invalid_stat' })
-    expect(useBottleCap(player([p], 25, {}), 'a', 'attack', ctx)).toEqual({ ok: false, error: 'no_item' })
+    expect(useBottleCap(player([p], 39, { 'bottle-cap': 1 }), 'a', 'attack', ctx)).toEqual({ ok: false, error: 'trainer_level_too_low' })
+    expect(useBottleCap(player([p], 40, { 'bottle-cap': 1 }), 'a', 'hp', ctx)).toEqual({ ok: false, error: 'iv_maxed' })
+    expect(useBottleCap(player([p], 40, { 'bottle-cap': 1 }), 'a', 'luck' as never, ctx)).toEqual({ ok: false, error: 'invalid_stat' })
+    expect(useBottleCap(player([p], 40, {}), 'a', 'attack', ctx)).toEqual({ ok: false, error: 'no_item' })
   })
 })
 
@@ -287,7 +306,7 @@ describe('older saves', () => {
     delete (p as Partial<OwnedPokemon>).tmMoves
     expect(computeStats(p, ctx)).toEqual(computeStats({ speciesSlug: p.speciesSlug, level: p.level, ivs: p.ivs, nature: p.nature }, ctx))
     expect(activeTera(p, T0)).toBeNull()
-    const s = okState(useTm(player([p], 1, { 'technical-machine': 1 }), 'a', tmCandidates(p, ctx)[0]!, ctx))
+    const s = okState(useTm(player([p], 15, { 'technical-machine': 1 }), 'a', tmCandidates(p, ctx)[0]!, ctx))
     expect(s.pokemon.a!.tmMoves).toHaveLength(1)
     expect(T0 + MIN).toBeGreaterThan(T0)
   })

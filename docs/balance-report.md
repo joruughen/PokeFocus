@@ -827,3 +827,33 @@ Lectura: ≈ 1,5 Teralitos por semana (una Teracristalización cada ~1,5 semanas
 | grinder | — | 4.0 |
 
 El constante sigue acumulando 10 (≈ 8 de misiones en las ~4–5 semanas entre el 15 y el 20, más los 2 del regalo): alcanza para 5 Teracristalizaciones al desbloquear. Si se quisiera menos, la palanca es subir el umbral de los tres escalones (por ejemplo a 18) o bajar los 2 Teralitos de «Metamorfosis». Los jugadores rápidos llegan al 20 con 4–8, lo que es lo previsto.
+
+**Ajuste 2026-11-15 (b) — niveles de desbloqueo nuevos, Chapas solo de evento y sin Ultra Balls en las semanales (decidido por el jugador).**
+
+- **Niveles de desbloqueo** (`advanced.*.minTrainerLevel`): MT 15 (antes sin bloqueo), Teracristalización 20, Menta 25 (antes 10), Cápsula Habilidad 30, Chapa 40 (antes 25). Las misiones dan cada objeto desde su nivel: MT desde el 15 («Gran cosecha» y los hitos 25/50 de la Pokédex), Menta a elegir desde el 25 («Fondo» y «Gran cosecha»), Cápsula desde el 30; los Teralitos siguen desde el 15.
+- **Chapas solo de evento:** fuera de todas las misiones comunes y del regalo de desbloqueo (`advanced.bottleCap.unlockGift` 0). Solo caen como drop o recompensa de misión de evento (el editor de eventos ya ofrece `bottle-cap`; hay un test).
+- **Ultra Balls fuera de las semanales:** «Semana constante» → 3 Super Balls; «Repertorio» → 2 Super Balls y 1 Superpoción; «Maratón semanal» → 2 Super Balls, 1 Hiperpoción y 300 Polvo; «Fondo» → 2 Super Balls y 1 Hiperpoción. Las diarias no daban Ultra. Quedan Ultra en los premios por nivel, los hitos de la Pokédex (25: 1; 50: 2, más Super Balls por debajo del nivel 15 donde antes iba la MT) y los eventos.
+
+Medida con el simulador (12 semanas, 8 semillas por perfil, misiones reclamadas; Ultra Balls ganadas por semana y rendimiento en capturas especiales; el simulador usa la mejor Ball disponible):
+
+| Perfil | Ultra/sem antes (misiones + niveles) | Ultra/sem sin compensar | Ultra/sem con compensación |
+|---|---|---|---|
+| casual | 0.11 | 0.11 | 0.27 |
+| constant | 1.50 | 0.41 | 0.75 |
+| marathoner | 2.42 | 0.58 | 1.10 |
+| night-owl | 2.25 | 0.41 | 0.83 |
+| irregular | 0.45 | 0.25 | 0.41 |
+| grinder | 2.91 | 1.08 | 1.92 |
+
+La caída sin compensar es de ≈ 60–75 % para quien juega bastante (las semanales eran casi toda su fuente de Ultra).
+
+| Perfil | Shiny capturados / vistos (antes) | Sin compensar | Con compensación | Legendarios capturados la 1.ª vez / vistos (antes → con compensación) |
+|---|---|---|---|---|
+| constant | 4.6 / 5.4 | 4.1 / 4.4 | 5.4 / 5.4 | 1.0 / 2.1 → 0.5 / 2.4 |
+| marathoner | 6.9 / 8.5 | 5.5 / 9.8 | 6.0 / 10.3 | 1.3 / 6.3 → 1.8 / 10.8 |
+| night-owl | 7.1 / 7.4 | 6.5 / 7.5 | 5.5 / 6.5 | 1.5 / 4.0 → 2.5 / 6.9 |
+| grinder | 19.6 / 31.6 | 18.4 / 36.5 | 19.1 / 32.4 | 3.8 / 24.4 → 3.0 / 22.9 |
+
+(Con 8 semillas el ruido es grande: los legendarios vistos cambian de una tabla a otra porque el inventario cambia el azar de las capturas.) Sin compensar, las Ultra lanzadas del maratonista pasaban de 1.9 a 0.6 por semana y su tasa de shiny capturados bajaba de ≈ 81 % a ≈ 56 %; los grinders pierden menos. **Compensación aplicada:** una **Ultra Ball más cada 5 niveles de entrenador** (`trainer.levelRewards`, tramo `step 5`: `ultra-ball` 0 → 1; los múltiplos de 10 dan 1 + 2 = 3). Esto duplica las Ultra por nivel (de 2 a 4 por cada 10 niveles) y recupera ≈ 25–45 % de lo perdido (el total semanal queda en ≈ 45–65 % del de antes: maratonista 1.1 de 2.4, grinder 1.9 de 2.9), justo en los perfiles que más suben de nivel; la proporción de shiny capturados queda cerca de la de antes (constant 100 % frente a 85 %, grinder 59 % frente a 62 %, maratonista 58 % frente a 81 %, búho 85 % frente a 96 %): dentro del ruido salvo una pequeña pérdida en maratonista y búho, que es el coste aceptado de quitar las Ultra de las semanales. El casual y el irregular ganan algo (más Ultra que antes) sin usarlas. Si en uso real siguen faltando Ultra para los legendarios, la palanca es `step 5` → 2 Ultra o el hito de la Pokédex 25/50.
+
+Objetos avanzados con los niveles nuevos (`simulate-advanced.ts --weeks 12 --seeds 3`): Teralitos ≈ 13–21 en 12 semanas (sin cambios de fondo), MT ≈ 2–4 (desde el 15), Mentas ≈ 0–10 (desde el 25: el constante no llega), Cápsulas ≈ 0–4 y **Chapas 0** (solo de evento). El grinder llega al nivel 40 en la semana ≈ 5; ningún otro perfil lo alcanza en 12 semanas, así que las Chapas serán un objeto de fin de juego y de eventos.

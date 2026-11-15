@@ -403,17 +403,20 @@ describe('advanced items (F4)', () => {
   })
 
   it('returns clear rule errors (locked, no item, in session)', () => {
+    expect(applyAction(withItems(14, { 'technical-machine': 1 }), { type: 'useTm', uid: 'p1', move: 'x' }, env(T0))).toEqual({ ok: false, error: 'trainer_level_too_low' })
+    expect(applyAction(withItems(24, { 'choice-mint': 1 }), { type: 'useMint', uid: 'p1', nature: 'modest' }, env(T0))).toEqual({ ok: false, error: 'trainer_level_too_low' })
+    expect(applyAction(withItems(39, { 'bottle-cap': 1 }), { type: 'useBottleCap', uid: 'p1', stat: 'attack' }, env(T0))).toEqual({ ok: false, error: 'trainer_level_too_low' })
     expect(applyAction(withItems(19, { 'tera-shard': 2 }), { type: 'useTera', uid: 'p1', teraType: 'water' }, env(T0))).toEqual({ ok: false, error: 'trainer_level_too_low' })
-    expect(applyAction(withItems(10, {}), { type: 'useMint', uid: 'p1', nature: 'modest' }, env(T0))).toEqual({ ok: false, error: 'no_item' })
+    expect(applyAction(withItems(25, {}), { type: 'useMint', uid: 'p1', nature: 'modest' }, env(T0))).toEqual({ ok: false, error: 'no_item' })
     const capsule = applyAction(withItems(30, { 'ability-capsule': 1 }), { type: 'useAbilityCapsule', uid: 'p1', ability: 'levitate' }, env(T0))
     expect(capsule.ok).toBe(false)
     if (!capsule.ok) expect(['no_other_ability', 'invalid_ability']).toContain(capsule.error)
-    const inSession = must(withItems(25, { 'bottle-cap': 1 }), { type: 'start', minutes: 25 }, env(T0))
+    const inSession = must(withItems(40, { 'bottle-cap': 1 }), { type: 'start', minutes: 25 }, env(T0))
     expect(applyAction(inSession, { type: 'useBottleCap', uid: 'p1', stat: 'attack' }, env(T0 + 1000))).toEqual({ ok: false, error: 'session_active' })
   })
 
   it('useMint spends a choice mint for the nature the player picks, and refuses without one', () => {
-    let doc = withItems(10, { 'choice-mint': 1 })
+    let doc = withItems(25, { 'choice-mint': 1 })
     const nature = doc.player!.pokemon.p1!.nature === 'modest' ? 'jolly' : 'modest'
     doc = must(doc, { type: 'useMint', uid: 'p1', nature }, env(T0))
     expect(doc.player?.pokemon.p1?.mintNature).toBe(nature)
@@ -422,7 +425,7 @@ describe('advanced items (F4)', () => {
   })
 
   it('useMint, useBottleCap and useTm change the Pokémon', () => {
-    let doc = withItems(30, { 'bottle-cap': 1, 'technical-machine': 1 })
+    let doc = withItems(40, { 'bottle-cap': 1, 'technical-machine': 1 })
     const p = doc.player!.pokemon.p1!
     const nature = p.nature === 'modest' ? 'jolly' : 'modest'
     doc = { ...doc, player: { ...doc.player!, inventory: { ...doc.player!.inventory, [`${nature}-mint`]: 1 } } }

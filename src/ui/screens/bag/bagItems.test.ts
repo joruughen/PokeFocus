@@ -90,14 +90,14 @@ describe('buildBagEntries', () => {
     expect(by('tera-shard').lockedLevel).toBe(20)
     expect(by('tera-shard').users).toEqual([])
     expect(by('bottle-cap').description).toContain('31')
-    expect(by('bottle-cap').lockedLevel).toBe(25)
+    expect(by('bottle-cap').lockedLevel).toBe(40)
   })
 
   it('links the advanced items to the Pokémon that can use them once unlocked', () => {
     const pidgey = makeMon('pidgey', 20, { uid: 'pid', ability: 'keen-eye', nature: 'relaxed' })
     const pika = makeMon('pikachu', 20, { uid: 'pika', ability: 'static', ivs: { hp: 31, attack: 31, defense: 31, specialAttack: 31, specialDefense: 31, speed: 31 } })
     const player = makePlayer([pika], {
-      trainer: { level: 30, exp: 0 },
+      trainer: { level: 40, exp: 0 },
       pokemon: { pika, pid: pidgey },
       inventory: { 'tera-shard': 2, 'technical-machine': 1, 'bottle-cap': 1, 'ability-capsule': 1, 'timid-mint': 1, 'modest-mint': 1 },
     })
@@ -121,7 +121,7 @@ describe('buildBagEntries', () => {
   it('the Choice Mint is a training item with its own text, ES and EN, and links to Pokémon whose role a nature could improve', async () => {
     const pidgey = makeMon('pidgey', 20, { uid: 'pid', nature: 'relaxed' }) // Sprinter with a Pace-lowering nature
     const pika = makeMon('pikachu', 20, { uid: 'pika', nature: 'timid' }) // Sprinter already raising Pace
-    const player = makePlayer([pika], { trainer: { level: 30, exp: 0 }, pokemon: { pika, pid: pidgey }, inventory: { 'choice-mint': 2 } })
+    const player = makePlayer([pika], { trainer: { level: 40, exp: 0 }, pokemon: { pika, pid: pidgey }, inventory: { 'choice-mint': 2 } })
     for (const lng of ['es', 'en'] as const) {
       await i18n.changeLanguage(lng)
       const e = buildBagEntries(player, ctx, lng, (k, p) => String(i18n.t(k, p as never)), T0).find((x) => x.slug === 'choice-mint')!
@@ -137,7 +137,20 @@ describe('buildBagEntries', () => {
     }
     await i18n.changeLanguage('es')
     const low = makePlayer([pika], { trainer: { level: 5, exp: 0 }, inventory: { 'choice-mint': 1 } })
-    expect(buildBagEntries(low, ctx, 'es', text, T0).find((x) => x.slug === 'choice-mint')!.lockedLevel).toBe(10)
+    expect(buildBagEntries(low, ctx, 'es', text, T0).find((x) => x.slug === 'choice-mint')!.lockedLevel).toBe(25)
+  })
+
+  it('locks the TM until trainer level 15, the Choice Mint until 25 and the Bottle Cap until 40 (levels come from config)', () => {
+    const pika = makeMon('pikachu', 20, { uid: 'pika' })
+    const inventory = { 'technical-machine': 1, 'choice-mint': 1, 'bottle-cap': 1 }
+    const lockOf = (level: number, slug: string) =>
+      buildBagEntries(makePlayer([pika], { trainer: { level, exp: 0 }, inventory }), ctx, 'es', text, T0).find((x) => x.slug === slug)!.lockedLevel
+    expect(lockOf(14, 'technical-machine')).toBe(15)
+    expect(lockOf(15, 'technical-machine')).toBeUndefined()
+    expect(lockOf(24, 'choice-mint')).toBe(25)
+    expect(lockOf(25, 'choice-mint')).toBeUndefined()
+    expect(lockOf(39, 'bottle-cap')).toBe(40)
+    expect(lockOf(40, 'bottle-cap')).toBeUndefined()
   })
 })
 

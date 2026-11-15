@@ -370,16 +370,17 @@
       "dustPerLevel": 10,
       "tiers": [
         { "step": 1, "poke-ball": 3, "great-ball": 0, "ultra-ball": 0, "potion": 0, "super-potion": 0, "hyper-potion": 0 },
-        { "step": 5, "poke-ball": 0, "great-ball": 3, "ultra-ball": 0, "potion": 1, "super-potion": 0, "hyper-potion": 0 },
+        { "step": 5, "poke-ball": 0, "great-ball": 3, "ultra-ball": 1, "potion": 1, "super-potion": 0, "hyper-potion": 0 },
         { "step": 10, "poke-ball": 0, "great-ball": 0, "ultra-ball": 2, "potion": 0, "super-potion": 0, "hyper-potion": 0 }
       ]
     }
   },
   "advanced": {
-    "_note": "Objetos avanzados (F4, GDD §6.1–6.3, §7, §9.4). minTrainerLevel = nivel de entrenador que desbloquea su uso; unlockGift = unidades que se regalan al alcanzar ese nivel (con el premio del nivel). Las MT no tienen bloqueo.",
+    "_note": "Objetos avanzados (F4, GDD §6.1–6.3, §7, §9.4). minTrainerLevel = nivel de entrenador que desbloquea su uso; unlockGift = unidades que se regalan al alcanzar ese nivel (con el premio del nivel). Las Chapas solo se consiguen en eventos (sin regalo de desbloqueo: unlockGift 0).",
+    "tm": { "minTrainerLevel": 15 },
     "tera": { "minTrainerLevel": 20, "shardCost": 2, "hours": 24, "sessions": 5, "unlockGift": 2 },
-    "mint": { "minTrainerLevel": 10 },
-    "bottleCap": { "minTrainerLevel": 25, "unlockGift": 1 },
+    "mint": { "minTrainerLevel": 25 },
+    "bottleCap": { "minTrainerLevel": 40, "unlockGift": 0 },
     "abilityCapsule": { "minTrainerLevel": 30, "unlockGift": 1 }
   },
   "starters": [

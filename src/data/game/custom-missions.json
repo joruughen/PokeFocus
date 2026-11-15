@@ -127,8 +127,8 @@
       "title": { "es": "Semana constante", "en": "Steady week" },
       "description": { "es": "Estudia {n} días distintos esta semana", "en": "Study on {n} different days this week" },
       "rewards": [
-        { "minTrainerLevel": 1, "items": { "ultra-ball": 1, "great-ball": 1 } },
-        { "minTrainerLevel": 15, "items": { "ultra-ball": 1, "great-ball": 1, "tera-shard": 1 } }
+        { "minTrainerLevel": 1, "items": { "great-ball": 3 } },
+        { "minTrainerLevel": 15, "items": { "great-ball": 3, "tera-shard": 1 } }
       ]
     },
     {
@@ -140,8 +140,8 @@
       "title": { "es": "Repertorio", "en": "Repertoire" },
       "description": { "es": "Activa {n} técnicas esta semana", "en": "Activate {n} techniques this week" },
       "rewards": [
-        { "minTrainerLevel": 1, "items": { "ultra-ball": 1 } },
-        { "minTrainerLevel": 15, "items": { "ultra-ball": 1, "tera-shard": 1 } }
+        { "minTrainerLevel": 1, "items": { "great-ball": 2, "super-potion": 1 } },
+        { "minTrainerLevel": 15, "items": { "great-ball": 2, "super-potion": 1, "tera-shard": 1 } }
       ]
     },
     {
@@ -153,8 +153,7 @@
       "title": { "es": "Maratón semanal", "en": "Weekly marathon" },
       "description": { "es": "Estudia {n} minutos esta semana", "en": "Study for {n} minutes this week" },
       "rewards": [
-        { "minTrainerLevel": 1, "items": { "ultra-ball": 1 }, "dust": 300 },
-        { "minTrainerLevel": 25, "items": { "ultra-ball": 1, "bottle-cap": 1 }, "dust": 300 }
+        { "minTrainerLevel": 1, "items": { "great-ball": 2, "hyper-potion": 1 }, "dust": 300 }
       ]
     },
     {
@@ -167,8 +166,8 @@
       "title": { "es": "Fondo", "en": "Stamina" },
       "description": { "es": "Haz {n} sesiones de al menos {minutes} minutos", "en": "Finish {n} sessions of at least {minutes} minutes" },
       "rewards": [
-        { "minTrainerLevel": 1, "items": { "ultra-ball": 1, "hyper-potion": 1 } },
-        { "minTrainerLevel": 10, "items": { "ultra-ball": 1, "hyper-potion": 1, "choice-mint": 1 } }
+        { "minTrainerLevel": 1, "items": { "great-ball": 2, "hyper-potion": 1 } },
+        { "minTrainerLevel": 25, "items": { "great-ball": 2, "hyper-potion": 1, "choice-mint": 1 } }
       ]
     },
     {
@@ -181,8 +180,8 @@
       "description": { "es": "Captura {n} Pokémon esta semana", "en": "Catch {n} Pokémon this week" },
       "rewards": [
         { "minTrainerLevel": 1, "items": { "great-ball": 3 }, "dust": 200 },
-        { "minTrainerLevel": 10, "items": { "great-ball": 3, "choice-mint": 1 }, "dust": 200 },
-        { "minTrainerLevel": 15, "items": { "great-ball": 3, "technical-machine": 1, "choice-mint": 1 }, "dust": 200 }
+        { "minTrainerLevel": 15, "items": { "great-ball": 3, "technical-machine": 1 }, "dust": 200 },
+        { "minTrainerLevel": 25, "items": { "great-ball": 3, "technical-machine": 1, "choice-mint": 1 }, "dust": 200 }
       ]
     },
     {
@@ -213,14 +212,20 @@
       "species": 25,
       "title": { "es": "Investigador", "en": "Researcher" },
       "description": { "es": "Registra {n} especies en la Pokédex", "en": "Register {n} species in the Pokédex" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "technical-machine": 1, "ultra-ball": 1 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 1 } }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "great-ball": 3, "ultra-ball": 1 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 1 } },
+        { "minTrainerLevel": 15, "items": { "great-ball": 3, "technical-machine": 1, "ultra-ball": 1 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 1 } }
+      ]
     },
     {
       "id": "dex-50",
       "species": 50,
       "title": { "es": "Enciclopedia viviente", "en": "Living encyclopedia" },
       "description": { "es": "Registra {n} especies en la Pokédex", "en": "Register {n} species in the Pokédex" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "technical-machine": 1, "ultra-ball": 2 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 2 } }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "great-ball": 5, "ultra-ball": 2 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 2 } },
+        { "minTrainerLevel": 15, "items": { "great-ball": 5, "technical-machine": 1, "ultra-ball": 2 }, "randomItem": { "pool": ["fire-stone", "water-stone", "thunder-stone", "moon-stone"], "count": 2 } }
+      ]
     }
   ]
 }

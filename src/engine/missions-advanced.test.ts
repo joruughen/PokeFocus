@@ -55,11 +55,11 @@ describe('the Choice Mint replaces the random mint in mission rewards', () => {
     expect(item.description?.en).toBeTruthy()
   })
 
-  it('"Fondo" and "Gran cosecha" give one Choice Mint from level 10', () => {
+  it('"Fondo" and "Gran cosecha" give one Choice Mint from level 25', () => {
     for (const id of ['weekly-long-sessions', 'weekly-catch']) {
       const def = ctx.missions.pool.find((d) => d.id === id)!
-      expect(resolveReward(def.rewards, 9, null, createRng('a')).items[CHOICE_MINT] ?? 0, id).toBe(0)
-      for (const level of [10, 15, 30]) expect(resolveReward(def.rewards, level, null, createRng('a')).items[CHOICE_MINT], `${id} @${level}`).toBe(1)
+      expect(resolveReward(def.rewards, 24, null, createRng('a')).items[CHOICE_MINT] ?? 0, id).toBe(0)
+      for (const level of [25, 30, 50]) expect(resolveReward(def.rewards, level, null, createRng('a')).items[CHOICE_MINT], `${id} @${level}`).toBe(1)
     }
   })
 })
