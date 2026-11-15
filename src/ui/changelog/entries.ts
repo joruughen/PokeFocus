@@ -50,6 +50,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
+          es: 'En la Pokédex ves con qué frecuencia aparece cada especie a tu nivel («≈1 de cada N salvajes»), con un «?» que lo explica. En los eventos, las especies destacadas que aún no pueden aparecer a tu nivel se marcan con «Desde nv. N».',
+          en: 'In the Pokédex you can see how often each species appears at your level (“≈1 in N wild Pokémon”), with a “?” that explains it. In events, featured species that can’t appear at your level yet are marked “From lv. N”.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
           es: 'Nueva página de Perfil (toca tu tarjeta de entrenador): tu nivel y la EXP que te falta, el premio del próximo nivel, tu racha, lo que desbloqueas en cada nivel y tus estadísticas de estudio.',
           en: 'New Profile page (tap your trainer card): your level and the EXP you still need, the next level’s reward, your streak, what each level unlocks and your study stats.',
         },
