@@ -67,6 +67,8 @@ export function EvolveMoment({ from, to, shiny, nickname, onClose }: { from: str
                 slug={slug}
                 shiny={shiny}
                 scale={3}
+                maxHeight={208}
+                maxWidth={300}
                 alt={names.species(slug)}
                 className={cx('relative mb-12', !done && 'brightness-0 invert', done && 'motion-safe:animate-pop-in')}
               />

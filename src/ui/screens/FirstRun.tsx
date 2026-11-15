@@ -203,7 +203,7 @@ export function StarterCard({ slug, checked, tabbable, onPick }: { slug: string;
         <Stage time="day" weather="clear" celestial={false} className="h-44 shadow-none">
           <div className="relative flex h-full items-end justify-center pb-3">
             <Platform width={128} className="absolute bottom-3" />
-            <Sprite kind="showdown" slug={slug} scale={2} alt={names.species(slug)} className={cx('relative mb-3', checked && 'motion-safe:animate-bob')} />
+            <Sprite kind="showdown" slug={slug} scale={2} maxHeight={132} maxWidth={180} alt={names.species(slug)} className={cx('relative mb-3', checked && 'motion-safe:animate-bob')} />
           </div>
         </Stage>
         <span className="flex items-center justify-between gap-2 px-4 pt-4">

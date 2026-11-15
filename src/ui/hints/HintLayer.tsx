@@ -6,10 +6,28 @@ import { Mascot } from '../components/Mascot'
 import { sfx } from '../lib/sound'
 import { usePrefs } from '../store/prefs'
 import { anchorFocused, closeHint, disableTips, getHint, nextInSequence, useHints } from './engine'
+import { pickHintSide, type HintSide } from './placement'
 
+function visible(el: Element): boolean {
+  const r = el.getBoundingClientRect()
+  return r.width > 0 || r.height > 0
+}
+
+/**
+ * The element carrying the anchor id. Several can exist (the desktop rail's items are hidden on
+ * phones, where the same section sits in the «More» sheet): prefer one that is on screen. A section
+ * of the nav that is not on screen at all points at the «More» button instead.
+ */
 function findAnchor(id: string | undefined): Element | null {
   if (!id) return null
-  return document.querySelector(`[data-hint-anchor="${CSS.escape(id)}"]`)
+  const all = [...document.querySelectorAll(`[data-hint-anchor="${CSS.escape(id)}"]`)]
+  const shown = all.find(visible)
+  if (shown) return shown
+  if (id.startsWith('nav.') && id !== 'nav.more' && all.length > 0) {
+    const more = document.querySelector('[data-hint-anchor="nav.more"]')
+    if (more && visible(more)) return more
+  }
+  return all[0] ?? null
 }
 
 /**
@@ -23,6 +41,9 @@ export function HintLayer() {
   const def = active ? getHint(active.id) : undefined
   const [anchor, setAnchor] = useState<Element | null>(null)
   const [ready, setReady] = useState(false)
+  // Side of the anchor where the bubble fits on screen; null = dock it in the corner instead; undefined = not measured yet.
+  const [side, setSide] = useState<HintSide | null | undefined>(undefined)
+  const [popupEl, setPopupEl] = useState<HTMLElement | null>(null)
 
   // Focus/hover triggers.
   useEffect(() => {
@@ -75,6 +96,42 @@ export function HintLayer() {
     }, 250)
     return () => window.clearInterval(id)
   }, [anchor, ready, def, active])
+
+  // General rule: the bubble always fits on screen. Pick a side of the anchor with room for the
+  // bubble's measured size (preferred side, its opposite, then left/right); when none has room (a
+  // very tall anchor such as the team card on a phone, or an anchor scrolled out of view) dock the
+  // bubble at the bottom-right corner. Re-evaluated on scroll, resize and when the bubble resizes.
+  const preferred = def?.side ?? 'bottom'
+  useEffect(() => {
+    if (!anchor || !ready) {
+      setSide(undefined)
+      return
+    }
+    let frame = 0
+    const decide = () => {
+      frame = 0
+      if (!anchor.isConnected) return
+      const r = anchor.getBoundingClientRect()
+      const vw = window.innerWidth
+      const pr = popupEl?.getBoundingClientRect()
+      const size = { width: pr?.width || Math.min(432, vw - 32), height: pr?.height || 240 }
+      setSide(pickHintSide(r, { width: vw, height: window.innerHeight }, size, preferred, { bottomInset: bottomBarInset() }))
+    }
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(decide)
+    }
+    decide()
+    window.addEventListener('resize', schedule)
+    window.addEventListener('scroll', schedule, true)
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule)
+    if (ro && popupEl) ro.observe(popupEl)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', schedule)
+      window.removeEventListener('scroll', schedule, true)
+      ro?.disconnect()
+    }
+  }, [anchor, ready, preferred, popupEl])
 
   // Sound and scroll once per hint: a re-found anchor (see below) must not yank the page again.
   const announced = useRef<string | null>(null)
@@ -141,9 +198,9 @@ export function HintLayer() {
       }}
     >
       <Popover.Portal>
-        {anchor ? (
-          <Popover.Positioner anchor={anchor} side={def.side ?? 'bottom'} sideOffset={14} collisionPadding={16} className="z-[45]">
-            <Popover.Popup className={popupClass} initialFocus={false} finalFocus={false} aria-live="polite">
+        {anchor && side !== null ? (
+          <Popover.Positioner anchor={anchor} side={side ?? preferred} sideOffset={14} collisionPadding={16} className="z-[45]">
+            <Popover.Popup ref={setPopupEl} className={popupClass} initialFocus={false} finalFocus={false} aria-live="polite">
               <Popover.Arrow className="data-[side=bottom]:-top-[12px] data-[side=left]:-right-[17px] data-[side=left]:rotate-90 data-[side=right]:-left-[17px] data-[side=right]:-rotate-90 data-[side=top]:-bottom-[12px] data-[side=top]:rotate-180">
                 <svg viewBox="0 0 11 6" width={22} height={12} shapeRendering="crispEdges" aria-hidden className="block">
                   <path d="M4 0h3v1h1v1h1v1h1v1h1v2H0V4h1V3h1V2h1V1h1z" fill="var(--color-ink)" />
@@ -154,8 +211,8 @@ export function HintLayer() {
             </Popover.Popup>
           </Popover.Positioner>
         ) : (
-          <Popover.Positioner anchor={dockAnchor} side="top" align="end" sideOffset={0} className="z-[45]">
-            <Popover.Popup className={popupClass} initialFocus={false} finalFocus={false} aria-live="polite">
+          <Popover.Positioner anchor={dockAnchor} side="top" align="end" sideOffset={0} collisionPadding={16} className="z-[45]">
+            <Popover.Popup ref={setPopupEl} className={popupClass} initialFocus={false} finalFocus={false} aria-live="polite">
               {bubble}
             </Popover.Popup>
           </Popover.Positioner>
@@ -165,11 +222,16 @@ export function HintLayer() {
   )
 }
 
-/** Virtual anchor at the bottom-right corner (docked bubble). */
+/** Height of the phone's fixed bottom navigation bar (below 640 px), which the bubble must not cover. */
+function bottomBarInset(): number {
+  return typeof window !== 'undefined' && window.innerWidth < 640 ? 64 : 0
+}
+
+/** Virtual anchor at the bottom-right corner (docked bubble), above the phone's bottom bar. */
 const dockAnchor = {
   getBoundingClientRect: () => {
-    const x = window.innerWidth - 24
-    const y = window.innerHeight - 24
+    const x = window.innerWidth - (window.innerWidth < 640 ? 16 : 24)
+    const y = window.innerHeight - 24 - bottomBarInset()
     return { x, y, width: 0, height: 0, top: y, left: x, right: x, bottom: y, toJSON: () => ({}) } as DOMRect
   },
 }

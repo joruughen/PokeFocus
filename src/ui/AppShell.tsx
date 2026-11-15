@@ -5,6 +5,7 @@ import { BALL_ORDER, missionsView } from '../engine'
 import { DevToggle } from './dev/DevPanel'
 import { StageBadge } from './changelog/StageBadge'
 import { WhatsNewDialog } from './changelog/WhatsNewDialog'
+import { MoreNav, PRIMARY_NAV, splitNav, type NavBadges } from './MoreNav'
 import { LevelUpHost } from './levelUp/LevelUpDialog'
 import { EventPopupHost } from './screens/events/EventPopup'
 import { GroupInviteNotice } from './GroupInviteNotice'
@@ -21,6 +22,8 @@ import { useNow } from './store/clock'
 import { useAuth } from './store/auth'
 import { timerOf, useGame } from './store/game'
 import { useIncomingCount } from './store/social'
+import { useLiveEvents } from './store/liveEvents'
+import { eventPhase } from './screens/events/model'
 import { usePhase, usePlayer } from './store/selectors'
 
 /**
@@ -92,15 +95,30 @@ function ScreenLoading() {
   )
 }
 
+/** Alert counts of the sections that live inside the phone's «More» sheet (friend requests, live events). */
+function useMoreBadges(): NavBadges {
+  const friends = useIncomingCount()
+  const active = useLiveEvents((s) => s.active)
+  const skew = useLiveEvents((s) => s.skew)
+  const now = useNow() + skew
+  const minute = Math.floor(now / 60_000)
+  const events = useMemo(() => active.filter((e) => eventPhase(e, minute * 60_000) === 'active').length, [active, minute])
+  return { friends, events }
+}
+
 function Rail({ route, focusing }: { route: string; focusing: boolean }) {
   const { t } = useTranslation()
+  const role = useAuth((s) => s.user?.role)
+  const badges = useMoreBadges()
+  const { more } = splitNav(ROUTES, role)
   return (
     <nav
       aria-label={t('nav.label')}
       className={cx(
         'z-30 bg-dusk-900 shadow-[2px_0_0_0_var(--color-ink)] transition-opacity',
         'max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:shadow-[0_-2px_0_0_var(--color-ink)]',
-        'sm:sticky sm:top-0 sm:flex sm:h-dvh sm:flex-col',
+        // Short desktop windows: the rail scrolls instead of cutting off sections or the trainer card.
+        'sm:sticky sm:top-0 sm:flex sm:h-dvh sm:flex-col sm:overflow-y-auto sm:overscroll-contain',
       )}
     >
       <div className="hidden px-5 pt-6 pb-5 xl:flex xl:flex-col xl:items-start xl:gap-1">
@@ -117,7 +135,8 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
         {ROUTES.filter((r) => r.nav).map((r) => {
           const active = r.id === route
           return (
-            <li key={r.id} className="max-sm:min-w-0 max-sm:flex-1">
+            // Phones: only the main sections are buttons in the bar; the rest live in «More».
+            <li key={r.id} className={cx('max-sm:min-w-0 max-sm:flex-1', !PRIMARY_NAV.includes(r.id as (typeof PRIMARY_NAV)[number]) && 'max-sm:hidden')}>
               <a
                 href={hrefTo(r.id)}
                 aria-current={active ? 'page' : undefined}
@@ -138,6 +157,9 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
             </li>
           )
         })}
+        <li className="min-w-0 flex-1 sm:hidden">
+          <MoreNav routes={more} route={route} badges={badges} focusing={focusing} />
+        </li>
       </ul>
       <div className="mt-auto hidden flex-col gap-4 p-4 sm:flex">
         <LiveSessionChip />

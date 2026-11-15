@@ -857,6 +857,7 @@ function WildCard({
             shiny={wild.isShiny}
             scale={2}
             maxHeight={148}
+            maxWidth={160}
             alt=""
             className={cx(
               'relative mb-3 transition-opacity',
