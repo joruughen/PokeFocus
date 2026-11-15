@@ -1622,7 +1622,21 @@
     "seenOnly": "Vista en una oleada, aún sin capturar.",
     "line": "Línea evolutiva",
     "legendary": "Legendario",
-    "mythical": "Mítico"
+    "mythical": "Mítico",
+    "spawn": {
+      "chance": "Aparición: ≈1 de cada {{n}} salvajes a tu nivel",
+      "tiny": "Aparición: menos de 1 de cada {{n}} salvajes a tu nivel",
+      "fromLevel": "Aparece en salvajes desde nivel {{wild}} (entrenador nivel {{trainer}})",
+      "evolution": "Solo se consigue por evolución",
+      "legendary": "Legendario: aparece muy rara vez, siempre a nivel {{level}} o más",
+      "help": "Cada oleada trae varios Pokémon salvajes. Este número es la probabilidad de que cada uno de ellos sea esta especie.",
+      "example": "En una oleada de {{size}} salvajes, la probabilidad de ver al menos uno es ≈{{pct}}.",
+      "dependsOn": "Cambia con tu nivel de entrenador, las condiciones del día, el clima y la hora (algunas especies solo salen en ciertos momentos) y los eventos. Es un promedio, no una promesa.",
+      "helpFrom": "Las especies muy evolucionadas solo salen como salvajes cuando los niveles son altos. Sube de nivel de entrenador y empezarán a aparecer; las condiciones del día, el clima, la hora y los eventos también cuentan.",
+      "helpEvolution": "Esta especie no aparece sola entre los salvajes: la consigues evolucionando a su forma anterior.",
+      "helpLegendary": "Los legendarios no entran en el reparto normal: cada salvaje tiene una probabilidad muy pequeña de ser uno (según tu Focus y la duración de la sesión), repartida entre todos ellos.",
+      "helpLabel": "Cómo se calcula la aparición"
+    }
   },
   "break": {
     "muteMusicHint": "Activa o silencia solo la música del descanso. Los sonidos y el aviso de fin siguen sonando.",
@@ -2527,7 +2541,13 @@
       "endsOn": "Hasta el {{when}}",
       "view": "Ver evento",
       "close": "Cerrar"
-    }
+    },
+    "featuredFrom": "Desde nv. {{level}}",
+    "featuredEvolution": "Solo evolución",
+    "featuredFromTitle": "Aparece en salvajes de nivel {{wild}} o más (entrenador nivel {{trainer}})",
+    "featuredEvolutionTitle": "No sale como salvaje: solo se consigue por evolución",
+    "featuredFromNote": "Los atenuados aún no pueden aparecer a tu nivel: empiezan a salir cuando llegues al nivel de entrenador indicado.",
+    "featuredEvolutionNote": "«Solo evolución»: no sale como salvaje, se consigue evolucionando."
   },
   "maintenance": {
     "upcomingTitle": "Mantenimiento programado",
@@ -3401,7 +3421,9 @@
       "big_change": "Cambio grande: pide confirmación al publicar.",
       "featured_legendary": "Destacar un legendario no lo hace más frecuente (usa el multiplicador de legendarios).",
       "item_shadows_base": "Ese objeto ya existe en el juego: usa otro identificador.",
-      "event_mission_id_shared": "Una misión de evento usa el mismo id que una diaria o semanal."
+      "event_mission_id_shared": "Una misión de evento usa el mismo id que una diaria o semanal.",
+      "featured_high_level": "{{species}} solo aparece como salvaje desde el nivel de entrenador {{trainerLevel}} (salvajes de nivel {{wildLevel}}): los jugadores por debajo no lo verán. Puedes publicarlo, pero dilo en la descripción.",
+      "featured_evolution_only": "{{species}} no aparece como salvaje (solo por evolución): destacarlo no cambia nada."
     },
     "sudo": {
       "title": {
@@ -3510,7 +3532,20 @@
       "add": "Añadir especie",
       "species": "Especie",
       "mult": "Multiplicador",
-      "multHint": "De 1 a 10 veces más probable."
+      "multHint": "De 1 a 10 veces más probable.",
+      "odds": {
+        "refLevelLabel": "Nivel de entrenador de referencia",
+        "oneIn": "1 de cada {{n}}",
+        "oneInTiny": "menos de 1 de cada {{n}}",
+        "none": "no sale",
+        "line": "Cada salvaje: sin el evento {{without}} · con el evento {{with}}",
+        "cadence": "Para la descripción: {{p}} salvajes es {{name}}; en una oleada de ~{{size}} salvajes la probabilidad de ver al menos uno es ≈{{pct}} (sale de media 1 cada {{k}} oleadas).",
+        "cadenceEach": "Para la descripción: {{p}} salvajes es {{name}}; en una oleada de ~{{size}} salvajes la probabilidad de ver al menos uno es ≈{{pct}} (sale casi en cada oleada).",
+        "cannotWild": "A nivel de entrenador {{level}} no puede aparecer: sale en salvajes desde nivel {{wild}} (entrenador nivel {{trainer}}).",
+        "cannotEvolution": "No sale como salvaje (solo por evolución): destacarlo no cambia nada.",
+        "legendary": "Legendario: destacarlo no cambia cuántas veces sale (usa el multiplicador de legendarios).",
+        "note": "Estimación con condiciones neutras (hora 12, clima despejado, sin otras reglas ni eventos). La tabla de más abajo usa el contenido real."
+      }
     },
     "boosts": {
       "title": "Shiny y legendarios",

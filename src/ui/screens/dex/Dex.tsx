@@ -9,6 +9,7 @@ import { usePlayer } from '../../store/selectors'
 import { EvoLine } from '../shared/EvoLine'
 import { useMemo, useState } from 'react'
 import { useContent } from '../../store/content'
+import { SpawnLine } from './SpawnLine'
 
 type Show = 'all' | 'caught' | 'missing'
 
@@ -115,13 +116,13 @@ export default function Dex() {
           </ul>
         </section>
 
-        <DexEntry slug={selected.slug} state={known(selected.slug)} owned={Object.values(player.pokemon).filter((p) => p.speciesSlug === selected.slug).length} known={known} />
+        <DexEntry slug={selected.slug} state={known(selected.slug)} owned={Object.values(player.pokemon).filter((p) => p.speciesSlug === selected.slug).length} trainerLevel={player.trainer.level} known={known} />
       </div>
     </div>
   )
 }
 
-function DexEntry({ slug, state, owned, known }: { slug: string; state: 'caught' | 'seen' | 'unknown'; owned: number; known: (s: string) => 'caught' | 'seen' | 'unknown' }) {
+function DexEntry({ slug, state, owned, trainerLevel, known }: { slug: string; state: 'caught' | 'seen' | 'unknown'; owned: number; trainerLevel: number; known: (s: string) => 'caught' | 'seen' | 'unknown' }) {
   const ctx = defaultContext()
   const { t } = useTranslation()
   const names = useNames()
@@ -155,6 +156,7 @@ function DexEntry({ slug, state, owned, known }: { slug: string; state: 'caught'
                 <PixelIcon name={state === 'caught' ? 'check' : 'search'} size={10} />
                 {state === 'caught' ? (owned > 0 ? t('dex.owned', { count: owned }) : t('dex.caughtNone')) : t('dex.seenOnly')}
               </p>
+              <SpawnLine slug={slug} trainerLevel={trainerLevel} />
               {sp.role && (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                   <RoleBadge role={sp.role} size="md" />

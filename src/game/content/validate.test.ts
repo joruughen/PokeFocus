@@ -419,6 +419,19 @@ describe('validateEventOverlay', () => {
     expect(validateEventOverlay(event({ endsAt: Date.UTC(2027, 5, 1) }), NO_SMOKE).ok).toBe(false)
   })
 
+  it('warns (not errors) when a featured species cannot appear at low trainer levels', () => {
+    const r = validateEventOverlay(event({ featured: [{ species: 'bulbasaur', weightMult: 3 }] }), NO_SMOKE)
+    expect(r.errors).toEqual([])
+    expect(r.ok).toBe(true)
+    // Bulbasaur is a base form: nothing to warn about.
+    expect(r.warnings.filter((x) => x.code === 'featured_high_level' || x.code === 'featured_evolution_only')).toEqual([])
+    const high = validateEventOverlay(event({ featured: [{ species: 'dragonite', weightMult: 3 }] }), NO_SMOKE)
+    expect(high.ok).toBe(true)
+    const w = high.warnings.find((x) => x.code === 'featured_high_level')
+    expect(w).toMatchObject({ path: 'featured.0.species', params: { species: 'dragonite', below: 20 } })
+    expect(w!.requiresConfirm).toBeFalsy()
+  })
+
   it('Bottle Caps are event-only: an event can drop them and give them as a mission reward', () => {
     const ev = event({
       drops: [{ item: 'bottle-cap', perWaveChance: 0.05, max: 1 }],

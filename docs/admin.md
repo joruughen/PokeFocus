@@ -85,6 +85,17 @@ Hasta que marques la casilla de confirmación, publicar devuelve «confirmación
 - **Drops**: objetos del evento, probabilidad por oleada (0–100 %) y **máximo por sesión** (1–99). Se tiran con un azar aparte: no cambian qué salvajes salen.
 - **Misiones de evento** (hasta 10) y **objetos propios** (hasta 20; conservan su nombre en el inventario cuando el evento termina, también si se archiva).
 
+#### Cómo leer la probabilidad de una destacada y qué escribir en la descripción
+
+Junto a cada especie destacada, el editor muestra una **estimación** de su probabilidad **por Pokémon salvaje** (no por oleada), sin el evento y con él, para un **nivel de entrenador de referencia** que eliges (1, 10, 20 o 30):
+
+- Se lee así: «1 de cada 70» significa que, de cada 70 Pokémon salvajes que salen, uno es esa especie. Cada oleada trae varios salvajes (de media ~4; hasta 8 en ligas altas), así que la probabilidad de **ver al menos uno en una oleada** es mayor: `1 − (1 − p)^n`. Con p = 1,5 % y 6 salvajes, ≈ 9 %.
+- Es una **estimación con condiciones neutras**: hora 12, clima despejado, sin reglas de admin ni otros eventos, sin condición del día, sonido ni equipo (esos factores mueven el número de cada jugador: los tipos con condición activa salen ×2, los del equipo ×1,25, etc.). La tabla *Vista previa de apariciones* de más abajo usa el contenido real (con tus reglas de admin y la hora y el clima que elijas) y es la referencia final.
+- Si la especie **no puede aparecer a ese nivel** (p. ej. una evolución final a nivel de entrenador 1), el editor lo avisa en ámbar con el nivel desde el que sí sale. Una evolución que ningún nivel alcanza como salvaje no sale nunca por sí sola: destacarla no cambia nada. Los legendarios tampoco cambian de frecuencia por destacarlos (usa el multiplicador de legendarios).
+- Al validar (en el editor y en el servidor) hay un **aviso** (no un error, no pide confirmación) si una destacada solo sale como salvaje a partir del nivel de entrenador 20 o superior, o nunca. Se puede publicar igual; los jugadores con nivel bajo la ven **atenuada** y con la etiqueta «Desde nv. N» en la ventana y la página del evento, sin ocultarla.
+
+**Cómo redactar la descripción con expectativas realistas.** El editor sugiere la frase: «1 de cada N salvajes es X; en una oleada de ~4 salvajes la probabilidad de ver al menos uno es ≈ P % (de media 1 cada K oleadas)». Úsala como base y no prometas más de lo que da el número: con ×3 una especie común pasa de ~1,5 % a ~4 % por salvaje, es decir, **de media una por cada ~6 oleadas**, no «aparece por todas partes». Mejor «sale bastante más a menudo» que «lluvia de X»; si es una evolución final, di desde qué nivel sale. La probabilidad también aparece al jugador en la Pokédex («Aparición: ≈1 de cada N salvajes a tu nivel») con un «?» que explica las oleadas.
+
 Vida de un evento:
 
 1. **Borrador** (se guarda aunque tenga errores semánticos; máximo 50 borradores). La vista previa de apariciones usa el evento aunque sea borrador.

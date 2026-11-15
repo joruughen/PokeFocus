@@ -4,14 +4,15 @@ import type { TimeZoneSpec } from '../../../engine'
 import type { LiveEventPublic } from '../../../game/protocol'
 import { whatsNewDue } from '../../changelog/WhatsNewDialog'
 import { owedLevelUps } from '../../levelUp/owed'
-import { Button, Dialog, RichText, Sprite } from '../../components'
+import { Button, Dialog, RichText } from '../../components'
 import { setHintsHeld, useHints } from '../../hints'
-import { asLocale, speciesName } from '../../lib/names'
+import { asLocale } from '../../lib/names'
 import { navigate, useRoute } from '../../router'
 import { phaseOf, useGame } from '../../store/game'
 import { useLiveEvents } from '../../store/liveEvents'
 import { usePhase } from '../../store/selectors'
-import { eventText, fmtMult, formatEventWhen, imageSrcSet } from './model'
+import { FeaturedList } from './FeaturedList'
+import { eventText, formatEventWhen, imageSrcSet } from './model'
 import { decideEventPopup, pendingPopups, popupCandidates, type PopupCandidate, type PopupPhase } from './popup'
 
 /** Pause after something changes before opening, so the screen settles first (a bit after "What's new?"). */
@@ -35,6 +36,7 @@ export function EventPopupHost() {
   const seen = useLiveEvents((s) => s.popupSeen)
   const markSeen = useLiveEvents((s) => s.markPopupSeen)
   const tz = useGame((s) => s.player?.profile.timezone)
+  const trainerLevel = useGame((s) => s.player?.trainer.level)
   const [shown, setShown] = useState<PopupCandidate | null>(null)
 
   // Something is owed at all (cheap check on every render; the decision itself reads the live state).
@@ -80,7 +82,7 @@ export function EventPopupHost() {
     markSeen([shown.key, ...same.map((c) => c.key)])
     setShown(null)
   }
-  return <EventPopupModal candidate={shown} tz={tz} onClose={close} onView={() => (close(), navigate('events'))} />
+  return <EventPopupModal candidate={shown} tz={tz} trainerLevel={trainerLevel} onClose={close} onView={() => (close(), navigate('events'))} />
 }
 
 /** Phase of the home loop from the live store (the retry timer cannot use a hook). */
@@ -94,10 +96,11 @@ export interface EventPopupModalProps {
   onClose: () => void
   onView: () => void
   tz?: TimeZoneSpec
+  trainerLevel?: number
 }
 
 /** The window itself (controlled, open). Exported for tests. */
-export function EventPopupModal({ candidate, onClose, onView, tz }: EventPopupModalProps) {
+export function EventPopupModal({ candidate, onClose, onView, tz, trainerLevel }: EventPopupModalProps) {
   const { t, i18n } = useTranslation()
   const lng = asLocale(i18n.language)
   const { event, phase } = candidate
@@ -120,7 +123,7 @@ export function EventPopupModal({ candidate, onClose, onView, tz }: EventPopupMo
         </>
       }
     >
-      <EventPopupBody event={event} phase={phase} tz={tz} />
+      <EventPopupBody event={event} phase={phase} tz={tz} trainerLevel={trainerLevel} />
     </Dialog>
   )
 }
@@ -128,7 +131,7 @@ export function EventPopupModal({ candidate, onClose, onView, tz }: EventPopupMo
 const BADGE: Record<PopupPhase, string> = { active: 'bg-volt-400 text-ink', upcoming: 'bg-amber-400 text-ink' }
 
 /** Image, status, dates, description and featured species of one event. */
-export function EventPopupBody({ event, phase, tz }: { event: LiveEventPublic; phase: PopupPhase; tz?: TimeZoneSpec }) {
+export function EventPopupBody({ event, phase, tz, trainerLevel }: { event: LiveEventPublic; phase: PopupPhase; tz?: TimeZoneSpec; trainerLevel?: number }) {
   const { t, i18n } = useTranslation()
   const lng = asLocale(i18n.language)
   const when = (ts: number) => formatEventWhen(ts, tz, i18n.language)
@@ -157,17 +160,7 @@ export function EventPopupBody({ event, phase, tz }: { event: LiveEventPublic; p
       {event.featured.length > 0 && (
         <section aria-label={t('events.featured')} className="flex flex-col gap-2">
           <h3 className="font-display text-base text-mist-300">{t('events.featured')}</h3>
-          <ul className="flex flex-wrap gap-2">
-            {event.featured.map((f) => (
-              <li key={f.species} className="flex min-w-[5.5rem] flex-col items-center gap-0.5 bg-dusk-900 px-2 py-1.5 inset-shadow-well">
-                <span className="grid h-10 place-items-center">
-                  <Sprite kind="icon" slug={f.species} scale={1} alt="" />
-                </span>
-                <span className="text-center text-sm leading-tight">{speciesName(f.species, lng)}</span>
-                <span className="font-num text-lg leading-none text-volt-300">×{fmtMult(f.weightMult)}</span>
-              </li>
-            ))}
-          </ul>
+          <FeaturedList featured={event.featured} trainerLevel={trainerLevel} />
         </section>
       )}
     </div>

@@ -35,6 +35,7 @@ import {
   type LimitKind,
 } from './limits'
 import { contentPatchSchema, eventOverlaySchema } from './schema'
+import { FEATURED_REACH_TRAINER_LEVEL, speciesReach } from './spawnOdds'
 
 // ---------------------------------------------------------------------------
 // Result
@@ -588,6 +589,17 @@ export function validateEventOverlay(input: unknown, opts: ValidateEventOptions 
     const sp = ctx.speciesBySlug.get(f.species)
     if (!sp) issues.error('unknown_species', `${p}.species`, `unknown species ${f.species}`)
     else if (isLegendarySpecies(sp)) issues.warn('featured_legendary', `${p}.species`, 'featuring a legendary only changes which legendary appears, not how often (use legendaryChanceMult)')
+    else {
+      // A featured species that low-level players cannot meet at all: the admin should know before publishing.
+      const reach = speciesReach(ctx, sp)
+      if (reach.kind === 'evolution') issues.warn('featured_evolution_only', `${p}.species`, `${f.species} never appears in the wild (evolution only): featuring it changes nothing`, { species: f.species, wildLevel: reach.wildLevel })
+      else if (reach.kind === 'wild') {
+        const trainerLevel = Math.max(reach.trainerLevel, ctx.spawn.get(f.species)?.minTrainerLevel ?? 1)
+        if (trainerLevel > FEATURED_REACH_TRAINER_LEVEL) {
+          issues.warn('featured_high_level', `${p}.species`, `${f.species} only appears in the wild from trainer level ${trainerLevel} (wild level ${reach.wildLevel})`, { species: f.species, trainerLevel, wildLevel: reach.wildLevel, below: FEATURED_REACH_TRAINER_LEVEL })
+        }
+      }
+    }
     if (featured.has(f.species)) issues.error('duplicate_featured', `${p}.species`, `${f.species} featured twice`)
     featured.add(f.species)
     const was = opts.previous?.featured.find((x) => x.species === f.species)?.weightMult
