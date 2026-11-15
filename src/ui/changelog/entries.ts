@@ -29,6 +29,55 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.12.0',
+    date: '2026-11-15',
+    title: { es: 'Intercambios y objetos avanzados', en: 'Trades and advanced items' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Intercambios con amigos: ofrece un Pokémon, tu amigo elige qué te da a cambio y los dos confirman. Kadabra, Machoke, Graveler y Haunter evolucionan al llegar. Necesitas 3 días de amistad y cuesta algo de Polvo.',
+          en: 'Trades with friends: offer a Pokémon, your friend picks what to give you back and you both confirm. Kadabra, Machoke, Graveler and Haunter evolve when they arrive. You need 3 days of friendship and it costs some Dust.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Objetos avanzados en la ficha de cada Pokémon: Teracristalización (nivel 20), MT, Mentas (nivel 10), Chapas (nivel 25) y Cápsula Habilidad (nivel 30). Salen en las misiones semanales según tu nivel de entrenador.',
+          en: 'Advanced items on each Pokémon’s page: Terastallization (level 20), TMs, Mints (level 10), Bottle Caps (level 25) and Ability Capsule (level 30). They come from weekly missions depending on your trainer level.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Caja: botón «Seleccionar» para soltar varios Pokémon a la vez, con un resumen de los caramelos que ganas y avisos si hay shiny, legendarios o Pokémon con mote.',
+          en: 'Box: a “Select” button to release several Pokémon at once, with a summary of the candies you get and warnings for shinies, legendaries or nicknamed Pokémon.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'En el móvil, el menú de abajo tiene Inicio, Caja, Equipo, Misiones y «Más» con el resto. Los avisos ya no se amontonan y los consejos siempre caben en pantalla.',
+          en: 'On phones, the bottom menu has Home, Box, Team, Missions and “More” with the rest. Notices no longer pile up and tips always fit on screen.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'El desglose de puntos muestra «Reclamado tarde» como paso propio, y los caramelos de la Mochila ya no listan los Pokémon de su línea.',
+          en: 'The points breakdown shows “Claimed late” as its own step, and Bag candies no longer list the Pokémon of their line.',
+        },
+      },
+      {
+        kind: 'fixed',
+        text: {
+          es: 'Los Pokémon grandes (Moltres, Articuno, Charizard…) ya no se salen de su recuadro en la sesión, la ficha, la Pokédex, la elección de inicial ni la evolución.',
+          en: 'Big Pokémon (Moltres, Articuno, Charizard…) no longer stick out of their frame in the session, the Pokémon page, the Pokédex, the starter choice or the evolution.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.11.0',
     date: '2026-11-10',
     title: { es: 'Eventos', en: 'Events' },
