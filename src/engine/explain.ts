@@ -228,7 +228,7 @@ export function techniqueOutlook(p: OwnedPokemon, slug: string, ctx: EngineConte
 // How the session points add up
 // ---------------------------------------------------------------------------
 
-export type PointsStepKind = 'base' | 'condition' | 'bond' | 'focus' | 'grit' | 'focusAdj' | 'mods' | 'burst' | 'lastAction' | 'daily'
+export type PointsStepKind = 'base' | 'condition' | 'bond' | 'focus' | 'late' | 'grit' | 'focusAdj' | 'mods' | 'burst' | 'lastAction' | 'daily'
 
 export interface PointsStep {
   kind: PointsStepKind
@@ -242,11 +242,16 @@ export interface PointsStep {
 
 /** Sum of the stages of several members (the team's breakdown), or null when one of them has no log. */
 export function sumPointsStages(list: readonly (PointsStages | undefined)[]): PointsStages | null {
-  const acc: PointsStages = { base: 0, afterCondition: 0, afterBond: 0, afterFocus: 0, afterGrit: 0, afterFocusAdj: 0, afterMods: 0, afterBurst: 0, raw: 0 }
+  const acc: Required<Omit<PointsStages, 'afterLate'>> & { afterLate?: number } = { base: 0, afterCondition: 0, afterBond: 0, afterFocus: 0, afterGrit: 0, afterFocusAdj: 0, afterMods: 0, afterBurst: 0, raw: 0 }
+  let late = 0
+  let hasLate = true
   for (const g of list) {
     if (!g) return null
-    for (const k of Object.keys(acc) as (keyof PointsStages)[]) acc[k] += g[k]
+    for (const k of Object.keys(acc) as (keyof typeof acc)[]) acc[k] = (acc[k] ?? 0) + (g[k] ?? 0)
+    if (g.afterLate === undefined) hasLate = false
+    else late += g.afterLate
   }
+  if (hasLate) acc.afterLate = late
   return acc
 }
 
@@ -261,6 +266,7 @@ export function pointsBreakdown(stages: PointsStages, rewardFactor: number, fina
     ['condition', stages.afterCondition],
     ['bond', stages.afterBond],
     ['focus', stages.afterFocus],
+    ...(stages.afterLate === undefined ? [] : ([['late', stages.afterLate]] as [PointsStepKind, number][])),
     ['grit', stages.afterGrit],
     ['focusAdj', stages.afterFocusAdj],
     ['mods', stages.afterMods],

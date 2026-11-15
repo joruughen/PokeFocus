@@ -43,7 +43,19 @@
     "friends": "Amigos",
     "changelog": "Novedades",
     "admin": "Administración",
-    "events": "Eventos"
+    "events": "Eventos",
+    "more": "Más",
+    "moreTitle": "Más secciones",
+    "moreBadge_one": "{{count}} aviso",
+    "moreBadge_other": "{{count}} avisos",
+    "badge": {
+      "friends_one": "{{count}} solicitud de amistad",
+      "friends_other": "{{count}} solicitudes de amistad",
+      "events_one": "{{count}} evento en curso",
+      "events_other": "{{count}} eventos en curso",
+      "missions_one": "{{count}} misión lista",
+      "missions_other": "{{count}} misiones listas"
+    }
   },
   "trainer": {
     "level": "Entrenador nv. {{level}}",
@@ -2017,6 +2029,7 @@
         "condition": "Condición de tipo",
         "bond": "Vínculo",
         "focus": "Foco",
+        "late": "Reclamado tarde",
         "grit": "Aguante",
         "focusAdj": "Habilidad de Foco",
         "mods": "Habilidades y técnicas",
@@ -2028,7 +2041,8 @@
         "base": "Lo que gana cada acción según el Rendimiento del Pokémon, antes de cualquier bonus.",
         "condition": "Bonus de los tipos con condición activa (hora, clima, racha…). Es la media de todas sus acciones.",
         "bond": "Cuanto más tiempo estudia con vosotros, más puntos: hasta un +20 %.",
-        "focus": "100 % si reclamas a tiempo; 50 % si tardas más de {{min}} minutos.",
+        "focus": "Foco de la sesión según tus capturas de pantalla (100 % si no hay).",
+        "late": "Reclamaste pasados {{min}} minutos: los puntos se multiplican por {{mult}}. Reclama a tiempo para evitarlo.",
         "grit": "Su Aguante sube su Foco hasta un 10 %: con Aguante 200 o más, ×1,10.",
         "focusAdj": "Una habilidad cambió su Foco (un mínimo, o no le afecta reclamar tarde).",
         "mods": "Efectos de habilidades y técnicas que cambian los puntos. Mira «Habilidad y pasivas» de cada Pokémon.",

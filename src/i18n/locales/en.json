@@ -43,7 +43,19 @@
     "friends": "Friends",
     "changelog": "News",
     "admin": "Admin",
-    "events": "Events"
+    "events": "Events",
+    "more": "More",
+    "moreTitle": "More sections",
+    "moreBadge_one": "{{count}} alert",
+    "moreBadge_other": "{{count}} alerts",
+    "badge": {
+      "friends_one": "{{count}} friend request",
+      "friends_other": "{{count}} friend requests",
+      "events_one": "{{count}} event running",
+      "events_other": "{{count}} events running",
+      "missions_one": "{{count}} mission ready",
+      "missions_other": "{{count}} missions ready"
+    }
   },
   "trainer": {
     "level": "Trainer lv. {{level}}",
@@ -2017,6 +2029,7 @@
         "condition": "Type condition",
         "bond": "Bond",
         "focus": "Focus",
+        "late": "Claimed late",
         "grit": "Grit",
         "focusAdj": "Focus ability",
         "mods": "Abilities and techniques",
@@ -2028,7 +2041,8 @@
         "base": "What each action earns from the Pokémon's Output, before any bonus.",
         "condition": "Bonus from the types whose condition is active (time, weather, streak…). It is the average over all its actions.",
         "bond": "The longer it studies with you, the more points: up to +20%.",
-        "focus": "100% if you claim on time; 50% if you take longer than {{min}} minutes.",
+        "focus": "Session Focus from your screenshots (100% when there are none).",
+        "late": "You claimed after more than {{min}} minutes: points are multiplied by {{mult}}. Claim on time to avoid it.",
         "grit": "Its Grit raises its Focus by up to 10%: with Grit 200 or more, ×1.10.",
         "focusAdj": "An ability changed its Focus (a minimum, or late claims do not affect it).",
         "mods": "Effects of abilities and techniques that change the points. See «Ability and passives» for each Pokémon.",

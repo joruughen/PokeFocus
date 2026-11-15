@@ -99,7 +99,7 @@ export function Detail({ uid }: { uid: string }) {
         <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
           <div className="relative flex h-60 w-64 shrink-0 items-end justify-center">
             <Platform width={200} night={scene.time === 'night'} className="absolute bottom-0" />
-            <Sprite kind="showdown" slug={p.speciesSlug} shiny={p.isShiny} scale={3} flip alt={name} className={cx('relative mb-5', view.energy <= 0 && 'grayscale')} />
+            <Sprite kind="showdown" slug={p.speciesSlug} shiny={p.isShiny} scale={3} maxHeight={220} maxWidth={248} flip alt={name} className={cx('relative mb-5', view.energy <= 0 && 'grayscale')} />
             {p.isShiny && <span className="absolute top-2 left-2 bg-shiny-300 px-1.5 py-0.5 font-display text-sm text-ink shadow-frame">★ {t('pokemon.shiny')}</span>}
           </div>
           <div className="min-w-0 max-w-xl flex-1 bg-mist-50 p-5 text-ink shadow-plate">

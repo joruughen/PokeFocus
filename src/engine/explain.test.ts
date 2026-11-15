@@ -111,8 +111,30 @@ describe('pointsBreakdown', () => {
     expect(steps.reduce((a, s) => a + s.delta, 0)).toBe(result.totalPoints)
     const kinds = steps.map((s) => s.kind)
     expect(kinds).toContain('condition')
-    expect(kinds).toContain('focus')
-    expect(steps.find((s) => s.kind === 'focus')!.factor).toBeCloseTo(0.5) // late claim = 50 % Focus
+    // Late claim is its own step (×0.5), not folded into "Focus": on-screen Focus stays at 100 %.
+    expect(kinds).toContain('late')
+    expect(kinds).not.toContain('focus')
+    const late = steps.find((s) => s.kind === 'late')!
+    expect(late.factor).toBeCloseTo(cfg.session.lateClaimMultiplier)
+    expect(late.delta).toBeLessThan(0)
+    expect(kinds.indexOf('late')).toBeGreaterThan(kinds.indexOf('condition'))
+  })
+
+  it('claiming on time has no late step; the steps still add up', () => {
+    const { result } = runSession(makePlayer([makeMon('pikachu', 15, { uid: 'p' })]), 25)
+    expect(result.lateClaim).toBe(false)
+    const m = result.members[0]!
+    const steps = pointsBreakdown(m.pointsStages!, result.rewardFactor, m.points)
+    expect(steps.find((s) => s.kind === 'late')).toBeUndefined()
+    expect(steps.reduce((a, s) => a + s.delta, 0)).toBe(m.points)
+  })
+
+  it('results saved before the late step (no afterLate) keep the late penalty inside Focus', () => {
+    const stages: PointsStages = { base: 100, afterCondition: 100, afterBond: 100, afterFocus: 50, afterGrit: 50, afterFocusAdj: 50, afterMods: 50, afterBurst: 50, raw: 50 }
+    const steps = pointsBreakdown(stages, 1, 50)
+    expect(steps.map((s) => s.kind)).toEqual(['base', 'focus'])
+    expect(steps.find((s) => s.kind === 'focus')!.factor).toBeCloseTo(0.5)
+    expect(sumPointsStages([stages, { ...stages, afterLate: 25 }])!.afterLate).toBeUndefined()
   })
 
   it('Grit appears as its own step and is capped at +10 %', () => {

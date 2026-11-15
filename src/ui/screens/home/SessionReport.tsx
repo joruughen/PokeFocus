@@ -28,7 +28,7 @@ type T = (k: string, o?: Record<string, unknown>) => string
 function fmtChance(f: number, lng: string): string {
   return new Intl.NumberFormat(lng, { style: 'percent', maximumFractionDigits: f < 0.1 ? 1 : 0 }).format(f)
 }
-const fmtMult = (m: number) => `×${Number(m.toFixed(2))}`
+const fmtMult = (m: number, lng?: string) => `×${lng ? new Intl.NumberFormat(lng, { maximumFractionDigits: 2 }).format(m) : Number(m.toFixed(2))}`
 
 /**
  * "Informe de la sesión" button: opens the report of the session whose
@@ -335,7 +335,7 @@ function PointsSteps({ steps, actions }: { steps: PointsStep[]; actions?: number
   const { t, i18n } = useTranslation()
   const cfg = useContent().config
   const lng = i18n.language
-  const tipValues = { min: cfg.session.claimWindowMinutes, full: cfg.session.dailyFullRewardMinutes / 60, half: cfg.session.dailyHalfRewardMinutes / 60 }
+  const tipValues = { min: cfg.session.claimWindowMinutes, mult: fmtMult(cfg.session.lateClaimMultiplier, lng).slice(1), full: cfg.session.dailyFullRewardMinutes / 60, half: cfg.session.dailyHalfRewardMinutes / 60 }
   const last = steps[steps.length - 1]
   const signed = (n: number) => (n > 0 ? `+${fmtInt(n, lng)}` : n < 0 ? `−${fmtInt(-n, lng)}` : fmtInt(0, lng))
   return (
@@ -345,7 +345,7 @@ function PointsSteps({ steps, actions }: { steps: PointsStep[]; actions?: number
           <li key={s.kind} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 border-b border-dusk-700 py-1.5 last:border-b-0">
             <span className="flex min-w-0 flex-wrap items-center gap-x-2">
               <span>{t(`report.points.step.${s.kind}`)}</span>
-              {s.factor !== null && <span className={s.factor < 1 ? 'font-num text-amber-400' : 'font-num text-leaf-400'}>{s.kind === 'focus' || s.kind === 'daily' ? fmtPct(s.factor, lng) : fmtMult(s.factor)}</span>}
+              {s.factor !== null && <span className={s.factor < 1 ? 'font-num text-amber-400' : 'font-num text-leaf-400'}>{s.kind === 'focus' || s.kind === 'daily' ? fmtPct(s.factor, lng) : fmtMult(s.factor, lng)}</span>}
               <InfoTip content={s.kind === 'base' && actions !== undefined ? `${t('report.points.tip.base')} ${t('report.points.actionsNote', { count: actions })}` : t(`report.points.tip.${s.kind}`, tipValues)} />
             </span>
             <span className="text-right font-num tabular text-mist-300">{s.kind === 'base' ? '' : signed(s.delta)}</span>

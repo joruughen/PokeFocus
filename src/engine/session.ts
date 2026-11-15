@@ -361,8 +361,13 @@ export interface PointsStages {
   base: number
   afterCondition: number
   afterBond: number
-  /** After the session Focus (100 % on time, 50 % late). */
+  /** After the session Focus the screenshots gave (100 % without labels), before any late-claim penalty. */
   afterFocus: number
+  /**
+   * After the late-claim multiplier (×0.5, or ×1 on time). Absent in results saved before the
+   * breakdown had its own late step: there the late penalty is inside `afterFocus`.
+   */
+  afterLate?: number
   /** After the Grit bonus (Defense, up to +10 %). */
   afterGrit: number
   /** After Focus effects of abilities (focus floors, late-claim immunity). */
@@ -518,10 +523,9 @@ interface Sim {
   bond: number
   focusEff: number
   /** Session Focus and Grit multiplier, to split `focusEff` in the points breakdown (report only). */
-  focusSession: number
   gritMult: number
   /** Running totals for the points breakdown (report only: never read by the rules). */
-  stg: { base: number; cond: number; bond: number; focus: number; grit: number; adj: number; mods: number; burst: number }
+  stg: { base: number; cond: number; bond: number; focus: number; late: number; grit: number; adj: number; mods: number; burst: number }
   bonusMult: number
   lastMult: number
   nextT: number
@@ -712,9 +716,8 @@ export function completeSession(
       activables: techs.filter((t) => t.kind === 'activable'),
       bond: bondMultiplier(p.bondMinutes, cfg),
       focusEff: f,
-      focusSession: focus,
       gritMult: 1 + defenseFocusBonus(stats.defense, cfg),
-      stg: { base: 0, cond: 0, bond: 0, focus: 0, grit: 0, adj: 0, mods: 0, burst: 0 },
+      stg: { base: 0, cond: 0, bond: 0, focus: 0, late: 0, grit: 0, adj: 0, mods: 0, burst: 0 },
       bonusMult,
       lastMult,
       nextT: 0,
@@ -885,12 +888,14 @@ export function completeSession(
       // Breakdown (report only): the same product, stage by stage.
       {
         const g = s.stg
-        const afterFocus = basePts * cond * s.bond * s.focusSession
-        const afterGrit = afterFocus * s.gritMult
+        const afterFocus = basePts * cond * s.bond * baseCapture
+        const afterLate = afterFocus * lateMult
+        const afterGrit = afterLate * s.gritMult
         g.base += basePts
         g.cond += basePts * cond
         g.bond += basePts * cond * s.bond
         g.focus += afterFocus
+        g.late += afterLate
         g.grit += afterGrit
         g.adj += basePts * cond * s.bond * s.focusEff
         g.mods += basePts * cond * s.bond * s.focusEff * pointsMod
@@ -1066,6 +1071,7 @@ export function completeSession(
         afterCondition: s.stg.cond,
         afterBond: s.stg.bond,
         afterFocus: s.stg.focus,
+        afterLate: s.stg.late,
         afterGrit: s.stg.grit,
         afterFocusAdj: s.stg.adj,
         afterMods: s.stg.mods,

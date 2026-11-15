@@ -38,6 +38,8 @@ export function StageTeam({ members, night = false, bob = true, dim = false, cla
             slug={m.slug}
             shiny={m.shiny}
             scale={2}
+            maxHeight={136}
+            maxWidth={128}
             flip
             alt={m.name}
             className={cx('relative mb-3', bob && 'motion-safe:animate-bob', dim && 'brightness-90', m.faded && 'opacity-60')}
