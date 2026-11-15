@@ -173,7 +173,7 @@ Salen de `src/game/content/limits.ts`; esta tabla se regenera con `npm run admin
 | `patch.techniques[].limitPerSession` / `limitPerWeek` | 1 a 20 |
 <!-- limits:end -->
 
-Además, cualquier número fuera de rango, texto demasiado largo o campo desconocido se rechaza. Algunos valores grandes (peso de una destacada > ×3, legendarios > ×3, shiny > ×5 la base) **no son errores**, pero al publicar el admin tendrá que marcar la casilla de confirmación; el validador los avisa.
+Además, cualquier número fuera de rango, texto demasiado largo o campo desconocido se rechaza. Algunos valores grandes (peso de una destacada > ×3, legendarios > ×3, shiny > ×5 la probabilidad base, que es 0.0018) **no son errores**, pero al publicar el admin tendrá que marcar la casilla de confirmación; el validador los avisa.
 
 ## 7. Consultar los valores válidos
 
