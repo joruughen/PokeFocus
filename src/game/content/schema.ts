@@ -228,7 +228,7 @@ const missionFields = {
   rewards: z.array(missionRewardSchema).min(1).max(D.rewardTiersMax),
 }
 
-function missionRules<T extends { kind: string; minMinutes?: number; type?: string }>(m: T, ctx: z.RefinementCtx): void {
+export function missionRules<T extends { kind: string; minMinutes?: number; type?: string }>(m: T, ctx: z.RefinementCtx): void {
   if (m.kind === 'longSession' && m.minMinutes === undefined) ctx.addIssue({ code: 'custom', message: 'longSession needs minMinutes', path: ['minMinutes'] })
   if (m.kind !== 'longSession' && m.minMinutes !== undefined) ctx.addIssue({ code: 'custom', message: 'minMinutes is only for longSession', path: ['minMinutes'] })
   if (m.kind !== 'catchType' && m.type !== undefined) ctx.addIssue({ code: 'custom', message: 'type is only for catchType', path: ['type'] })
@@ -237,10 +237,8 @@ function missionRules<T extends { kind: string; minMinutes?: number; type?: stri
 export const missionDefSchema = z.strictObject({ ...missionFields, period: z.enum(['daily', 'weekly']) }).superRefine(missionRules)
 
 /** Event missions: a fixed list (never drawn), so no weight. */
-export const eventMissionDefSchema = z
-  .strictObject({ ...missionFields, period: z.literal('event') })
-  .omit({ weight: true })
-  .superRefine(missionRules)
+export const eventMissionBaseSchema = z.strictObject({ ...missionFields, period: z.literal('event') }).omit({ weight: true })
+export const eventMissionDefSchema = eventMissionBaseSchema.superRefine(missionRules)
 
 export const pokedexMilestoneSchema = z.strictObject({
   id: slugSchema,

@@ -20,7 +20,9 @@
     "db:generate": "drizzle-kit generate",
     "vapid": "tsx scripts/generate-vapid.ts",
     "pepper": "tsx scripts/generate-pepper.ts",
-    "admin:role": "tsx scripts/admin-role.ts"
+    "admin:role": "tsx scripts/admin-role.ts",
+    "admin:schema": "tsx scripts/admin-schema.ts",
+    "admin:validate": "tsx scripts/admin-validate.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -32,12 +32,20 @@ import { ImagePicker } from './ImagePicker'
 import { RichField } from './RichField'
 import { SpawnPreview } from './SpawnPreview'
 import { SudoDialog, type SudoMode, type SudoSubmit } from './SudoDialog'
+import { EventImportDialog } from '../import/EventImportDialog'
+import { ExportDialog } from '../import/ExportDialog'
+import { eventExportText, exportFileName, type ImportInfo } from '../import/logic'
+import { ImportNotice } from '../import/parts'
 
 export interface EventEditorProps {
   /** The saved event to edit; null = a new one. */
   event: AdminEvent | null
   /** Start a new event from this form (Duplicate). */
   seed?: EventDraft | null
+  /** Unsaved fields to show on top of the saved `event` (an import that updates a draft). */
+  prefill?: EventDraft | null
+  /** What an import did, to tell the admin (nothing was published). */
+  importInfo?: ImportInfo | null
   elevated: boolean
   onElevated: (v: boolean) => void
   /** After every successful save, publish, archive. */
@@ -56,12 +64,15 @@ interface LocalValidation {
 const utc = (ts: number): string => (Number.isNaN(ts) ? '' : `${new Date(ts).toISOString().slice(0, 16).replace('T', ' ')} UTC`)
 
 /** The form of one event: everything the overlay can hold, live validation, a player's-eye preview, and the publish flow. */
-export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDeleted, onBack, onDuplicate }: EventEditorProps) {
+export function EventEditor({ event, seed, prefill, importInfo, elevated, onElevated, onSaved, onDeleted, onBack, onDuplicate }: EventEditorProps) {
   const { t, i18n } = useTranslation()
   const lng = asLocale(i18n.language)
   const now = useNow()
   const [saved, setSaved] = useState<EventDraft>(() => (event ? draftFromEvent(event) : (seed ?? blankDraft(Date.now()))))
-  const [d, setD] = useState<EventDraft>(saved)
+  const [d, setD] = useState<EventDraft>(() => prefill ?? saved)
+  const [info, setInfo] = useState<ImportInfo | null>(importInfo ?? null)
+  const [importing, setImporting] = useState(false)
+  const [exported, setExported] = useState<string | null>(null)
   const [current, setCurrent] = useState<AdminEvent | null>(event)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -266,6 +277,18 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
     }
   }
 
+  /** «Export JSON»: the form as it is, in the import format (only when it can be read). */
+  const exportJson = async () => {
+    const r = await eventExportText(d)
+    if (!r.ok) {
+      setProblems(r.problems)
+      setError(t('adminJson.export.incomplete'))
+      return
+    }
+    setError(null)
+    setExported(r.text)
+  }
+
   const problemFor = (path: string): string | null => {
     const p = problems.find((x) => x.path === path)
     return p ? t(`eventsAdmin.problem.${p.code}`) : null
@@ -301,10 +324,22 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
             {dirty && <span className="ml-2 text-amber-400">{t('eventsAdmin.editor.unsaved')}</span>}
           </p>
         </div>
-        <Button variant="ghost" size="sm" icon="back" onClick={onBack}>
-          {t('eventsAdmin.editor.back')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {(d.status === 'new' || d.status === 'draft') && (
+            <Button variant="secondary" size="sm" icon="plus" onClick={() => setImporting(true)} disabled={busy}>
+              {t('adminJson.import.button')}
+            </Button>
+          )}
+          <Button variant="secondary" size="sm" icon="copy" onClick={() => void exportJson()} disabled={busy}>
+            {t('adminJson.export.button')}
+          </Button>
+          <Button variant="ghost" size="sm" icon="back" onClick={onBack}>
+            {t('eventsAdmin.editor.back')}
+          </Button>
+        </div>
       </header>
+
+      {info && <ImportNotice info={info} onDismiss={() => setInfo(null)} />}
 
       <fieldset disabled={locked} className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0">
         <Panel variant="frame" title={t('eventsAdmin.basics.title')} headingLevel={3}>
@@ -662,6 +697,20 @@ export function EventEditor({ event, seed, elevated, onElevated, onSaved, onDele
         error={dialogError}
         onSubmit={(v) => void submitSudo(v)}
       />
+      <EventImportDialog
+        open={importing}
+        onOpenChange={setImporting}
+        mode="fill"
+        current={d}
+        onImported={(r) => {
+          setD(r.draft)
+          setInfo(r.info)
+          setProblems([])
+          setServerIssues(null)
+          setError(null)
+        }}
+      />
+      <ExportDialog open={exported !== null} onOpenChange={(o) => !o && setExported(null)} text={exported ?? ''} fileName={exportFileName(d.slug || d.nameEn || d.nameEs, 'event')} kind="event" />
       <Dialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}

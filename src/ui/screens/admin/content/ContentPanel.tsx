@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AdminContentLiveResponse, AdminContentVersionResponse, AdminContentVersionSummary } from '../../../../game/protocol'
-import { isApiError } from '../../../api'
 import { Button, Dialog, DialogClose, Panel, TextField, toast } from '../../../components'
-import { errorText } from '../../../lib/errors'
 import { useAuth } from '../../../store/auth'
 import { useAdminNav } from '../nav'
 import { contentApi } from './api'
+import { contentErrorText } from './errors'
+import { ContentImportDialog } from '../import/ContentImportDialog'
 import { DraftEditor } from './DraftEditor'
 import { LiveStatus, VersionsList, type StatusFilter } from './Overview'
 import { RollbackDialog, UnscheduleDialog } from './PublishDialog'
@@ -15,15 +15,7 @@ import { contentPermissions, versionName } from './versions'
 
 type View = { kind: 'overview' } | { kind: 'view'; id: number } | { kind: 'edit'; id: number }
 
-const OWN = ['forbidden', 'not_found', 'not_draft', 'not_published', 'not_scheduled', 'too_many_drafts', 'invalid_body', 'event_not_linkable', 'unknown_event']
-
-/** Text of an error of the content API (own copy for its codes, else the generic one). */
-export function contentErrorText(e: unknown, t: (k: string, o?: Record<string, unknown>) => string): string {
-  if (!isApiError(e)) return errorText('network')
-  if (e.status === 429) return t('admin.content.action.rateLimited', { count: Math.max(1, Math.ceil((e.retryAfter ?? 60) / 60)) })
-  if (OWN.includes(e.code)) return t(`admin.content.errors.${e.code}`)
-  return errorText(e.code)
-}
+export { contentErrorText }
 
 /**
  * Content tab of the admin screen (support reads, admin edits): what is live, the versions, and the draft editor.
@@ -48,6 +40,9 @@ export default function ContentPanel() {
   const [draftName, setDraftName] = useState('')
   const [unscheduling, setUnscheduling] = useState<AdminContentVersionSummary | null>(null)
   const [removing, setRemoving] = useState<AdminContentVersionSummary | null>(null)
+  const [importing, setImporting] = useState(false)
+  /** The open request came from another tab (a link): a draft opens in the editor, not read-only. */
+  const fromNav = useRef(false)
 
   const reload = useCallback(
     async (f: StatusFilter = filter) => {
@@ -75,6 +70,7 @@ export default function ContentPanel() {
   const requested = useAdminNav((s) => s.contentVersionId)
   useEffect(() => {
     if (requested === null) return
+    fromNav.current = true
     setView({ kind: 'view', id: requested })
     useAdminNav.getState().consumeContentVersion()
   }, [requested])
@@ -87,7 +83,14 @@ export default function ContentPanel() {
     let current = true
     contentApi
       .version(viewId)
-      .then((r) => current && setLoaded(r))
+      .then((r) => {
+        if (!current) return
+        setLoaded(r)
+        if (fromNav.current) {
+          fromNav.current = false
+          if (r.version.status === 'draft' && perms.edit) setView({ kind: 'edit', id: r.version.id })
+        }
+      })
       .catch((e) => {
         if (!current) return
         toast.add({ title: contentErrorText(e, t), type: 'danger' })
@@ -95,7 +98,7 @@ export default function ContentPanel() {
       })
     return () => {
       current = false
-    }
+  }, [viewId, t, perms.edit])
   }, [viewId, t])
 
   const changeFilter = (f: StatusFilter) => {
@@ -199,6 +202,9 @@ export default function ContentPanel() {
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => startNaming('empty')}>
                 {t('admin.content.versions.newEmpty')}
               </Button>
+              <Button size="sm" variant="secondary" disabled={busy} onClick={() => setImporting(true)}>
+                {t('adminJson.import.button')}
+              </Button>
             </>
           )
         }
@@ -250,6 +256,17 @@ export default function ContentPanel() {
 
       <RollbackTarget target={rollback} onClose={() => setRollback(null)} onDone={() => void reload()} />
       <UnscheduleTarget target={unscheduling} onClose={() => setUnscheduling(null)} onDone={() => void reload()} />
+
+      <ContentImportDialog
+        open={importing}
+        onOpenChange={setImporting}
+        live={live}
+        onCreated={(r) => {
+          setLoaded(r)
+          void reload()
+          setView({ kind: 'edit', id: r.version.id })
+        }}
+      />
 
       <Dialog
         open={removing !== null}
