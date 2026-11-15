@@ -159,7 +159,8 @@ function BagCard({ entry: e }: { entry: BagEntry }) {
           </span>
         </div>
         <p className="text-sm text-mist-300 [overflow-wrap:anywhere]">{e.description}</p>
-        {e.category !== 'ball' && e.category !== 'event' && e.category !== 'other' && <Users entry={e} />}
+        {/* Candies show only their description: the list of Pokémon of that line looked cluttered (user feedback). */}
+        {e.category !== 'ball' && e.category !== 'event' && e.category !== 'other' && e.category !== 'candy' && <Users entry={e} />}
       </div>
     </article>
   )
