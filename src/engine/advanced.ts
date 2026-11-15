@@ -13,7 +13,12 @@ import { equippableMoves, isUsableMove } from './moves'
 import { err, ok, type OwnedPokemon, type PlayerState, type Result } from './state'
 import { effectiveNature, maxEnergyOf, STAT_KEYS } from './stats'
 
-/** Item slugs. Mints are `<nature>-mint` (real PokeAPI slugs, one per target nature). */
+/**
+ * Item slugs. Mission rewards give the `choice-mint` ("Mint of your choice": the player picks the target nature
+ * when using it). The 21 `<nature>-mint` items (real PokeAPI slugs, one per target nature) still work for anyone
+ * who already owns one.
+ */
+export const CHOICE_MINT = 'choice-mint'
 export const TERA_SHARD = 'tera-shard'
 export const TECHNICAL_MACHINE = 'technical-machine'
 export const BOTTLE_CAP = 'bottle-cap'
@@ -56,6 +61,20 @@ export function isUnlocked(state: Pick<PlayerState, 'trainer'>, kind: AdvancedUn
 /** The mint item that sets `nature`'s effect. */
 export function mintItem(nature: string): string {
   return `${nature}-mint`
+}
+
+/** Any mint item: the choice mint or the mint of a known nature. */
+export function isMintItem(slug: string, ctx: EngineContext = defaultContext()): boolean {
+  return slug === CHOICE_MINT || mintNatureOf(slug, ctx) !== null
+}
+
+/**
+ * The mint item `useMint` would spend to set `nature`: the specific `<nature>-mint` if the player has one (legacy
+ * stock first), else a `choice-mint`; null when they have neither.
+ */
+export function mintSourceFor(state: Pick<PlayerState, 'inventory'>, nature: string): string | null {
+  if ((state.inventory[mintItem(nature)] ?? 0) > 0) return mintItem(nature)
+  return (state.inventory[CHOICE_MINT] ?? 0) > 0 ? CHOICE_MINT : null
 }
 
 /** Target nature of a mint item slug, or null if it is not a mint of a known nature. */
@@ -149,8 +168,9 @@ export function useTm(state: PlayerState, uid: string, move: string, ctx: Engine
 }
 
 /**
- * Use the mint of `nature` (GDD §6.2): its stats follow that nature's effect; the original nature is kept
- * (and shown). The mint of the original nature removes the change.
+ * Use a mint to set `nature` (GDD §6.2): its stats follow that nature's effect; the original nature is kept
+ * (and shown). Setting the original nature removes the change. It spends the `<nature>-mint` if the player owns
+ * one, otherwise a `choice-mint` (the player picks the nature when using it).
  */
 export function useMint(state: PlayerState, uid: string, nature: string, ctx: EngineContext = defaultContext()): Result<PlayerState, AdvancedError> {
   const t = target(state, uid)
@@ -159,10 +179,11 @@ export function useMint(state: PlayerState, uid: string, nature: string, ctx: En
   if (!isUnlocked(state, 'mint', ctx)) return err('trainer_level_too_low')
   if (!ctx.naturesBySlug.has(nature)) return err('invalid_nature')
   if (!mintChoices(p, ctx).includes(nature)) return err('same_nature')
-  if (!has(state, mintItem(nature))) return err('no_item')
+  const item = mintSourceFor(state, nature)
+  if (!item) return err('no_item')
   const { mintNature: _old, ...rest } = p
   const next: OwnedPokemon = nature === p.nature ? rest : { ...rest, mintNature: nature }
-  return ok(spend(state, mintItem(nature), 1, uid, next))
+  return ok(spend(state, item, 1, uid, next))
 }
 
 /** Bottle Cap (GDD §6.1): raise one IV below the max to `ivMax`. A higher HP IV also fills the extra Energy. */

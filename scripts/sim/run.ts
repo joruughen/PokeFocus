@@ -127,6 +127,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
       seen: state.pokedex.seen.length,
       cap: levelCap(state, ctx),
       trainerLevel: state.trainer.level,
+      teraShards: state.inventory['tera-shard'] ?? 0,
       dust: state.dust,
       cumPoints,
       cumMinutes,

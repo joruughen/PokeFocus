@@ -8,6 +8,10 @@
       "names": { "es": "Teralito", "en": "Tera Shard" },
       "description": { "es": "Teracristaliza a un Pokémon: fija un tipo para sus condiciones durante un tiempo.", "en": "Terastallizes a Pokémon: sets one type for its conditions for a while." }
     },
+    "choice-mint": {
+      "names": { "es": "Menta a elegir", "en": "Choice Mint" },
+      "description": { "es": "Cambia el efecto de la naturaleza de un Pokémon por la que tú elijas al usarla. Se gasta al usarla.", "en": "Changes a Pokémon's nature effect to the one you pick when you use it. Used up when used." }
+    },
     "technical-machine": {
       "names": { "es": "MT", "en": "TM" },
       "description": { "es": "Enseña a un Pokémon una técnica de MT compatible con su especie. Se gasta al usarla.", "en": "Teaches a Pokémon a TM technique its species can learn. Used up when used." }
@@ -124,7 +128,7 @@
       "description": { "es": "Estudia {n} días distintos esta semana", "en": "Study on {n} different days this week" },
       "rewards": [
         { "minTrainerLevel": 1, "items": { "ultra-ball": 1, "great-ball": 1 } },
-        { "minTrainerLevel": 20, "items": { "ultra-ball": 1, "great-ball": 1, "tera-shard": 1 } }
+        { "minTrainerLevel": 15, "items": { "ultra-ball": 1, "great-ball": 1, "tera-shard": 1 } }
       ]
     },
     {
@@ -135,7 +139,10 @@
       "weight": 2,
       "title": { "es": "Repertorio", "en": "Repertoire" },
       "description": { "es": "Activa {n} técnicas esta semana", "en": "Activate {n} techniques this week" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "ultra-ball": 1, "tera-shard": 1 } }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "ultra-ball": 1 } },
+        { "minTrainerLevel": 15, "items": { "ultra-ball": 1, "tera-shard": 1 } }
+      ]
     },
     {
       "id": "weekly-minutes",
@@ -161,7 +168,7 @@
       "description": { "es": "Haz {n} sesiones de al menos {minutes} minutos", "en": "Finish {n} sessions of at least {minutes} minutes" },
       "rewards": [
         { "minTrainerLevel": 1, "items": { "ultra-ball": 1, "hyper-potion": 1 } },
-        { "minTrainerLevel": 10, "items": { "ultra-ball": 1, "hyper-potion": 1 }, "randomItem": { "pool": ["lonely-mint", "adamant-mint", "naughty-mint", "brave-mint", "bold-mint", "impish-mint", "lax-mint", "relaxed-mint", "modest-mint", "mild-mint", "rash-mint", "quiet-mint", "calm-mint", "gentle-mint", "careful-mint", "sassy-mint", "timid-mint", "hasty-mint", "jolly-mint", "naive-mint", "serious-mint"], "count": 1 } }
+        { "minTrainerLevel": 10, "items": { "ultra-ball": 1, "hyper-potion": 1, "choice-mint": 1 } }
       ]
     },
     {
@@ -174,8 +181,8 @@
       "description": { "es": "Captura {n} Pokémon esta semana", "en": "Catch {n} Pokémon this week" },
       "rewards": [
         { "minTrainerLevel": 1, "items": { "great-ball": 3 }, "dust": 200 },
-        { "minTrainerLevel": 10, "items": { "great-ball": 3 }, "dust": 200, "randomItem": { "pool": ["lonely-mint", "adamant-mint", "naughty-mint", "brave-mint", "bold-mint", "impish-mint", "lax-mint", "relaxed-mint", "modest-mint", "mild-mint", "rash-mint", "quiet-mint", "calm-mint", "gentle-mint", "careful-mint", "sassy-mint", "timid-mint", "hasty-mint", "jolly-mint", "naive-mint", "serious-mint"], "count": 1 } },
-        { "minTrainerLevel": 15, "items": { "great-ball": 3, "technical-machine": 1 }, "dust": 200, "randomItem": { "pool": ["lonely-mint", "adamant-mint", "naughty-mint", "brave-mint", "bold-mint", "impish-mint", "lax-mint", "relaxed-mint", "modest-mint", "mild-mint", "rash-mint", "quiet-mint", "calm-mint", "gentle-mint", "careful-mint", "sassy-mint", "timid-mint", "hasty-mint", "jolly-mint", "naive-mint", "serious-mint"], "count": 1 } }
+        { "minTrainerLevel": 10, "items": { "great-ball": 3, "choice-mint": 1 }, "dust": 200 },
+        { "minTrainerLevel": 15, "items": { "great-ball": 3, "technical-machine": 1, "choice-mint": 1 }, "dust": 200 }
       ]
     },
     {
@@ -187,7 +194,10 @@
       "minTrainerLevel": 3,
       "title": { "es": "Metamorfosis", "en": "Metamorphosis" },
       "description": { "es": "Evoluciona {n} Pokémon", "en": "Evolve {n} Pokémon" },
-      "rewards": [{ "minTrainerLevel": 1, "items": { "tera-shard": 2 }, "dust": 250 }]
+      "rewards": [
+        { "minTrainerLevel": 1, "items": { "great-ball": 2 }, "dust": 250 },
+        { "minTrainerLevel": 15, "items": { "tera-shard": 2 }, "dust": 250 }
+      ]
     }
   ],
   "pokedex": [

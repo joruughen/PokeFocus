@@ -89,6 +89,8 @@ export interface DayRec {
   seen: number
   cap: number
   trainerLevel: number
+  /** Tera Shards held at the end of the day (F4 economy check). */
+  teraShards: number
   dust: number
   cumPoints: number
   cumMinutes: number

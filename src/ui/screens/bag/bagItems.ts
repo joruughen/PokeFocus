@@ -8,9 +8,11 @@ import {
   ABILITY_CAPSULE,
   BOTTLE_CAP,
   bottleCapStats,
+  CHOICE_MINT,
   effectiveNature,
   energyAt,
   evolutionOptions,
+  isMintItem,
   isUnlocked,
   maxEnergyOf,
   mintNatureOf,
@@ -28,7 +30,7 @@ import {
 import { fmtPct } from '../../lib/format'
 import { itemName, natureName, pick, pokemonName, speciesName, typeName } from '../../lib/names'
 import { lineRoot } from '../shared/EvoLine'
-import { roleNatureFit } from '../box/roleNature'
+import { ROLE_STAT, roleNatureFit } from '../box/roleNature'
 
 export type BagCategory = 'ball' | 'heal' | 'evolution' | 'candy' | 'training' | 'event' | 'other'
 
@@ -75,7 +77,7 @@ export function trainingKind(slug: string, ctx: EngineContext): TrainingKind | n
   if (slug === TECHNICAL_MACHINE) return 'tm'
   if (slug === BOTTLE_CAP) return 'bottleCap'
   if (slug === ABILITY_CAPSULE) return 'abilityCapsule'
-  return mintNatureOf(slug, ctx) ? 'mint' : null
+  return isMintItem(slug, ctx) ? 'mint' : null
 }
 
 /** Translator shape of `i18next.t` that the builder needs. */
@@ -165,7 +167,14 @@ function trainingUsers(player: PlayerState, slug: string, ctx: EngineContext, ln
   else if (kind === 'tm') list = mons.filter((p) => tmCandidates(p, ctx).length > 0)
   else if (kind === 'bottleCap') list = team.filter((p) => bottleCapStats(p, ctx).length > 0)
   else if (kind === 'abilityCapsule') list = mons.filter((p) => abilityCapsuleChoices(p, ctx).length > 0)
-  else if (kind === 'mint') {
+  else if (slug === CHOICE_MINT) {
+    // Any nature can be picked: those whose role stat is not yet raised by their effect (and that a nature could raise).
+    list = mons.filter((p) => {
+      const role = ctx.speciesBySlug.get(p.speciesSlug)?.role
+      const stat = role ? ROLE_STAT[role] : null
+      return Boolean(stat) && stat !== 'hp' && roleNatureFit(role, ctx.naturesBySlug.get(effectiveNature(p)))?.kind !== 'with'
+    })
+  } else if (kind === 'mint') {
     const target = ctx.naturesBySlug.get(mintNatureOf(slug, ctx) ?? '')
     list = mons.filter((p) => {
       const role = ctx.speciesBySlug.get(p.speciesSlug)?.role
@@ -190,6 +199,7 @@ function trainingDescription(slug: string, ctx: EngineContext, lng: LocaleCode, 
     case 'abilityCapsule':
       return text('bag.desc.abilityCapsule')
     case 'mint': {
+      if (slug === CHOICE_MINT) return text('bag.desc.choiceMint')
       const n = ctx.naturesBySlug.get(mintNatureOf(slug, ctx) ?? '')
       const effect =
         n?.increased && n.decreased ? `+${text(`stats.${n.increased}.name`)} −${text(`stats.${n.decreased}.name`)}` : text('bag.desc.mintNeutral')
@@ -241,7 +251,7 @@ export function buildBagEntries(player: PlayerState, ctx: EngineContext, lng: Lo
       description: itemDescription(slug, category, ctx, lng, text),
       count,
       users: locked ? [] : itemUsers(player, slug, category, ctx, lng, now),
-      ...(training && { usersKey: training }),
+      ...(training && { usersKey: slug === CHOICE_MINT ? 'choiceMint' : training }),
       ...(locked !== undefined && { lockedLevel: locked }),
     })
   }

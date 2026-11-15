@@ -3,9 +3,12 @@ import {
   abilityCapsuleChoices,
   activeTera,
   bottleCapStats,
+  CHOICE_MINT,
+  isMintItem,
   mintChoices,
   mintItem,
   mintNatureOf,
+  mintSourceFor,
   teraChoices,
   tmCandidates,
   unlockLevel,
@@ -179,6 +182,52 @@ describe('useMint', () => {
     expect(mintItem('modest')).toBe('modest-mint')
     expect(mintNatureOf('modest-mint', ctx)).toBe('modest')
     expect(mintNatureOf('bottle-cap', ctx)).toBeNull()
+  })
+})
+
+describe('useMint with the choice mint', () => {
+  const mon = () => makeMon('pikachu', 30, { uid: 'a', nature: 'hardy' })
+
+  it('sets the chosen nature and spends one choice mint', () => {
+    const s = okState(useMint(player([mon()], 10, { [CHOICE_MINT]: 2 }), 'a', 'timid', ctx))
+    expect(s.pokemon.a!.nature).toBe('hardy')
+    expect(s.pokemon.a!.mintNature).toBe('timid')
+    expect(s.inventory[CHOICE_MINT]).toBe(1)
+    expect(computeStats(s.pokemon.a!, ctx).speed).toBeGreaterThan(computeStats(mon(), ctx).speed)
+  })
+
+  it('choosing the original nature through the choice mint removes the change', () => {
+    const p = { ...mon(), nature: 'jolly', mintNature: 'modest' }
+    const s = okState(useMint(player([p], 10, { [CHOICE_MINT]: 1 }), 'a', 'jolly', ctx))
+    expect('mintNature' in s.pokemon.a!).toBe(false)
+    expect(s.inventory[CHOICE_MINT]).toBe(0)
+  })
+
+  it('spends the specific mint of that nature before the choice mint (legacy stock keeps working)', () => {
+    const s = okState(useMint(player([mon()], 10, { 'modest-mint': 1, [CHOICE_MINT]: 1 }), 'a', 'modest', ctx))
+    expect(s.inventory['modest-mint']).toBe(0)
+    expect(s.inventory[CHOICE_MINT]).toBe(1)
+    const other = okState(useMint(player([mon()], 10, { 'modest-mint': 1, [CHOICE_MINT]: 1 }), 'a', 'jolly', ctx))
+    expect(other.inventory['modest-mint']).toBe(1)
+    expect(other.inventory[CHOICE_MINT]).toBe(0)
+  })
+
+  it('refuses: locked level, unknown nature, same effect, no mint, member of a session', () => {
+    expect(useMint(player([mon()], 9, { [CHOICE_MINT]: 1 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'trainer_level_too_low' })
+    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 1 }), 'a', 'x', ctx)).toEqual({ ok: false, error: 'invalid_nature' })
+    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 1 }), 'a', 'serious', ctx)).toEqual({ ok: false, error: 'same_nature' })
+    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 0 }), 'a', 'modest', ctx)).toEqual({ ok: false, error: 'no_item' })
+    expect(useMint(player([mon()], 10, { [CHOICE_MINT]: 1 }), 'zz', 'modest', ctx)).toEqual({ ok: false, error: 'unknown_pokemon' })
+  })
+
+  it('helpers: isMintItem, mintSourceFor and the choice mint has no fixed nature', () => {
+    expect(isMintItem(CHOICE_MINT, ctx)).toBe(true)
+    expect(isMintItem('adamant-mint', ctx)).toBe(true)
+    expect(isMintItem('bottle-cap', ctx)).toBe(false)
+    expect(mintNatureOf(CHOICE_MINT, ctx)).toBeNull()
+    expect(mintSourceFor({ inventory: {} }, 'modest')).toBeNull()
+    expect(mintSourceFor({ inventory: { [CHOICE_MINT]: 1 } }, 'modest')).toBe(CHOICE_MINT)
+    expect(mintSourceFor({ inventory: { 'modest-mint': 1, [CHOICE_MINT]: 1 } }, 'modest')).toBe('modest-mint')
   })
 })
 

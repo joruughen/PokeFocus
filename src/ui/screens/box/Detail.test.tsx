@@ -108,6 +108,17 @@ describe('Detail: advanced items (F4)', () => {
       expect(html).not.toContain(i18n.t('training.lockedAt', { level: 20 }))
     })
 
+    it(`offers the Choice Mint on the sheet and counts it as a mint, without raw keys (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      loadAdvanced(30)
+      const player = useGame.getInitialState().player!
+      Object.assign(useGame.getInitialState(), { player: { ...player, inventory: { ...player.inventory, 'modest-mint': 0, 'choice-mint': 3 } } })
+      const html = render()
+      expect(html).not.toMatch(/training\.|bag\.|errors\./)
+      expect(html).toContain(i18n.t('training.mint.choiceOwned', { count: 3 }))
+      expect(html).toContain('/sprites/items/choice-mint.svg')
+    })
+
     it(`shows the trainer level each item needs while locked (${lng})`, async () => {
       await i18n.changeLanguage(lng)
       loadAdvanced(1)
