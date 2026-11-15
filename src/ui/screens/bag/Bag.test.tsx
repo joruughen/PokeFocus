@@ -28,7 +28,7 @@ describe('Bag page', () => {
       for (const c of ['all', 'ball', 'heal', 'evolution', 'candy', 'training']) expect(html).toContain(i18n.t(`bag.cat.${c}`).replace('&', '&amp;'))
       // Advanced items are locked at trainer level 1: real description + the unlock level, no "no use yet".
       expect(html).toContain(i18n.t('bag.lockedAt', { level: 20 }))
-      expect(html).toContain(i18n.t('bag.lockedAt', { level: 25 }))
+      expect(html).toContain(i18n.t('bag.lockedAt', { level: 40 }))
       expect(html).not.toContain(i18n.t('bag.desc.other'))
       expect(html).toContain(i18n.t('bag.search'))
       expect(html).toContain(lng === 'es' ? 'Piedra Lunar' : 'Moon Stone')

@@ -20,10 +20,10 @@ const weeks = Number(arg('weeks', '12'))
 const seeds = Number(arg('seeds', '2'))
 const profiles = (arg('profile', 'all') === 'all' ? PROFILE_IDS : arg('profile', '').split(',')) as ProfileId[]
 const ctx = defaultContext()
-const UNLOCKS = [10, 20, 25, 30]
+const UNLOCKS = [15, 20, 25, 30, 40]
 
 const rows: string[] = []
-rows.push(`| Perfil | Nivel entr. final | Semana nv 10 / 20 / 25 / 30 | Teralitos al nv 20 | Teralitos | MT | Mentas | Chapas | Cápsulas |`)
+rows.push(`| Perfil | Nivel entr. final | Semana nv 15 / 20 / 25 / 30 / 40 | Teralitos al nv 20 | Teralitos | MT | Mentas | Chapas | Cápsulas |`)
 rows.push('|---|---|---|---|---|---|---|---|---|')
 for (const profile of profiles) {
   const acc = { level: 0, tera: 0, teraAt20: [] as number[], tm: 0, mint: 0, cap: 0, capsule: 0, reach: UNLOCKS.map(() => [] as number[]) }

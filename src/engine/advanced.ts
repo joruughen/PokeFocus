@@ -24,9 +24,9 @@ export const TECHNICAL_MACHINE = 'technical-machine'
 export const BOTTLE_CAP = 'bottle-cap'
 export const ABILITY_CAPSULE = 'ability-capsule'
 
-/** The advanced uses that a trainer level unlocks (TMs have no lock). */
-export type AdvancedUnlock = 'tera' | 'mint' | 'bottleCap' | 'abilityCapsule'
-export const ADVANCED_UNLOCKS: readonly AdvancedUnlock[] = ['mint', 'tera', 'bottleCap', 'abilityCapsule']
+/** The advanced uses that a trainer level unlocks. */
+export type AdvancedUnlock = 'tm' | 'tera' | 'mint' | 'bottleCap' | 'abilityCapsule'
+export const ADVANCED_UNLOCKS: readonly AdvancedUnlock[] = ['tm', 'tera', 'mint', 'bottleCap', 'abilityCapsule']
 
 export type AdvancedError =
   | 'unknown_pokemon'
@@ -159,6 +159,7 @@ export function useTm(state: PlayerState, uid: string, move: string, ctx: Engine
   const t = target(state, uid)
   if (!t.ok) return t
   const p = t.value
+  if (!isUnlocked(state, 'tm', ctx)) return err('trainer_level_too_low')
   if (!tmCandidates(p, ctx).includes(move)) {
     return err(equippableMoves(p, ctx).includes(move) ? 'move_already_known' : 'move_not_compatible')
   }

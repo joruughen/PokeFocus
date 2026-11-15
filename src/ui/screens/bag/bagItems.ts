@@ -184,7 +184,7 @@ function trainingUsers(player: PlayerState, slug: string, ctx: EngineContext, ln
   return sortUsers(list.map((p) => userOf(p, lng, true)), lng)
 }
 
-const UNLOCK_OF: Partial<Record<TrainingKind, AdvancedUnlock>> = { tera: 'tera', mint: 'mint', bottleCap: 'bottleCap', abilityCapsule: 'abilityCapsule' }
+const UNLOCK_OF: Partial<Record<TrainingKind, AdvancedUnlock>> = { tera: 'tera', tm: 'tm', mint: 'mint', bottleCap: 'bottleCap', abilityCapsule: 'abilityCapsule' }
 
 function trainingDescription(slug: string, ctx: EngineContext, lng: LocaleCode, text: BagText): string {
   const kind = trainingKind(slug, ctx)

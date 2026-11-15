@@ -419,6 +419,26 @@ describe('validateEventOverlay', () => {
     expect(validateEventOverlay(event({ endsAt: Date.UTC(2027, 5, 1) }), NO_SMOKE).ok).toBe(false)
   })
 
+  it('Bottle Caps are event-only: an event can drop them and give them as a mission reward', () => {
+    const ev = event({
+      drops: [{ item: 'bottle-cap', perWaveChance: 0.05, max: 1 }],
+      missions: [
+        {
+          id: 'ev-cap',
+          period: 'event',
+          kind: 'sessions',
+          target: 3,
+          title: { es: 'Chapa', en: 'Cap' },
+          description: { es: 'Haz {n} sesiones', en: 'Do {n} sessions' },
+          rewards: [{ minTrainerLevel: 1, items: { 'bottle-cap': 1 } }],
+        },
+      ],
+    })
+    const r = validateEventOverlay(ev, NO_SMOKE)
+    expect(r.errors).toEqual([])
+    expect(r.ok).toBe(true)
+  })
+
   it('references: species, drops and event items', () => {
     expect(codes(validateEventOverlay(event({ featured: [{ species: 'missingno', weightMult: 2 }] }), NO_SMOKE))).toContain('unknown_species')
     expect(codes(validateEventOverlay(event({ drops: [{ item: 'golden-banana', perWaveChance: 0.2, max: 3 }] }), NO_SMOKE))).toContain('unknown_item')

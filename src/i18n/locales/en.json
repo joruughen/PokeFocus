@@ -3151,6 +3151,9 @@
         "fairy": "Fairy condition multiplier"
       },
       "advanced": {
+        "tm": {
+          "minTrainerLevel": "TMs: trainer level to use them"
+        },
         "mint": {
           "minTrainerLevel": "Mints: trainer level to use them"
         },

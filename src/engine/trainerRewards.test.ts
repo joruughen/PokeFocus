@@ -11,10 +11,10 @@ import { rollWild } from './waves'
 const ctx = defaultContext()
 
 describe('trainer level rewards', () => {
-  it('each level gives 50 + 10·L Dust and 3 Poké Balls; every 5th adds 3 Great Balls and a Potion; every 10th 2 Ultra Balls', () => {
+  it('each level gives 50 + 10·L Dust and 3 Poké Balls; every 5th adds 3 Great Balls, 1 Ultra Ball and a Potion; every 10th 2 more Ultra Balls', () => {
     expect(trainerLevelRewards(1, 2, ctx)).toEqual({ dust: 70, items: { 'poke-ball': 3 } })
-    expect(trainerLevelRewards(4, 5, ctx)).toEqual({ dust: 100, items: { 'poke-ball': 3, 'great-ball': 3, potion: 1 } })
-    expect(trainerLevelRewards(9, 10, ctx)).toEqual({ dust: 150, items: { 'poke-ball': 3, 'great-ball': 3, potion: 1, 'ultra-ball': 2 } })
+    expect(trainerLevelRewards(4, 5, ctx)).toEqual({ dust: 100, items: { 'poke-ball': 3, 'great-ball': 3, 'ultra-ball': 1, potion: 1 } })
+    expect(trainerLevelRewards(9, 10, ctx)).toEqual({ dust: 150, items: { 'poke-ball': 3, 'great-ball': 3, potion: 1, 'ultra-ball': 3 } })
   })
 
   it('sums the levels from+1..to, nothing for no climb, capped at trainer.maxLevel', () => {
@@ -22,7 +22,7 @@ describe('trainer level rewards', () => {
     let dust = 0
     for (let l = 4; l <= 11; l++) dust += 50 + 10 * l
     expect(r.dust).toBe(dust)
-    expect(r.items).toEqual({ 'poke-ball': 24, 'great-ball': 6, potion: 2, 'ultra-ball': 2 })
+    expect(r.items).toEqual({ 'poke-ball': 24, 'great-ball': 6, potion: 2, 'ultra-ball': 4 })
     expect(trainerLevelRewards(5, 5, ctx)).toEqual({ dust: 0, items: {} })
     expect(trainerLevelRewards(7, 3, ctx)).toEqual({ dust: 0, items: {} })
     const max = ctx.config.trainer.maxLevel
@@ -47,7 +47,7 @@ describe('trainer level rewards', () => {
     expect(g.dust).toBe(10 + 100 + 110)
     expect(g.inventory['poke-ball']).toBe(1 + 6)
     expect(g.inventory['great-ball']).toBe(3)
-    expect(g.pendingLevelUps).toEqual([{ from: 4, to: 6, items: { 'poke-ball': 6, 'great-ball': 3, potion: 1 }, dust: 100 + 110, at: 123 }])
+    expect(g.pendingLevelUps).toEqual([{ from: 4, to: 6, items: { 'poke-ball': 6, 'great-ball': 3, 'ultra-ball': 1, potion: 1 }, dust: 100 + 110, at: 123 }])
     expect(grantTrainerLevelUp(g, 6, 6, 5, ctx)).toBe(g)
     expect(grantTrainerLevelUp(g, 6, 7, 200, ctx).pendingLevelUps).toHaveLength(2)
   })

@@ -94,7 +94,7 @@ describe('Detail: advanced items (F4)', () => {
   for (const lng of ['es', 'en'] as const) {
     it(`shows the five items, the active Tera and the mint effect, without raw keys (${lng})`, async () => {
       await i18n.changeLanguage(lng)
-      loadAdvanced(30)
+      loadAdvanced(40)
       const html = render()
       expect(html).not.toMatch(/training\.|bag\.|errors\./)
       for (const k of ['tera', 'tm', 'mint', 'bottleCap', 'abilityCapsule']) expect(html).toContain(i18n.t(`training.${k}.name`))
@@ -110,7 +110,7 @@ describe('Detail: advanced items (F4)', () => {
 
     it(`offers the Choice Mint on the sheet and counts it as a mint, without raw keys (${lng})`, async () => {
       await i18n.changeLanguage(lng)
-      loadAdvanced(30)
+      loadAdvanced(40)
       const player = useGame.getInitialState().player!
       Object.assign(useGame.getInitialState(), { player: { ...player, inventory: { ...player.inventory, 'modest-mint': 0, 'choice-mint': 3 } } })
       const html = render()
@@ -123,7 +123,7 @@ describe('Detail: advanced items (F4)', () => {
       await i18n.changeLanguage(lng)
       loadAdvanced(1)
       const html = render()
-      for (const level of [10, 20, 25, 30]) expect(html).toContain(i18n.t('training.lockedAt', { level }))
+      for (const level of [15, 20, 25, 30, 40]) expect(html).toContain(i18n.t('training.lockedAt', { level }))
     })
   }
 })

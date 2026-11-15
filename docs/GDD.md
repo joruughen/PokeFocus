@@ -307,7 +307,7 @@ Cada Pokémon capturado es **único**. No existen "duplicados" idénticos.
 
 - De 0 a 31 en cada una de las 6 estadísticas, al azar al capturar.
 - Los legendarios y míticos tienen garantizados **3 IVs en 31**.
-- Las **Chapas** (objeto avanzado, `bottle-cap`, nivel de entrenador 25) suben **un IV elegido** a 31 (`ivMax`). No sirven en un IV que ya está en 31. Si el IV es el de PS, la Energía máxima sube y la actual sube lo mismo. La ficha marca los IVs subidos con Chapa. **No hay Chapa de Oro** (todos los IVs a la vez): no está en los datos de PokeAPI que importamos y, con una Chapa por IV, el objeto sigue siendo raro.
+- Las **Chapas** (objeto avanzado, `bottle-cap`, nivel de entrenador 40; **solo se consiguen en eventos**, §12.7) suben **un IV elegido** a 31 (`ivMax`). No sirven en un IV que ya está en 31. Si el IV es el de PS, la Energía máxima sube y la actual sube lo mismo. La ficha marca los IVs subidos con Chapa. **No hay Chapa de Oro** (todos los IVs a la vez): no está en los datos de PokeAPI que importamos y, con una Chapa por IV, el objeto sigue siendo raro.
 
 **Rangos resultantes.** La estadística final de un individuo = base de la especie + IV + nivel + naturaleza (§5.1). Ejemplo con Bulbasaur al nivel 50:
 
@@ -346,7 +346,7 @@ Cada naturaleza sube una estadística un 10% y baja otra un 10%. Con los roles d
 | Grosera | DefEsp | Vel | Más técnicas, menos acciones |
 | Cauta | DefEsp | AtEsp | Más técnicas, menos puntos |
 
-Las **Mentas** (objeto avanzado, nivel de entrenador 10) cambian el efecto de la naturaleza. Las misiones dan la **Menta a elegir** (`choice-mint`, decidido en F4): al usarla en la ficha, el jugador elige la naturaleza objetivo en el diálogo, que muestra el efecto de cada una (y cuáles van con el rol del Pokémon). Las 21 mentas concretas de PokeAPI (`<naturaleza>-mint`) siguen funcionando para quien ya tenga alguna: al usar una naturaleza se gasta antes la menta concreta de esa naturaleza, si hay, y si no una Menta a elegir. Elegir la Modesta hace que las estadísticas suban y bajen como una Modesta. La **naturaleza original se conserva** y se muestra («Fuerte, por menta (Modesta)»); Sincronía sigue usando la original. Elegir la naturaleza original quita el cambio. No se puede usar una menta que no cambie nada (mismo efecto que el actual, por ejemplo dos neutras). La PS no cambia nunca (las naturalezas no la tocan).
+Las **Mentas** (objeto avanzado, nivel de entrenador 25) cambian el efecto de la naturaleza. Las misiones dan la **Menta a elegir** (`choice-mint`, decidido en F4): al usarla en la ficha, el jugador elige la naturaleza objetivo en el diálogo, que muestra el efecto de cada una (y cuáles van con el rol del Pokémon). Las 21 mentas concretas de PokeAPI (`<naturaleza>-mint`) siguen funcionando para quien ya tenga alguna: al usar una naturaleza se gasta antes la menta concreta de esa naturaleza, si hay, y si no una Menta a elegir. Elegir la Modesta hace que las estadísticas suban y bajen como una Modesta. La **naturaleza original se conserva** y se muestra («Fuerte, por menta (Modesta)»); Sincronía sigue usando la original. Elegir la naturaleza original quita el cambio. No se puede usar una menta que no cambie nada (mismo efecto que el actual, por ejemplo dos neutras). La PS no cambia nunca (las naturalezas no la tocan).
 
 ### 6.3 Habilidades
 
@@ -386,7 +386,7 @@ La **Cápsula Habilidad** (objeto avanzado, nivel de entrenador 30) cambia a **o
 | 50+ | 4 |
 
 - Cualquier técnica (de daño, pasiva o activable) ocupa un hueco. Si el Pokémon **no lleva ninguna técnica de daño**, sus acciones generan Energía de tipo Normal al 50%. Al principio hay una decisión real: ¿equipar el ataque para capturar o la técnica para potenciar la sesión?
-- Las **MT** (drops raros, objeto genérico `technical-machine`) enseñan una técnica de MT compatible con la especie: cualquiera de su learnset `machine` de PokeAPI que exista en PokeFocus y que aún no pueda equipar. Se gasta la MT; la técnica queda aprendida para siempre y equipable al momento (si era una técnica extra todavía bloqueada por nivel, la MT la desbloquea antes). No tiene bloqueo por nivel de entrenador. Al evolucionar se conserva, como el resto de técnicas aprendidas.
+- Las **MT** (drops raros y misiones desde el nivel de entrenador 15, que es cuando se desbloquean; objeto genérico `technical-machine`) enseñan una técnica de MT compatible con la especie: cualquiera de su learnset `machine` de PokeAPI que exista en PokeFocus y que aún no pueda equipar. Se gasta la MT; la técnica queda aprendida para siempre y equipable al momento (si era una técnica extra todavía bloqueada por nivel, la MT la desbloquea antes). No tiene bloqueo por nivel de entrenador. Al evolucionar se conserva, como el resto de técnicas aprendidas.
 
 ### 7.1 Tipos de efecto
 
@@ -755,15 +755,15 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 | Nivel | Desbloqueo |
 |---|---|
 | 5 | Super Balls en misiones diarias |
-| 10 | Mentas |
-| 15 | Equipos guardados (3 configuraciones) |
+| 15 | Equipos guardados (3 configuraciones) · MT |
 | 20 | Teracristalización |
-| 25 | Chapas |
+| 25 | Mentas |
 | 30 | Cápsula Habilidad |
+| 40 | Chapas |
 
-Los niveles de las Mentas, la Teracristalización, las Chapas y la Cápsula están en `advanced.<objeto>.minTrainerLevel` (editables en el panel de administración). Al llegar al nivel que los desbloquea se regalan, con el premio de ese nivel, **2 Teralitos** (nivel 20), **1 Chapa** (25) y **1 Cápsula Habilidad** (30) (`unlockGift`). Por debajo del nivel, los objetos se pueden tener pero no usar: la Mochila y la ficha dicen a qué nivel se desbloquean.
+Los niveles de las MT (15), la Teracristalización (20), las Mentas (25), la Cápsula (30) y las Chapas (40) están en `advanced.<objeto>.minTrainerLevel` (editables en el panel de administración; decididos el 2026-11-15). Al llegar al nivel que los desbloquea se regalan, con el premio de ese nivel, **2 Teralitos** (nivel 20) y **1 Cápsula Habilidad** (30) (`unlockGift`); las MT y las Mentas no tienen regalo y **las Chapas tampoco** (`unlockGift` 0): **solo se consiguen en eventos** (drops y misiones de evento; ninguna misión común ni premio de nivel las da). Por debajo del nivel, los objetos se pueden tener pero no usar: la Mochila y la ficha dicen a qué nivel se desbloquean.
 
-**Recompensa por subir de nivel.** Cada nivel de entrenador alcanzado da **Polvo** (`50 + 10 · nivel`) y **3 Poké Balls**; cada **5** niveles además **3 Super Balls y 1 Poción**, y cada **10** además **2 Ultra Balls** (`trainer.levelRewards`, editable desde el panel de administración). Si un solo estudio o una captura sube varios niveles, se pagan todos (suma de los niveles intermedios); el tope es `trainer.maxLevel`. Las vías que suben el nivel son dos: los minutos de una sesión (al reclamarla) y la **especie nueva** capturada. El premio se ingresa al instante y, cuando el jugador está tranquilo (nunca en sesión, oleadas o descanso, ni encima de pistas, «¿Qué hay de nuevo?» o la ventana de un evento), sale una ventana **«¡Felicidades!»** con la mascota, el nivel alcanzado (o «del N al M» si fueron varios, en una sola ventana), los objetos con su imagen y el Polvo; el botón «¡Genial!» la cierra. En Resultados, la línea de subida de nivel también cuenta el premio. No cambia el azar de ninguna sesión ni captura (solo suma inventario y Polvo).
+**Recompensa por subir de nivel.** Cada nivel de entrenador alcanzado da **Polvo** (`50 + 10 · nivel`) y **3 Poké Balls**; cada **5** niveles además **3 Super Balls, 1 Ultra Ball y 1 Poción**, y cada **10** además **2 Ultra Balls más** (3 en total en los múltiplos de 10; al quitar las Ultra de las misiones semanales se duplicó lo de los niveles, ver `docs/balance-report.md` §12) (`trainer.levelRewards`, editable desde el panel de administración). Si un solo estudio o una captura sube varios niveles, se pagan todos (suma de los niveles intermedios); el tope es `trainer.maxLevel`. Las vías que suben el nivel son dos: los minutos de una sesión (al reclamarla) y la **especie nueva** capturada. El premio se ingresa al instante y, cuando el jugador está tranquilo (nunca en sesión, oleadas o descanso, ni encima de pistas, «¿Qué hay de nuevo?» o la ventana de un evento), sale una ventana **«¡Felicidades!»** con la mascota, el nivel alcanzado (o «del N al M» si fueron varios, en una sola ventana), los objetos con su imagen y el Polvo; el botón «¡Genial!» la cierra. En Resultados, la línea de subida de nivel también cuenta el premio. No cambia el azar de ninguna sesión ni captura (solo suma inventario y Polvo).
 
 ### 12.8 Intercambios entre amigos
 
@@ -795,11 +795,11 @@ Los niveles de las Mentas, la Teracristalización, las Chapas y la Cápsula est�
 | Tipo | Ejemplos | Recompensas |
 |---|---|---|
 | Diarias (3) | Completa 3 sesiones · Captura 2 Pokémon · Haz una sesión ≥ 50 min | Poké/Super Balls, Polvo, Pociones |
-| Semanales (3) | Captura 10 tipo Bicho · Estudia 5 días · Activa 20 técnicas | Caramelos de tipo, Ultra Ball, Teralitos; Mentas (nv 10+), MT (nv 15+), Chapas (nv 25+), Cápsula Habilidad (nv 30+) |
-| Pokédex | Registra 10/25/50 especies | Piedras, MT |
+| Semanales (3) | Captura 10 tipo Bicho · Estudia 5 días · Activa 20 técnicas | Caramelos de tipo, Super Balls, Pociones, Polvo, Teralitos (nv 15+); MT (nv 15+), Mentas (nv 25+), Cápsula Habilidad (nv 30+). Sin Ultra Balls ni Chapas |
+| Pokédex | Registra 10/25/50 especies | Piedras, Ultra Balls, MT (nv 15+) |
 | Evento | Lista fija de cada evento activo (sin sorteo) | Las que defina el evento |
 
-**Fuentes de los objetos avanzados (F4).** Con escalones nuevos de recompensa por nivel de entrenador en las semanales (nada cambia en las Balls, el Polvo ni los caramelos): los **Teralitos de las misiones solo caen desde el nivel de entrenador 15** (decidido): «Semana constante» +1, «Repertorio» +1 y «Metamorfosis» +2 desde el 15 (por debajo dan otra cosa pequeña: una Ultra Ball extra o 2 Great Ball; los hitos de la Pokédex, los premios por nivel y los eventos por defecto no dan Teralitos, y el regalo de desbloqueo de 2 llega en el 20); «Fondo» y «Gran cosecha» +1 **Menta a elegir** desde el nivel 10; «Gran cosecha» +1 MT desde el 15; «Maratón semanal» +1 Chapa desde el 25; «Especialista en tipo» +1 Cápsula Habilidad desde el 30. Más los regalos de desbloqueo de §12.7. Medido en `docs/balance-report.md` §12: ≈ 1,5 Teralitos, ≈ 1 menta, ≈ 0,5–1 Chapa y ≈ 0,25 Cápsulas por semana una vez desbloqueados.
+**Fuentes de los objetos avanzados (F4).** Con escalones de recompensa por nivel de entrenador en las semanales; cada objeto solo se da desde el nivel que lo desbloquea (§12.7; decidido el 2026-11-15): los **Teralitos** desde el 15 («Semana constante» +1, «Repertorio» +1 y «Metamorfosis» +2; se guardan unos pocos antes del 20, y los hitos de la Pokédex, los premios por nivel y los eventos por defecto no los dan; el regalo de 2 llega en el 20); la **MT** desde el 15 («Gran cosecha» +1; los hitos 25/50 de la Pokédex dan la MT también desde el 15); la **Menta a elegir** desde el 25 («Fondo» y «Gran cosecha» +1); la **Cápsula Habilidad** desde el 30 («Especialista en tipo» +1). **Las Chapas ya no salen de ninguna misión común: solo de eventos** (drops y misiones de evento, que pueden dar `bottle-cap`). **Las misiones diarias y semanales tampoco dan Ultra Balls:** las semanales dan Super Balls (2–3), Pociones y Polvo en su lugar; las Ultra vienen de los premios por nivel (§12.7), los hitos de la Pokédex y los eventos. Medido en `docs/balance-report.md` §12.
 
 Las **misiones de evento** avanzan mientras el evento está activo; una sesión (y las capturas de sus oleadas) cuenta si empezó durante el evento, aunque se reclame después. Se pueden reclamar hasta 7 días después de que termine.
 

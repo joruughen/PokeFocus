@@ -725,6 +725,17 @@
             "advanced": {
               "type": "object",
               "properties": {
+                "tm": {
+                  "type": "object",
+                  "properties": {
+                    "minTrainerLevel": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "mint": {
                   "type": "object",
                   "properties": {
