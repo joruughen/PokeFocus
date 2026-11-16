@@ -3,7 +3,7 @@ import { trainerLevelRewards } from '../../src/engine/index.ts'
 import { DAMAGE_POLICIES, type DamagePolicy } from './capture-policy.ts'
 import { makeContext } from './experiments.ts'
 import { runPipeline } from './pipeline.ts'
-import { planProfile, PROFILE_IDS } from './profiles.ts'
+import { ALL_PROFILE_IDS, planProfile, PROFILE_IDS } from './profiles.ts'
 import { renderReport } from './report.ts'
 import { runPlayer } from './run.ts'
 import { speciesValue } from './species-value.ts'
@@ -75,6 +75,24 @@ describe('balance simulator (smoke, 1 week, 1 seed)', () => {
     const minutes = g.sessions.reduce((a, s) => a + s.minutes, 0) / 7
     expect(minutes).toBeGreaterThan(700)
     expect(minutes).toBeLessThan(900)
+  })
+
+  it('long-horizon profiles are deterministic, have blank weeks / bursts / decay', () => {
+    for (const p of ALL_PROFILE_IDS) expect(planProfile(p, 12, 3)).toEqual(planProfile(p, 12, 3))
+    const perWeek = (p: Parameters<typeof planProfile>[0], seed: number, weeks: number) => {
+      const w = Array(weeks).fill(0)
+      for (const s of planProfile(p, weeks, seed).sessions) w[Math.floor(s.day / 7)]++
+      return w as number[]
+    }
+    const real = Array.from({ length: 10 }, (_, s) => perWeek('casual-real', s + 1, 52)).flat()
+    expect(real.some((n) => n === 0)).toBe(true)
+    expect(Math.max(...real)).toBeLessThanOrEqual(4)
+    const drop = perWeek('dropout', 1, 26)
+    expect(drop.slice(12).every((n) => n === 0)).toBe(true)
+    expect(drop[0]).toBeGreaterThan(drop[8] as number)
+    const ex = perWeek('exams', 1, 20)
+    expect(Math.max(...ex)).toBeGreaterThan(10)
+    expect(ex.some((n) => n <= 2)).toBe(true)
   })
 
   it('values a species and renders a report', () => {

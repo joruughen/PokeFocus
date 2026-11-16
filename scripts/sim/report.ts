@@ -28,6 +28,9 @@ const PN: Record<ProfileId, string> = {
   'night-owl': 'noctámbulo',
   irregular: 'irregular',
   grinder: 'grinder',
+  'casual-real': 'casual real',
+  exams: 'exámenes',
+  dropout: 'abandono',
 }
 
 const k = (x: number) => `${(x / 1000).toFixed(x >= 100_000 ? 0 : 1)}k`

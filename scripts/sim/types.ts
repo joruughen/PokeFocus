@@ -92,6 +92,10 @@ export interface DayRec {
   /** Tera Shards held at the end of the day (F4 economy check). */
   teraShards: number
   dust: number
+  /** Dust earned so far (held + spent): the long-term report compares it with the dust still unspent. */
+  dustTotal: number
+  /** Legendaries caught for the first time so far. */
+  legendariesCaught: number
   cumPoints: number
   cumMinutes: number
 }

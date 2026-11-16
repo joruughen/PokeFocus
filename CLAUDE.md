@@ -9,6 +9,7 @@ Lee solo la sección **«▶ Para continuar»** de `docs/PENDING.md`. El histori
 - `npm run dev` (app 5173 + API 8787, `?dev` = panel de desarrollo), `npm run typecheck`, `npm run build`
 - Tests: `npx vitest run --maxWorkers=2 [ruta]`. **Siempre `--maxWorkers=2`** (con más se agota la memoria). Para un cambio acotado, corre solo los tests de esa carpeta.
 - Simulador de balance: `npm run simulate` (escribe `docs/balance-report.md`)
+- Simulador a largo plazo: `npm run simulate -- --longterm [--weeks 104 --seeds 10 --config variante.json --out ruta.md]` (escribe `docs/longterm-report.md`; formato en la cabecera de `scripts/simulate.ts`)
 - Contenido para el admin: `npm run admin:validate`, `npm run admin:schema`
 
 ## Estructura

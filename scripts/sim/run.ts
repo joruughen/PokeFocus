@@ -129,6 +129,8 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
       trainerLevel: state.trainer.level,
       teraShards: state.inventory['tera-shard'] ?? 0,
       dust: state.dust,
+      dustTotal: state.dust + tally.dustSpent,
+      legendariesCaught: tally.legendaryFreshCaught,
       cumPoints,
       cumMinutes,
     }
