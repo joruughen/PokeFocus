@@ -9,6 +9,16 @@ services:
       POSTGRES_USER: pokefocus
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (e.g. openssl rand -hex 24)}
       POSTGRES_DB: pokefocus
+    # Límites de recursos: un fallo del servidor no puede dejar sin memoria ni CPU a PostgreSQL ni al resto del equipo.
+    # Ajusta DB_MEM_LIMIT / DB_CPUS a tu máquina (ver docs/server.md, «Límites de recursos»).
+    mem_limit: ${DB_MEM_LIMIT:-2g}
+    cpus: ${DB_CPUS:-2}
+    # Logs rotados: sin esto crecen sin límite y pueden llenar el disco.
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -48,6 +58,21 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+      # Protecciones de carga (ver docs/server.md): conexiones SSE por jugador y totales, y peticiones simultáneas
+      # máximas antes de responder 503 «servidor ocupado».
+      MAX_SSE_PER_USER: ${MAX_SSE_PER_USER:-6}
+      MAX_SSE_TOTAL: ${MAX_SSE_TOTAL:-10000}
+      MAX_INFLIGHT: ${MAX_INFLIGHT:-400}
+    # Límites de recursos: el servidor no puede quedarse con toda la RAM o la CPU del equipo. Cada conexión SSE
+    # cuesta ~200 KB, así que MAX_SSE_TOTAL=10000 son ~2 GB: APP_MEM_LIMIT debe dejar margen.
+    mem_limit: ${APP_MEM_LIMIT:-3g}
+    cpus: ${APP_CPUS:-2}
+    # Logs rotados: sin esto crecen sin límite y pueden llenar el disco.
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     volumes:
       - uploads:/app/.data/uploads
     ports:

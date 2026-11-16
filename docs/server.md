@@ -76,6 +76,51 @@ docker compose up --build   # PostgreSQL 17 + app on :8787
 
 Migrations are applied automatically on startup (`drizzle-orm/*/migrator`), for both drivers. To start over in development, stop the server and delete `.data/`.
 
+### Resource limits and load protection
+
+Added after the load tests and the security audit (`docs/load-report.md`, `docs/security-audit.md` A1/A2):
+
+- **Containers** (`docker-compose.yml`): `mem_limit` and `cpus` for `db` and `app` (`DB_MEM_LIMIT`/`DB_CPUS`, default 2g/2; `APP_MEM_LIMIT`/`APP_CPUS`, default 3g/2) and rotated logs (10 MB × 3). **Adjust them to the machine** (`free -h`, `nproc`): the sum of the memory limits must leave room for the OS; one container hitting its limit is restarted alone (`restart: unless-stopped`) instead of the kernel killing a random process.
+- **SSE** (`server/routes/events.ts`): `MAX_SSE_PER_USER` (default 6; a new connection past it closes the player's oldest one, so several tabs work), `MAX_SSE_TOTAL` (default 10,000 per process, ~200 KB each; past it `503 server_busy`) and 60 new connections per player per minute.
+- **Load shedding** (`server/app.ts`): `MAX_INFLIGHT` (default 400; 0 = off) API requests served at once; past it `503 server_busy` + `Retry-After: 2` at once instead of queueing behind a saturated pool. SSE, `/api/health` and `/api/admin/*` are exempt.
+- **Game actions** (`server/routes/game.ts`): 120 per player per minute (`gameActionUser`), at most 3 in flight per player (`429 too_many_requests`), and the real weather of `start` is fetched **before** the transaction (it used to hold a pool connection and the player's row lock for up to 2 s).
+- Ranking top and total of the global/country boards are cached (`LEADERBOARD_CACHE_MS`, 10 s in production).
+
+### Load tests (`scripts/load/`)
+
+Results and conclusions: `docs/load-report.md`. Nothing here ever touches production: the tool starts **its own** server (port 18787, `NODE_ENV=development`, clean environment: it does not read the project `.env`, uses a throw-away `PASSWORD_PEPPER`) against a **PostgreSQL 16 container** (`pfload-pg`, 127.0.0.1:55432, named volume `pfload-pgdata`), and removes both at the end (also on Ctrl-C). It has no `--url` option on purpose. Needs Docker (the `postgres:16` image is pulled the first time).
+
+```bash
+npm run load:smoke                                  # ~1 min: 40 users, checks every scenario works
+npm run load:run -- --levels 100,1000               # real levels (default); also 5000, 10000, or any number
+npm run load:run -- --levels 5000 --ramp 60 --hold 120 --think 10000
+npm run load:report                                 # regenerate docs/load-report.md + docs/load-charts/*.svg from .data/load/results/
+```
+
+Flags: `--levels a,b`, `--users/--ramp/--hold` (override one level), `--think ms` (time between actions of a user, default 20000), `--study ms`, `--actors 0.1` (fraction that also studies), `--login-rate 0.002` (login probability per action), `--workers N` (load-generator processes), `--pg-port`, `--port`, `--pg-image`, `--min-mem-mb 1500` (aborts a phase if free RAM drops below), `--no-dev-tools`, `--keep` (do not delete the container).
+
+Extra flags: `--tag name` (suffix of the result file/level), `--pg-stats` (loads `pg_stat_statements`; after each measured phase the 15 queries with the most total time go to `.data/load/results/<level>-queries.json` and the report prints a top-10 table per level; the counter is reset after sign-ups/seeding, so only the measured phase counts; the scenarios below turn it on by themselves, `--no-pg-stats` turns it off), `--no-report` (do not regenerate `docs/load-report.md` at the end; handy for smoke runs).
+
+**Scenarios** (`--scenario steady|peak|event`, default `steady`). Result files are named `<users>-<scenario>[-big][-<tag>]`; the phase length is computed from the scenario unless `--hold` is given.
+
+```bash
+# Peak: 30 % of the connected users start a session within 8 s ("on the hour"); they claim ~--study ms later.
+npm run load:run -- --levels 1000 --scenario peak --peak-pct 30
+npm run load:run -- --levels 5000 --scenario peak --peak-pct 30 --peak-window 8 --recover 90
+# Published event: everybody on SSE, an admin publishes a live event and, 25 s later, announces it.
+npm run load:run -- --levels 5000 --scenario event
+# Big database: 5,000 active users over 100,000 registered (sleeping) users; combine with any scenario.
+npm run load:run -- --levels 5000 --big-base 100000
+npm run load:run -- --levels 5000 --big-base 100000 --scenario peak
+npm run load:run -- --levels 5000 --big-base 100000 --scenario event
+```
+
+- `peak`: `--peak-pct 30` (% of users in the peak), `--peak-at 20` (s after the ramp ends), `--peak-window 8` (s over which they start), `--recover 60` (s observed after the peak). Needs `DEV_TOOLS` (game clock via `x-dev-now`). The peak users are not "background actors"; the rest keep the normal mix. The report compares baseline / peak / after (req/s, p95 per second, errors, CPU, RAM, PG connections) and gives the seconds until the p95 is back to ≤ 1.5× baseline.
+- `event`: `--event-at 25` (s after the ramp), `--event-gap 25` (s between publish and announce), `--recover 60`. The tool registers a throw-away admin (`admin@load.test`, role set by SQL in the temporary database), does `POST /api/admin/reauth` (sudo) with the test password, creates a draft event and publishes/announces it through the real admin API (`POST /api/admin/events/:id/publish|announce`). Every client reacts like the app (`content` → refetch `/api/content` + `/api/live-events`; `event_announce` → `/api/live-events`). Measured: SSE arrival delay p50/p95/p99 per notice (from just before the admin request is sent, so it includes the publish itself, shown separately), clients reached / connected, CPU/RAM/PG per 10 s window, and the requests it provokes (`react.*` rows). No `ADMIN_TOKEN` is involved.
+- `--big-base N`: before the measured phase (once per run, after the sign-up phase) the database is topped up to N users with "sleeping" users by bulk SQL (`scripts/load/bigbase.ts`, `generate_series` in batches of 5,000, no API): same precomputed password hash as an active user, a player document copied from a real one and grown to 30 Pokémon (~28 KB), scores for the current and previous weeks/months (≈40 % / 25 % of them), ≈8 friends each and 10 sleeping friends per active user; then `ANALYZE`. Measured at 3,000 users: ~12 MB per 1,000 users in the container volume (so ~1.2 GB for 100,000; the copies compress better than real documents, so it is a lower bound) and ~1 s per 3,000 users to seed (extrapolated: about a minute for 100,000; not run at that size).
+
+How it works: a user is registered through the real API (one scrypt each: the heaviest call), keeps its cookie, holds an SSE connection and loops over `GET /game`, `/leaderboard` (global/country/friends × week/month), `/friends`, `/content` (with and without `If-None-Match`) and `/config`; a fraction studies (`start` → `claim` → `dismissResults`) and a few log in again. Rate limits stay **on**: the server runs with `TRUST_PROXY=1` and every virtual user sends its own `X-Forwarded-For` IP. The server decides study minutes with its clock and the minimum session is 15 min, so studying users use `DEV_TOOLS=1` and the `x-dev-now` header to advance their own game clock (same reducer and transaction as production; `--no-dev-tools` disables actors). Resources are sampled every 2 s from `/proc` (server process), the container's cgroup (PostgreSQL CPU/RAM/net) and `pg_stat_*` (connections, tx/s). The load generator itself uses worker processes and `node:http` (no extra dependency).
+
 ## Environment
 
 Loaded from the process environment; `server/index.ts` also reads `.env` if present (see `.env.example`).

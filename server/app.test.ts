@@ -150,15 +150,19 @@ describe('auth', () => {
 
   it('rate limits login per email and per IP, and register per IP (429 + Retry-After)', async () => {
     const u = await register()
+    // Audit M5: only FAILED logins count, per (IP, account). A stranger's failures block his own IP, not the owner.
+    const attacker = '192.168.6.6'
     for (let i = 0; i < 5; i++) {
-      expect((await call('POST', '/api/auth/login', { body: { email: u.email, password: 'nope nope' } })).status).toBe(401)
+      expect((await call('POST', '/api/auth/login', { ip: attacker, body: { email: u.email, password: 'nope nope' } })).status).toBe(401)
     }
-    const blocked = await call('POST', '/api/auth/login', { body: { email: u.email, password: u.password } })
+    const blocked = await call('POST', '/api/auth/login', { ip: attacker, body: { email: u.email, password: u.password } })
     expect(blocked.status).toBe(429)
     expect(Number(blocked.res.headers.get('retry-after'))).toBeGreaterThan(0)
+    const owner = await call('POST', '/api/auth/login', { ip: '192.168.6.7', body: { email: u.email, password: u.password } })
+    expect(owner.status).toBe(200)
 
     const ip = '192.168.7.7'
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       expect((await call('POST', '/api/auth/login', { ip, body: { email: `x${i}@test.dev`, password: 'nope nope' } })).status).toBe(401)
     }
     expect((await call('POST', '/api/auth/login', { ip, body: { email: 'y@test.dev', password: 'nope nope' } })).status).toBe(429)

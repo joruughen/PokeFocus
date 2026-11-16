@@ -29,7 +29,7 @@ export const users = pgTable('users', {
   /** Admin panel access (docs/admin-plan.md §4): player < support < admin. */
   role: text('role', { enum: ['player', 'support', 'admin'] }).notNull().default('player'),
 },
-(t) => [check('users_role_check', sql`${t.role} in ('player', 'support', 'admin')`)],
+(t) => [check('users_role_check', sql`${t.role} in ('player', 'support', 'admin')`), index('users_country_idx').on(t.country)],
 )
 
 export const authSessions = pgTable(
@@ -81,7 +81,7 @@ export const leagueScores = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.userId, t.period, t.periodKey] }),
-    index('league_scores_rank_idx').on(t.period, t.periodKey, t.points.desc()),
+    index('league_scores_rank_idx').on(t.period, t.periodKey, t.points.desc(), t.updatedAt.asc()),
     check('league_scores_period_check', sql`${t.period} in ('week', 'month')`),
   ],
 )

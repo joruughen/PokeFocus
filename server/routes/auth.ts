@@ -86,13 +86,28 @@ export function authRoutes(deps: Deps) {
 
   app.post('/login', async (c) => {
     const ip = clientIp(c, env.trustProxy)
-    limit(c, `login:ip:${ip}`, RULES.loginIp)
     const body = await readBody(c, loginBody)
-    limit(c, `login:email:${body.email}`, RULES.loginEmail)
+    // Only FAILED attempts count (audit M5): checking first, counting after a wrong password. So a stranger spamming
+    // wrong passwords for your email from his IP blocks his own IP/pair, not you from yours.
+    const keys = [
+      [`login:ip:${ip}`, RULES.loginIp],
+      [`login:pair:${ip}:${body.email}`, RULES.loginPair],
+      [`login:email:${body.email}`, RULES.loginEmail],
+    ] as const
+    for (const [key, rule] of keys) {
+      const b = limiter.isBlocked(key, rule)
+      if (b.blocked) {
+        c.header('Retry-After', String(b.retryAfter))
+        throw new ApiError(429, 'rate_limited', { retryAfter: b.retryAfter })
+      }
+    }
     const [user] = await db.select().from(users).where(eq(users.email, body.email)).limit(1)
     const valid = user ? await verifyPassword(body.password, user.passwordHash, env.passwordPeppers) : await verifyDummy(body.password, env.passwordPeppers)
-    if (!user || !valid) throw new ApiError(401, 'invalid_credentials')
-    limiter.reset(`login:email:${body.email}`)
+    if (!user || !valid) {
+      for (const [key, rule] of keys) limiter.hit(key, rule)
+      throw new ApiError(401, 'invalid_credentials')
+    }
+    limiter.reset(`login:pair:${ip}:${body.email}`)
     // Upgrade legacy (no pepper) or old-pepper hashes now that we have the plain password.
     // Conditional on the old hash so a concurrent password change is never overwritten.
     if (needsRehash(user.passwordHash, env.passwordPeppers)) {

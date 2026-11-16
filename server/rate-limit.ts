@@ -8,8 +8,12 @@ export interface RateRule {
 }
 
 export const RULES = {
-  loginIp: { limit: 10, windowMs: 15 * 60_000 },
-  loginEmail: { limit: 5, windowMs: 15 * 60_000 },
+  /** FAILED logins from one IP (a school or CGNAT shares an IP, so it is looser than the pair rule). */
+  loginIp: { limit: 20, windowMs: 15 * 60_000 },
+  /** FAILED logins for one account from all IPs: only a distributed attack reaches it (audit M5: it used to be 5). */
+  loginEmail: { limit: 30, windowMs: 15 * 60_000 },
+  /** FAILED logins for one account from one IP. Another person cannot lock the owner out: they use another IP. */
+  loginPair: { limit: 5, windowMs: 15 * 60_000 },
   registerIp: { limit: 5, windowMs: 60 * 60_000 },
   /** Wrong-current-password guesses from a (possibly stolen) session. */
   passwordUser: { limit: 5, windowMs: 15 * 60_000 },
@@ -42,6 +46,10 @@ export const RULES = {
   /** Image uploads per staff user (each one decodes and re-encodes an image: CPU and RAM). */
   adminUpload: { limit: 20, windowMs: 15 * 60_000 },
   /** New trade offers per user (each one notifies a friend). */
+  /** POST /api/game/action: ~2 per second sustained is far above real play. */
+  gameActionUser: { limit: 120, windowMs: 60_000 },
+  /** New SSE connections per player (page reloads, reconnects). */
+  sseConnectUser: { limit: 60, windowMs: 60_000 },
   tradeOfferUser: { limit: 20, windowMs: 15 * 60_000 },
   /** Any other trade write (counter, accept, reject, cancel) per user. */
   tradeWriteUser: { limit: 120, windowMs: 15 * 60_000 },
@@ -70,6 +78,13 @@ export class RateLimiter {
     if (b.count >= rule.limit) return { ok: false, retryAfter: Math.max(1, Math.ceil((b.resetAt - now) / 1000)) }
     b.count++
     return { ok: true }
+  }
+
+  /** Is the key already over its limit? (does not count anything) */
+  isBlocked(key: string, rule: RateRule): { blocked: false } | { blocked: true; retryAfter: number } {
+    const b = this.buckets.get(key)
+    if (!b || b.resetAt <= this.clock() || b.count < rule.limit) return { blocked: false }
+    return { blocked: true, retryAfter: Math.max(1, Math.ceil((b.resetAt - this.clock()) / 1000)) }
   }
 
   reset(key: string): void {

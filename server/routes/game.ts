@@ -1,15 +1,16 @@
 /** /api/game — the player's document and the action endpoint. */
 import { randomBytes } from 'node:crypto'
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
-import { createRng, type Rng } from '../../src/engine'
+import { eq, sql } from 'drizzle-orm'
+import { createRng, type Rng, type WeatherInput } from '../../src/engine'
 import { applyAction, isDevAction } from '../../src/game/actions'
 import { DEV_SEED_HEADER, EMPTY_DOC, type ActionResponse, type ActionResults, type GameAction, type GameDoc, type GameSnapshot } from '../../src/game/protocol'
-import type { Tx } from '../db/client'
+import type { Db, Tx } from '../db/client'
 import { contentForAction } from '../content/service'
 import { activeStudySessions, leagueScores, playerDocs } from '../db/schema'
 import { claimOverlap, publishGroupEvents, syncGroupMembership, type PendingGroupEvent } from '../groups'
 import { ApiError, gameTime, readBody, requireAuth, type AppEnv, type Ctx, type Deps } from '../http'
+import { RULES } from '../rate-limit'
 import { logSession } from '../session-log'
 import { asGameAction, gameActionBody } from '../validation'
 
@@ -35,7 +36,7 @@ export async function runGameAction(
   deps: Deps,
   user: { id: string; trainerName: string },
   action: GameAction,
-  opts: { now: number; rng: Rng; viaGroup?: boolean },
+  opts: { now: number; rng: Rng; viaGroup?: boolean; /** Weather already fetched outside the transaction (undefined = fetch it here). */ weather?: WeatherInput | null },
 ): Promise<RunOutcome> {
   const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, user.id)).for('update')
   const before = row?.doc ?? EMPTY_DOC
@@ -45,7 +46,12 @@ export async function runGameAction(
   // Real weather of the profile location (else city), fixed on the session at start (≤ 2 s, cached; null = no weather).
   // Also for sessions the server starts for study-group invitees, which is why the rounded location lives in the profile.
   const profile = before.player?.profile
-  const weather = action.type === 'start' ? ((await deps.weather.current({ location: profile?.location ?? null, city: profile?.city ?? null }))?.weather ?? null) : undefined
+  const weather =
+    action.type !== 'start'
+      ? undefined
+      : opts.weather !== undefined
+        ? opts.weather
+        : ((await deps.weather.current({ location: profile?.location ?? null, city: profile?.city ?? null }))?.weather ?? null)
   // Live content: start → current (pinned on the session); claim/cancel → the session's; waves → the encounter's.
   const content = await contentForAction(deps.content, tx, before, action.type, opts.now)
   const r = applyAction(before, action, { now: opts.now, rng: opts.rng, dev: deps.env.devTools, trainerName: user.trainerName, friendOverlap, weather, ctx: content.ctx, contentHash: content.hash })
@@ -61,6 +67,20 @@ export async function runGameAction(
   if (row) await tx.update(playerDocs).set({ doc: r.doc, version, updatedAt }).where(eq(playerDocs.userId, user.id))
   else await tx.insert(playerDocs).values({ userId: user.id, doc: r.doc, version, updatedAt })
   return { ok: true, doc: r.doc, result: r.result, version, groupEvents }
+}
+
+const MAX_ACTIONS_IN_FLIGHT = 3
+const actionsInFlight = new Map<string, number>()
+
+/** Real weather of the profile location, read from the player's doc without locking it. */
+async function startWeather(db: Db, deps: Deps, userId: string): Promise<WeatherInput | null> {
+  const [row] = await db
+    .select({ profile: sql<{ location?: unknown; city?: unknown } | null>`${playerDocs.doc} -> 'player' -> 'profile'` })
+    .from(playerDocs)
+    .where(eq(playerDocs.userId, userId))
+  const p = row?.profile
+  const w = await deps.weather.current({ location: (p?.location as never) ?? null, city: (p?.city as never) ?? null })
+  return w?.weather ?? null
 }
 
 export function gameRoutes(deps: Deps) {
@@ -83,14 +103,32 @@ export function gameRoutes(deps: Deps) {
     const user = c.get('user')
     const action = asGameAction(await readBody(c, gameActionBody))
     if (isDevAction(action.type) && !env.devTools) throw new ApiError(403, 'dev_disabled')
-    const now = gameTime(deps, c)
-    const rng = actionRng(deps, c)
-    const out = await db.transaction((tx) => runGameAction(tx, deps, user, action, { now, rng }))
-    if (!out.ok) throw new ApiError(out.error === 'dev_disabled' ? 403 : 409, out.error)
-    bus.publish(user.id, { type: 'game', version: out.version })
-    await publishGroupEvents(deps, user, out.groupEvents)
-    const body: ActionResponse = { doc: out.doc, version: out.version, serverNow: now, result: out.result }
-    return c.json(body)
+    // Per-player limits: a request rate and at most 3 in flight (a stuck or parallel burst from one account must not
+    // fill the 10-connection pool: each action holds a connection and a row lock).
+    const rl = deps.limiter.hit(`game:${user.id}`, RULES.gameActionUser)
+    if (!rl.ok) {
+      c.header('Retry-After', String(rl.retryAfter))
+      throw new ApiError(429, 'rate_limited', { retryAfter: rl.retryAfter })
+    }
+    if ((actionsInFlight.get(user.id) ?? 0) >= MAX_ACTIONS_IN_FLIGHT) throw new ApiError(429, 'too_many_requests')
+    actionsInFlight.set(user.id, (actionsInFlight.get(user.id) ?? 0) + 1)
+    try {
+      const now = gameTime(deps, c)
+      const rng = actionRng(deps, c)
+      // The real weather (≤ 2 s, cached) is fetched BEFORE the transaction: waiting for Open-Meteo inside it kept a
+      // pool connection and the player's row locked.
+      const weather = action.type === 'start' ? await startWeather(db, deps, user.id) : undefined
+      const out = await db.transaction((tx) => runGameAction(tx, deps, user, action, { now, rng, weather }))
+      if (!out.ok) throw new ApiError(out.error === 'dev_disabled' ? 403 : 409, out.error)
+      bus.publish(user.id, { type: 'game', version: out.version })
+      await publishGroupEvents(deps, user, out.groupEvents)
+      const body: ActionResponse = { doc: out.doc, version: out.version, serverNow: now, result: out.result }
+      return c.json(body)
+    } finally {
+      const n = (actionsInFlight.get(user.id) ?? 1) - 1
+      if (n <= 0) actionsInFlight.delete(user.id)
+      else actionsInFlight.set(user.id, n)
+    }
   })
 
   return app

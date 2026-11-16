@@ -205,22 +205,38 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
       .select({ id: contentVersions.id, effectiveAt: contentVersions.effectiveAt })
       .from(contentVersions)
       .where(and(eq(contentVersions.status, 'published'), isNotNull(contentVersions.effectiveAt)))
-    versions = rows.map((r) => ({ id: r.id, effectiveAt: r.effectiveAt!.getTime() })).sort((a, b) => a.effectiveAt - b.effectiveAt || a.id - b.id)
-    events = await eventSource(ex)
+    const nextVersions = rows.map((r) => ({ id: r.id, effectiveAt: r.effectiveAt!.getTime() })).sort((a, b) => a.effectiveAt - b.effectiveAt || a.id - b.id)
+    const nextEvents = await eventSource(ex)
     const items: Record<string, ContentItem> = {}
     // Items of every published event (past ones too), so the inventory keeps their names.
-    for (const e of [...events].sort((a, b) => a.overlay.startsAt - b.overlay.startsAt || (a.overlay.id < b.overlay.id ? -1 : 1))) Object.assign(items, e.overlay.items ?? {})
+    for (const e of [...nextEvents].sort((a, b) => a.overlay.startsAt - b.overlay.startsAt || (a.overlay.id < b.overlay.id ? -1 : 1))) Object.assign(items, e.overlay.items ?? {})
+    // Swap everything at once (no await in between), so readers never see new versions with old events.
+    versions = nextVersions
+    events = nextEvents
     eventItems = items
     byKey.clear()
     loadedAt = clock()
   }
 
+  /**
+   * First load: callers wait for it. Afterwards a stale cache is served as is while ONE reload runs
+   * in the background on the pool. Waiting for it from inside a transaction deadlocked under load:
+   * every pool connection held by a transaction waiting for a reload that needed a free connection.
+   */
   async function ensureLoaded(ex: Executor = db): Promise<void> {
     if (clock() - loadedAt < reloadMs) return
-    loading ??= load(ex).finally(() => {
-      loading = null
-    })
-    await loading
+    if (loadedAt === -Infinity) {
+      loading ??= load(ex).finally(() => {
+        loading = null
+      })
+      await loading
+      return
+    }
+    loading ??= load(db)
+      .catch(() => {}) // keep serving the old content; the next request tries again
+      .finally(() => {
+        loading = null
+      })
   }
 
   async function patchOf(id: number, ex: Executor = db): Promise<ContentPatch> {
@@ -278,6 +294,7 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
   }
 
   async function reload(): Promise<void> {
+    await loading // a background reload may predate the change that asked for this one
     loadedAt = -Infinity
     await ensureLoaded()
   }

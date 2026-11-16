@@ -56,7 +56,7 @@ export function profileStats(agg: ProfileAgg): AdminSimProfileStats {
     }
   const share = (lg: 'base' | 'super' | 'ultra' | 'master') => agg.leagueReach[lg].share
   return {
-    profile: agg.profile,
+    profile: agg.profile as AdminSimProfileStats['profile'], // the admin only runs the six standard profiles
     n: agg.n,
     weeklyPoints: agg.weekly.map((w) => ({ p25: w.p25, p50: w.p50, p75: w.p75, mean: w.mean })),
     weeklyPointsMedian: median(pairs),

@@ -58,6 +58,17 @@ const schema = z.object({
    */
   COOKIE_SECURE: z.enum(['auto', '0', '1']).default('auto'),
   /**
+   * Seconds-scale cache (ms) of the global and country leaderboard tops, shared by all players.
+   * Unset = 10000 in production, 0 (off) elsewhere so tests and dev see every change at once.
+   */
+  /** Max simultaneous SSE connections per player (the oldest is closed when exceeded; several tabs are fine). */
+  MAX_SSE_PER_USER: z.coerce.number().int().min(1).max(50).default(6),
+  /** Max SSE connections in this process (each costs ~200 KB). Over it: 503 server_busy. */
+  MAX_SSE_TOTAL: z.coerce.number().int().min(1).default(10_000),
+  /** Max API requests being served at once (not SSE or /health). Over it: 503 server_busy + Retry-After. 0 = off. */
+  MAX_INFLIGHT: z.coerce.number().int().min(0).default(400),
+  LEADERBOARD_CACHE_MS: z.coerce.number().int().min(0).max(600_000).optional(),
+  /**
    * Bearer token of the admin API (/api/admin/*, scheduled maintenance notices).
    * Unset or empty = admin API off. When set it must be at least 24 characters
    * (e.g. `openssl rand -hex 24`). Never logged.
@@ -129,6 +140,11 @@ export interface VapidConfig {
 
 export interface Env {
   nodeEnv: 'development' | 'production' | 'test'
+  /** Shared cache of the global/country leaderboard top and total (ms; 0 = off). */
+  leaderboardCacheMs: number
+  maxSsePerUser: number
+  maxSseTotal: number
+  maxInflight: number
   production: boolean
   port: number
   databaseUrl: string | undefined
@@ -160,6 +176,10 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   const production = e.NODE_ENV === 'production'
   return {
     nodeEnv: e.NODE_ENV,
+    maxSsePerUser: e.MAX_SSE_PER_USER,
+    maxSseTotal: e.MAX_SSE_TOTAL,
+    maxInflight: e.MAX_INFLIGHT,
+    leaderboardCacheMs: e.LEADERBOARD_CACHE_MS ?? (production ? 10_000 : 0),
     production,
     port: e.PORT,
     databaseUrl: e.DATABASE_URL,

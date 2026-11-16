@@ -92,6 +92,13 @@
       "when": 1794711127366,
       "tag": "0012_trades",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794863240845,
+      "tag": "0013_ranking_indexes",
+      "breakpoints": true
     }
   ]
 }

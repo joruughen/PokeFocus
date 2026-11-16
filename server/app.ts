@@ -77,7 +77,30 @@ export function createApp(opts: AppOptions) {
   const { env } = deps
   const app = new Hono<AppEnv>()
 
-  app.use('*', secureHeaders())
+  // Audit M6. The CSP starts as Report-Only (it logs violations in the browser console without blocking anything):
+  // load the site with the dev tools open, fix what it reports and then switch it to `contentSecurityPolicy`.
+  const csp = {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"], // React/Tailwind inline style attributes
+    imgSrc: ["'self'", 'data:', 'blob:', 'https://raw.githubusercontent.com'],
+    fontSrc: ["'self'", 'data:'],
+    connectSrc: ["'self'"],
+    mediaSrc: ["'self'", 'blob:', 'data:'],
+    workerSrc: ["'self'"],
+    manifestSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    baseUri: ["'self'"],
+    frameAncestors: ["'none'"],
+    formAction: ["'self'"],
+  }
+  app.use(
+    '*',
+    secureHeaders({
+      contentSecurityPolicyReportOnly: csp,
+      permissionsPolicy: { camera: [], microphone: ['self'], geolocation: ['self'], payment: [], usb: [] },
+    }),
+  )
 
   const api = new Hono<AppEnv>()
   const tooLarge = () => {
@@ -90,6 +113,23 @@ export function createApp(opts: AppOptions) {
     const p = c.req.path
     if (p === UPLOAD_PATH) return uploadLimit(c, next)
     return p.startsWith('/api/admin/content') || p.startsWith('/api/admin/events') ? contentLimit(c, next) : defaultLimit(c, next)
+  })
+  // Load shedding: past MAX_INFLIGHT requests being served at once, answer 503 at once instead of queueing everyone
+  // behind a saturated database pool (measured: p95 of 17 s at 10,000 users). SSE, /health and the admin API are exempt.
+  let inflight = 0
+  api.use('*', async (c, next) => {
+    const p = c.req.path
+    if (env.maxInflight === 0 || p === '/api/events' || p === '/api/health' || p.startsWith('/api/admin')) return next()
+    if (inflight >= env.maxInflight) {
+      c.header('Retry-After', '2')
+      throw new ApiError(503, 'server_busy')
+    }
+    inflight++
+    try {
+      await next()
+    } finally {
+      inflight--
+    }
   })
   api.use('*', async (c, next) => {
     const m = c.req.method

@@ -14,6 +14,7 @@ export interface Subscriber {
 
 export class EventBus {
   private byUser = new Map<string, Set<Subscriber>>()
+  private closing = new WeakSet<Subscriber>()
 
   subscribe(sub: Subscriber): () => void {
     let set = this.byUser.get(sub.userId)
@@ -43,6 +44,16 @@ export class EventBus {
       if (!ids.has(sub.sessionId)) continue
       safe(() => sub.send({ type: 'logout' }))
       safe(() => sub.close())
+    }
+  }
+
+  /** Close the player's oldest connection that is not already closing (keeps at most N per player). */
+  evictOldest(userId: string): void {
+    for (const sub of this.byUser.get(userId) ?? []) {
+      if (this.closing.has(sub)) continue
+      this.closing.add(sub)
+      safe(() => sub.close())
+      return
     }
   }
 

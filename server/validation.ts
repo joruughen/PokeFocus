@@ -117,6 +117,10 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('nextWave', {}),
   act('finishWaves', {}),
   act('release', { uid: id }),
+  act('resolveCapture', {
+    uid: id,
+    choice: z.discriminatedUnion('kind', [z.object({ kind: z.literal('swap'), releaseUid: id }), z.object({ kind: z.literal('convert') }), z.object({ kind: z.literal('keep') })]),
+  }),
   act('releaseMany', { uids: z.array(id).min(1).max(MAX_RELEASE_BATCH).refine((a) => new Set(a).size === a.length, 'duplicate uids') }),
   act('feedCandy', {
     uid: id,

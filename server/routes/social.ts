@@ -158,6 +158,11 @@ export function friendRoutes(deps: Deps) {
   return app
 }
 
+/** Shared tops of the global and country boards (see `leaderboardCacheMs`). Bounded: oldest entry out. */
+type BoardTop = { userId: string; points: number; trainerName: string; anonymous: boolean; country: string; leader: string | null }[]
+const boardCache = new Map<string, { at: number; top: BoardTop; total: number }>()
+const BOARD_CACHE_MAX = 600
+
 export function leaderboardRoutes(deps: Deps) {
   const { db } = deps
   const app = new Hono<AppEnv>()
@@ -198,12 +203,39 @@ export function leaderboardRoutes(deps: Deps) {
         .innerJoin(users, eq(users.id, leagueScores.userId))
         .leftJoin(playerDocs, eq(playerDocs.userId, leagueScores.userId))
 
-    const top = await base().where(where).orderBy(desc(leagueScores.points), asc(leagueScores.updatedAt)).limit(LEADERBOARD_SIZE)
-    const [{ total }] = (await db
-      .select({ total: count() })
-      .from(leagueScores)
-      .innerJoin(users, eq(users.id, leagueScores.userId))
-      .where(where)) as [{ total: number }]
+    // The top and the total are the same for every viewer of a global or country board, so they are
+    // computed once per `cacheMs` (the caller's own row below is always live). Friends boards depend on
+    // the viewer and are never cached. The total needs the users join only for the country filter.
+    const cacheKey = scope === 'friends' ? null : `${scope}|${period}|${periodKey}|${scope === 'country' ? me.country : ''}`
+    const cacheMs = deps.env.leaderboardCacheMs
+    const hit = cacheKey && cacheMs > 0 ? boardCache.get(cacheKey) : undefined
+    let top: BoardTop
+    let total: number
+    if (hit && now - hit.at < cacheMs) {
+      ;({ top, total } = hit)
+    } else {
+      // Pick the 100 ids from league_scores alone (index order), and only then join `users` and the large
+      // player doc for those 100. Joining first made every call walk all the players (52 ms at 5,000).
+      const pick = db.select({ userId: leagueScores.userId, points: leagueScores.points, updatedAt: leagueScores.updatedAt }).from(leagueScores).$dynamic()
+      const ranked = (scope === 'country' ? pick.innerJoin(users, eq(users.id, leagueScores.userId)) : pick)
+        .where(where)
+        .orderBy(desc(leagueScores.points), asc(leagueScores.updatedAt))
+        .limit(LEADERBOARD_SIZE)
+        .as('ranked')
+      top = await db
+        .select({ userId: ranked.userId, points: ranked.points, trainerName: users.trainerName, anonymous: users.anonymousRankings, country: users.country, leader })
+        .from(ranked)
+        .innerJoin(users, eq(users.id, ranked.userId))
+        .leftJoin(playerDocs, eq(playerDocs.userId, ranked.userId))
+        .orderBy(desc(ranked.points), asc(ranked.updatedAt))
+      const countFrom = db.select({ total: count() }).from(leagueScores)
+      const [row] = (await (scope === 'country' ? countFrom.innerJoin(users, eq(users.id, leagueScores.userId)) : countFrom).where(where)) as [{ total: number }]
+      total = Number(row.total)
+      if (cacheKey && cacheMs > 0) {
+        if (boardCache.size >= BOARD_CACHE_MAX) boardCache.delete(boardCache.keys().next().value!)
+        boardCache.set(cacheKey, { at: now, top, total })
+      }
+    }
 
     // Privacy: anonymous trainers lose their name in the global and country scopes, except on the
     // caller's own row. Friends always see names. `anonymous` is reported either way.
@@ -231,16 +263,15 @@ export function leaderboardRoutes(deps: Deps) {
         .where(and(where, eq(leagueScores.userId, me.id)))
         .limit(1)
       if (own) {
-        const [{ better }] = (await db
-          .select({ better: count() })
-          .from(leagueScores)
-          .innerJoin(users, eq(users.id, leagueScores.userId))
-          .where(and(where, gt(leagueScores.points, own.points)))) as [{ better: number }]
+        const betterFrom = db.select({ better: count() }).from(leagueScores)
+        const [{ better }] = (await (scope === 'country' ? betterFrom.innerJoin(users, eq(users.id, leagueScores.userId)) : betterFrom).where(
+          and(where, gt(leagueScores.points, own.points)),
+        )) as [{ better: number }]
         mineRow = toRow(own, Number(better) + 1)
       }
     }
 
-    const body: LeaderboardResponse = { scope, period, periodKey, rows, mine: mineRow, total: Number(total) }
+    const body: LeaderboardResponse = { scope, period, periodKey, rows, mine: mineRow, total }
     return c.json(body)
   })
 
