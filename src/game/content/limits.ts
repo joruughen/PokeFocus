@@ -177,11 +177,18 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
   scalar(X, 'trainer.expPerNewSpecies', b('int', 0, 1000)),
   scalar(X, 'trainer.levelRewards.dustBase', b('int', 0, 10_000)),
   scalar(X, 'trainer.levelRewards.dustPerLevel', b('number', 0, 1000, undefined, 1)),
+  // Box capacity (GDD §12.9). Upper bounds protect the database: ~0.85 KB per Pokémon in every player's document.
+  scalar(X, 'box.baseCapacity', b('int', 20, 1000)),
+  scalar(X, 'box.perStep', b('int', 0, 200)),
+  scalar(X, 'box.stepLevels', b('int', 1, 50)),
+  scalar(X, 'box.maxCapacity', b('int', 20, 1000)),
+  scalar(X, 'box.maxPending', b('int', 0, 50)),
   scalar(X, 'bond.maxBonus', b('fraction', 0, 0.5)),
   scalar(X, 'progression.candyExp', b('int', 1, 5000), 'owned'),
   scalar(X, 'progression.typeCandyExp', b('int', 1, 5000), 'owned'),
   scalar(X, 'progression.candyDustBase', b('int', 0, 1000), 'owned'),
   scalar(X, 'progression.candyDustPerLevel', b('number', 0, 100), 'owned'),
+  scalar(X, 'progression.candyDustPerLevelSq', b('number', 0, 1, undefined, 3), 'owned'),
   scalar(X, 'progression.candiesOnCatch', b('int', 0, 20)),
   scalar(X, 'progression.hiddenAbilityChance', b('prob', 0, 0.5, '%')),
   // Advanced items (F4): unlock level, one-time gift at that level and the Tera rules.

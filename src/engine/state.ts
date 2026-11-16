@@ -394,6 +394,11 @@ export interface PlayerState {
   missions?: MissionsState
   /** Saved teams (at most 10, see teams.ts). Absent in older saves = none. */
   teamPresets?: TeamPreset[]
+  /**
+   * Captures waiting for room in the Box (it was full, GDD §12.9): the player picks whom to release, converts the
+   * capture into candies or keeps it once there is room. Absent in older saves = none.
+   */
+  pendingCaptures?: OwnedPokemon[]
   /** Preference: split the wave damage automatically (no assignment step). Absent = false. */
   autoDamage?: boolean
   /**

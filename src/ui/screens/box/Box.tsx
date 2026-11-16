@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ALL_TYPES, energyAt, maxEnergyOf, type SpeciesRole, type TypeSlug } from '../../../engine'
+import { ALL_TYPES, boxCapacity, energyAt, maxEnergyOf, type SpeciesRole, type TypeSlug } from '../../../engine'
 import { Button, EmptyState, HelpDot, MonTile, Panel, PixelIcon, Segmented, Select, Switch, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { errorText } from '../../lib/errors'
@@ -11,6 +11,7 @@ import { navigate } from '../../router'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer } from '../../store/selectors'
+import { PendingBanner } from './PendingCaptureDialog'
 import { ReleaseDialog, SelectionBar } from './ReleaseMany'
 import { releaseSummary } from './releaseSummary'
 import { filteredMons, filtersActive, useBoxFilters, type BoxSort, type BoxWhere } from './filters'
@@ -34,6 +35,7 @@ export function Box() {
     return out
   }, [list, player, minute])
   const total = Object.keys(player.pokemon).length
+  const capacity = boxCapacity(player.trainer.level)
 
   // ---- Multi-select (release) -----------------------------------------------
   const releaseMany = useGame((st) => st.releaseMany)
@@ -113,7 +115,8 @@ export function Box() {
             {t('nav.box')}
             <HelpDot hint="box.intro" />
           </h1>
-          <p className="mt-1 text-mist-300">{t('box.count', { count: total, team: player.team.length })}</p>
+          <p className="mt-1 text-mist-300">{t('box.count', { count: total, max: capacity, team: player.team.length })}</p>
+          {total >= capacity ? <p className="mt-1 max-w-[60ch] text-sm text-amber-400">{t('box.full')}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-3">
         <Button
@@ -143,6 +146,8 @@ export function Box() {
         </Button>
         </div>
       </header>
+
+      <PendingBanner className="-mt-4" />
 
       <div className="flex min-w-0 flex-col gap-5">
         {selecting && <p className="text-sm text-mist-300">{t('box.select.help')}</p>}

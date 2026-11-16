@@ -19,6 +19,7 @@ import type {
   MissionReward,
   NicknameError,
   OwnedPokemon,
+  PendingChoice,
   PlayerState,
   PresetError,
   ProgressEvent,
@@ -125,6 +126,8 @@ export type GameAction =
   | { type: 'finishWaves' }
   // Box
   | { type: 'release'; uid: string }
+  /** Settle a pending capture (Box was full, GDD §12.9): swap it for a Box Pokémon, convert it into candies or keep it. */
+  | { type: 'resolveCapture'; uid: string; choice: PendingChoice }
   /** Release up to `MAX_RELEASE_BATCH` Pokémon at once (all or nothing; none may be in the team). */
   | { type: 'releaseMany'; uids: string[] }
   | { type: 'feedCandy'; uid: string; candy: CandyKind; count: number }
@@ -195,6 +198,7 @@ export interface ActionResults {
   nextWave: null
   finishWaves: null
   release: null
+  resolveCapture: null
   /** `candies`: gained per evolution chain id. */
   releaseMany: { released: number; candies: Record<string, number>; totalCandies: number }
   feedCandy: { events: ProgressEvent[]; dustSpent: number; used: number }

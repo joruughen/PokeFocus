@@ -364,8 +364,10 @@ describe('damage split', () => {
     doc = must(doc, { type: 'autoAssignDamage', waveIndex: 0 }, env(t))
     expect(doc.player!.encounter!.waves[0]!.assignments).toEqual({ p1: 0 })
     doc = must(doc, { type: 'throwBall', ref: { waveIndex: 0, wildIndex: 0 }, ball: 'poke-ball' }, env(t))
-    expect(doc.player!.encounter!.waves[0]!.damageLocked).toBe(true)
-    expect(applyAction(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))).toEqual({ ok: false, error: 'damage_locked' })
+    // A ball never makes anyone attack nor locks a manual wave: the one who already attacked cannot attack again.
+    expect(doc.player!.encounter!.waves[0]!.damageLocked).toBeFalsy()
+    expect(doc.player!.encounter!.waves[0]!.assignments).toEqual({ p1: 0 })
+    expect(applyAction(doc, { type: 'assignDamage', waveIndex: 0, uid: 'p1', wildIndex: 0 }, env(t))).toEqual({ ok: false, error: 'already_attacked' })
   })
 
   it('autoDamage on at claim: the encounter is automatic and keeps that mode after the preference changes', () => {

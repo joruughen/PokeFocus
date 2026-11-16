@@ -29,6 +29,7 @@ import {
   type StartSessionError,
   type StatKey,
   type ThrowBall,
+  type PendingChoice,
   type ThrowOutcome,
   type TimeZoneSpec,
   type TypeSlug,
@@ -109,6 +110,8 @@ export interface GameState extends GameDoc {
 
   /** Box (error code or null). */
   release: (uid: string) => Promise<BoxError | GameActionError | null>
+  /** Settle a pending capture (the Box was full, GDD §12.9): swap it for a Box Pokémon, convert it into candies or keep it. */
+  resolveCapture: (uid: string, choice: PendingChoice) => Promise<BoxError | GameActionError | null>
   /** Release several at once (all or nothing): the candies gained, or the error. */
   releaseMany: (uids: string[]) => Promise<{ ok: true; released: number; totalCandies: number; candies: Record<string, number> } | { ok: false; error: GameActionError }>
   feedCandy: (
@@ -306,6 +309,7 @@ export const useGame = create<GameState>()((set, get) => {
     finishWaves: async () => errOf(await dispatch({ type: 'finishWaves' })),
 
     release: async (uid) => errOf(await dispatch({ type: 'release', uid })),
+    resolveCapture: async (uid, choice) => errOf(await dispatch({ type: 'resolveCapture', uid, choice })),
     releaseMany: async (uids) => {
       const r = await dispatch({ type: 'releaseMany', uids })
       return r.ok ? { ok: true, ...r.result } : { ok: false, error: r.error }

@@ -5,7 +5,8 @@
 import type { BallSlug, GameConfig, WildStatus } from './config'
 import { defaultContext, getSpecies, type EngineContext } from './context'
 import { encounterModifiers, resolveCounter } from './counter'
-import { effectiveHits, lockWaveAttacks } from './damage'
+import { effectiveHits, isManualWave, lockWaveAttacks } from './damage'
+import { isBoxFull, releaseCandyGain } from './box'
 import { toOwnedPokemon } from './individual'
 import { recordMissionEvent } from './missions'
 import { grantTrainerLevelUp, trainerLevelFromExp } from './progression'
@@ -121,7 +122,7 @@ export function catchBreakdown(state: PlayerState, wild: WildPokemon, ball: Thro
 }
 
 export type ThrowOutcome =
-  | { kind: 'caught'; uid: string; ball: ThrowBall; chance: number; guaranteed: 'study' | 'shiny' | null }
+  | { kind: 'caught'; uid: string; ball: ThrowBall; chance: number; guaranteed: 'study' | 'shiny' | null; /** Box full (GDD §12.9): the capture waits as pending (`pending`) or, with the pending list full, became these candies. */ boxFull?: { pending: true } | { pending: false; candies: number } }
   | { kind: 'failed'; ball: ThrowBall; chance: number; counter: CounterResult | null; failedThrows: number; throwsLeft: number }
   | { kind: 'fled'; ball: ThrowBall; chance: number; counter: CounterResult | null; roaming: boolean }
 
@@ -175,7 +176,11 @@ export function throwBall(
   // with the automatic split, and each attacked wild strikes back at its attacker (GDD §11.4).
   // The Study Ball is the exception: it is a sure catch that needs no damage, so it neither locks
   // the wave nor makes anyone attack; you can still assign your team to the other wilds after it.
-  let s: PlayerState = ball === 'study-ball' ? state : lockWaveAttacks(state, ref.waveIndex, rng, ctx)
+  // A manual wave (the player assigns the attacks) is never locked by a throw: nobody attacks unless the player sent
+  // them, and whoever is left simply does not attack this wave (no counterattack, their damage is lost). Only an
+  // automatic-mode wave (the "Auto" preference) attacks with everyone at the first ball.
+  const manualWave = isManualWave(rawWave)
+  let s: PlayerState = ball === 'study-ball' || manualWave ? state : lockWaveAttacks(state, ref.waveIndex, rng, ctx)
   let encounter: EncounterState = s.encounter as EncounterState
   const wave = encounter.waves[ref.waveIndex] as EncounterState['waves'][number]
   const wild = wave.wilds[ref.wildIndex] as WildPokemon
@@ -201,23 +206,32 @@ export function throwBall(
 
   if (guaranteed || chance(rng, p)) {
     const uid = `p${s.counters.pokemon + 1}`
-    const owned = toOwnedPokemon(wild, uid, now, ball, ctx)
     const sp = getSpecies(wild.speciesSlug, ctx)
     const isNewSpecies = !s.pokedex.caught.includes(sp.slug)
     const chainKey = String(sp.evolutionChainId)
-    encounter = replaceWild(encounter, ref, { ...usedWild, outcome: 'caught', caughtUid: uid }, wavePatch)
+    // Box full (GDD §12.9): the capture waits as pending until the player swaps it for a Pokémon, converts it into
+    // candies or keeps it. With `maxPending` waiting, a normal capture becomes candies at once; shinies and
+    // legendaries always wait (the player is never forced to lose one).
+    const pendingList = s.pendingCaptures ?? []
+    const boxFull = isBoxFull(s, ctx)
+    const pending = boxFull && (wild.isShiny || wild.isLegendary || pendingList.length < cfg.box.maxPending)
+    const converted = boxFull && !pending
+    const candies = cfg.progression.candiesOnCatch + (converted ? releaseCandyGain(sp.slug, ctx).gain : 0)
+    const owned = converted ? null : toOwnedPokemon(wild, uid, now, ball, ctx)
+    encounter = replaceWild(encounter, ref, { ...usedWild, outcome: 'caught', caughtUid: converted ? null : uid }, wavePatch)
     const trainerExp = s.trainer.exp + (isNewSpecies ? cfg.trainer.expPerNewSpecies : 0)
     s = {
       ...s,
-      pokemon: { ...s.pokemon, [uid]: owned },
-      candies: { ...s.candies, chains: { ...s.candies.chains, [chainKey]: (s.candies.chains[chainKey] ?? 0) + cfg.progression.candiesOnCatch } },
+      pokemon: owned && !boxFull ? { ...s.pokemon, [uid]: owned } : s.pokemon,
+      ...(pending && owned ? { pendingCaptures: [...pendingList, owned] } : {}),
+      candies: { ...s.candies, chains: { ...s.candies.chains, [chainKey]: (s.candies.chains[chainKey] ?? 0) + candies } },
       pokedex: {
         seen: s.pokedex.seen.includes(sp.slug) ? s.pokedex.seen : [...s.pokedex.seen, sp.slug],
         caught: isNewSpecies ? [...s.pokedex.caught, sp.slug] : s.pokedex.caught,
       },
       roaming: s.roaming.filter((r) => r.speciesSlug !== sp.slug),
       trainer: { exp: trainerExp, level: s.trainer.level },
-      counters: { ...s.counters, pokemon: s.counters.pokemon + 1 },
+      counters: converted ? s.counters : { ...s.counters, pokemon: s.counters.pokemon + 1 },
       history: s.history.map((h) => (h.id === enc.sessionId ? { ...h, caught: h.caught + 1 } : h)),
       encounter,
     }
@@ -226,7 +240,7 @@ export function throwBall(
     s = { ...s, trainer: { exp: s.trainer.exp, level: levelAfter } }
     s = grantTrainerLevelUp(s, levelBefore, levelAfter, now, ctx)
     s = recordMissionEvent(s, { kind: 'catch', types: sp.types, ball, firstThrow: wild.failedThrows === 0 }, now, ctx)
-    return ok({ state: s, outcome: { kind: 'caught', uid, ball, chance: p, guaranteed } })
+    return ok({ state: s, outcome: { kind: 'caught', uid, ball, chance: p, guaranteed, ...(pending ? { boxFull: { pending: true as const } } : converted ? { boxFull: { pending: false as const, candies } } : {}) } })
   }
 
   // Failed throw

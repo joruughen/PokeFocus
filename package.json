@@ -1,7 +1,7 @@
 {
   "name": "pokefocus",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n client,server -c cyan,magenta \"npm:dev:client\" \"npm:dev:server\"",
@@ -22,7 +22,10 @@
     "pepper": "tsx scripts/generate-pepper.ts",
     "admin:role": "tsx scripts/admin-role.ts",
     "admin:schema": "tsx scripts/admin-schema.ts",
-    "admin:validate": "tsx scripts/admin-validate.ts"
+    "admin:validate": "tsx scripts/admin-validate.ts",
+    "load:smoke": "tsx scripts/load/run.ts smoke",
+    "load:run": "tsx scripts/load/run.ts run",
+    "load:report": "tsx scripts/load/run.ts report"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -23,6 +23,7 @@ import { scheduleSessionEnd, sfx } from '../../lib/sound'
 import { EventBanner } from '../events/EventBanner'
 import { AutoDamageToggle } from './AutoDamageToggle'
 import { BreakOffer, useBreakOffer } from './Break'
+import { PendingBanner } from '../box/PendingCaptureDialog'
 import { Checklist } from './Checklist'
 import { GroupStudyPanel } from './GroupStudy'
 import { QuickTeamSwitch } from '../team/TeamPresets'
@@ -101,6 +102,8 @@ export function PreSession() {
       </header>
 
       <EventBanner className="-mt-4" />
+
+      <PendingBanner className="-mt-4" />
 
       <Stage time={scene.time} weather={scene.weather} className="px-4 pt-10 pb-5" sky={null}>
         <h2 className="sr-only">{t('team.title')}</h2>

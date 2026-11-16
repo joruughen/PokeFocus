@@ -11,6 +11,7 @@ import { LevelUpHost } from './levelUp/LevelUpDialog'
 import { EventPopupHost } from './screens/events/EventPopup'
 import { GroupInviteNotice } from './GroupInviteNotice'
 import { ContentNotice } from './ContentNotice'
+import { PendingCaptureDialog } from './screens/box/PendingCaptureDialog'
 import { MaintenanceBanner } from './MaintenanceBanner'
 import { BallIcon, IconButton, Logo, PixelIcon, Tooltip } from './components'
 import { hintAnchor, useHintEvent } from './hints'
@@ -53,6 +54,7 @@ export function AppShell() {
       <GroupInviteNotice />
       <WhatsNewDialog />
       <LevelUpHost />
+      <PendingCaptureDialog />
       <TradeArrivalHost />
       <EventPopupHost />
       <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>

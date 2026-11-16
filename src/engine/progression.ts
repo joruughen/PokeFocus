@@ -12,7 +12,10 @@ import { toLocal } from './time'
 
 /** Total EXP to reach level L: round(coef · L^exponent). */
 export function expForLevel(level: number, ctx: EngineContext = defaultContext()): number {
-  const { coef, exponent } = ctx.config.progression.expCurve
+  const { coef, exponent, kneeLevel, exponentAfter } = ctx.config.progression.expCurve
+  if (kneeLevel !== undefined && exponentAfter !== undefined && level > kneeLevel) {
+    return Math.round(coef * Math.pow(kneeLevel, exponent) * Math.pow(level / kneeLevel, exponentAfter))
+  }
   return Math.round(coef * Math.pow(level, exponent))
 }
 
@@ -35,10 +38,10 @@ export function levelCap(state: PlayerState, ctx: EngineContext = defaultContext
   return levelCapFor(state.pokedex.caught.length, ctx)
 }
 
-/** Dust per candy: 25 + 3 · current level. */
+/** Dust per candy: `base + perLevel · level (+ perLevelSq · level²)`; today 25 + 3 · level. */
 export function candyDustCost(level: number, ctx: EngineContext = defaultContext()): number {
   const p = ctx.config.progression
-  return p.candyDustBase + p.candyDustPerLevel * level
+  return Math.round(p.candyDustBase + p.candyDustPerLevel * level + (p.candyDustPerLevelSq ?? 0) * level * level)
 }
 
 /** Bond bonus (0..maxBonus). */

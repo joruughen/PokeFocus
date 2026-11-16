@@ -1075,6 +1075,37 @@
                   },
                   "additionalProperties": false
                 },
+                "box": {
+                  "type": "object",
+                  "properties": {
+                    "baseCapacity": {
+                      "type": "integer",
+                      "minimum": 20,
+                      "maximum": 1000
+                    },
+                    "perStep": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 200
+                    },
+                    "stepLevels": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 50
+                    },
+                    "maxCapacity": {
+                      "type": "integer",
+                      "minimum": 20,
+                      "maximum": 1000
+                    },
+                    "maxPending": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 50
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "bond": {
                   "type": "object",
                   "properties": {
@@ -1108,6 +1139,11 @@
                       "type": "number",
                       "minimum": 0,
                       "maximum": 100
+                    },
+                    "candyDustPerLevelSq": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
                     },
                     "candiesOnCatch": {
                       "type": "integer",

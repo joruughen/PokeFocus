@@ -44,6 +44,7 @@ import { ChargeChip } from './ChargeChip'
 import { SessionReportButton } from './SessionReport'
 import { TeamEnergy } from './TeamEnergy'
 import { useContent } from '../../store/content'
+import { usePendingUi } from '../box/pendingCapture'
 
 type Anim = {
   ref: WildRef
@@ -135,8 +136,8 @@ export function Waves() {
       .filter((tk) => player.pokemon[tk.uid])
       .sort((a, b) => order(a.uid) - order(b.uid))
   }, [wave, manual, player])
-  // What the first ball will lock in: whoever has not attacked (and has Energy) attacks with the automatic split.
-  const atThrow = useMemo(() => lockWaveDamage(wave, ctx, (uid) => canAttack(player, uid)), [wave, player])
+  // (a manual wave is not changed by a throw: nobody attacks unless the player sent them; an automatic one attacks with everyone)
+  const atThrow = useMemo(() => (manual ? wave : lockWaveDamage(wave, ctx, (uid) => canAttack(player, uid))), [wave, player, manual])
   // Only a token that has not attacked yet, of a member with Energy, can be picked (attacks are irreversible).
   const pickedToken = editable ? (tokens.find((tk) => tk.uid === picked && tk.assigned === null && canAttack(player, tk.uid)) ?? null) : null
   const previews = useMemo(
@@ -212,8 +213,22 @@ export function Waves() {
       if (outcome.kind === 'fled') sfxLater('flee', 250)
       if (outcome.kind === 'caught') {
         setCounterFx(null)
-        toast.add({ title: t('waves.caughtToast', { name: names.species(before.speciesSlug) }), description: t('waves.caughtToastBody'), type: 'success' })
+        toast.add(
+          outcome.boxFull
+            ? outcome.boxFull.pending
+              ? { title: t('waves.boxFullPendingToast', { name: names.species(before.speciesSlug) }), description: t('waves.boxFullPendingToastBody'), type: 'info' }
+              : { title: t('waves.boxFullToast', { name: names.species(before.speciesSlug) }), description: t('waves.boxFullToastBody', { candies: outcome.boxFull.candies }), type: 'info' }
+            : { title: t('waves.caughtToast', { name: names.species(before.speciesSlug) }), description: t('waves.caughtToastBody'), type: 'success' },
+        )
         emitHintEvent('throw.caught')
+        // A capture left pending (Box full): open the window to settle it, unless another window is up (the banner stays).
+        if (outcome.boxFull?.pending) {
+          timers.current.push(
+            setTimeout(() => {
+              if (!document.querySelector('[role="dialog"], [role="alertdialog"]')) usePendingUi.getState().setOpen(true)
+            }, 700),
+          )
+        }
       } else {
         if (outcome.counter) {
           setCounterFx({ key: Date.now(), counter: outcome.counter, energyBefore: energyBy[outcome.counter.targetUid] ?? 0, source: 'ball' })

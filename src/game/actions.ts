@@ -36,6 +36,7 @@ import {
   deletePreset,
   releaseMany,
   releasePokemon,
+  resolvePendingCapture,
   renamePreset,
   savePreset,
   setNickname,
@@ -331,6 +332,10 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
     // ---- Box ----------------------------------------------------------------
     case 'release': {
       const r = releasePokemon(p, a.uid, ctx)
+      return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+    case 'resolveCapture': {
+      const r = resolvePendingCapture(p, a.uid, a.choice, ctx)
       return r.ok ? withPlayer(r.value) : fail(r.error)
     }
     case 'releaseMany': {

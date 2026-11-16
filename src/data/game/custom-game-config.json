@@ -265,12 +265,15 @@
   "progression": {
     "expCurve": {
       "coef": 4,
-      "exponent": 2.8
+      "exponent": 2.8,
+      "kneeLevel": 20,
+      "exponentAfter": 4
     },
     "candyExp": 300,
     "typeCandyExp": 200,
     "candyDustBase": 25,
     "candyDustPerLevel": 3,
+    "candyDustPerLevelSq": 0.03,
     "candiesOnCatch": 3,
     "candiesOnRelease": [
       1,

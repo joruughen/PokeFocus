@@ -85,6 +85,8 @@ type BoxError =
   | 'empty_selection'
   | 'too_many_selected'
   | 'duplicate_selection'
+  | 'unknown_pending'
+  | 'box_full'
   | EquipError
   | EvolutionBlock
   | 'no_such_evolution'
@@ -99,6 +101,43 @@ function sessionLocks(state: PlayerState, uid?: string): boolean {
 export function releaseCandyGain(speciesSlug: string, ctx: EngineContext = defaultContext()): { chainId: string; gain: number } {
   const sp = getSpecies(speciesSlug, ctx)
   return { chainId: String(sp.evolutionChainId), gain: ctx.config.progression.candiesOnRelease[sp.stage - 1] ?? 1 }
+}
+
+/** How many Pokémon the Box holds at this trainer level (GDD §12.9). */
+export function boxCapacity(trainerLevel: number, ctx: EngineContext = defaultContext()): number {
+  const b = ctx.config.box
+  return Math.min(b.maxCapacity, b.baseCapacity + b.perStep * Math.floor(Math.max(0, trainerLevel) / b.stepLevels))
+}
+
+/** Is the Box full for this player? */
+export function isBoxFull(state: PlayerState, ctx: EngineContext = defaultContext()): boolean {
+  return Object.keys(state.pokemon).length >= boxCapacity(state.trainer.level, ctx)
+}
+
+/** What to do with a pending capture (GDD §12.9). */
+export type PendingChoice = { kind: 'swap'; releaseUid: string } | { kind: 'convert' } | { kind: 'keep' }
+
+/**
+ * Settle one pending capture: `swap` releases a Box Pokémon (not in the team; its candies as a normal release) and
+ * puts the capture in its place; `convert` turns the capture into the candies a release would give; `keep` stores it
+ * (only with room in the Box).
+ */
+export function resolvePendingCapture(state: PlayerState, uid: string, choice: PendingChoice, ctx: EngineContext = defaultContext()): Result<PlayerState, BoxError> {
+  const list = state.pendingCaptures ?? []
+  const cap = list.find((p) => p.uid === uid)
+  if (!cap) return err('unknown_pending')
+  const rest = list.filter((p) => p.uid !== uid)
+  let s: PlayerState = { ...state, pendingCaptures: rest.length > 0 ? rest : undefined }
+  if (choice.kind === 'convert') {
+    const { chainId, gain } = releaseCandyGain(cap.speciesSlug, ctx)
+    return ok({ ...s, candies: { ...s.candies, chains: { ...s.candies.chains, [chainId]: (s.candies.chains[chainId] ?? 0) + gain } } })
+  }
+  if (choice.kind === 'swap') {
+    const r = releasePokemon(s, choice.releaseUid, ctx)
+    if (!r.ok) return r
+    s = r.value
+  } else if (isBoxFull(s, ctx)) return err('box_full')
+  return ok({ ...s, pokemon: { ...s.pokemon, [cap.uid]: cap } })
 }
 
 /** Release a Pokémon: gives 1/2/3 candies of its line by stage. Team members cannot be released. */

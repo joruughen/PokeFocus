@@ -61,6 +61,8 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 
 **Decididas por el usuario (2026-11-15):** intercambios: los dos pagan el Polvo del Pokémon más caro, el mote se conserva, no da EXP de entrenador por especie nueva, máximo 10 ofertas abiertas; Menta a elegir; Ultra Balls: se quitan de las misiones semanales y cada 5 niveles de entrenador se da 1 extra (los hitos de Pokédex 25/50 siguen dando Ultra); multiplicadores de destacadas sin cambios (las descripciones de eventos dicen la probabilidad real, ver memoria `feedback-event-odds`).
 
+**Plan de balance para la beta (2026-11-16):** decisiones cerradas y pasos en `docs/beta-balance-plan.md` (ligas con subrangos, curva de EXP, Polvo como freno, 3.ª etapa, Kanto 151, pruebas de estrés). Alpha sin reset.
+
 **Pendiente:**
 - Decisiones de balance: reescalado ×0,85 del Foco, `legendaryChance`, suelo de Foco Interno, +14 % del noctámbulo, +35 % de capturas del casual por las recompensas de nivel, regla de la parálisis.
 - Recuperar la contraseña por correo (opción A: enlace desde el admin; opción B: servicio de correo gratuito); paquetes de especies nuevos; detección de anomalías; push para eventos con la app cerrada; aviso cuando un objeto propio ya lo usa otro evento; nota para jugadores al publicar contenido; mensaje al regalar desde Jugadores.

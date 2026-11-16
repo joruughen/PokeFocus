@@ -649,8 +649,8 @@ Daño = Σ_tipo  Energía[tipo] · Efectividad(tipo, tipos_del_salvaje)
 Un salvaje quita energía (PS, §5.3) a tus Pokémon en dos momentos:
 
 1. **Cuando lo atacas.** Mandar la ficha de daño de un Pokémon a un salvaje (§10, reparto del daño) **es un ataque y es definitivo**: no se puede deshacer ni cambiar de salvaje. El salvaje responde al momento con su mejor ataque **contra ese Pokémon**.
-   - **Auto** (botón o preferencia) también ataca de forma definitiva: cada Pokémon que falta ataca con el reparto automático y recibe el contraataque del salvaje al que más daño hace. Con la preferencia Auto activada, el ataque ocurre al lanzar la primera Ball de la oleada; la primera Ball también hace atacar a quien no lo haya hecho en el modo manual. Así cada Pokémon que actuó recibe **un** contraataque por oleada.
-   - **Un Pokémon agotado (0 PS) no puede atacar** (§5.3: no actúa): su ficha no se puede asignar y Auto o la primera Ball lo dejan fuera, así que su daño de esa oleada se pierde. Es lo coherente con "agotado = deja de actuar" y evita que un Pokémon a 0 sirva de escudo gratis.
+   - **Auto** (botón o preferencia) también ataca de forma definitiva: cada Pokémon que falta ataca con el reparto automático y recibe el contraataque del salvaje al que más daño hace. Con la preferencia Auto activada, el ataque ocurre al lanzar la primera Ball de la oleada. **En el modo manual, lanzar una Ball no hace atacar a nadie y no bloquea la oleada (cambiado el 2026-11-16):** quien no asignes no ataca en esa oleada (no recibe contraataque, pero se pierde su daño) y puedes seguir asignando después de lanzar. Así cada Pokémon que actuó recibe **un** contraataque por oleada.
+   - **Un Pokémon agotado (0 PS) no puede atacar** (§5.3: no actúa): su ficha no se puede asignar y Auto lo deja fuera, así que su daño de esa oleada se pierde. Es lo coherente con "agotado = deja de actuar" y evita que un Pokémon a 0 sirva de escudo gratis.
    - **Estados del salvaje.** Si una técnica de estado ha funcionado (Somnífero, Hipnosis, Onda Trueno…: el salvaje está **dormido** o **paralizado**), el salvaje **no contraataca** a quien le ataque. Da igual quién le puso el estado. No existe congelación en PokeFocus; si se añade, contaría igual. Por eso conviene usar las cargas de estado **antes** de atacar.
 2. **Cuando falla una Ball.** El contraataque va **siempre al líder** (hueco 1); si está agotado, al siguiente del equipo con PS. Aquí el estado del salvaje no cuenta. Elegir líder es una decisión: conviene uno con mucha Energía y Aguante, y con tipos que resistan a lo que esperas encontrar.
 
@@ -677,8 +677,11 @@ daño_contraataque = PS_máx_objetivo · 0.08 · (Nivel_salvaje / Nivel_objetivo
 ### 12.1 Curva de EXP **[calibrar]**
 
 ```
-EXP total para alcanzar el nivel L = round(4 · L^2.8)
+EXP total para alcanzar el nivel L = round(4 · L^2.8)                       si L ≤ 20
+EXP total para alcanzar el nivel L = round(EXP(20) · (L / 20)^4.0)          si L > 20   (EXP(20) = 17,577)
 ```
+
+**Curva con codo (decidido el 2026-11-16, `progression.expCurve.kneeLevel` y `exponentAfter`):** rápida hasta el nivel 20, para enganchar también al casual, y mucho más lenta después, para que el juego dure años. Medido con el simulador de largo plazo (`docs/longterm-report.md`; nivel medio del equipo del jugador «constante», 4 sesiones de 25 min al día): nv. 36 hacia la semana 11, nv. 50 hacia la 39 (9 meses) y nv. 60 hacia la 78 (18 meses). El nivel avanza en proporción a los minutos de estudio: el maratonista (200 min al día) llega al 60 hacia el mes 10-12 y bajarlo a ~6 meses exige unas 5 h diarias; el casual real tarda unas 4-5 veces más que el constante. La tabla siguiente es la curva **antigua** (solo orientativa hasta el nivel 20):
 
 Referencia de diseño con 4 sesiones de 25 min al día, 29 EXP/min y Foco 1.0 (hoy son 24.65 EXP/min con Foco 1.0, lo mismo que 29 con el antiguo Foco 0.85; el simulador da nv. 30 hacia el día 23 y nv. 50 hacia el 93), el Pokémon siempre en el equipo y **sin** caramelos:
 
@@ -714,7 +717,7 @@ Además, con las horas de estudio (no con el nivel) crecen el **Vínculo** (§8)
 Usar caramelos **cuesta Polvo de Estudio**, que **solo se gana estudiando** (§5.2). Así el estudio sigue siendo el límite:
 
 ```
-Costo en Polvo por caramelo = 25 + 3 · Nivel_actual_del_Pokémon
+Costo en Polvo por caramelo = 25 + 3 · Nivel + 0.03 · Nivel²      (antes 25 + 3 · Nivel; `candyDustPerLevelSq`)
 ```
 
 | Nivel | Costo por caramelo | Caramelos con el Polvo de una sesión (250) | EXP extra / EXP de la sesión |
@@ -768,6 +771,13 @@ Sube con el total de minutos estudiados y las especies capturadas. Desbloquea, p
 Los niveles de las MT (15), la Teracristalización (20), las Mentas (25), la Cápsula (30) y las Chapas (40) están en `advanced.<objeto>.minTrainerLevel` (editables en el panel de administración; decididos el 2026-11-15). Al llegar al nivel que los desbloquea se regalan, con el premio de ese nivel, **2 Teralitos** (nivel 20) y **1 Cápsula Habilidad** (30) (`unlockGift`); las MT y las Mentas no tienen regalo y **las Chapas tampoco** (`unlockGift` 0): **solo se consiguen en eventos** (drops y misiones de evento; ninguna misión común ni premio de nivel las da). Por debajo del nivel, los objetos se pueden tener pero no usar: la Mochila y la ficha dicen a qué nivel se desbloquean.
 
 **Recompensa por subir de nivel.** Cada nivel de entrenador alcanzado da **Polvo** (`50 + 10 · nivel`) y **3 Poké Balls**; cada **5** niveles además **3 Super Balls, 1 Ultra Ball y 1 Poción**, y cada **10** además **2 Ultra Balls más** (3 en total en los múltiplos de 10; al quitar las Ultra de las misiones semanales se duplicó lo de los niveles, ver `docs/balance-report.md` §12) (`trainer.levelRewards`, editable desde el panel de administración). Si un solo estudio o una captura sube varios niveles, se pagan todos (suma de los niveles intermedios); el tope es `trainer.maxLevel`. Las vías que suben el nivel son dos: los minutos de una sesión (al reclamarla) y la **especie nueva** capturada. El premio se ingresa al instante y, cuando el jugador está tranquilo (nunca en sesión, oleadas o descanso, ni encima de pistas, «¿Qué hay de nuevo?» o la ventana de un evento), sale una ventana **«¡Felicidades!»** con la mascota, el nivel alcanzado (o «del N al M» si fueron varios, en una sola ventana), los objetos con su imagen y el Polvo; el botón «¡Genial!» la cierra. En Resultados, la línea de subida de nivel también cuenta el premio. No cambia el azar de ninguna sesión ni captura (solo suma inventario y Polvo).
+
+### 12.9 Capacidad de la Caja (decidido el 2026-11-16)
+
+La Caja tiene un tope (`box` en la configuración, editable desde el panel de administración): **150 Pokémon** con nivel de entrenador 1, **+25 cada 5 niveles** (`baseCapacity + perStep · floor(nivel / stepLevels)`) y **máximo 400** (nivel 50). Motivo: el documento de cada jugador guarda todos sus Pokémon (~0,85 KB cada uno) y se escribe y se devuelve entero en cada acción; sin tope, un jugador con miles de Pokémon encarecería cada acción para él y para la base de datos.
+
+- **Caja llena (revisado el 2026-11-16):** la captura **no se pierde**: queda **pendiente** (`pendingCaptures` en el documento del jugador) y se abre una ventana para decidir: **cambiarla por un Pokémon de la Caja** (el soltado da sus caramelos de soltar y no puede ser del equipo), **convertirla en caramelos** (los de soltar; los 3 de capturar ya se dieron) o **guardarla** si ya hay sitio. Si el jugador cierra la ventana, la captura sigue pendiente (un aviso en Inicio y en la Caja lo recuerda). Hasta `box.maxPending` (10) pendientes a la vez: con 10, una captura normal se convierte directamente en caramelos; **los shiny y los legendarios siempre quedan pendientes** (nunca se pierden solos) y la conversión pide confirmación extra. Sea cual sea la decisión, la especie ya se registró en la Pokédex, dio EXP de entrenador por especie nueva y cuenta para misiones e historial.
+- Los intercambios no cambian el número de Pokémon (uno por uno). La pantalla de la Caja muestra «N de M» y un aviso cuando está llena.
 
 ### 12.8 Intercambios entre amigos
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { boxCapacity, isBoxFull, resolvePendingCapture } from './box'
 import { applySessionResult } from './session'
 import { advanceWave, applyStatusCharge, ballCounterTarget, captureChance, catchBreakdown, counterDamage, encounterModifiers, rerollWild, resolveCounter, resolveCounterOn, throwBall, wildCatchChance } from './capture'
 import { createEngineContext, defaultContext, type EngineContext } from './context'
@@ -754,5 +755,104 @@ describe('reroll charges', () => {
       expect(r.value.inventory['poke-ball']).toBe(11)
     }
     expect(applyStatusCharge(s, 'r1', { waveIndex: 0, wildIndex: 0 })).toEqual({ ok: false, error: 'wrong_charge_kind' })
+  })
+})
+
+describe('Box capacity (GDD §12.9)', () => {
+  const fullBox = (level = 1): PlayerState => {
+    const base = makePlayer([makeMon('squirtle', 10)])
+    const fillers = Object.fromEntries(Array.from({ length: boxCapacity(level) - 1 }, (_, i) => [`f${i}`, makeMon('pidgey', 5, { uid: `f${i}` })]))
+    return { ...base, trainer: { ...base.trainer, level }, pokemon: { ...base.pokemon, ...fillers } }
+  }
+  const pidgeyChain = String(ctx.speciesBySlug.get('pidgey')!.evolutionChainId)
+  const release1 = cfg.progression.candiesOnRelease[0] ?? 1
+  const catchOne = (s: PlayerState, patch: Partial<WildPokemon> = {}) => {
+    const withEnc = withEncounter(s, [wild('pidgey', 5, { studyBallEligible: true, ...patch })])
+    const r = throwBall(withEnc, { waveIndex: 0, wildIndex: 0 }, 'study-ball', createRng(1), T0)
+    if (!r.ok) throw new Error(r.error)
+    return { before: withEnc, state: r.value.state, outcome: r.value.outcome }
+  }
+
+  it('starts at 150, grows 25 every 5 trainer levels and stops at 400', () => {
+    expect([1, 4, 5, 10, 49, 50, 80].map((l) => boxCapacity(l))).toEqual([150, 150, 175, 200, 375, 400, 400])
+    expect(isBoxFull(fullBox())).toBe(true)
+    expect(isBoxFull({ ...fullBox(), trainer: { ...fullBox().trainer, level: 5 } })).toBe(false)
+  })
+
+  it('a capture with the Box full waits as pending (nothing is lost, nothing is released)', () => {
+    const { before, state, outcome } = catchOne(fullBox())
+    expect(outcome.kind === 'caught' && outcome.boxFull).toEqual({ pending: true })
+    expect(Object.keys(state.pokemon)).toHaveLength(Object.keys(before.pokemon).length)
+    expect(state.pendingCaptures).toHaveLength(1)
+    expect(state.pendingCaptures![0]!.speciesSlug).toBe('pidgey')
+    expect(state.counters.pokemon).toBe(before.counters.pokemon + 1)
+    expect(state.candies.chains[pidgeyChain]).toBe((before.candies.chains[pidgeyChain] ?? 0) + cfg.progression.candiesOnCatch)
+    expect(state.pokedex.caught).toContain('pidgey')
+  })
+
+  it('with the pending list full a normal capture becomes candies, but a shiny still waits', () => {
+    const full = fullBox()
+    const pending = Array.from({ length: cfg.box.maxPending }, (_, i) => makeMon('pidgey', 5, { uid: `q${i}` }))
+    const loaded: PlayerState = { ...full, pendingCaptures: pending }
+    const a = catchOne(loaded)
+    expect(a.outcome.kind === 'caught' && a.outcome.boxFull).toEqual({ pending: false, candies: cfg.progression.candiesOnCatch + release1 })
+    expect(a.state.pendingCaptures).toHaveLength(cfg.box.maxPending)
+    expect(a.state.counters.pokemon).toBe(loaded.counters.pokemon)
+    expect(a.state.encounter?.waves[0]?.wilds[0]?.caughtUid).toBeNull()
+    const b = catchOne(loaded, { isShiny: true })
+    expect(b.outcome.kind === 'caught' && b.outcome.boxFull).toEqual({ pending: true })
+    expect(b.state.pendingCaptures).toHaveLength(cfg.box.maxPending + 1)
+  })
+
+  it('with room left, the capture is stored as always', () => {
+    const { state, outcome } = catchOne(makePlayer([makeMon('squirtle', 10)]))
+    expect(outcome.kind === 'caught' && outcome.boxFull).toBeUndefined()
+    expect(Object.keys(state.pokemon)).toHaveLength(2)
+    expect(state.pendingCaptures).toBeUndefined()
+  })
+
+  describe('resolvePendingCapture', () => {
+    const withPending = () => catchOne(fullBox()).state
+    const uid = (s: PlayerState) => s.pendingCaptures![0]!.uid
+
+    it('swap: releases the chosen Pokémon (with its candies) and stores the capture', () => {
+      const s = withPending()
+      const r = resolvePendingCapture(s, uid(s), { kind: 'swap', releaseUid: 'f3' })
+      expect(r.ok).toBe(true)
+      if (!r.ok) return
+      expect(r.value.pokemon['f3']).toBeUndefined()
+      expect(r.value.pokemon[uid(s)]?.speciesSlug).toBe('pidgey')
+      expect(Object.keys(r.value.pokemon)).toHaveLength(Object.keys(s.pokemon).length)
+      expect(r.value.pendingCaptures).toBeUndefined()
+      expect(r.value.candies.chains[pidgeyChain]).toBe((s.candies.chains[pidgeyChain] ?? 0) + release1)
+    })
+
+    it('swap refuses a team member and an unknown Pokémon', () => {
+      const s = withPending()
+      expect(resolvePendingCapture(s, uid(s), { kind: 'swap', releaseUid: s.team[0]! })).toEqual({ ok: false, error: 'in_team' })
+      expect(resolvePendingCapture(s, uid(s), { kind: 'swap', releaseUid: 'nope' })).toEqual({ ok: false, error: 'unknown_pokemon' })
+    })
+
+    it('convert: the capture becomes the candies of a release', () => {
+      const s = withPending()
+      const r = resolvePendingCapture(s, uid(s), { kind: 'convert' })
+      expect(r.ok).toBe(true)
+      if (!r.ok) return
+      expect(r.value.pendingCaptures).toBeUndefined()
+      expect(Object.keys(r.value.pokemon)).toHaveLength(Object.keys(s.pokemon).length)
+      expect(r.value.candies.chains[pidgeyChain]).toBe((s.candies.chains[pidgeyChain] ?? 0) + release1)
+    })
+
+    it('keep: only with room in the Box', () => {
+      const s = withPending()
+      expect(resolvePendingCapture(s, uid(s), { kind: 'keep' })).toEqual({ ok: false, error: 'box_full' })
+      const roomy = { ...s, trainer: { ...s.trainer, level: 5 } }
+      const r = resolvePendingCapture(roomy, uid(s), { kind: 'keep' })
+      expect(r.ok && r.value.pokemon[uid(s)]).toBeTruthy()
+    })
+
+    it('unknown pending uid', () => {
+      expect(resolvePendingCapture(withPending(), 'zzz', { kind: 'convert' })).toEqual({ ok: false, error: 'unknown_pending' })
+    })
   })
 })

@@ -203,7 +203,7 @@ describe('damage split: tokens and attacks (GDD §11.4)', () => {
     expect(assignDamage(r, { waveIndex: 0, uid: 'a', wildIndex: 0 }, rng())).toEqual({ ok: false, error: 'already_attacked' })
   })
 
-  it('the first ball attacks with whoever is left and locks; it hits the leader if it fails', () => {
+  it('manual wave: a ball makes nobody attack and does not lock; its counterattack goes to the leader', () => {
     const s0 = claimed(false)
     const r = must(assignDamage(s0, { waveIndex: 0, uid: 'b', wildIndex: 0 }, rng()))
     let t = null
@@ -214,14 +214,15 @@ describe('damage split: tokens and attacks (GDD §11.4)', () => {
     }
     expect(t).not.toBeNull()
     const w = wave0(t!.state)
-    expect(w.damageLocked).toBe(true)
-    expect(w.assignments).toEqual({ b: 0, a: 'auto' })
-    expect(Object.keys(w.attacks!).sort()).toEqual(['a', 'b'])
+    // Only 'b' attacked (the player sent it); 'a' was NOT made to attack by the throw, and the wave stays open.
+    expect(w.damageLocked).toBeFalsy()
+    expect(w.assignments).toEqual({ b: 0 })
+    expect(Object.keys(w.attacks!)).toEqual(['b'])
     // The ball's counterattack goes to the leader ('a'), though 'b' hit that wild.
     if (t!.outcome.kind === 'failed' && t!.outcome.counter) expect(t!.outcome.counter.targetUid).toBe('a')
-    expect(assignDamage(t!.state, { waveIndex: 0, uid: 'a', wildIndex: 0 }, rng())).toEqual({ ok: false, error: 'damage_locked' })
-    expect(autoAssignDamage(t!.state, 0, rng())).toEqual({ ok: false, error: 'damage_locked' })
-    expect(t!.state.encounter!.waves[1]!.damageLocked).toBe(false)
+    // The player can still choose for 'a' after the throw.
+    const later = assignDamage(t!.state, { waveIndex: 0, uid: 'a', wildIndex: 0 }, rng())
+    expect(later.ok).toBe(true)
   })
 
   it('auto mode: the first ball turns the wave into all-auto attacks (same damage) with counterattacks', () => {

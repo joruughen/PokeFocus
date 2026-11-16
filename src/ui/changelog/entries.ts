@@ -29,6 +29,41 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.13.0',
+    date: '2026-11-16',
+    title: { es: 'Progreso a largo plazo y Caja con límite', en: 'Long-term progression and a limited Box' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'La Caja tiene capacidad: 150 Pokémon al empezar, +25 cada 5 niveles de entrenador, hasta 400. Si está llena, tu captura queda pendiente y puedes cambiarla por otro Pokémon, convertirla en caramelos o guardarla cuando haya sitio.',
+          en: 'The Box now has a capacity: 150 Pokémon at the start, +25 every 5 trainer levels, up to 400. When it is full, your catch waits as pending and you can swap it for another Pokémon, turn it into candies or keep it once there is room.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Subir de nivel es rápido al principio y más lento después del nivel 20, para que haya objetivos durante años. Los caramelos cuestan algo más de Polvo a niveles altos.',
+          en: 'Leveling is fast at the start and slower after level 20, so there are goals for years. Candies cost a bit more Dust at high levels.',
+        },
+      },
+      {
+        kind: 'fixed',
+        text: {
+          es: 'Lanzar una Ball ya no hace atacar solos a los Pokémon que no has asignado: decides tú quién ataca en cada oleada (con la preferencia Auto, sigue atacando todo el equipo).',
+          en: 'Throwing a Ball no longer makes the Pokémon you have not assigned attack on their own: you decide who attacks each wave (with the Auto preference, the whole team still attacks).',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'La app aguanta mucha más gente a la vez: el ranking carga más rápido y hay protecciones contra abusos y sobrecargas.',
+          en: 'The app handles many more people at once: the leaderboard loads faster and there are protections against abuse and overload.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.12.0',
     date: '2026-11-15',
     title: { es: 'Intercambios y objetos avanzados', en: 'Trades and advanced items' },

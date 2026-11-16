@@ -180,11 +180,18 @@ export interface GameConfig {
     }
   }
   progression: {
-    expCurve: { coef: number; exponent: number }
+    /**
+     * Total EXP for level L: `round(coef · L^exponent)`. With `kneeLevel` + `exponentAfter` the curve bends at the
+     * knee: up to `kneeLevel` it is the same, above it `EXP(knee) · (L / knee)^exponentAfter` (continuous). That is
+     * fast early (hooks the casual player) and much slower later (GDD §12.1). Absent = a single power law.
+     */
+    expCurve: { coef: number; exponent: number; kneeLevel?: number; exponentAfter?: number }
     candyExp: number
     typeCandyExp: number
     candyDustBase: number
     candyDustPerLevel: number
+    /** Optional quadratic term of the Dust per candy: `base + perLevel·L + perLevelSq·L²` (absent = 0). */
+    candyDustPerLevelSq?: number
     candiesOnCatch: number
     candiesOnRelease: number[]
     levelCaps: { species: number; cap: number }[]
@@ -215,6 +222,12 @@ export interface GameConfig {
      */
     levelRewards: { dustBase: number; dustPerLevel: number; tiers: { step: number; [item: string]: number }[] }
   }
+  /**
+   * Box capacity (GDD §12.9): `baseCapacity + perStep · floor(trainerLevel / stepLevels)`, never above `maxCapacity`.
+   * With the Box full, a capture waits as pending (up to `maxPending`; shinies and legendaries always wait) until the
+   * player swaps it for a Pokémon, converts it into candies or keeps it; past `maxPending` a normal capture becomes candies.
+   */
+  box: { baseCapacity: number; perStep: number; stepLevels: number; maxCapacity: number; maxPending: number }
   leagues: {
     order: LeagueId[]
     weeklyThresholds: Record<LeagueId, number>
@@ -278,6 +291,7 @@ export const ENGINE_DEFAULTS = {
   },
   capture: { counter: { immuneHealPct: 0.25, damageMult: 1 } },
   progression: { maxLevel: 100 },
+  box: { baseCapacity: 150, perStep: 25, stepLevels: 5, maxCapacity: 400, maxPending: 10 },
   trainer: { expCoef: 100, expExponent: 1.5, expPerMinute: 1, expPerNewSpecies: 60, maxLevel: 50, levelRewards: { dustBase: 0, dustPerLevel: 0, tiers: [] } },
   advanced: {
     tm: { minTrainerLevel: 15 },

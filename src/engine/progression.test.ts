@@ -8,12 +8,14 @@ import { makeMon, makePlayer, T0 } from './test-helpers'
 const ctx = defaultContext()
 
 describe('EXP curve (GDD §12.1)', () => {
-  it('round(4 · L^2.8) ≈ the reference table', () => {
+  it('round(4 · L^2.8) up to level 20, then bends to exponent 4.0 (GDD §12.1)', () => {
     expect(expForLevel(10)).toBeGreaterThan(2400)
     expect(expForLevel(10)).toBeLessThan(2600)
-    expect(expForLevel(30) / 55_000).toBeCloseTo(1, 1)
-    expect(expForLevel(50) / 230_000).toBeCloseTo(1, 1)
-    expect(expForLevel(100) / 1_600_000).toBeCloseTo(1, 1)
+    expect(expForLevel(20)).toBe(Math.round(4 * 20 ** 2.8)) // the knee: same as the old curve
+    expect(expForLevel(30) / 89_000).toBeCloseTo(1, 1)
+    expect(expForLevel(36) / 184_500).toBeCloseTo(1, 1)
+    expect(expForLevel(50) / 686_600).toBeCloseTo(1, 1)
+    expect(expForLevel(60) / 1_423_700).toBeCloseTo(1, 1)
     expect(levelFromExp(expForLevel(37))).toBe(37)
     expect(levelFromExp(expForLevel(37) - 1)).toBe(36)
   })
@@ -43,10 +45,10 @@ describe('EXP curve (GDD §12.1)', () => {
 })
 
 describe('candies and dust (GDD §12.2–12.3)', () => {
-  it('dust cost per candy = 25 + 3·level', () => {
-    expect(candyDustCost(10)).toBe(55)
-    expect(candyDustCost(30)).toBe(115)
-    expect(candyDustCost(50)).toBe(175)
+  it('dust cost per candy = 25 + 3·level + 0.03·level²', () => {
+    expect(candyDustCost(10)).toBe(58)
+    expect(candyDustCost(30)).toBe(142)
+    expect(candyDustCost(50)).toBe(250)
   })
 
   it('useCandy spends dust at the current level and respects the cap', () => {
