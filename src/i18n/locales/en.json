@@ -1411,7 +1411,11 @@
       "listLabel_one": "{{count}} Pokémon you can release",
       "listLabel_other": "{{count}} Pokémon you can release",
       "noCandidates": "No Pokémon to release matches that search.",
-      "sort": { "weakest": "Weakest", "recent": "Newest", "species": "Species" },
+      "sort": {
+        "weakest": "Weakest",
+        "recent": "Newest",
+        "species": "Species"
+      },
       "gain_one": "gives {{count}} candy",
       "gain_other": "gives {{count}} candies",
       "pickOne": "Pick whom to release.",
@@ -1631,10 +1635,6 @@
     "capTitle": "Max level for now: {{cap}}",
     "capBody": "Catch {{species}} different species to raise the cap to {{cap}}. You have {{caught}}.",
     "capMax": "That's the highest cap in this pack.",
-    "toDex": "Open the Pokédex"
-  },
-  "evo": {
-    "title": "Evolution",
     "preview": {
       "title": "Preview (nothing applies until you confirm)",
       "level": "Lv. {{level}}",
@@ -1648,6 +1648,10 @@
       "capStop": "Level cap {{cap}}: only what is needed is spent. {{count}} of {{asked}} candies stay unused.",
       "dustStop": "Not enough Dust: {{count}} of {{asked}} candies stay unused."
     },
+    "toDex": "Open the Pokédex"
+  },
+  "evo": {
+    "title": "Evolution",
     "button": "Evolve",
     "previewShow": "See stat changes",
     "previewHide": "Hide stat changes",

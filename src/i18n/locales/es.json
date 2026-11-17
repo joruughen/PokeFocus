@@ -1411,7 +1411,11 @@
       "listLabel_one": "{{count}} Pokémon que puedes soltar",
       "listLabel_other": "{{count}} Pokémon que puedes soltar",
       "noCandidates": "No hay ningún Pokémon que soltar con esa búsqueda.",
-      "sort": { "weakest": "Débiles", "recent": "Nuevos", "species": "Especie" },
+      "sort": {
+        "weakest": "Débiles",
+        "recent": "Nuevos",
+        "species": "Especie"
+      },
       "gain_one": "da {{count}} caramelo",
       "gain_other": "da {{count}} caramelos",
       "pickOne": "Elige a quién soltar.",
@@ -1631,10 +1635,6 @@
     "capTitle": "Nivel máximo por ahora: {{cap}}",
     "capBody": "Captura {{species}} especies distintas para subir el límite a {{cap}}. Llevas {{caught}}.",
     "capMax": "Es el límite más alto de este pack.",
-    "toDex": "Ver la Pokédex"
-  },
-  "evo": {
-    "title": "Evolución",
     "preview": {
       "title": "Vista previa (no se aplica hasta confirmar)",
       "level": "Nv. {{level}}",
@@ -1648,6 +1648,10 @@
       "capStop": "Tope de nivel {{cap}}: solo se gastan los necesarios. {{count}} de {{asked}} caramelos se quedan sin usar.",
       "dustStop": "No alcanza el Polvo: {{count}} de {{asked}} caramelos se quedan sin usar."
     },
+    "toDex": "Ver la Pokédex"
+  },
+  "evo": {
+    "title": "Evolución",
     "button": "Evolucionar",
     "previewShow": "Ver cambios de estadísticas",
     "previewHide": "Ocultar cambios de estadísticas",
