@@ -81,3 +81,14 @@ Objetivo del constante: nv. 36 a los ~2-3 meses (sem. 11), nv. 50 a los ~9 meses
 - Cosméticos de podio (marco o insignia) no hechos: de momento solo Polvo.
 - El podio solo cierra la semana inmediatamente anterior: quien no abre la app en toda una semana pierde ese podio.
 - Repetir la medición con la curva y los topes definitivos del paso 6 (el informe actual usa el árbol con el paso 6 sin commitear).
+
+**Medición final con todo junto (2026-11-17: Kanto 158 especies, ligas con subrangos, curva con codo, evolución con caramelos; 6 semillas, 104 semanas; informe completo en `docs/longterm-kanto.md`)** — nivel medio del equipo:
+
+| Perfil | Sem. 12 | 26 | 39 | 52 | 78 | 104 |
+|---|---:|---:|---:|---:|---:|---:|
+| Constante (objetivo 36 / – / 50 / – / 60) | 35 | 44 | **50** | 56 | **59** | 59 |
+| Maratonista | 40 | 54 | 56 | 59 | 59 | 59 |
+| Noctámbulo | 39 | 49 | 56 | 58 | 60 | 60 |
+| Casual (1-2 sesiones, 4 días) | 19 | 23 | 25 | 27 | 31 | 33 |
+
+El constante cumple el calendario acordado con Kanto. Ojo: el constante captura 136 especies hacia la semana 26 y 151 hacia la 52, así que **Kanto se acaba en ~1 año** (un pack nuevo cada 4-6 meses lo cubre).
