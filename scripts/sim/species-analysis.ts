@@ -47,8 +47,15 @@ export interface SpeciesAnalysis {
   weakEvolutions: { from: string; to: string; level: number; ratio: number }[]
 }
 
+/**
+ * Single-stage species (Tauros, Lapras, Snorlax…: stage 1 with no evolution in the pack) are finals,
+ * so comparing them with unevolved base forms would flag every one of them as "high". They are
+ * compared with the 2nd stages instead (curation target: about as strong as a 2nd stage).
+ */
 export function groupOf(sp: Species): Group {
-  return sp.isLegendary || sp.isMythical ? 'legend' : sp.stage === 1 ? 's1' : sp.stage === 2 ? 's2' : 's3'
+  if (sp.isLegendary || sp.isMythical) return 'legend'
+  if (sp.stage === 1 && sp.evolutions.length === 0) return 's2'
+  return sp.stage === 1 ? 's1' : sp.stage === 2 ? 's2' : 's3'
 }
 
 export function transientLevel(sp: Species): number | null {

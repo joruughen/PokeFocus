@@ -641,5 +641,650 @@
       "es": "Muestra la calidad (IVs) de los salvajes antes de lanzar.",
       "en": "Shows wild Pokémon quality (IVs) before throwing."
     }
+  },
+  "sing": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "sleep"
+      }
+    ],
+    "description": {
+      "es": "Duerme a un salvaje que elijas (×2.5 a la captura).",
+      "en": "Puts a wild Pokémon of your choice to sleep (×2.5 capture)."
+    }
+  },
+  "lovely-kiss": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "sleep"
+      }
+    ],
+    "description": {
+      "es": "Duerme a un salvaje que elijas (×2.5 a la captura).",
+      "en": "Puts a wild Pokémon of your choice to sleep (×2.5 capture)."
+    }
+  },
+  "spore": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "sleep"
+      }
+    ],
+    "description": {
+      "es": "Duerme a un salvaje que elijas (×2.5 a la captura).",
+      "en": "Puts a wild Pokémon of your choice to sleep (×2.5 capture)."
+    }
+  },
+  "glare": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "wildStatus",
+        "status": "paralysis"
+      }
+    ],
+    "description": {
+      "es": "Paraliza a un salvaje que elijas (×1.5 a la captura).",
+      "en": "Paralyzes a wild Pokémon of your choice (×1.5 capture)."
+    }
+  },
+  "soft-boiled": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "self"
+      }
+    ],
+    "description": {
+      "es": "Recupera el 50% de su Energía.",
+      "en": "Restores 50% of its Energy."
+    }
+  },
+  "slack-off": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "self"
+      }
+    ],
+    "description": {
+      "es": "Recupera el 50% de su Energía.",
+      "en": "Restores 50% of its Energy."
+    }
+  },
+  "refresh": {
+    "category": "activable",
+    "baseChance": 0.08,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.25,
+        "target": "self"
+      }
+    ],
+    "description": {
+      "es": "Recupera el 25% de su Energía.",
+      "en": "Restores 25% of its Energy."
+    }
+  },
+  "heal-pulse": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 2,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.4,
+        "target": "lowestAlly"
+      }
+    ],
+    "description": {
+      "es": "Cura el 40% al compañero con menos Energía.",
+      "en": "Heals 40% to the teammate with the least Energy."
+    }
+  },
+  "aromatherapy": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.2,
+        "target": "team"
+      }
+    ],
+    "description": {
+      "es": "Cura el 20% de Energía a todo el equipo.",
+      "en": "Heals 20% Energy to the whole team."
+    }
+  },
+  "healing-wish": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "heal",
+        "pct": 0.5,
+        "target": "lowestAlly",
+        "timing": "nextSessionStart"
+      }
+    ],
+    "description": {
+      "es": "Al empezar la próxima sesión, cura el 50% al compañero con menos Energía.",
+      "en": "At the start of the next session, heals 50% to the teammate with the least Energy."
+    }
+  },
+  "leech-seed": {
+    "category": "activable",
+    "baseChance": 0.06,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "healOverTime",
+        "pctPerAction": 0.05
+      }
+    ],
+    "description": {
+      "es": "Recupera un 5% de Energía tras cada acción el resto de la sesión.",
+      "en": "Restores 5% Energy after each action for the rest of the session."
+    }
+  },
+  "metronome": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "pointsBurst",
+        "actions": 3,
+        "mult": 2
+      }
+    ],
+    "description": {
+      "es": "Sus 3 acciones siguientes dan el doble de puntos.",
+      "en": "Its next 3 actions earn double points."
+    }
+  },
+  "sandstorm": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "ground"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Tierra para todo el equipo el resto de la sesión.",
+      "en": "Activates the Ground condition for the whole team for the rest of the session."
+    }
+  },
+  "grassy-terrain": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "grass"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Planta para todo el equipo el resto de la sesión.",
+      "en": "Activates the Grass condition for the whole team for the rest of the session."
+    }
+  },
+  "electric-terrain": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "electric"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Eléctrico para todo el equipo el resto de la sesión.",
+      "en": "Activates the Electric condition for the whole team for the rest of the session."
+    }
+  },
+  "misty-terrain": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "fairy"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Hada para todo el equipo el resto de la sesión.",
+      "en": "Activates the Fairy condition for the whole team for the rest of the session."
+    }
+  },
+  "psychic-terrain": {
+    "category": "activable",
+    "baseChance": 0.05,
+    "limitPerSession": 1,
+    "effects": [
+      {
+        "kind": "activateCondition",
+        "type": "psychic"
+      }
+    ],
+    "description": {
+      "es": "Activa la condición de los tipo Psíquico para todo el equipo el resto de la sesión.",
+      "en": "Activates the Psychic condition for the whole team for the rest of the session."
+    }
+  },
+  "swords-dance": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.2,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+20% de Puntos de captura.",
+      "en": "+20% Capture Points."
+    }
+  },
+  "coil": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+15% de Puntos de captura.",
+      "en": "+15% Capture Points."
+    }
+  },
+  "sharpen": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.1,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+10% de Puntos de captura.",
+      "en": "+10% Capture Points."
+    }
+  },
+  "howl": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.1,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+10% de Puntos de captura.",
+      "en": "+10% Capture Points."
+    }
+  },
+  "work-up": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "points",
+        "mult": 1.08,
+        "scope": "self"
+      },
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.08,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+8% de puntos y de Puntos de captura.",
+      "en": "+8% points and Capture Points."
+    }
+  },
+  "belly-drum": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.4,
+        "scope": "self"
+      },
+      {
+        "kind": "statMod",
+        "stat": "energyCost",
+        "mult": 1.25,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+40% de Puntos de captura, pero gasta un 25% más de Energía.",
+      "en": "+40% Capture Points, but uses 25% more Energy."
+    }
+  },
+  "shell-smash": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "pace",
+        "mult": 1.15,
+        "scope": "self"
+      },
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.15,
+        "scope": "self"
+      },
+      {
+        "kind": "statMod",
+        "stat": "energyCost",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+15% de Ritmo y de Puntos de captura, pero gasta un 15% más de Energía.",
+      "en": "+15% Pace and Capture Points, but uses 15% more Energy."
+    }
+  },
+  "quiver-dance": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "points",
+        "mult": 1.1,
+        "scope": "self"
+      },
+      {
+        "kind": "statMod",
+        "stat": "pace",
+        "mult": 1.1,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+10% de puntos y de Ritmo.",
+      "en": "+10% points and Pace."
+    }
+  },
+  "rock-polish": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "pace",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "+15% de Ritmo (actúa más a menudo).",
+      "en": "+15% Pace (acts more often)."
+    }
+  },
+  "tailwind": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "pace",
+        "mult": 1.05,
+        "scope": "team"
+      }
+    ],
+    "description": {
+      "es": "+5% de Ritmo a todo el equipo (no se acumula).",
+      "en": "+5% Pace for the whole team (doesn't stack)."
+    }
+  },
+  "light-screen": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.85,
+        "scope": "team"
+      }
+    ],
+    "description": {
+      "es": "Todo el equipo recibe un 15% menos de daño de los contraataques (no se acumula).",
+      "en": "The whole team takes 15% less damage from counterattacks (doesn't stack)."
+    }
+  },
+  "reflect": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.85,
+        "scope": "team"
+      }
+    ],
+    "description": {
+      "es": "Todo el equipo recibe un 15% menos de daño de los contraataques (no se acumula).",
+      "en": "The whole team takes 15% less damage from counterattacks (doesn't stack)."
+    }
+  },
+  "barrier": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.75,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "Recibe un 25% menos de daño de los contraataques.",
+      "en": "Takes 25% less damage from counterattacks."
+    }
+  },
+  "acid-armor": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.75,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "Recibe un 25% menos de daño de los contraataques.",
+      "en": "Takes 25% less damage from counterattacks."
+    }
+  },
+  "iron-defense": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "counterDamageTaken",
+        "mult": 0.75,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "Recibe un 25% menos de daño de los contraataques.",
+      "en": "Takes 25% less damage from counterattacks."
+    }
+  },
+  "minimize": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "counterMiss",
+        "chance": 0.2
+      }
+    ],
+    "description": {
+      "es": "Los contraataques contra él fallan un 20% de las veces.",
+      "en": "Counterattacks against it miss 20% of the time."
+    }
+  },
+  "double-team": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "counterMiss",
+        "chance": 0.2
+      }
+    ],
+    "description": {
+      "es": "Los contraataques contra él fallan un 20% de las veces.",
+      "en": "Counterattacks against it miss 20% of the time."
+    }
+  },
+  "endure": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "counterMinHp1"
+      }
+    ],
+    "description": {
+      "es": "Los contraataques nunca lo dejan agotado.",
+      "en": "Counterattacks never leave it exhausted."
+    }
+  },
+  "magnet-rise": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "lateClaimImmune"
+      }
+    ],
+    "description": {
+      "es": "Reclamar tarde no reduce lo que genera este Pokémon.",
+      "en": "Claiming late doesn't reduce what this Pokémon earns."
+    }
+  },
+  "lock-on": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "ballMult",
+        "mult": 1.05
+      }
+    ],
+    "description": {
+      "es": "+5% de probabilidad de captura con cualquier Ball (no se acumula).",
+      "en": "+5% capture chance with any Ball (doesn't stack)."
+    }
+  },
+  "mind-reader": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "ballMult",
+        "mult": 1.05
+      }
+    ],
+    "description": {
+      "es": "+5% de probabilidad de captura con cualquier Ball (no se acumula).",
+      "en": "+5% capture chance with any Ball (doesn't stack)."
+    }
+  },
+  "charm": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "bondGain",
+        "mult": 1.3,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "Gana Vínculo un 30% más rápido.",
+      "en": "Gains Bond 30% faster."
+    }
+  },
+  "play-nice": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "bondGain",
+        "mult": 1.2,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "Gana Vínculo un 20% más rápido.",
+      "en": "Gains Bond 20% faster."
+    }
+  },
+  "transform": {
+    "category": "passive",
+    "effects": [
+      {
+        "kind": "statMod",
+        "stat": "points",
+        "mult": 1.15,
+        "scope": "self"
+      },
+      {
+        "kind": "statMod",
+        "stat": "captureEnergy",
+        "mult": 1.15,
+        "scope": "self"
+      }
+    ],
+    "description": {
+      "es": "Imita a los salvajes: +15% de puntos y de Puntos de captura.",
+      "en": "Mimics wild Pokémon: +15% points and Capture Points."
+    }
   }
 }

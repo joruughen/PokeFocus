@@ -1,5 +1,5 @@
 {
-  "_note": "Curación del Pack 1 (GDD §20.1, capa 2). 'role' es el papel principal del Pokémon en PokeFocus y se muestra en la UI. Roles: scholar (Rendimiento/puntos), hunter (Captura), sprinter (Ritmo), marathoner (Energía), technician (Técnica), guardian (Aguante, buen líder), support (curación del equipo), allrounder. Regla aplicada: mínimo de Ataque Esp. (Rendimiento) por etapa final ≥ 75, intermedia ≥ 55, base ≥ 35 (salvo Caterpie/Metapod, que evolucionan muy pronto). Legendarios: techo de 135 en cualquier stat.",
+  "_note": "Curación de Kanto completo (Pack 1 + resto de Kanto) (GDD §20.1, capa 2). 'role' es el papel principal del Pokémon en PokeFocus y se muestra en la UI. Roles: scholar (Rendimiento/puntos), hunter (Captura), sprinter (Ritmo), marathoner (Energía), technician (Técnica), guardian (Aguante, buen líder), support (curación del equipo), allrounder. Regla aplicada: mínimo de Ataque Esp. (Rendimiento) por etapa final ≥ 75, intermedia ≥ 55, base ≥ 35 (salvo Caterpie/Metapod, que evolucionan muy pronto). Legendarios: techo de 135 en cualquier stat. Kanto (2026-11): las especies de una sola etapa (Tauros, Lapras…) se comparan con las 2.as etapas; los ajustes de AtEsp de las especies nuevas salen del simulador (valor de estudio, banda ±40% de la mediana de su grupo; objetivo ±30%, finales ≥ −20%) y llevan su motivo. Detalle en docs/kanto-report.md.",
   "bulbasaur": {
     "role": "technician"
   },
@@ -41,6 +41,21 @@
     "role": "technician",
     "_note": "Paralizador + Somnífero + Remolino: el mejor preparador de capturas temprano."
   },
+  "weedle": {
+    "role": "hunter",
+    "_note": "Débil a propósito: evoluciona a nivel 7."
+  },
+  "kakuna": {
+    "role": "hunter",
+    "_note": "Sin técnicas de daño: genera Energía Normal al 50%. Evoluciona a nivel 10."
+  },
+  "beedrill": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 45 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
   "pidgey": {
     "role": "sprinter"
   },
@@ -57,6 +72,44 @@
       "specialAttack": 80
     },
     "_note": "AtEsp 70 → 80 para que su Ritmo se traduzca en puntos."
+  },
+  "rattata": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 35
+    },
+    "_note": "AtEsp 25 → 35: mínimo de Rendimiento de su etapa (35)."
+  },
+  "raticate": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 50 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "spearow": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 35
+    },
+    "_note": "AtEsp 31 → 35: mínimo de Rendimiento de su etapa (35)."
+  },
+  "fearow": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 61 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "ekans": {
+    "role": "hunter"
+  },
+  "arbok": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Deslumbrar (parálisis) + Enrosque + Intimidación. AtEsp 65 → 75: mínimo de Rendimiento de su etapa (75)."
   },
   "pikachu": {
     "role": "sprinter"
@@ -79,12 +132,64 @@
     },
     "_note": "AtEsp 45 → 75; Def 110 → 100 para no eclipsar a Golem como líder."
   },
+  "nidoran-f": {
+    "role": "guardian"
+  },
+  "nidorina": {
+    "role": "guardian",
+    "baseStats": {
+      "specialAttack": 73
+    },
+    "_note": "AtEsp 55 → 73: el simulador lo dejaba -37 % frente a la mediana de su grupo."
+  },
+  "nidoqueen": {
+    "role": "guardian",
+    "baseStats": {
+      "specialAttack": 87
+    },
+    "_note": "AtEsp 75 → 87: el simulador lo dejaba -23 % frente a la mediana de su grupo."
+  },
+  "nidoran-m": {
+    "role": "hunter"
+  },
+  "nidorino": {
+    "role": "hunter"
+  },
+  "nidoking": {
+    "role": "hunter"
+  },
   "clefairy": {
     "role": "support"
   },
   "clefable": {
     "role": "support",
     "_note": "Luz Lunar / Campana Cura + Guardia Amiga: sostiene al equipo."
+  },
+  "vulpix": {
+    "role": "technician"
+  },
+  "ninetales": {
+    "role": "technician",
+    "baseStats": {
+      "specialAttack": 76
+    },
+    "_note": "AtEsp 81 → 76: el simulador lo dejaba +30 % sobre la mediana de su grupo."
+  },
+  "jigglypuff": {
+    "role": "marathoner",
+    "baseStats": {
+      "hp": 105,
+      "specialAttack": 54
+    },
+    "_note": "PS 115 → 105, en línea con Wigglytuff. Canto duerme salvajes. AtEsp 45 → 54: el simulador lo dejaba -33 % frente a la mediana de su grupo."
+  },
+  "wigglytuff": {
+    "role": "marathoner",
+    "baseStats": {
+      "hp": 125,
+      "specialAttack": 100
+    },
+    "_note": "PS 140 → 125 (extremo moderado). AtEsp 85 → 100: el simulador lo dejaba -24 % frente a la mediana de su grupo."
   },
   "zubat": {
     "role": "sprinter",
@@ -100,12 +205,115 @@
     },
     "_note": "AtEsp 65 se mantiene (≥ 55)."
   },
-  "crobat": {
+  "oddish": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 44
+    },
+    "_note": "AtEsp 75 → 44: el simulador lo dejaba +75 % sobre la mediana de su grupo."
+  },
+  "gloom": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 82
+    },
+    "_note": "AtEsp 85 → 82: para que Vileplume lo supere en al menos un 10 %."
+  },
+  "vileplume": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 125
+    },
+    "_note": "AtEsp 110 → 125: para superar a Gloom en al menos un 10 %."
+  },
+  "paras": {
+    "role": "technician"
+  },
+  "parasect": {
+    "role": "technician",
+    "baseStats": {
+      "speed": 40,
+      "specialAttack": 75
+    },
+    "_note": "Espora: el mejor dormidor de salvajes. Vel 30 → 40. AtEsp 60 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "venonat": {
+    "role": "scholar"
+  },
+  "venomoth": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 83
+    },
+    "_note": "AtEsp 90 → 83: el simulador lo dejaba +32 % sobre la mediana de su grupo."
+  },
+  "diglett": {
     "role": "sprinter",
     "baseStats": {
-      "specialAttack": 80
+      "hp": 25
     },
-    "_note": "AtEsp 70 → 80."
+    "_note": "PS 10 → 25: frágil pero jugable una sesión entera (como Abra)."
+  },
+  "dugtrio": {
+    "role": "sprinter",
+    "baseStats": {
+      "hp": 45,
+      "specialAttack": 75
+    },
+    "_note": "PS 35 → 45: velocista frágil, pero no se agota en la primera sesión. AtEsp 50 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "meowth": {
+    "role": "sprinter"
+  },
+  "persian": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 65 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "psyduck": {
+    "role": "allrounder"
+  },
+  "golduck": {
+    "role": "allrounder"
+  },
+  "mankey": {
+    "role": "hunter"
+  },
+  "primeape": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 60 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "growlithe": {
+    "role": "allrounder",
+    "baseStats": {
+      "specialAttack": 57
+    },
+    "_note": "AtEsp 70 → 57: el simulador lo dejaba +41 % sobre la mediana de su grupo."
+  },
+  "arcanine": {
+    "role": "allrounder"
+  },
+  "poliwag": {
+    "role": "guardian"
+  },
+  "poliwhirl": {
+    "role": "guardian",
+    "baseStats": {
+      "specialAttack": 55
+    },
+    "_note": "AtEsp 50 → 55: mínimo de Rendimiento de su etapa (55)."
+  },
+  "poliwrath": {
+    "role": "guardian",
+    "baseStats": {
+      "specialAttack": 97
+    },
+    "_note": "AtEsp 70 → 97: mínimo de Rendimiento de su etapa (75); el simulador lo dejaba -28 % frente a la mediana de su grupo."
   },
   "abra": {
     "role": "scholar",
@@ -142,6 +350,29 @@
     },
     "_note": "AtEsp 65 → 110: el simulador lo marcó −37% bajo la mediana de finales; cazador viable en el ranking."
   },
+  "bellsprout": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 42
+    },
+    "_note": "AtEsp 70 → 42: el simulador lo dejaba +78 % sobre la mediana de su grupo."
+  },
+  "weepinbell": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 70
+    },
+    "_note": "AtEsp 85 → 70: el simulador lo dejaba +40 % sobre la mediana de su grupo."
+  },
+  "victreebel": {
+    "role": "hunter"
+  },
+  "tentacool": {
+    "role": "technician"
+  },
+  "tentacruel": {
+    "role": "technician"
+  },
   "geodude": {
     "role": "guardian",
     "baseStats": {
@@ -163,6 +394,26 @@
     },
     "_note": "AtEsp 55 → 78. Robustez + Def alta: el líder más seguro."
   },
+  "ponyta": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 35
+    },
+    "_note": "AtEsp 65 → 35: el simulador lo dejaba +77 % sobre la mediana de su grupo."
+  },
+  "rapidash": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 80 → 75: el simulador lo dejaba +32 % sobre la mediana de su grupo."
+  },
+  "slowpoke": {
+    "role": "guardian"
+  },
+  "slowbro": {
+    "role": "guardian"
+  },
   "magnemite": {
     "role": "scholar",
     "baseStats": {
@@ -174,6 +425,53 @@
   "magneton": {
     "role": "scholar"
   },
+  "farfetchd": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa única en Kanto. Danza Espada: cazador temprano. AtEsp 58 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "doduo": {
+    "role": "sprinter"
+  },
+  "dodrio": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 60 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "seel": {
+    "role": "marathoner"
+  },
+  "dewgong": {
+    "role": "marathoner",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 70 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "grimer": {
+    "role": "marathoner"
+  },
+  "muk": {
+    "role": "marathoner",
+    "baseStats": {
+      "specialAttack": 95
+    },
+    "_note": "AtEsp 65 → 95: mínimo de Rendimiento de su etapa (75); el simulador lo dejaba -28 % frente a la mediana de su grupo."
+  },
+  "shellder": {
+    "role": "guardian"
+  },
+  "cloyster": {
+    "role": "guardian",
+    "baseStats": {
+      "defense": 150
+    },
+    "_note": "Def 180 → 150: el Aguante satura en 200 y no debe eclipsar a los demás líderes."
+  },
   "gastly": {
     "role": "scholar"
   },
@@ -183,6 +481,234 @@
   "gengar": {
     "role": "scholar",
     "_note": "Estudioso nocturno con Hipnosis."
+  },
+  "onix": {
+    "role": "guardian",
+    "baseStats": {
+      "defense": 140,
+      "specialAttack": 75
+    },
+    "_note": "Def 160 → 140 (extremo moderado). Etapa única en Kanto (Steelix no está). AtEsp 30 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "drowzee": {
+    "role": "technician"
+  },
+  "hypno": {
+    "role": "technician",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 73 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "krabby": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 35
+    },
+    "_note": "AtEsp 25 → 35: mínimo de Rendimiento de su etapa (35)."
+  },
+  "kingler": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 50 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "voltorb": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 47
+    },
+    "_note": "AtEsp 55 → 47: el simulador lo dejaba +38 % sobre la mediana de su grupo."
+  },
+  "electrode": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 80 → 75: el simulador lo dejaba +31 % sobre la mediana de su grupo."
+  },
+  "exeggcute": {
+    "role": "scholar"
+  },
+  "exeggutor": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 107
+    },
+    "_note": "AtEsp 125 → 107: el simulador lo dejaba +40 % sobre la mediana de su grupo."
+  },
+  "cubone": {
+    "role": "guardian"
+  },
+  "marowak": {
+    "role": "guardian",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 50 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "hitmonlee": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa única (Tyrogue no está). Captura muy alta. AtEsp 35 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "hitmonchan": {
+    "role": "technician",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa única (Tyrogue no está). Técnica alta: activa mucho sus técnicas. AtEsp 35 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "lickitung": {
+    "role": "marathoner",
+    "baseStats": {
+      "speed": 45,
+      "specialAttack": 95
+    },
+    "_note": "Etapa única en Kanto (Lickilicky no está). Vel 30 → 45 para no depender solo del Rendimiento. AtEsp 60 → 95: mínimo de Rendimiento de su etapa (75); el simulador lo dejaba -28 % frente a la mediana de su grupo."
+  },
+  "koffing": {
+    "role": "guardian"
+  },
+  "weezing": {
+    "role": "guardian"
+  },
+  "rhyhorn": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 35
+    },
+    "_note": "AtEsp 30 → 35: mínimo de Rendimiento de su etapa (35)."
+  },
+  "rhydon": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa final en Kanto (Rhyperior no está). AtEsp 45 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "chansey": {
+    "role": "support",
+    "baseStats": {
+      "hp": 170,
+      "speed": 60,
+      "specialAttack": 92
+    },
+    "_note": "PS 250 → 170 y Vel 50 → 60: se modera el extremo (§20.1); sigue siendo la que más Energía tiene. Ovocuración, Pulso Cura y Alma Cura: sostiene al equipo. AtEsp 35 → 92: mínimo de Rendimiento de su etapa (75); el simulador lo dejaba -25 % frente a la mediana de su grupo."
+  },
+  "tangela": {
+    "role": "guardian",
+    "baseStats": {
+      "specialAttack": 93
+    },
+    "_note": "Etapa única en Kanto (Tangrowth no está). AtEsp 100 → 93: el simulador lo dejaba +32 % sobre la mediana de su grupo."
+  },
+  "kangaskhan": {
+    "role": "allrounder",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa única. Buena en todo y con mucha Energía. AtEsp 40 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "horsea": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 35
+    },
+    "_note": "AtEsp 70 → 35: el simulador lo dejaba +89 % sobre la mediana de su grupo."
+  },
+  "seadra": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 81
+    },
+    "_note": "Etapa final en Kanto (Kingdra no está). AtEsp 95 → 81: el simulador lo dejaba +40 % sobre la mediana de su grupo."
+  },
+  "goldeen": {
+    "role": "allrounder"
+  },
+  "seaking": {
+    "role": "allrounder",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 65 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "staryu": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 60
+    },
+    "_note": "AtEsp 70 → 60: el simulador lo dejaba +38 % sobre la mediana de su grupo."
+  },
+  "starmie": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 90
+    },
+    "_note": "AtEsp 100 → 90: el simulador lo dejaba +35 % sobre la mediana de su grupo."
+  },
+  "mr-mime": {
+    "role": "technician",
+    "_note": "Etapa única en Kanto. Barrera, Reflejo, Pantalla de Luz: técnico defensivo."
+  },
+  "scyther": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa única en Kanto (Scizor no está). Velocista con Captura alta. AtEsp 55 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "jynx": {
+    "role": "scholar",
+    "_note": "Etapa única en Kanto. Beso Amoroso duerme salvajes."
+  },
+  "electabuzz": {
+    "role": "sprinter",
+    "_note": "Etapa única en Kanto (Electivire no está)."
+  },
+  "magmar": {
+    "role": "scholar",
+    "_note": "Etapa única en Kanto (Magmortar no está)."
+  },
+  "pinsir": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa única. Captura muy alta + Danza Espada. AtEsp 55 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "tauros": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Etapa única. Intimidación como líder. AtEsp 40 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "magikarp": {
+    "role": "hunter",
+    "_note": "Débil a propósito (solo Placaje y Salpicadura): la recompensa es Gyarados a nivel 20."
+  },
+  "gyarados": {
+    "role": "hunter",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Evoluciona de Magikarp a nivel 20: cazador con Intimidación. AtEsp 60 → 75: mínimo de Rendimiento de su etapa (75)."
+  },
+  "lapras": {
+    "role": "marathoner",
+    "_note": "Etapa única. Mucha Energía; Canto para dormir salvajes."
+  },
+  "ditto": {
+    "role": "allrounder",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "Sin técnicas de daño: Transformación (+15 % de puntos y de Puntos de captura). Comodín sin tipo fuerte. AtEsp 48 → 75: mínimo de Rendimiento de su etapa (75)."
   },
   "eevee": {
     "role": "allrounder"
@@ -197,58 +723,50 @@
   "jolteon": {
     "role": "sprinter",
     "baseStats": {
-      "specialAttack": 80
+      "specialAttack": 75,
+      "speed": 124
     },
-    "_note": "AtEsp 110 → 80 (simulador: +76% sobre la mediana de su etapa). Sigue siendo velocista: su valor viene del Ritmo."
+    "_note": "AtEsp 110 → 75 y Vel 130 → 124 (simulador: +76% sobre la mediana de su etapa con el dato original; con Kanto completo seguía en +46% con AtEsp 80). Sigue siendo velocista: su valor viene del Ritmo."
   },
   "flareon": {
     "role": "hunter"
   },
-  "espeon": {
+  "porygon": {
+    "role": "scholar",
+    "_note": "Etapa única en Kanto (Porygon2 no está)."
+  },
+  "omanyte": {
     "role": "scholar",
     "baseStats": {
-      "specialAttack": 115
-    }
+      "specialAttack": 52
+    },
+    "_note": "AtEsp 90 → 52: el simulador lo dejaba +75 % sobre la mediana de su grupo."
   },
-  "umbreon": {
-    "role": "guardian",
+  "omastar": {
+    "role": "scholar"
+  },
+  "kabuto": {
+    "role": "hunter"
+  },
+  "kabutops": {
+    "role": "hunter",
     "baseStats": {
       "specialAttack": 75
     },
-    "_note": "AtEsp 60 → 75."
+    "_note": "AtEsp 65 → 75: mínimo de Rendimiento de su etapa (75)."
   },
-  "dratini": {
-    "role": "allrounder"
+  "aerodactyl": {
+    "role": "sprinter",
+    "_note": "Etapa única. El más rápido de Kanto: su valor viene del Ritmo."
   },
-  "dragonair": {
-    "role": "allrounder"
-  },
-  "dragonite": {
-    "role": "allrounder",
-    "_note": "Pseudolegendario: bueno en todo, requiere racha (Dragón)."
-  },
-  "houndour": {
-    "role": "scholar"
-  },
-  "houndoom": {
-    "role": "scholar",
-    "baseStats": {
-      "specialAttack": 90
-    }
-  },
-  "swinub": {
+  "snorlax": {
     "role": "marathoner",
     "baseStats": {
-      "specialAttack": 40
+      "hp": 140,
+      "speed": 45,
+      "specialAttack": 99
     },
-    "_note": "AtEsp 30 → 40."
-  },
-  "piloswine": {
-    "role": "marathoner",
-    "baseStats": {
-      "specialAttack": 91
-    },
-    "_note": "AtEsp 60 → 75. Etapa final dentro del Pack 1 (Mamoswine no está)."
+    "_note": "PS 160 → 140 y Vel 30 → 45: maratonista de referencia sin ser obligatorio; con Ritmo 30 solo entraba en banda con un Rendimiento impropio de él. AtEsp 65 → 99: mínimo de Rendimiento de su etapa (75); el simulador lo dejaba -30 % frente a la mediana de su grupo."
   },
   "articuno": {
     "role": "technician",
@@ -261,7 +779,21 @@
     "role": "scholar"
   },
   "moltres": {
-    "role": "scholar"
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 115
+    },
+    "_note": "AtEsp 125 → 115: con Kanto completo quedaba +65% sobre la mediana de los finales (techo de legendario: +60%). La rareza no cambia."
+  },
+  "dratini": {
+    "role": "allrounder"
+  },
+  "dragonair": {
+    "role": "allrounder"
+  },
+  "dragonite": {
+    "role": "allrounder",
+    "_note": "Pseudolegendario: bueno en todo, requiere racha (Dragón)."
   },
   "mewtwo": {
     "role": "scholar",
@@ -277,5 +809,48 @@
       "specialAttack": 115
     },
     "captureRate": 3
+  },
+  "crobat": {
+    "role": "sprinter",
+    "baseStats": {
+      "specialAttack": 80
+    },
+    "_note": "AtEsp 70 → 80."
+  },
+  "espeon": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 115
+    }
+  },
+  "umbreon": {
+    "role": "guardian",
+    "baseStats": {
+      "specialAttack": 75
+    },
+    "_note": "AtEsp 60 → 75."
+  },
+  "swinub": {
+    "role": "marathoner",
+    "baseStats": {
+      "specialAttack": 40
+    },
+    "_note": "AtEsp 30 → 40."
+  },
+  "piloswine": {
+    "role": "marathoner",
+    "baseStats": {
+      "specialAttack": 91
+    },
+    "_note": "AtEsp 60 → 75. Etapa final dentro del Pack 1 (Mamoswine no está)."
+  },
+  "houndour": {
+    "role": "scholar"
+  },
+  "houndoom": {
+    "role": "scholar",
+    "baseStats": {
+      "specialAttack": 90
+    }
   }
 }
