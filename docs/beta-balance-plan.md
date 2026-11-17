@@ -69,3 +69,13 @@ Objetivo del constante: nv. 36 a los ~2-3 meses (sem. 11), nv. 50 a los ~9 meses
 
 **Aplicado el 2026-11-16 (confirmado por el usuario):** `expCurve` con codo en el nivel 20 y exponente 4,0 después; coste de Polvo `25 + 3·L + 0,03·L²`. Ver GDD §12.1 y §12.3. Pendiente: repetir la medición con Kanto (151) y reajustar los topes por Pokédex en proporción.
 **Cambio de combate (2026-11-16, a petición del usuario):** lanzar una Ball en una oleada manual ya no hace atacar a nadie ni bloquea la oleada (GDD §11.4).
+
+## Pasos 4 y 5 — ligas con subrangos (hecho el 2026-11-17)
+
+**Hecho:** escalera de 40 escalones (Base/Super/Ultra 1-5, Maestra 1-25; el «35» del plan era una errata) con umbrales geométricos calculados de 5 valores editables (`leagues.secondRankPoints` 400, `weeklyThresholds` 4 k / 30 k / 100 k, `topRankPoints` 1 M); oleadas por rango (`encounters.leagueWaveSize`, Base 2→4, Super 4→6, Ultra 6→7, Maestra 7→10 y 10 fijo desde Maestra 5); etapas por liga (`encounters.leagueStageWeights`); Polvo por subir de rango (10 + 2·escalón) y podio semanal por rango + país (50 + 10·escalón × 1/0,6/0,4, mínimo 20 jugadores) liquidado al consultar (`POST /api/leaderboard/podium`, sin tareas en segundo plano); ranking por rango (por defecto el mío en mi país, con caída al global del rango si hay menos de 20); ventana «¡Subiste de liga!» / «¡Podio!» y aviso breve para escalones dentro de la misma liga; pantalla de Liga con la escalera completa; acción de desarrollo `devAddLeaguePoints`. Sin migración. Detalle y tabla en GDD §10.1, §10.2 y §14; informe en `docs/longterm-report.md`.
+
+**Pendiente / a revisar con el usuario:**
+- El casual real se queda de media en Base 5 (mejores semanas: Super 2). Valorar bajar Super 1 a ~3.000.
+- Cosméticos de podio (marco o insignia) no hechos: de momento solo Polvo.
+- El podio solo cierra la semana inmediatamente anterior: quien no abre la app en toda una semana pierde ese podio.
+- Repetir la medición con la curva y los topes definitivos del paso 6 (el informe actual usa el árbol con el paso 6 sin commitear).

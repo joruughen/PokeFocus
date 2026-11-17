@@ -559,27 +559,43 @@ oleadas = max(1, floor(minutos / 25))
 - Al reclamar, las oleadas se muestran **una tras otra**. Cada oleada trae su **propia Ball de Estudio** (§11.1) y recibe la Energía generada **en su bloque de 25 min** (§11.3).
 - **Bono de sesión larga:** cada oleada después de la primera aumenta la rareza. La tirada de legendario sube ×1.5 en la 2.ª oleada y ×2 desde la 3.ª, y el peso de las especies con `capture_rate` bajo también sube **[calibrar]**. Estudiar de seguido atrae a los raros.
 
-**Tamaño de cada oleada:** 4 salvajes, ±1 al azar, +1 con Dulce Aroma (en una oleada), −1 si `Foco < 0.75` (`lowFocusThreshold`: es decir, al reclamar tarde, Foco 0.5; el Aguante no cuenta). Mínimo 3.
+**Tamaño de cada oleada** (decidido el 2026-11-16, sustituye los topes 5/6/7/8): el **rango de liga** de la semana en curso (§14) fija el **máximo** de salvajes, que crece con el subrango (interpolado y redondeado entre el subrango 1 y el 5, `encounters.leagueWaveSize` y `leagueRampSubranks`):
 
-**Máximo por oleada según tu liga actual** (§14):
+| Liga | Subrango 1 → 5 | Después |
+|---|---|---|
+| Base | 2, 3, 3, 4, 4 | — |
+| Super | 4, 5, 5, 6, 6 | — |
+| Ultra | 6, 6, 7, 7, 7 | — |
+| Maestra | 7, 8, 9, 9, 10 | 10 fijo de Maestra 6 a 25 |
 
-| Liga | Máximo de salvajes por grupo |
-|---|---|
-| Base | 5 |
-| Super | 6 |
-| Ultra | 7 |
-| Maestra | 8 |
+Cada oleada trae **máximo − 1 ± 1** salvajes (`waveSizeJitter`), +1 con Dulce Aroma (en una oleada), −1 si `Foco < 0.75` (`lowFocusThreshold`: al reclamar tarde), nunca menos de `minWaveSize` (2; o el máximo si es menor) ni más que el máximo. Las oleadas empiezan la semana con 1-2 salvajes y crecen a medida que estudias: el rango cuenta al **empezar** la sesión.
 
 ### 10.2 Qué especies aparecen
 
 Para cada hueco del grupo:
 
-1. **Tirada de legendario o mítico:** `0.136% × Foco` **[calibrar]** (0.16 % × 0.85; Foco de la sesión, sin Aguante).
+**Etapas por liga (acumulativo, decidido el 2026-11-16).** El rango de liga de la semana al empezar la sesión decide qué etapas evolutivas pueden salir como salvajes (`encounters.leagueStageWeights`: multiplicador de peso de la 2.ª y la 3.ª etapa, interpolado del subrango 1 al 5, y multiplicador de la tirada de legendario; 0 = no salen):
+
+| Liga | 1.ª forma | 2.ª forma | 3.ª forma | Legendarios |
+|---|---|---|---|---|
+| Base | sí | no | no | no |
+| Super | sí | ×1 → ×2 (más probable en Super 5) | no | no |
+| Ultra | sí | ×2 | ×0,25 (Ultra 1) → ×1 (Ultra 5) | no |
+| Maestra | sí | ×2 | ×1 → ×1,5 | sí (tirada normal, muy rara) |
+
+Las formas evolucionadas siguen necesitando su nivel mínimo de salvaje (§10.3): un jugador de nv. ~20 que llega a Ultra 1 (raro: hace falta una semana muy buena o un evento) ya puede ver y capturar una 3.ª forma si su banda de niveles lo permite. Los legendarios que vuelven (§10.4) aparecen en cualquier liga, porque ya se vieron. Las partidas guardadas antes de esta regla (encuentros sin rango) no tienen restricción.
+
+Para cada hueco del grupo:
+
+1. **Tirada de legendario o mítico** (solo Maestra): `0.136% × Foco` **[calibrar]** (0.16 % × 0.85; Foco de la sesión, sin Aguante).
 2. Si no, se elige una especie con peso `= capture_rate` (dato de PokeAPI), multiplicado por:
+   - el peso de su etapa en la liga (tabla de arriba),
    - ×2 si el tipo de la especie tiene su condición activa en ese momento (p. ej. Fantasma de noche),
    - ×1.2 por el perfil sonoro dominante (§4.3),
    - ×1.25 si comparte tipo con algún miembro del equipo.
 3. **Shiny:** `0.9/512 × (0.5 + Foco)` (Foco de la sesión: con 1.0 da lo mismo que 1/512 con el antiguo 0.85).
+
+La Pokédex usa el rango de la semana del jugador: una forma que su nivel ya alcanza pero su liga todavía no dice «Aparece en salvajes desde la Liga Super/Ultra», y un legendario fuera de Maestra «solo aparece en la Liga Maestra».
 
 **Contenido en vivo y eventos** (`docs/admin-plan.md` §6): el admin puede desactivar una especie, limitarla a unas horas, a un clima o a un nivel de entrenador, y multiplicar su peso. Una especie limitada por hora o clima **no aparece si la hora o el clima son desconocidos**. Los eventos activos al **empezar** la sesión (contenido fijado) añaden:
 - **Especies destacadas:** su peso se multiplica (× el del admin). Siguen sin aparecer por debajo de su nivel mínimo.
@@ -835,19 +851,42 @@ Las **misiones de evento** avanzan mientras el evento está activo; una sesión 
 - **Diseño original (reemplazado por F2: ranking por país, ver `docs/F2-plan.md`).** El diseño inicial tenía un ámbito "Zona" que agrupaba a los usuarios con el mismo desfase horario (UTC) y una tabla `leaderboard_snapshots` cerrada por una tarea programada (`pg_cron`). F2 usa el país elegido al registrarse y no tiene tarea de cierre.
 - **Semanas y meses:** la semana de cada usuario va del lunes 00:00 al domingo 23:59 **de su zona horaria**, y el mes del día 1 al último día. Cada puntuación se guarda con la clave de su periodo (el lunes local, p. ej. `2026-11-02`; el mes, `2026-11`), y cada ranking compara las puntuaciones que tienen la misma clave. Lo que ves es el ranking de tu semana o mes en curso.
 - **Qué muestra:** solo los jugadores con puntos en el periodo, los 100 primeros más tu propia fila. Los empates comparten puesto (1, 2, 2, 4) y se ordenan por quién llegó antes a esa puntuación. Cada fila lleva el nombre de entrenador, el país, los puntos, la liga y el líder del equipo como avatar. Quien activa el modo anónimo (§2.1) aparece como «Entrenador anónimo» en los rankings global y de país; en el de amigos y en tu propia fila siempre se ve el nombre.
-- **Ligas** por umbral de puntos semanales **[calibrar con el simulador]**:
+- **Ligas con subrangos (decidido el 2026-11-16, como Pokémon Sleep):** Base 1-5, Super 1-5, Ultra 1-5 y Maestra 1-25: **40 escalones** (el plan decía «35», pero 5 + 5 + 5 + 25 son 40). El escalón sale de los **puntos de la semana** en curso; no hay tabla nueva.
+- **Umbrales geométricos** (cada escalón pide un % fijo más que el anterior dentro de su liga; se calculan en `src/engine/league.ts` a partir de 5 números de la config, editables en el admin y redondeados a 3 cifras):
 
-| Liga | Puntos semanales (inicial) | Máximo de salvajes por grupo |
+| Parámetro (`leagues.*`) | Valor | Por qué |
 |---|---|---|
-| Base | 0 | 5 |
-| Super | 6,000 | 6 |
-| Ultra | 60,000 | 7 |
-| Maestra | 95,000 | 8 |
+| `secondRankPoints` (Base 2) | 400 | Una sesión de 25 min de un equipo recién empezado: el primer escalón llega el primer día. |
+| `weeklyThresholds.super` (Super 1) | 4.000 | El casual real la alcanza en sus mejores semanas; el casual la alcanza desde el mes 1-2. Base sube ×1,78 por escalón. |
+| `weeklyThresholds.ultra` (Ultra 1) | 30.000 | El constante hacia el mes 2 y los exámenes en ráfaga; un jugador de nv. ~20 apenas llega. Super sube ×1,49 por escalón. |
+| `weeklyThresholds.master` (Maestra 1) | 100.000 | El maratonista desde el mes 3, el noctámbulo desde el mes 3-4, el constante hacia el mes 6-9. Ultra sube ×1,27 por escalón. |
+| `topRankPoints` (Maestra 25) | 1.000.000 | 2,7 veces la mejor semana del mejor equipo actual (maratonista, ~365 k en 2 años): margen para varios packs. Maestra sube **×1,10 por escalón**. |
+| `monthlyMultiplier` | 4 | La liga mensual usa la misma escalera ×4 (solo ranking). |
 
-- **La liga se reinicia cada semana:** el lunes a las 00:00 todos vuelven a la liga **Base** y suben a medida que acumulan puntos esa semana. La **liga actual** (la que fija el máximo de salvajes por oleada) es la que llevas en la semana en curso.
-- Consecuencia buscada: a principio de semana las oleadas son más pequeñas y crecen a medida que estudias. Cada semana es una escalada nueva.
-- La liga mensual usa los mismos nombres con umbrales ×4 y se reinicia el día 1 de cada mes. Es solo de ranking: no afecta al tamaño de las oleadas.
-- La mejor liga alcanzada se guarda y se muestra en la pantalla de Liga.
+Escalera resultante (puntos semanales):
+
+| Liga | 1 | 2 | 3 | 4 | 5 |
+|---|---:|---:|---:|---:|---:|
+| Base | 0 | 400 | 711 | 1.260 | 2.250 |
+| Super | 4.000 | 5.990 | 8.960 | 13.400 | 20.000 |
+| Ultra | 30.000 | 38.200 | 48.600 | 61.800 | 78.600 |
+| Maestra 1-5 | 100.000 | 110.000 | 121.000 | 133.000 | 147.000 |
+| Maestra 6-10 | 162.000 | 178.000 | 196.000 | 215.000 | 237.000 |
+| Maestra 11-15 | 261.000 | 287.000 | 316.000 | 348.000 | 383.000 |
+| Maestra 16-20 | 422.000 | 464.000 | 511.000 | 562.000 | 619.000 |
+| Maestra 21-25 | 681.000 | 750.000 | 825.000 | 909.000 | 1.000.000 |
+
+  Mejor semana de cada perfil del simulador en 2 años (`docs/longterm-report.md`, con Kanto y los subrangos): casual real ~7 k → Super 2; casual ~22 k → Super 5; irregular ~50 k → Ultra 3; exámenes ~93 k → Ultra 5; constante ~159 k → Maestra 5; noctámbulo ~284 k → Maestra 11; maratonista ~365 k → Maestra 14. La sensación buscada: las ligas bajas se suben rápido (Base y Super en pocos días), y en Maestra cada escalón pide un 10 % más, así que un equipo sube deprisa hasta su mejor semana y desde ahí cuesta. Maestra 15-25 queda libre para los packs futuros.
+- **Tamaño de oleada y salvajes por rango:** ver §10.1 y §10.2.
+- **La liga se reinicia cada semana:** el lunes a las 00:00 todos vuelven a **Base 1** y suben a medida que acumulan puntos esa semana. El **rango actual** (el que fija el tamaño de oleada y las etapas de salvaje) es el que llevas en la semana en curso al empezar cada sesión.
+- **Mejor rango:** se guarda `league.bestRank` (posición en la escalera). **Compatibilidad:** `bestLeague` (las 4 ligas grandes) se sigue guardando y actualizando; las partidas anteriores (alpha) sin `bestRank` cuentan como el subrango 1 de su `bestLeague`. Los puntos ya guardados no cambian: el rango se recalcula de ellos.
+- **La liga mensual** usa la misma escalera con umbrales ×4 (también con subrangos, que salen de los puntos) y se reinicia el día 1 de cada mes. Es solo de ranking: no afecta a las oleadas ni da premios.
+- **Rankings por rango:** por defecto el jugador ve el ranking **de su rango (liga + subrango) en su país**; puede elegir cualquier otro rango, «Todos los rangos» (su país, el global o el de amigos sin filtrar) y el semanal o el mensual. El de amigos nunca se filtra por rango. Si el tablero de rango + país tiene **menos de 20 jugadores** (`podium.minPlayers`), se muestra el **global de ese rango** con un aviso. Cada fila muestra su rango, calculado de los puntos. Rendimiento: un tablero de rango es un intervalo de puntos `[desde, hasta)` sobre el índice `league_scores_rank_idx` (sin migración), con el top 100 elegido antes de unir usuarios y documentos, y caché de 10 s por tablero (ámbito × periodo × país × rango).
+- **Premios (Polvo, nada de poder):**
+  - **Subir de rango:** cada escalón alcanzado en la semana da `rankUpDust.base + rankUpDust.perRank · escalón` = **10 + 2·escalón** de Polvo (Base 2: 12; Super 1: 20; Ultra 1: 30; Maestra 1: 40; Maestra 25: 88). Como los puntos de la semana solo suben, cada escalón se cobra **una vez por semana**. Referencia: un nivel de entrenador da `50 + 10·nivel` (250 a nv. 20); una semana del constante (de Base 1 a Maestra 6) suma 620 de Polvo, unos 2-3 niveles de entrenador; el casual (hasta Super 5) 180.
+  - **Podio semanal:** al cerrar la semana, los 3 primeros del **tablero de su rango final en su país** (o del global de ese rango si el país tiene menos de 20 jugadores; sin podio si el global tampoco llega) ganan `(podium.dustBase + podium.dustPerRank · escalón) × [1; 0,6; 0,4]` = **(50 + 10·escalón)** × 1/0,6/0,4 de Polvo (Ultra 1: 150/90/60; Maestra 25: 440/264/176), la misma forma que el Polvo de nivel de entrenador.
+  - **Sin tareas en segundo plano:** el podio se liquida **al consultar**: al abrir la app, el cliente pide `POST /api/leaderboard/podium` y el servidor cierra la semana anterior del jugador cuando ya terminó en todas las zonas horarias (lunes 12:00 UTC después). Es idempotente (`league.podiumSettled`, últimas 8 semanas). El puesto se calcula sobre las puntuaciones finales de esa semana. Quien no abre la app no cobra el podio de una semana hasta que la abre (si pasan más de 8 semanas, la más antigua se pierde: solo se cierra la semana anterior a la actual).
+  - **Avisos:** subir de liga (Base → Super…) o un podio abre la ventana **«¡Subiste de liga!» / «¡Podio de la semana!»** con la mascota, el rango alcanzado, el tamaño de oleada nuevo y el Polvo (como la de nivel de entrenador, que va primero); los escalones dentro de la misma liga solo dan un aviso breve (y la línea de Resultados), para no interrumpir varias veces al día.
 - Tus amigos ven tu equipo (el líder primero), tu nivel de entrenador y tus puntos y liga de la semana en su lista de amigos (§2.1), para ver *cómo* conseguiste tus puntos. Un perfil público con técnicas, medallas e historial es del diseño original y no está construido.
 
 ---

@@ -1,12 +1,12 @@
 # Informe de progresión a largo plazo
 
-> Generado por `npm run simulate -- --longterm --seeds 10`. Las tablas se regeneran con `npm run simulate -- --longterm` (no editarlas a mano); la sección final «Lectura» es manual y hay que revisarla si se regenera.
+> Generado por `npm run simulate -- --longterm --seeds 6`. Las tablas se regeneran con `npm run simulate -- --longterm` (no editarlas a mano); la sección final «Lectura» es manual y hay que revisarla si se regenera.
 
-- Horizonte: **104 semanas**; **10 semillas** por perfil (las mismas semillas 1..10 en cada ejecución, así que dos configuraciones se comparan en pareado); misiones del motor reclamadas: sí.
+- Horizonte: **104 semanas**; **6 semillas** por perfil (las mismas semillas 1..6 en cada ejecución, así que dos configuraciones se comparan en pareado); misiones del motor reclamadas: sí.
 - Configuración: la actual del juego (`src/data/game/custom-game-config.json`).
-- Pack: **56 especies** (5 legendarias/míticas). Topes de nivel por Pokédex: 0 especies → nv. 30, 25 especies → nv. 40, 36 especies → nv. 50, 50 especies → nv. 60. Nivel máximo: 100.
-- Ligas semanales (puntos): Super ≥ 6,000, Ultra ≥ 60,000, Master ≥ 95,000.
-- Tiempo de cálculo: 182 s.
+- Pack: **158 especies** (5 legendarias/míticas). Topes de nivel por Pokédex: 0 especies → nv. 30, 55 especies → nv. 40, 100 especies → nv. 50, 140 especies → nv. 60. Nivel máximo: 100.
+- Ligas semanales con subrangos (40 escalones; puntos del primer subrango): Super ≥ 4,000, Ultra ≥ 30,000, Master ≥ 100,000; último escalón (Master 25) ≥ 1,000,000. Oleadas de hasta 2–10 salvajes según el escalón; las etapas evolutivas y los legendarios dependen de la liga (GDD §10.2).
+- Tiempo de cálculo: 343 s.
 
 Las cifras son **medianas entre semillas** salvo que se indique. «Nivel EXP máx.» es el nivel que daría la EXP del mejor miembro sin tope; «Nivel máx.» es el real (limitado por el tope de Pokédex). «Pts/sem» es la media de las 4 semanas hasta la muestra (las semanas en blanco cuentan 0) y la liga se calcula con esa media.
 
@@ -25,257 +25,272 @@ Las cifras son **medianas entre semillas** salvo que se indique. «Nivel EXP má
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 18.3 | 20 | 20 | 30 | 21 | 7 | 6,195 | 277 | 3,643 | Base | 0.0 |
-| 8 | 24.0 | 26 | 26 | 30 | 23 | 8 | 12,254 | 531 | 6,498 | Super | 0.0 |
-| 12 | 27.9 | 30 | 30 | 35 | 25 | 10 | 18,492 | 287 | 8,395 | Super | 0.0 |
-| 26 | 36.5 | 40 | 40 | 40 | 32 | 15 | 38,051 | 313 | 13,095 | Super | 0.1 |
-| 39 | 40.0 | 40 | 45 | 40 | 35 | 18 | 57,202 | 3,693 | 16,371 | Super | 0.3 |
-| 52 | 47.3 | 50 | 51 | 50 | 38 | 21 | 77,690 | 327 | 21,296 | Super | 0.5 |
-| 78 | 50.0 | 50 | 58 | 50 | 42 | 27 | 117,495 | 7,553 | 24,506 | Super | 0.8 |
-| 104 | 49.9 | 50 | 63 | 50 | 47 | 32 | 156,536 | 310 | 26,273 | Super | 1.4 |
+| 4 | 17.7 | 20 | 20 | 30 | 36 | 10 | 6,815 | 3,298 | 2,846 | Base 5 | 0.0 |
+| 8 | 22.0 | 24 | 24 | 35 | 55 | 13 | 13,165 | 5,820 | 4,824 | Super 1 | 0.0 |
+| 12 | 24.0 | 26 | 26 | 40 | 64 | 15 | 19,497 | 9,920 | 6,022 | Super 2 | 0.0 |
+| 26 | 29.7 | 31 | 31 | 40 | 80 | 20 | 39,931 | 19,657 | 8,131 | Super 2 | 0.0 |
+| 39 | 32.6 | 34 | 34 | 40 | 99 | 23 | 59,323 | 20,373 | 10,080 | Super 3 | 0.0 |
+| 52 | 33.8 | 37 | 37 | 50 | 110 | 26 | 79,703 | 21,399 | 12,003 | Super 3 | 0.0 |
+| 78 | 38.4 | 41 | 41 | 50 | 121 | 32 | 121,226 | 3,993 | 14,605 | Super 4 | 0.0 |
+| 104 | 41.0 | 44 | 44 | 50 | 128 | 36 | 163,426 | 364 | 17,460 | Super 4 | 0.0 |
+
+Mejor semana (mediana entre semillas): **21,685 puntos → Super 5**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 85 (sem. 13) | día 85 (sem. 13) |
-| nivel 36 (real) | día 134 (sem. 20) | día 134 (sem. 20) |
-| nivel 40 (real) | día 182 (sem. 26) | día 182 (sem. 26) |
-| nivel 50 (real) | día 339 (sem. 49) | día 339 (sem. 49) |
-| nivel 60 (real) | no (20% lo logra) | día 618 (sem. 89) |
-| 25 especies | día 83 (sem. 12) |  |
-| 36 especies | día 314 (sem. 45) |  |
-| 50 especies | no (20% lo logra) |  |
-| 56 especies | no |  |
-| 1 legendario | día 434 (sem. 62) · 80% | – |
-| 3 legendarios | no (10% lo logra) | – |
+| nivel 30 (real) | día 152 (sem. 22) | día 152 (sem. 22) |
+| nivel 36 (real) | día 322 (sem. 46) | día 322 (sem. 46) |
+| nivel 40 (real) | día 503 (sem. 72) | día 503 (sem. 72) |
+| nivel 50 (real) | no | no |
+| nivel 60 (real) | no | no |
+| 55 especies | día 56 (sem. 8) |  |
+| 100 especies | día 283 (sem. 41) |  |
+| 140 especies | no |  |
+| 158 especies | no |  |
+| 1 legendario | no | – |
+| 3 legendarios | no | – |
 | 5 legendarios | no | – |
 
 ## constante
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 32.2 | 33 | 33 | 40 | 31 | 12 | 27,379 | 271 | 30,802 | Super | 0.4 |
-| 8 | 41.7 | 46 | 48 | 45 | 36 | 18 | 55,526 | 785 | 65,783 | Ultra | 0.6 |
-| 12 | 48.3 | 50 | 56 | 50 | 41 | 22 | 85,117 | 275 | 89,216 | Ultra | 0.8 |
-| 26 | 50.0 | 50 | 67 | 50 | 49 | 35 | 184,017 | 3,796 | 121,317 | Master | 1.6 |
-| 39 | 59.1 | 60 | 76 | 60 | 53 | 45 | 276,041 | 2,559 | 158,142 | Master | 2.6 |
-| 52 | 59.8 | 60 | 82 | 60 | 55 | 50 | 366,021 | 1,118 | 166,598 | Master | 3.4 |
-| 78 | 60.0 | 60 | 91 | 60 | 56 | 50 | 533,721 | 23,614 | 173,813 | Master | 5.3 |
-| 104 | 60.0 | 60 | 100 | 60 | 56 | 50 | 702,675 | 17,978 | 177,115 | Master | 6.3 |
+| 4 | 26.1 | 28 | 28 | 40 | 80 | 18 | 28,533 | 6,459 | 23,731 | Super 5 | 0.0 |
+| 8 | 32.0 | 34 | 34 | 50 | 107 | 24 | 57,801 | 367 | 42,261 | Ultra 2 | 0.0 |
+| 12 | 35.0 | 37 | 37 | 50 | 117 | 28 | 88,835 | 1,464 | 52,983 | Ultra 3 | 0.0 |
+| 26 | 43.6 | 49 | 49 | 50 | 136 | 41 | 191,721 | 241 | 77,894 | Ultra 4 | 0.0 |
+| 39 | 49.7 | 53 | 53 | 60 | 146 | 50 | 286,651 | 347 | 99,927 | Ultra 5 | 0.0 |
+| 52 | 55.6 | 60 | 60 | 60 | 151 | 50 | 377,234 | 420 | 126,025 | Master 3 | 0.2 |
+| 78 | 59.1 | 60 | 64 | 60 | 153 | 50 | 558,383 | 413 | 144,340 | Master 4 | 0.7 |
+| 104 | 59.3 | 60 | 65 | 60 | 154 | 50 | 742,462 | 630 | 155,773 | Master 5 | 1.5 |
+
+Mejor semana (mediana entre semillas): **159,254 puntos → Master 5**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 20 (sem. 3) | día 20 (sem. 3) |
-| nivel 36 (real) | día 32 (sem. 5) | día 32 (sem. 5) |
-| nivel 40 (real) | día 42 (sem. 6) | día 42 (sem. 6) |
-| nivel 50 (real) | día 52 (sem. 8) | día 52 (sem. 8) |
-| nivel 60 (real) | día 191 (sem. 28) | día 112 (sem. 16) |
-| 25 especies | día 18 (sem. 3) |  |
-| 36 especies | día 57 (sem. 9) |  |
-| 50 especies | día 191 (sem. 28) |  |
-| 56 especies | día 548 (sem. 79) · 80% |  |
-| 1 legendario | día 74 (sem. 11) | – |
-| 3 legendarios | día 402 (sem. 58) · 70% | – |
-| 5 legendarios | no (50% lo logra) | – |
+| nivel 30 (real) | día 35 (sem. 5) | día 35 (sem. 5) |
+| nivel 36 (real) | día 71 (sem. 11) | día 71 (sem. 11) |
+| nivel 40 (real) | día 102 (sem. 15) | día 102 (sem. 15) |
+| nivel 50 (real) | día 181 (sem. 26) | día 181 (sem. 26) |
+| nivel 60 (real) | día 314 (sem. 45) | día 314 (sem. 45) |
+| 55 especies | día 12 (sem. 2) |  |
+| 100 especies | día 47 (sem. 7) |  |
+| 140 especies | día 208 (sem. 30) |  |
+| 158 especies | no |  |
+| 1 legendario | día 507 (sem. 73) | – |
+| 3 legendarios | no | – |
+| 5 legendarios | no | – |
 
 ## maratonista
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 42.1 | 50 | 55 | 40 | 35 | 18 | 51,375 | 2,460 | 84,826 | Ultra | 1.1 |
-| 8 | 49.2 | 50 | 63 | 50 | 43 | 26 | 104,188 | 4,391 | 180,610 | Master | 1.5 |
-| 12 | 50.0 | 50 | 68 | 50 | 47 | 33 | 158,813 | 12,487 | 213,491 | Master | 1.8 |
-| 26 | 59.2 | 60 | 80 | 60 | 55 | 50 | 342,040 | 17,302 | 336,000 | Master | 2.5 |
-| 39 | 60.0 | 60 | 85 | 60 | 56 | 50 | 500,753 | 98,811 | 354,455 | Master | 3.3 |
-| 52 | 60.0 | 60 | 88 | 60 | 56 | 50 | 661,040 | 171,595 | 360,804 | Master | 3.7 |
-| 78 | 60.0 | 60 | 100 | 60 | 56 | 50 | 981,678 | 410,322 | 387,013 | Master | 4.4 |
-| 104 | 60.0 | 60 | 100 | 60 | 56 | 50 | 1,303,090 | 654,963 | 399,087 | Master | 5.3 |
+| 4 | 30.1 | 32 | 32 | 40 | 93 | 24 | 53,524 | 14,953 | 55,453 | Ultra 3 | 0.0 |
+| 8 | 35.9 | 40 | 40 | 50 | 116 | 32 | 108,610 | 27,303 | 106,072 | Master 1 | 0.0 |
+| 12 | 39.5 | 44 | 44 | 50 | 128 | 39 | 165,906 | 17,829 | 138,453 | Master 4 | 0.3 |
+| 26 | 54.1 | 59 | 59 | 60 | 152 | 50 | 355,022 | 11,355 | 255,897 | Master 10 | 1.2 |
+| 39 | 55.7 | 60 | 62 | 60 | 156 | 50 | 525,078 | 22,537 | 302,573 | Master 12 | 1.2 |
+| 52 | 59.3 | 60 | 65 | 60 | 157 | 50 | 699,603 | 82,995 | 323,834 | Master 13 | 1.3 |
+| 78 | 59.3 | 60 | 68 | 60 | 158 | 50 | 1,046,237 | 276,811 | 336,260 | Master 13 | 1.7 |
+| 104 | 59.3 | 60 | 71 | 60 | 158 | 50 | 1,397,110 | 560,649 | 351,152 | Master 14 | 2.3 |
+
+Mejor semana (mediana entre semillas): **364,859 puntos → Master 14**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 10 (sem. 2) | día 10 (sem. 2) |
-| nivel 36 (real) | día 14 (sem. 2) | día 14 (sem. 2) |
-| nivel 40 (real) | día 14 (sem. 2) | día 14 (sem. 2) |
-| nivel 50 (real) | día 14 (sem. 2) | día 14 (sem. 2) |
-| nivel 60 (real) | día 106 (sem. 16) | día 46 (sem. 7) |
-| 25 especies | día 9 (sem. 2) |  |
-| 36 especies | día 33 (sem. 5) |  |
-| 50 especies | día 106 (sem. 16) |  |
-| 56 especies | día 211 (sem. 31) |  |
-| 1 legendario | día 23 (sem. 4) | – |
-| 3 legendarios | día 145 (sem. 21) | – |
-| 5 legendarios | día 481 (sem. 69) · 60% | – |
+| nivel 30 (real) | día 21 (sem. 3) | día 21 (sem. 3) |
+| nivel 36 (real) | día 42 (sem. 6) | día 42 (sem. 6) |
+| nivel 40 (real) | día 56 (sem. 8) | día 56 (sem. 8) |
+| nivel 50 (real) | día 90 (sem. 13) | día 90 (sem. 13) |
+| nivel 60 (real) | día 158 (sem. 23) | día 158 (sem. 23) |
+| 55 especies | día 6 (sem. 1) |  |
+| 100 especies | día 33 (sem. 5) |  |
+| 140 especies | día 119 (sem. 17) |  |
+| 158 especies | día 460 (sem. 66) |  |
+| 1 legendario | día 139 (sem. 20) · 83% | – |
+| 3 legendarios | no (50% lo logra) | – |
+| 5 legendarios | no | – |
 
 ## noctámbulo
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 37.9 | 44 | 45 | 40 | 32 | 15 | 39,679 | 654 | 60,787 | Ultra | 0.5 |
-| 8 | 48.5 | 50 | 57 | 50 | 39 | 22 | 79,188 | 600 | 121,995 | Master | 1.1 |
-| 12 | 49.2 | 50 | 61 | 50 | 43 | 28 | 121,063 | 712 | 157,005 | Master | 1.6 |
-| 26 | 58.9 | 60 | 77 | 60 | 53 | 45 | 263,609 | 530 | 248,502 | Master | 3.2 |
-| 39 | 60.0 | 60 | 86 | 60 | 55 | 50 | 389,292 | 1,984 | 273,825 | Master | 4.5 |
-| 52 | 60.0 | 60 | 90 | 60 | 55 | 50 | 511,567 | 7,675 | 289,496 | Master | 4.8 |
-| 78 | 60.0 | 60 | 100 | 60 | 56 | 50 | 754,949 | 13,552 | 300,762 | Master | 5.8 |
-| 104 | 60.0 | 60 | 100 | 60 | 56 | 50 | 1,000,224 | 177,285 | 302,932 | Master | 7.4 |
+| 4 | 29.2 | 31 | 31 | 40 | 93 | 21 | 41,642 | 12,279 | 42,091 | Ultra 2 | 0.0 |
+| 8 | 34.6 | 36 | 36 | 50 | 114 | 29 | 83,357 | 18,925 | 77,572 | Ultra 4 | 0.0 |
+| 12 | 38.7 | 40 | 40 | 50 | 127 | 34 | 126,258 | 8,769 | 100,355 | Master 1 | 0.0 |
+| 26 | 49.3 | 53 | 53 | 60 | 147 | 50 | 275,889 | 654 | 150,750 | Master 5 | 1.0 |
+| 39 | 55.7 | 60 | 60 | 60 | 154 | 50 | 406,630 | 1,266 | 205,630 | Master 8 | 2.3 |
+| 52 | 58.3 | 60 | 62 | 60 | 157 | 50 | 539,448 | 4,152 | 237,159 | Master 10 | 2.7 |
+| 78 | 59.5 | 60 | 66 | 60 | 158 | 50 | 804,424 | 66,349 | 258,045 | Master 10 | 3.7 |
+| 104 | 59.9 | 60 | 70 | 60 | 158 | 50 | 1,073,303 | 190,804 | 268,685 | Master 11 | 5.3 |
+
+Mejor semana (mediana entre semillas): **284,192 puntos → Master 11**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 14 (sem. 2) | día 14 (sem. 2) |
-| nivel 36 (real) | día 23 (sem. 4) | día 23 (sem. 4) |
-| nivel 40 (real) | día 26 (sem. 4) | día 26 (sem. 4) |
-| nivel 50 (real) | día 28 (sem. 4) | día 28 (sem. 4) |
-| nivel 60 (real) | día 124 (sem. 18) | día 69 (sem. 10) |
-| 25 especies | día 12 (sem. 2) |  |
-| 36 especies | día 43 (sem. 7) |  |
-| 50 especies | día 124 (sem. 18) |  |
-| 56 especies | día 387 (sem. 56) |  |
-| 1 legendario | día 36 (sem. 6) | – |
-| 3 legendarios | día 126 (sem. 18) | – |
-| 5 legendarios | día 364 (sem. 52) · 90% | – |
+| nivel 30 (real) | día 24 (sem. 4) | día 24 (sem. 4) |
+| nivel 36 (real) | día 53 (sem. 8) | día 53 (sem. 8) |
+| nivel 40 (real) | día 73 (sem. 11) | día 73 (sem. 11) |
+| nivel 50 (real) | día 122 (sem. 18) | día 122 (sem. 18) |
+| nivel 60 (real) | día 194 (sem. 28) | día 194 (sem. 28) |
+| 55 especies | día 8 (sem. 2) |  |
+| 100 especies | día 33 (sem. 5) |  |
+| 140 especies | día 135 (sem. 20) |  |
+| 158 especies | día 511 (sem. 73) · 83% |  |
+| 1 legendario | día 178 (sem. 26) | – |
+| 3 legendarios | día 360 (sem. 52) · 83% | – |
+| 5 legendarios | día 627 (sem. 90) · 67% | – |
 
 ## irregular
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 20.2 | 22 | 22 | 30 | 21 | 7 | 7,898 | 321 | 5,038 | Base | 0.0 |
-| 8 | 27.2 | 29 | 29 | 40 | 26 | 10 | 17,141 | 383 | 9,887 | Super | 0.3 |
-| 12 | 31.9 | 34 | 34 | 40 | 31 | 12 | 26,338 | 330 | 13,912 | Super | 0.3 |
-| 26 | 40.8 | 45 | 49 | 45 | 36 | 18 | 57,413 | 383 | 22,396 | Super | 0.5 |
-| 39 | 48.8 | 50 | 56 | 50 | 40 | 22 | 87,590 | 475 | 31,005 | Super | 0.7 |
-| 52 | 50.0 | 50 | 60 | 50 | 43 | 26 | 117,053 | 348 | 34,724 | Super | 1.2 |
-| 78 | 50.0 | 50 | 68 | 50 | 49 | 33 | 172,299 | 301 | 37,108 | Super | 1.8 |
-| 104 | 59.8 | 60 | 74 | 60 | 51 | 40 | 231,087 | 2,425 | 42,218 | Super | 2.5 |
+| 4 | 19.2 | 22 | 22 | 30 | 46 | 11 | 8,752 | 3,046 | 4,277 | Super 1 | 0.0 |
+| 8 | 22.6 | 25 | 25 | 40 | 60 | 14 | 17,073 | 3,409 | 6,489 | Super 2 | 0.0 |
+| 12 | 24.7 | 27 | 27 | 40 | 71 | 17 | 26,172 | 4,074 | 8,296 | Super 2 | 0.0 |
+| 26 | 31.3 | 33 | 33 | 50 | 106 | 24 | 61,973 | 342 | 14,811 | Super 4 | 0.0 |
+| 39 | 34.0 | 36 | 36 | 50 | 117 | 28 | 90,790 | 314 | 18,373 | Super 4 | 0.0 |
+| 52 | 37.1 | 40 | 40 | 50 | 124 | 32 | 122,074 | 413 | 21,415 | Super 5 | 0.0 |
+| 78 | 41.8 | 44 | 44 | 50 | 132 | 38 | 180,621 | 276 | 21,498 | Super 5 | 0.0 |
+| 104 | 46.3 | 50 | 50 | 50 | 136 | 45 | 243,267 | 341 | 23,073 | Super 5 | 0.0 |
+
+Mejor semana (mediana entre semillas): **50,373 puntos → Ultra 3**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 62 (sem. 9) | día 62 (sem. 9) |
-| nivel 36 (real) | día 97 (sem. 14) | día 97 (sem. 14) |
-| nivel 40 (real) | día 117 (sem. 17) | día 117 (sem. 17) |
-| nivel 50 (real) | día 146 (sem. 21) | día 146 (sem. 21) |
-| nivel 60 (real) | día 623 (sem. 89) · 90% | día 365 (sem. 53) |
-| 25 especies | día 51 (sem. 8) |  |
-| 36 especies | día 174 (sem. 25) |  |
-| 50 especies | día 621 (sem. 89) · 90% |  |
-| 56 especies | no |  |
-| 1 legendario | día 338 (sem. 49) | – |
-| 3 legendarios | no (40% lo logra) | – |
-| 5 legendarios | no (10% lo logra) | – |
+| nivel 30 (real) | día 109 (sem. 16) | día 109 (sem. 16) |
+| nivel 36 (real) | día 260 (sem. 38) | día 260 (sem. 38) |
+| nivel 40 (real) | día 334 (sem. 48) | día 334 (sem. 48) |
+| nivel 50 (real) | día 612 (sem. 88) | día 612 (sem. 88) |
+| nivel 60 (real) | no | no |
+| 55 especies | día 43 (sem. 7) |  |
+| 100 especies | día 165 (sem. 24) |  |
+| 140 especies | no |  |
+| 158 especies | no |  |
+| 1 legendario | no | – |
+| 3 legendarios | no | – |
+| 5 legendarios | no | – |
 
 ## casual real
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 13.3 | 15 | 15 | 30 | 16 | 5 | 2,523 | 342 | 916 | Base | 0.0 |
-| 8 | 16.3 | 18 | 18 | 30 | 19 | 6 | 4,763 | 500 | 1,571 | Base | 0.0 |
-| 12 | 19.8 | 21 | 21 | 30 | 21 | 7 | 7,244 | 1,241 | 2,278 | Base | 0.0 |
-| 26 | 26.8 | 28 | 28 | 30 | 24 | 10 | 14,972 | 572 | 3,332 | Base | 0.1 |
-| 39 | 30.8 | 33 | 33 | 40 | 28 | 12 | 22,250 | 392 | 4,569 | Base | 0.2 |
-| 52 | 34.1 | 36 | 36 | 40 | 31 | 13 | 30,031 | 323 | 5,232 | Base | 0.4 |
-| 78 | 40.0 | 40 | 42 | 40 | 35 | 16 | 46,698 | 486 | 7,452 | Super | 0.5 |
-| 104 | 44.8 | 50 | 52 | 50 | 36 | 19 | 62,604 | 346 | 7,317 | Super | 0.8 |
+| 4 | 13.0 | 15 | 15 | 30 | 18 | 6 | 2,497 | 657 | 750 | Base 3 | 0.0 |
+| 8 | 15.9 | 18 | 18 | 30 | 31 | 9 | 5,240 | 2,093 | 1,298 | Base 4 | 0.0 |
+| 12 | 19.0 | 21 | 21 | 30 | 40 | 10 | 8,131 | 3,821 | 1,748 | Base 4 | 0.0 |
+| 26 | 22.8 | 24 | 24 | 40 | 59 | 14 | 16,842 | 6,676 | 2,281 | Base 5 | 0.0 |
+| 39 | 25.1 | 27 | 27 | 40 | 64 | 16 | 24,100 | 8,495 | 2,685 | Base 5 | 0.0 |
+| 52 | 26.8 | 29 | 29 | 40 | 70 | 18 | 32,453 | 11,524 | 2,997 | Base 5 | 0.0 |
+| 78 | 30.7 | 32 | 32 | 40 | 81 | 21 | 50,550 | 18,379 | 4,062 | Super 1 | 0.0 |
+| 104 | 32.6 | 35 | 35 | 40 | 93 | 23 | 64,942 | 23,397 | 3,626 | Base 5 | 0.0 |
+
+Mejor semana (mediana entre semillas): **6,953 puntos → Super 2**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 211 (sem. 31) | día 211 (sem. 31) |
-| nivel 36 (real) | día 345 (sem. 50) | día 345 (sem. 50) |
-| nivel 40 (real) | día 463 (sem. 67) | día 463 (sem. 67) |
-| nivel 50 (real) | día 611 (sem. 88) · 70% | día 611 (sem. 88) · 70% |
+| nivel 30 (real) | día 389 (sem. 56) | día 389 (sem. 56) |
+| nivel 36 (real) | no | no |
+| nivel 40 (real) | no | no |
+| nivel 50 (real) | no | no |
 | nivel 60 (real) | no | no |
-| 25 especies | día 190 (sem. 28) |  |
-| 36 especies | día 708 (sem. 102) · 60% |  |
-| 50 especies | no |  |
-| 56 especies | no |  |
-| 1 legendario | día 675 (sem. 97) · 60% | – |
-| 3 legendarios | no (10% lo logra) | – |
+| 55 especies | día 160 (sem. 23) |  |
+| 100 especies | no |  |
+| 140 especies | no |  |
+| 158 especies | no |  |
+| 1 legendario | no | – |
+| 3 legendarios | no | – |
 | 5 legendarios | no | – |
 
 ## exámenes
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 25.8 | 28 | 28 | 30 | 23 | 9 | 14,377 | 280 | 10,194 | Super | 0.0 |
-| 8 | 31.2 | 32 | 32 | 40 | 30 | 11 | 23,227 | 248 | 15,130 | Super | 0.0 |
-| 12 | 34.7 | 36 | 36 | 40 | 33 | 14 | 33,899 | 322 | 16,225 | Super | 0.1 |
-| 26 | 45.8 | 50 | 55 | 50 | 37 | 20 | 70,620 | 333 | 29,520 | Super | 0.7 |
-| 39 | 50.0 | 50 | 59 | 50 | 42 | 25 | 102,397 | 291 | 36,947 | Super | 1.2 |
-| 52 | 50.0 | 50 | 64 | 50 | 44 | 28 | 132,225 | 333 | 38,813 | Super | 1.8 |
-| 78 | 58.2 | 60 | 70 | 60 | 51 | 37 | 199,708 | 1,388 | 51,226 | Super | 2.8 |
-| 104 | 59.8 | 60 | 77 | 60 | 53 | 43 | 265,945 | 10,669 | 60,345 | Ultra | 3.5 |
+| 4 | 21.4 | 24 | 24 | 40 | 61 | 14 | 14,510 | 3,955 | 9,130 | Super 3 | 0.0 |
+| 8 | 25.3 | 27 | 27 | 40 | 75 | 17 | 24,874 | 4,829 | 11,059 | Super 3 | 0.0 |
+| 12 | 27.6 | 29 | 29 | 40 | 87 | 20 | 36,613 | 9,654 | 10,820 | Super 3 | 0.0 |
+| 26 | 33.8 | 36 | 36 | 50 | 113 | 26 | 74,279 | 320 | 21,329 | Super 5 | 0.0 |
+| 39 | 36.7 | 39 | 39 | 50 | 121 | 31 | 105,248 | 289 | 15,329 | Super 4 | 0.0 |
+| 52 | 39.4 | 42 | 42 | 50 | 130 | 35 | 141,619 | 284 | 32,072 | Ultra 1 | 0.0 |
+| 78 | 45.4 | 50 | 50 | 55 | 139 | 42 | 206,322 | 402 | 30,360 | Ultra 1 | 0.0 |
+| 104 | 47.9 | 51 | 51 | 60 | 144 | 49 | 277,660 | 460 | 43,761 | Ultra 2 | 0.0 |
+
+Mejor semana (mediana entre semillas): **93,227 puntos → Ultra 5**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 46 (sem. 7) | día 46 (sem. 7) |
-| nivel 36 (real) | día 79 (sem. 12) | día 79 (sem. 12) |
-| nivel 40 (real) | día 95 (sem. 14) | día 95 (sem. 14) |
-| nivel 50 (real) | día 110 (sem. 16) | día 110 (sem. 16) |
-| nivel 60 (real) | día 485 (sem. 70) · 90% | día 284 (sem. 41) |
-| 25 especies | día 47 (sem. 7) |  |
-| 36 especies | día 173 (sem. 25) |  |
-| 50 especies | día 484 (sem. 70) · 90% |  |
-| 56 especies | no |  |
-| 1 legendario | día 221 (sem. 32) | – |
-| 3 legendarios | día 535 (sem. 77) · 80% | – |
-| 5 legendarios | no (10% lo logra) | – |
+| nivel 30 (real) | día 86 (sem. 13) | día 86 (sem. 13) |
+| nivel 36 (real) | día 169 (sem. 25) | día 169 (sem. 25) |
+| nivel 40 (real) | día 291 (sem. 42) | día 291 (sem. 42) |
+| nivel 50 (real) | día 545 (sem. 78) | día 545 (sem. 78) |
+| nivel 60 (real) | no (17% lo logra) | no (17% lo logra) |
+| 55 especies | día 14 (sem. 2) |  |
+| 100 especies | día 122 (sem. 18) |  |
+| 140 especies | día 571 (sem. 82) |  |
+| 158 especies | no |  |
+| 1 legendario | no | – |
+| 3 legendarios | no | – |
+| 5 legendarios | no | – |
 
 ## abandono
 
 | Sem. | Nivel medio equipo | Nivel máx. | Nivel EXP máx. | Tope Pokédex | Especies | Entrenador | Polvo acum. | Polvo sin gastar | Pts/sem | Liga | Legend. (media) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
-| 4 | 25.8 | 27 | 27 | 30 | 24 | 9 | 15,099 | 265 | 12,321 | Super | 0.0 |
-| 8 | 28.6 | 30 | 30 | 40 | 26 | 10 | 19,802 | 249 | 5,516 | Base | 0.1 |
-| 12 | 28.8 | 30 | 30 | 40 | 26 | 10 | 19,802 | 249 | 255 | Base | 0.1 |
-| 26 | 28.8 | 30 | 30 | 40 | 26 | 10 | 19,802 | 249 | 0 | Base | 0.1 |
-| 39 | 28.8 | 30 | 30 | 40 | 26 | 10 | 19,802 | 249 | 0 | Base | 0.1 |
-| 52 | 28.8 | 30 | 30 | 40 | 26 | 10 | 19,802 | 249 | 0 | Base | 0.1 |
-| 78 | 28.8 | 30 | 30 | 40 | 26 | 10 | 19,802 | 249 | 0 | Base | 0.1 |
-| 104 | 28.8 | 30 | 30 | 40 | 26 | 10 | 19,802 | 249 | 0 | Base | 0.1 |
+| 4 | 22.7 | 25 | 25 | 40 | 63 | 14 | 15,168 | 2,229 | 9,127 | Super 3 | 0.0 |
+| 8 | 22.7 | 25 | 25 | 40 | 66 | 15 | 18,466 | 2,121 | 2,893 | Base 5 | 0.0 |
+| 12 | 23.1 | 25 | 25 | 40 | 66 | 15 | 18,586 | 2,121 | 184 | Base 1 | 0.0 |
+| 26 | 23.1 | 25 | 25 | 40 | 66 | 15 | 18,586 | 2,121 | 0 | Base 1 | 0.0 |
+| 39 | 23.1 | 25 | 25 | 40 | 66 | 15 | 18,586 | 2,121 | 0 | Base 1 | 0.0 |
+| 52 | 23.1 | 25 | 25 | 40 | 66 | 15 | 18,586 | 2,121 | 0 | Base 1 | 0.0 |
+| 78 | 23.1 | 25 | 25 | 40 | 66 | 15 | 18,586 | 2,121 | 0 | Base 1 | 0.0 |
+| 104 | 23.1 | 25 | 25 | 40 | 66 | 15 | 18,586 | 2,121 | 0 | Base 1 | 0.0 |
+
+Mejor semana (mediana entre semillas): **11,523 puntos → Super 3**.
 
 Hitos (mediana de los jugadores que llegan; «· X %» = proporción que llega; «no» = menos de la mitad llega):
 
 | Hito | Cuándo | Por EXP sin tope |
 |---|---:|---:|
-| nivel 30 (real) | día 55 (sem. 8) · 60% | día 55 (sem. 8) · 60% |
-| nivel 36 (real) | no (10% lo logra) | no (10% lo logra) |
-| nivel 40 (real) | no (10% lo logra) | no (10% lo logra) |
-| nivel 50 (real) | no (10% lo logra) | no (10% lo logra) |
+| nivel 30 (real) | no | no |
+| nivel 36 (real) | no | no |
+| nivel 40 (real) | no | no |
+| nivel 50 (real) | no | no |
 | nivel 60 (real) | no | no |
-| 25 especies | día 40 (sem. 6) · 80% |  |
-| 36 especies | no |  |
-| 50 especies | no |  |
-| 56 especies | no |  |
-| 1 legendario | no (10% lo logra) | – |
+| 55 especies | día 20 (sem. 3) |  |
+| 100 especies | no |  |
+| 140 especies | no |  |
+| 158 especies | no |  |
+| 1 legendario | no | – |
 | 3 legendarios | no | – |
 | 5 legendarios | no | – |
 
 ## Hallazgos (calculados de esta ejecución)
 
-- **casual**: Pokédex completa (56) no; nivel 60 no (20% lo logra); a la semana 104 lleva 47 especies, nivel máx. 50 (por EXP 63), Polvo acumulado 156,536 de los que sobran 310 (0%).
-- **constante**: Pokédex completa (56) día 548 (sem. 79) · 80%; nivel 60 día 191 (sem. 28); a la semana 104 lleva 56 especies, nivel máx. 60 (por EXP 100), Polvo acumulado 702,675 de los que sobran 17,978 (3%).
-- **maratonista**: Pokédex completa (56) día 211 (sem. 31); nivel 60 día 106 (sem. 16); a la semana 104 lleva 56 especies, nivel máx. 60 (por EXP 100), Polvo acumulado 1,303,090 de los que sobran 654,963 (50%).
-- **noctámbulo**: Pokédex completa (56) día 387 (sem. 56); nivel 60 día 124 (sem. 18); a la semana 104 lleva 56 especies, nivel máx. 60 (por EXP 100), Polvo acumulado 1,000,224 de los que sobran 177,285 (18%).
-- **irregular**: Pokédex completa (56) no; nivel 60 día 623 (sem. 89) · 90%; a la semana 104 lleva 51 especies, nivel máx. 60 (por EXP 74), Polvo acumulado 231,087 de los que sobran 2,425 (1%).
-- **casual real**: Pokédex completa (56) no; nivel 60 no; a la semana 104 lleva 36 especies, nivel máx. 50 (por EXP 52), Polvo acumulado 62,604 de los que sobran 346 (1%).
-- **exámenes**: Pokédex completa (56) no; nivel 60 día 485 (sem. 70) · 90%; a la semana 104 lleva 53 especies, nivel máx. 60 (por EXP 77), Polvo acumulado 265,945 de los que sobran 10,669 (4%).
-- **abandono**: Pokédex completa (56) no; nivel 60 no; a la semana 104 lleva 26 especies, nivel máx. 30 (por EXP 30), Polvo acumulado 19,802 de los que sobran 249 (1%).
-## Lectura de la línea base (manual; configuración actual, 104 semanas, 10 semillas)
+- **casual**: Pokédex completa (158) no; nivel 60 no; a la semana 104 lleva 128 especies, nivel máx. 44 (por EXP 44), Polvo acumulado 163,426 de los que sobran 364 (0%).
+- **constante**: Pokédex completa (158) no; nivel 60 día 314 (sem. 45); a la semana 104 lleva 154 especies, nivel máx. 60 (por EXP 65), Polvo acumulado 742,462 de los que sobran 630 (0%).
+- **maratonista**: Pokédex completa (158) día 460 (sem. 66); nivel 60 día 158 (sem. 23); a la semana 104 lleva 158 especies, nivel máx. 60 (por EXP 71), Polvo acumulado 1,397,110 de los que sobran 560,649 (40%).
+- **noctámbulo**: Pokédex completa (158) día 511 (sem. 73) · 83%; nivel 60 día 194 (sem. 28); a la semana 104 lleva 158 especies, nivel máx. 60 (por EXP 70), Polvo acumulado 1,073,303 de los que sobran 190,804 (18%).
+- **irregular**: Pokédex completa (158) no; nivel 60 no; a la semana 104 lleva 136 especies, nivel máx. 50 (por EXP 50), Polvo acumulado 243,267 de los que sobran 341 (0%).
+- **casual real**: Pokédex completa (158) no; nivel 60 no; a la semana 104 lleva 93 especies, nivel máx. 35 (por EXP 35), Polvo acumulado 64,942 de los que sobran 23,397 (36%).
+- **exámenes**: Pokédex completa (158) no; nivel 60 no (17% lo logra); a la semana 104 lleva 144 especies, nivel máx. 51 (por EXP 51), Polvo acumulado 277,660 de los que sobran 460 (0%).
+- **abandono**: Pokédex completa (158) no; nivel 60 no; a la semana 104 lleva 66 especies, nivel máx. 25 (por EXP 25), Polvo acumulado 18,586 de los que sobran 2,121 (11%).
 
-- **La Pokédex de 56 especies se agota** (mediana) hacia la semana 31 el maratonista, la 56 el noctámbulo, la 79 el constante (80 % lo logra). Irregular, exámenes, casual, casual real y abandono **no la completan en 2 años** (51, 53, 47, 36 y 26 especies a la semana 104). Las 5 legendarias cuestan más: el 5.º legendario llega a la semana 52 (noctámbulo, 90 %), la 69 (maratonista, 60 %) y casi nunca al resto. Con 151 especies (paso 9) el problema cambia de escala: los topes de Pokédex proporcionales y el contenido nuevo importan más que la curva.
-- **Topes de nivel.** El nivel real lo manda el tope de Pokédex, no la EXP: a 104 semanas el nivel por EXP es 100 (máximo) para constante/maratonista/noctámbulo, 74-77 para irregular/exámenes, 63 para casual, 52 para casual real. El constante llega al nv. 50 en la semana 8 y al 60 en la 28 (por EXP lo habría hecho en la 16); el maratonista toca el 50 en la semana 2 y el 60 en la 16; el noctámbulo 50 en la 4 y 60 en la 18; irregular tarda 21 sem. al 50 y 89 al 60; exámenes 16 y 70; casual 49 y solo 20 % llega al 60; **casual real llega al 30 en la semana 31, al 40 en la 67 y al 50 solo el 70 % en la 88**; el abandono se queda en nv. ~30 para siempre (26 especies, nivel máx. 30).
-- **Tramo muerto de los jugadores intensos:** constante y maratonista pasan de nv. 50 a nv. 60 solo tras completar casi toda la Pokédex (50 especies), y desde ese punto su EXP es ya excedente (nivel por EXP 100 de 100). Para esos perfiles el 60 es techo duro desde la semana ~16-28.
-- **Polvo.** No frena a nadie salvo en el techo: en los perfiles moderados el Polvo sin gastar queda en ~300 durante todo el horizonte (se gasta tan pronto como entra), así que el coste de caramelos no es el cuello de botella; el cuello de botella son los topes y el ritmo de sesiones. El Polvo **sobra** solo cuando el equipo ya está en el tope: maratonista 655 k sin gastar de 1,30 M acumulados (50 %), noctámbulo 177 k (18 %), constante 18 k (3 %). Aun así «Polvo acumulado» crece a 0,2-1,3 M en 2 años: no hay sumidero de Polvo a largo plazo.
-- **Ligas semanales** (umbrales actuales Super 6.000, Ultra 60.000, Master 95.000): constante, maratonista y noctámbulo llegan a Master y se estancan allí (sin escalón superior); irregular y casual se quedan en Super; casual real tarda hasta la semana ~78 en promediar Super y exámenes solo roza Ultra a las 104 semanas; el abandono vuelve a Base. Master es un escalón que ~3 perfiles alcanzan en el mes 1-6, sin nada por encima para los siguientes 18 meses.
-- **Limitaciones.** 10 semillas por perfil (medianas con alta varianza en hitos tardíos; «· X %» indica la proporción que llega). El jugador simulado optimiza siempre (equipo, caramelos, liberaciones) y reclama todo; los humanos reales irán por detrás. El grinder no está en esta ejecución (use `--profile all`).
+## Lectura (manual, 2026-11-17: ligas con subrangos, Kanto 158, 6 semillas)
+
+- Generado con el árbol de trabajo del 2026-11-17: ligas con subrangos (40 escalones), oleadas por rango (2→10), etapas por liga, Kanto (158 especies) y los cambios del paso 6 aún sin commitear (evolución con caramelos, tope de Pokédex 55 → nv. 40). Los puntos semanales bajan frente a la línea base anterior (oleadas más pequeñas al principio de la semana y menos formas evolucionadas en ligas bajas → menos capturas y menos poder a igual tiempo).
+- **Mejor semana por perfil** (mediana): casual real 7 k → Super 2; casual 22 k → Super 5; irregular 50 k → Ultra 3; exámenes 93 k → Ultra 5; constante 159 k → Maestra 5; noctámbulo 284 k → Maestra 11; maratonista 365 k → Maestra 14. **Nadie pasa de Maestra 14**: Maestra 15-25 (383 k-1 M) queda libre para los packs futuros, como se buscaba.
+- **Media de 4 semanas a los 2 años:** casual real Base 5, casual Super 4, irregular Super 5, exámenes Ultra 2, constante Maestra 5, noctámbulo Maestra 11, maratonista Maestra 14. El constante entra en Maestra hacia el mes 6-9 y pasa a Ultra en el mes 2-3; el maratonista llega a Maestra en el mes 3.
+- **Posible ajuste (a revisar con el usuario):** el casual real se queda en Base 5 de media (sus mejores semanas, Super 2). Si se quiere que vea 2.ª formas casi todas las semanas, bajar `weeklyThresholds.super` a ~3.000.

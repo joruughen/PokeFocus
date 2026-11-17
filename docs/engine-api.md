@@ -10,7 +10,7 @@
 - **Fallible operations** return `Result<T, E> = { ok: true; value: T } | { ok: false; error: E }`. `E` is a string-literal union, so the UI can map it to i18n keys.
 - **Context**: every function takes an optional last argument `ctx: EngineContext` (default `defaultContext()` = shipped data + config). The simulator builds its own with `createEngineContext({ config?: DeepPartial<GameConfig>, data?, techniques?, abilities?, missions?, contentHash?, spawn?, events?, warnings? })` (the last four come from `resolveContent`, see «Contenido en vivo»); `config` overrides are deep-merged over `custom-game-config.json`. `ctx.warnings` lists problems found in the effect definitions and, with live content, the unknown slugs or keys a patch referenced (empty with the shipped data).
 - **Config**: every number comes from `ctx.config` (`custom-game-config.json`). Parameters the engine needs that are not in that file yet live in `ENGINE_DEFAULTS` (`config.ts`) and are merged under the JSON: `session.dailyHalfRewardFactor`, `energy.potions` / `revivePct`, `conditions.earlyMorningWindow`, `encounters.soundProfileTypes` / `nonLevelEvolutionLevelGap`, `capture.counter.immuneHealPct`, `capture.counter.damageMult` (1; the JSON sets the tuned value), `progression.maxLevel`, `trainer.*`, `historyLimit`. Adding them to the JSON overrides the defaults.
-- **Config keys added with the damage/missions pass** (in the JSON): `capture.captureDamageScale` (0.065), `capture.levelSync` (`{ ratio: 1, gap: 0 }`), `capture.damageReferenceSpeed` (70), `capture.hitTargeting` (`'maxHp'`), `encounters.leagueWaveBonus` (`{ base: 0, super: 1, ultra: 2, master: 3 }`), `encounters.studyBallLevelMargin` (10).
+- **Config keys added with the damage/missions pass** (in the JSON): `capture.captureDamageScale` (0.065), `capture.levelSync` (`{ ratio: 1, gap: 0 }`), `capture.damageReferenceSpeed` (70), `capture.hitTargeting` (`'maxHp'`), `encounters.studyBallLevelMargin` (10).
 
 ## Player state (`state.ts`)
 
@@ -26,7 +26,7 @@
 | `pokedex` | `{ seen: slug[], caught: slug[] }` (caught count drives the level cap) |
 | `history` | `SessionSummary[]` (for stats/charts; `caught` is updated by throws) |
 | `streak` | `{ current, best, lastDayKey, gapBeforeLastDay, protectUsedWeek }` |
-| `league` | `{ weeklyPoints: {weekKey: n}, monthlyPoints: {monthKey: n}, bestLeague }` |
+| `league` | `{ weeklyPoints: {weekKey: n}, monthlyPoints: {monthKey: n}, bestLeague, bestRank?, podiumSettled? }` (`bestRank`: best ladder position, absent in older saves = first subrank of `bestLeague`; `podiumSettled`: last 8 week keys whose podium was closed) |
 | `roaming` | escaped legendaries `{ speciesSlug, sessionsLeft }` |
 | `pendingWishes` | heals applied at the next `startSession` |
 | `pendingLevelUps?` | `PendingLevelUp[]` = `{ from, to, items, dust, at }`: trainer level-ups whose "Congratulations" window is still to be shown (rewards are already in `inventory`/`dust`). Emptied by the `ackLevelUp` action. Absent in older saves = none. At most `MAX_PENDING_LEVEL_UPS` (20; the oldest two merge) |
@@ -77,14 +77,14 @@ Starter (`config.starters`) at `starterLevel`, 1 technique equipped, `starterPok
    - Session-report log on each member (optional, absent in older results; never read by the rules): `damageMoves [{move|null,count}]`, `activables [{move, attempts, activations, chanceMin/Max/Avg, limitPerSession, limitReached}]`, `passives [{source, sourceKind, effect, count}]` (passive effects that did something: per-action statMods whose `when` held, statusOnAction triggers, end/next-session heals, focus floors, encounterWeight…), `conditionLog [{type, mult, actions, forced}]`, `conditionBonusMult`.
    - `wildFactors` (optional): `localHour, weekday, league, waveSizes[], extraWild, typeWeights [{type, mult, uid, source}]` (encounterWeight and who caused it), `sync {uid, source, nature, chance} | null`, `roaming[]` (species that appeared). Shown by the UI's session report with `gen` and `Wave.activeConditionTypes`.
    - `totalPoints`, `dust`, `pokeBalls`, `energyByBlock[]` (catch energy per type per 25-min block; informational since the damage model below).
-   - `waves[]` (see Encounters), `charges[]` (status / reroll), `extraWild`, `wishes`, `streak`, `roamingAfter`, `league` (league used for wave caps).
+   - `waves[]` (see Encounters), `charges[]` (status / reroll), `extraWild`, `wishes`, `streak`, `roamingAfter`, `league` (league used for wave caps); `gen.rank {league, sub}` = the rung that decided the wave size and the stages (absent in older encounters = no stage restriction).
    With `rewardFactor = 0` (over 600 min today) the session is recorded but gives nothing and no waves.
 
 3. ```ts
    applySessionResult(state, result): Result<{ state, events: ProgressEvent[] }, 'session_mismatch' | 'already_applied'>
    ```
    Idempotent per session id. Finishes any previous encounter, applies energy (`updatedAt = startedAt`), Rest/asleep flags (boxed sleepers wake up after a valid session), EXP + level ups (moves learned, cap), Bond, Mastery, dust, Poké Balls (+1 per Study Ball converted), weekly/monthly points, best league, streak, `days`, trainer EXP, history, Pokédex seen, Wishes, roaming list, and sets `state.encounter` with the waves. Clears `activeSession`. Rewarded sessions also advance missions (sessions, minutes, long sessions, distinct days, technique activations).
-   `ProgressEvent`: `levelUp {uid, from, to, newMoves, slotsUnlocked}`, `evolutionAvailable {uid, to, trigger}`, `levelCapped {uid, cap}`, `trainerLevelUp`, `leagueUp {from, to}`.
+   `ProgressEvent`: `levelUp {uid, from, to, newMoves, slotsUnlocked}`, `evolutionAvailable {uid, to, trigger}`, `levelCapped {uid, cap}`, `trainerLevelUp`, `leagueUp {from, to, fromSub?, toSub?, dust?}` (any higher rung of the week; `dust` = rank-up Dust of the rungs climbed, already added to `state.dust`; also queued in `state.pendingLeagueNotices`).
 
 Helpers: `captureValue(focusInputs, cfg, labelFloors?)`, `dailyRewardFactor(minutesBefore, minutes, cfg)`, `validatedMinutes`, `activationChance(baseChance, spDef, masteryMinutes, techChanceMult, cfg)`, `projectStreak`, `conditionTypes(p, at)`.
 
@@ -140,7 +140,8 @@ Other calls:
 - `encounterModifiers(state)` → `{ ballMult, extraFailedThrows, maxFailedThrows, counterNoFirst, revealWildIvs, teamCounterDamageMult, teamCounterMiss }` for the current team (`teamCounterMiss` = best team-scope `counterMiss` chance, 0 if none; `resolveCounter` uses the max of it and the target's own `counterMiss`) (UI: show IVs when `revealWildIvs`).
 - `wildCatchChance(state, wild, ball)` → probability to show before throwing.
 - Pure building blocks: `captureChance`, `counterDamage`, `resolveCounter(state, wild, rng, ctx?)` (leader chain), `resolveCounterOn`, `ballCounterTarget`, `wildCanStrikeBack`, `typeEffectiveness(attack, defTypes, chart, floors?)`, `computeDamage` (legacy), `hpFractionAfter`, `waveCount`, `rollWaveSize`, `rollWild`, `speciesWeight`, `minWildLevel`, `wildLevelRange`, `isStudyBallEligible(sp, level, cfg, trainerLevel = 1)`, `studyBallMaxLevelFor(trainerLevel, cfg)`, `shinyGuaranteeBall`, `ballCovers`.
-- **Wave size** (`rollWaveSize`): `baseWaveSize + leagueWaveBonus[league] ± waveSizeJitter + extraWild − (focus < lowFocusThreshold)`, min `minWaveSize`, max `leagueMaxWaveSize[league]`. With `leagueWaveBonus { base: 0, super: 1, ultra: 2, master: 3 }` the means are ≈ 4/5/6/7: waves grow as the week's league rises (leagues reset to Base every Monday).
+- **Wave size** (`rollWaveSize(rng, focus, rank, extraWild, cfg)`): cap = `waveSizeForRank(rank)` (`encounters.leagueWaveSize[league]` from → to over subranks 1..`leagueRampSubranks`, rounded); size = `cap − 1 ± waveSizeJitter + extraWild − (focus < lowFocusThreshold)`, clamped to `[min(minWaveSize, cap), cap]`. Caps: Base 2→4, Super 4→6, Ultra 6→7, Master 7→10 (10 from Master 5 on).
+- **Stages by league** (`stageWeightsForRank`, `encounters.leagueStageWeights`): weight multiplier of 2nd and 3rd stages (0 = excluded from the pool) and of the legendary roll, from `WaveGenParams.rank`. Roaming legendaries are forced and ignore it.
 
 ## Box (`box.ts`)
 
@@ -180,7 +181,11 @@ Queries: `unlockLevel(kind)`, `isUnlocked(state, kind)`, `activeTera(p, at)` (ty
 - `useHealItem(state, uid, item, now)` — `potion` 20, `super-potion` 50, `hyper-potion` 120, `revive` 0 → 50%.
 
 ## Leagues (`league.ts`)
-`weekKey(state, now)` (local Monday `YYYY-MM-DD`), `monthKey`, `weeklyPoints`, `monthlyPoints`, `currentLeague(state, now)` (resets to Base every local Monday 00:00), `currentMaxWaveSize`, `nextLeagueProgress`, `leagueForPoints(points, 'week' | 'month')`.
+`weekKey(state, now)` (local Monday `YYYY-MM-DD`), `monthKey`, `weeklyPoints`, `monthlyPoints`, `leagueForPoints(points, 'week' | 'month')`, `currentLeague(state, now)` (resets to Base every local Monday 00:00), `nextLeagueProgress`, `leagueRank`.
+
+Subranks (GDD §14): the ladder is a list of `LadderRung {league, sub, index, points}` built from `leagues.subranks`, `weeklyThresholds` (first subrank of each league), `secondRankPoints` and `topRankPoints`, geometric inside each league and rounded to 3 significant digits (`weeklyLadderOf(cfg)`, memoized per config; `leagueLadder(period, ctx)` = ×`monthlyMultiplier` for the month). `rankForPoints`, `rankAt(index)`, `rankOf(league, sub)`, `rankInterval(index) → {from, to|null}`, `currentRank(state, now)`, `nextRankProgress(state, now) → {next, pointsNeeded, from, to, progress} | null`, `bestRank(state)`, `waveSizeForRank(rank, cfg)`, `stageWeightsForRank(rank, cfg)`, `stageWeight(stage, w)`, `currentMaxWaveSize`.
+
+Rewards: `rankUpDust(index, cfg)` (`10 + 2·index`), `rankUpDustBetween(from, to, cfg)` (paid by `applySessionResult`), `podiumDust(index, place, cfg)`, `settlePodium(state, {weekKey, index, place, scope?, at?})` (pure, idempotent per week: pays the podium Dust, marks `league.podiumSettled` and queues a `podium` notice), `addLeagueNotice`, `podiumSettled`. `PlayerState.pendingLeagueNotices?: LeagueNotice[]` (`rankUp {weekKey, from, to, dust, at}` merged per week, `podium {weekKey, rank, place, scope, dust, at}`) is emptied by the `ackLeagueNotices` action.
 
 ## Missions (`missions.ts`, GDD §13)
 Content: `data/overrides/custom-missions.json` (`ctx.missions`): `dailyCount` (3), `weeklyCount` (3), `pool[]`, `pokedex[]` milestones and `placeholderItems` (names and descriptions of mission-only items that are not in the PokeAPI data: `tera-shard` = Teralito, `technical-machine` = MT; both are used by the advanced items, see above).

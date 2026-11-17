@@ -36,6 +36,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
+          es: 'Las ligas tienen rangos: Base 1-5, Super 1-5, Ultra 1-5 y Maestra 1-25. Cada rango trae oleadas más grandes (de 2 a 10 salvajes) y Pokémon más evolucionados: 2.ª forma desde Super, 3.ª desde Ultra y legendarios solo en Maestra. Cada rango nuevo de la semana da Polvo, y los 3 primeros de cada rango en tu país ganan Polvo al cerrar la semana. El ranking muestra primero tu rango en tu país.',
+          en: 'Leagues now have ranks: Base 1-5, Super 1-5, Ultra 1-5 and Master 1-25. Each rank brings bigger waves (2 to 10 wild Pokémon) and more evolved Pokémon: 2nd forms from Super, 3rd forms from Ultra and legendaries only in Master. Each new rank of the week gives Dust, and the top 3 of each rank in your country win Dust when the week closes. The ranking shows your rank in your country first.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
           es: '¡Kanto al completo! Ya pueden aparecer los 151 Pokémon de la primera región (más de 100 especies nuevas), con sus habilidades y 41 técnicas especiales nuevas como Canto, Espora, Danza Espada o Transformación. Con tantas especies, los iniciales son ahora más difíciles de encontrar.',
           en: 'All of Kanto is here! All 151 Pokémon of the first region can now appear (over 100 new species), with their abilities and 41 new special techniques such as Sing, Spore, Swords Dance or Transform. With so many species, starters are now harder to find.',
         },
