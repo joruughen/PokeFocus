@@ -42,12 +42,11 @@ import type {
 // Configuration
 // ---------------------------------------------------------------------------
 
-/** National dex ids of the Pack 1 species (default forms only). */
-const PACK_1_IDS: number[] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 17, 18, 25, 26, 27, 28, 35, 36, 41, 42, 169, 63, 64,
-  65, 66, 67, 68, 74, 75, 76, 81, 82, 92, 93, 94, 133, 134, 135, 136, 196, 197, 147, 148, 149, 228,
-  229, 220, 221, 144, 145, 146, 150, 151,
-]
+/** Pack 1 extras from other generations (kept: already in players' boxes). */
+const PACK_1_EXTRA_IDS: number[] = [169, 196, 197, 220, 221, 228, 229]
+
+/** National dex ids of the active content: all of Kanto (1-151) plus the Pack 1 extras. Default forms only. */
+const PACK_IDS: number[] = [...Array.from({ length: 151 }, (_, i) => i + 1), ...PACK_1_EXTRA_IDS]
 
 const PREFERRED_VERSION_GROUP = 'ultra-sun-ultra-moon'
 
@@ -768,14 +767,14 @@ async function main(): Promise<void> {
   await mkdir(CACHE_DIR, { recursive: true })
   await mkdir(OUT_DIR, { recursive: true })
 
-  console.log(`Importing ${PACK_1_IDS.length} species from PokeAPI (concurrency ${MAX_CONCURRENCY}${REFRESH ? ', refresh' : ''})...`)
-  const duplicate = PACK_1_IDS.filter((id, i) => PACK_1_IDS.indexOf(id) !== i)
+  console.log(`Importing ${PACK_IDS.length} species from PokeAPI (concurrency ${MAX_CONCURRENCY}${REFRESH ? ', refresh' : ''})...`)
+  const duplicate = PACK_IDS.filter((id, i) => PACK_IDS.indexOf(id) !== i)
   if (duplicate.length) throw new Error(`Duplicate ids in pack: ${duplicate.join(', ')}`)
 
   const { versionRank, groupRank } = await loadVersionRanks()
 
   console.log('- species, evolution chains')
-  const species = await buildSpecies(PACK_1_IDS, versionRank, groupRank)
+  const species = await buildSpecies(PACK_IDS, versionRank, groupRank)
 
   const moveSlugs = [...new Set(species.flatMap((s) => [...s.learnset.levelUp.map((m) => m.move), ...s.learnset.egg, ...s.learnset.tutor, ...s.learnset.machine]))].sort()
   const abilitySlugs = [...new Set(species.flatMap((s) => s.abilities.map((a) => a.slug)))].sort()

@@ -57,6 +57,25 @@
     }
   },
   {
+    "slug": "comet-punch",
+    "id": 4,
+    "names": {
+      "es": "Puño Cometa",
+      "en": "Comet Punch"
+    },
+    "type": "normal",
+    "power": 18,
+    "damageClass": "physical",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Hits 2-5 times in one turn."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "mega-punch",
     "id": 5,
     "names": {
@@ -73,6 +92,25 @@
     "flavorText": {
       "es": "Un puñetazo de gran potencia.",
       "en": "The target is slugged by a punch thrown with muscle-packed power."
+    }
+  },
+  {
+    "slug": "pay-day",
+    "id": 6,
+    "names": {
+      "es": "Día de Pago",
+      "en": "Pay Day"
+    },
+    "type": "normal",
+    "power": 40,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Scatters money on the ground worth five times the user’s level."
+    },
+    "flavorText": {
+      "es": "Arroja monedas al objetivo y las recupera al final del combate.",
+      "en": "Coins are hurled at the target to inflict damage. Money is earned after the battle."
     }
   },
   {
@@ -149,6 +187,63 @@
     "flavorText": {
       "es": "Araña con afiladas garras.",
       "en": "Hard, pointed, sharp claws rake the target to inflict damage."
+    }
+  },
+  {
+    "slug": "vice-grip",
+    "id": 11,
+    "names": {
+      "es": "Agarre",
+      "en": "Vise Grip"
+    },
+    "type": "normal",
+    "power": 55,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Atrapa y atenaza al objetivo.",
+      "en": "The target is gripped and squeezed from both sides to inflict damage."
+    }
+  },
+  {
+    "slug": "guillotine",
+    "id": 12,
+    "names": {
+      "es": "Guillotina",
+      "en": "Guillotine"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "physical",
+    "accuracy": 30,
+    "shortEffect": {
+      "en": "Causes a one-hit KO."
+    },
+    "flavorText": {
+      "es": "Ataque cortante que debilita al oponente de un golpe si acierta.",
+      "en": "A vicious tearing attack with big pincers. The target faints instantly if this attack hits."
+    }
+  },
+  {
+    "slug": "razor-wind",
+    "id": 13,
+    "names": {
+      "es": "Viento Cortante",
+      "en": "Razor Wind"
+    },
+    "type": "normal",
+    "power": 80,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Requires a turn to charge before attacking."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
     }
   },
   {
@@ -304,6 +399,25 @@
     }
   },
   {
+    "slug": "stomp",
+    "id": 23,
+    "names": {
+      "es": "Pisotón",
+      "en": "Stomp"
+    },
+    "type": "normal",
+    "power": 65,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to make the target flinch."
+    },
+    "flavorText": {
+      "es": "Tremendo pisotón que puede hacer que el objetivo se amedrente.",
+      "en": "The user attacks by stomping on the target with a big foot. This may also make the target flinch."
+    }
+  },
+  {
     "slug": "double-kick",
     "id": 24,
     "names": {
@@ -320,6 +434,44 @@
     "flavorText": {
       "es": "Una patada doble. Golpea dos veces.",
       "en": "The user attacks by kicking the target twice in a row using two feet."
+    }
+  },
+  {
+    "slug": "mega-kick",
+    "id": 25,
+    "names": {
+      "es": "Megapatada",
+      "en": "Mega Kick"
+    },
+    "type": "normal",
+    "power": 120,
+    "damageClass": "physical",
+    "accuracy": 75,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Patada de extrema fuerza.",
+      "en": "The target is attacked by a kick launched with muscle-packed power."
+    }
+  },
+  {
+    "slug": "jump-kick",
+    "id": 26,
+    "names": {
+      "es": "Patada Salto",
+      "en": "Jump Kick"
+    },
+    "type": "fighting",
+    "power": 100,
+    "damageClass": "physical",
+    "accuracy": 95,
+    "shortEffect": {
+      "en": "If the user misses, it takes half the damage it would have inflicted in recoil."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
     }
   },
   {
@@ -361,6 +513,44 @@
     }
   },
   {
+    "slug": "headbutt",
+    "id": 29,
+    "names": {
+      "es": "Golpe Cabeza",
+      "en": "Headbutt"
+    },
+    "type": "normal",
+    "power": 70,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to make the target flinch."
+    },
+    "flavorText": {
+      "es": "Potente cabezazo que puede amedrentar al objetivo.",
+      "en": "The user sticks out its head and attacks by charging straight into the target. This may also make the target flinch."
+    }
+  },
+  {
+    "slug": "horn-attack",
+    "id": 30,
+    "names": {
+      "es": "Cornada",
+      "en": "Horn Attack"
+    },
+    "type": "normal",
+    "power": 65,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Ataca al objetivo con una cornada.",
+      "en": "The target is jabbed with a sharply pointed horn to inflict damage."
+    }
+  },
+  {
     "slug": "fury-attack",
     "id": 31,
     "names": {
@@ -377,6 +567,25 @@
     "flavorText": {
       "es": "Cornea al objetivo de dos a cinco veces.",
       "en": "The user attacks by jabbing the target with a horn, a beak, or the like. This move hits two to five times in a row."
+    }
+  },
+  {
+    "slug": "horn-drill",
+    "id": 32,
+    "names": {
+      "es": "Perforador",
+      "en": "Horn Drill"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "physical",
+    "accuracy": 30,
+    "shortEffect": {
+      "en": "Causes a one-hit KO."
+    },
+    "flavorText": {
+      "es": "Ataque con un cuerno giratorio que fulmina de un solo golpe al objetivo si lo alcanza.",
+      "en": "The user stabs the target with a horn that rotates like a drill. The target faints instantly if this attack hits."
     }
   },
   {
@@ -529,6 +738,25 @@
     "flavorText": {
       "es": "Lanza un aguijón tóxico que puede envenenar al objetivo.",
       "en": "The user stabs the target with a poisonous stinger to inflict damage. This may also poison the target."
+    }
+  },
+  {
+    "slug": "twineedle",
+    "id": 41,
+    "names": {
+      "es": "Doble Ataque",
+      "en": "Twineedle"
+    },
+    "type": "bug",
+    "power": 25,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Hits twice in the same turn. Has a chance to poison the target."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
     }
   },
   {
@@ -703,6 +931,25 @@
     }
   },
   {
+    "slug": "acid",
+    "id": 51,
+    "names": {
+      "es": "Ácido",
+      "en": "Acid"
+    },
+    "type": "poison",
+    "power": 40,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to lower the target’s Special Defense by one stage."
+    },
+    "flavorText": {
+      "es": "Rocía a los enemigos con un ácido corrosivo. Puede bajar la Defensa Especial.",
+      "en": "Opposing Pokémon are attacked with a spray of harsh acid. This may also lower their Sp. Def stats."
+    }
+  },
+  {
     "slug": "ember",
     "id": 52,
     "names": {
@@ -871,6 +1118,25 @@
     "flavorText": {
       "es": "Extraño rayo que puede causar confusión.",
       "en": "The target is attacked with a peculiar ray. This may also confuse the target."
+    }
+  },
+  {
+    "slug": "bubble-beam",
+    "id": 61,
+    "names": {
+      "es": "Rayo Burbuja",
+      "en": "Bubble Beam"
+    },
+    "type": "water",
+    "power": 65,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to lower the target’s Speed by one stage."
+    },
+    "flavorText": {
+      "es": "Diluvio de burbujas que puede bajar la Velocidad.",
+      "en": "A spray of bubbles is forcefully ejected at the target. This may also lower the target's Speed stat."
     }
   },
   {
@@ -1053,6 +1319,25 @@
     },
     "type": "grass",
     "power": 20,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Drains half the damage inflicted to heal the user."
+    },
+    "flavorText": {
+      "es": "Un ataque que absorbe nutrientes. Quien lo usa recupera la mitad de los PS del daño que produce.",
+      "en": "A nutrient-draining attack. The user's HP is restored by up to half the damage taken by the target."
+    }
+  },
+  {
+    "slug": "mega-drain",
+    "id": 72,
+    "names": {
+      "es": "Megaagotar",
+      "en": "Mega Drain"
+    },
+    "type": "grass",
+    "power": 40,
     "damageClass": "special",
     "accuracy": 100,
     "shortEffect": {
@@ -1615,6 +1900,25 @@
     }
   },
   {
+    "slug": "mimic",
+    "id": 102,
+    "names": {
+      "es": "Mimético",
+      "en": "Mimic"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Copies the target’s last used move."
+    },
+    "flavorText": {
+      "es": "Copia el último movimiento usado por el objetivo, y puede utilizarlo mientras esté en el combate.",
+      "en": "The user copies the move last used by the target. The copied move can be used until the user of Mimic leaves the battle."
+    }
+  },
+  {
     "slug": "screech",
     "id": 103,
     "names": {
@@ -1881,6 +2185,25 @@
     }
   },
   {
+    "slug": "bide",
+    "id": 117,
+    "names": {
+      "es": "Venganza",
+      "en": "Bide"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "physical",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "User waits for two turns, then hits back for twice the damage it took."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "metronome",
     "id": 118,
     "names": {
@@ -1935,6 +2258,25 @@
     "flavorText": {
       "es": "El atacante explota y hiere a todos a su alrededor. El usuario se debilita de inmediato.",
       "en": "The user attacks everything around it by causing an explosion. The user faints upon using this move."
+    }
+  },
+  {
+    "slug": "egg-bomb",
+    "id": 121,
+    "names": {
+      "es": "Bomba Huevo",
+      "en": "Egg Bomb"
+    },
+    "type": "normal",
+    "power": 100,
+    "damageClass": "physical",
+    "accuracy": 75,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
     }
   },
   {
@@ -1995,6 +2337,25 @@
     }
   },
   {
+    "slug": "bone-club",
+    "id": 125,
+    "names": {
+      "es": "Hueso Palo",
+      "en": "Bone Club"
+    },
+    "type": "ground",
+    "power": 65,
+    "damageClass": "physical",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Has a chance to make the target flinch."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "fire-blast",
     "id": 126,
     "names": {
@@ -2030,6 +2391,25 @@
     "flavorText": {
       "es": "Embiste con un gran impulso que puede llegar a amedrentar.",
       "en": "The user charges at the target and may make it flinch."
+    }
+  },
+  {
+    "slug": "clamp",
+    "id": 128,
+    "names": {
+      "es": "Tenaza",
+      "en": "Clamp"
+    },
+    "type": "water",
+    "power": 35,
+    "damageClass": "physical",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Prevents the target from fleeing and inflicts damage for 2-5 turns."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
     }
   },
   {
@@ -2071,6 +2451,44 @@
     }
   },
   {
+    "slug": "spike-cannon",
+    "id": 131,
+    "names": {
+      "es": "Clavo Cañón",
+      "en": "Spike Cannon"
+    },
+    "type": "normal",
+    "power": 20,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Hits 2-5 times in one turn."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "constrict",
+    "id": 132,
+    "names": {
+      "es": "Restricción",
+      "en": "Constrict"
+    },
+    "type": "normal",
+    "power": 10,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to lower the target’s Speed by one stage."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "amnesia",
     "id": 133,
     "names": {
@@ -2109,6 +2527,63 @@
     }
   },
   {
+    "slug": "soft-boiled",
+    "id": 135,
+    "names": {
+      "es": "Ovocuración",
+      "en": "Soft-Boiled"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Heals the user by half its max HP."
+    },
+    "flavorText": {
+      "es": "Restaura la mitad de los PS máximos del usuario.",
+      "en": "The user restores its own HP by up to half its max HP."
+    }
+  },
+  {
+    "slug": "high-jump-kick",
+    "id": 136,
+    "names": {
+      "es": "Patada Salto Alta",
+      "en": "High Jump Kick"
+    },
+    "type": "fighting",
+    "power": 130,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "If the user misses, it takes half the damage it would have inflicted in recoil."
+    },
+    "flavorText": {
+      "es": "El usuario salta muy alto y da un rodillazo. Si falla, se hará daño.",
+      "en": "The target is attacked with a knee kick from a jump. If this move misses, the user takes damage instead."
+    }
+  },
+  {
+    "slug": "glare",
+    "id": 137,
+    "names": {
+      "es": "Deslumbrar",
+      "en": "Glare"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Paralyzes the target."
+    },
+    "flavorText": {
+      "es": "Intimida y asusta al objetivo con la mirada para dejarlo paralizado.",
+      "en": "The user intimidates the target with the pattern on its belly to cause paralysis."
+    }
+  },
+  {
     "slug": "dream-eater",
     "id": 138,
     "names": {
@@ -2128,6 +2603,44 @@
     }
   },
   {
+    "slug": "poison-gas",
+    "id": 139,
+    "names": {
+      "es": "Gas Venenoso",
+      "en": "Poison Gas"
+    },
+    "type": "poison",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Poisons the target."
+    },
+    "flavorText": {
+      "es": "Lanza una nube de gas tóxico al objetivo. Produce envenenamiento.",
+      "en": "A cloud of poison gas is sprayed in the faces of opposing Pokémon, poisoning those it hits."
+    }
+  },
+  {
+    "slug": "barrage",
+    "id": 140,
+    "names": {
+      "es": "Bombardeo",
+      "en": "Barrage"
+    },
+    "type": "normal",
+    "power": 15,
+    "damageClass": "physical",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Hits 2-5 times in one turn."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "leech-life",
     "id": 141,
     "names": {
@@ -2144,6 +2657,25 @@
     "flavorText": {
       "es": "Restaura al usuario la mitad del daño causado al objetivo.",
       "en": "The user drains the target's blood. The user's HP is restored by up to half the damage taken by the target."
+    }
+  },
+  {
+    "slug": "lovely-kiss",
+    "id": 142,
+    "names": {
+      "es": "Beso Amoroso",
+      "en": "Lovely Kiss"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 75,
+    "shortEffect": {
+      "en": "Puts the target to sleep."
+    },
+    "flavorText": {
+      "es": "Intimida al objetivo con una cara que asusta y le da un beso que lo deja dormido.",
+      "en": "With a scary face, the user tries to force a kiss on the target. If it succeeds, the target falls asleep."
     }
   },
   {
@@ -2204,6 +2736,44 @@
     }
   },
   {
+    "slug": "dizzy-punch",
+    "id": 146,
+    "names": {
+      "es": "Puño Mareo",
+      "en": "Dizzy Punch"
+    },
+    "type": "normal",
+    "power": 70,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to confuse the target."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "spore",
+    "id": 147,
+    "names": {
+      "es": "Espora",
+      "en": "Spore"
+    },
+    "type": "grass",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Puts the target to sleep."
+    },
+    "flavorText": {
+      "es": "Esparce esporas que inducen al sueño.",
+      "en": "The user scatters bursts of spores that induce sleep."
+    }
+  },
+  {
     "slug": "psywave",
     "id": 149,
     "names": {
@@ -2223,6 +2793,25 @@
     }
   },
   {
+    "slug": "splash",
+    "id": 150,
+    "names": {
+      "es": "Salpicadura",
+      "en": "Splash"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Does nothing."
+    },
+    "flavorText": {
+      "es": "No tiene ningún efecto. Solo salpica.",
+      "en": "The user just flops and splashes around to no effect at all..."
+    }
+  },
+  {
     "slug": "acid-armor",
     "id": 151,
     "names": {
@@ -2239,6 +2828,25 @@
     "flavorText": {
       "es": "Transforma la estructura celular para hacerse líquido y aumenta mucho la Defensa.",
       "en": "The user alters its cellular structure to liquefy itself, sharply boosting its Defense stat."
+    }
+  },
+  {
+    "slug": "crabhammer",
+    "id": 152,
+    "names": {
+      "es": "Martillazo",
+      "en": "Crabhammer"
+    },
+    "type": "water",
+    "power": 100,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Has an increased chance for a critical hit."
+    },
+    "flavorText": {
+      "es": "Golpea con fuerza con una pinza enorme. Suele asestar un golpe crítico.",
+      "en": "The target is hammered with a large pincer. This move has a heightened chance of landing a critical hit."
     }
   },
   {
@@ -2280,6 +2888,25 @@
     }
   },
   {
+    "slug": "bonemerang",
+    "id": 155,
+    "names": {
+      "es": "Huesomerang",
+      "en": "Bonemerang"
+    },
+    "type": "ground",
+    "power": 50,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Hits twice in one turn."
+    },
+    "flavorText": {
+      "es": "Lanza un hueso a modo de bumerán que golpea dos veces.",
+      "en": "The user throws the bone it holds. The bone loops around to hit the target twice—coming and going."
+    }
+  },
+  {
     "slug": "rest",
     "id": 156,
     "names": {
@@ -2315,6 +2942,63 @@
     "flavorText": {
       "es": "Lanza grandes pedruscos. Puede amedrentar al objetivo.",
       "en": "Large boulders are hurled at opposing Pokémon to inflict damage. This may also make the opposing Pokémon flinch."
+    }
+  },
+  {
+    "slug": "hyper-fang",
+    "id": 158,
+    "names": {
+      "es": "Hipercolmillo",
+      "en": "Hyper Fang"
+    },
+    "type": "normal",
+    "power": 80,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Has a chance to make the target flinch."
+    },
+    "flavorText": {
+      "es": "Ataca con agudos colmillos. Puede amedrentar al objetivo.",
+      "en": "The user bites hard on the target with its sharp front fangs. This may also make the target flinch."
+    }
+  },
+  {
+    "slug": "sharpen",
+    "id": 159,
+    "names": {
+      "es": "Afilar",
+      "en": "Sharpen"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Raises the user’s Attack by one stage."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "conversion",
+    "id": 160,
+    "names": {
+      "es": "Conversión",
+      "en": "Conversion"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "User’s type changes to the type of one of its moves at random."
+    },
+    "flavorText": {
+      "es": "Cambia el tipo del usuario por el del primero de sus movimientos.",
+      "en": "The user changes its type to become the same type as the move at the top of the list of moves it knows."
     }
   },
   {
@@ -2451,6 +3135,25 @@
     }
   },
   {
+    "slug": "flame-wheel",
+    "id": 172,
+    "names": {
+      "es": "Rueda Fuego",
+      "en": "Flame Wheel"
+    },
+    "type": "fire",
+    "power": 60,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to burn the target. Lets frozen Pokémon thaw themselves."
+    },
+    "flavorText": {
+      "es": "Ataca envuelto en fuego. Puede causar quemaduras.",
+      "en": "The user attacks by cloaking itself in fire and charging at the target. This may also leave the target with a burn."
+    }
+  },
+  {
     "slug": "snore",
     "id": 173,
     "names": {
@@ -2505,6 +3208,25 @@
     "flavorText": {
       "es": "Ataque frenético. Cuantos menos PS tenga el usuario, más daño producirá.",
       "en": "The user flails about aimlessly to attack. The less HP the user has, the greater the move's power."
+    }
+  },
+  {
+    "slug": "conversion-2",
+    "id": 176,
+    "names": {
+      "es": "Conversión 2",
+      "en": "Conversion 2"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Changes the user’s type to a random type either resistant or immune to the last move used against it."
+    },
+    "flavorText": {
+      "es": "El usuario cambia de tipo para hacerse resistente al último tipo de movimiento usado por el objetivo.",
+      "en": "The user changes its type to make itself resistant to the type of the move the target used last."
     }
   },
   {
@@ -2581,6 +3303,25 @@
     "flavorText": {
       "es": "Frena todos los ataques, pero puede fallar si se usa repetidamente.",
       "en": "This move enables the user to protect itself from all attacks. Its chance of failing rises if it is used in succession."
+    }
+  },
+  {
+    "slug": "mach-punch",
+    "id": 183,
+    "names": {
+      "es": "Ultrapuño",
+      "en": "Mach Punch"
+    },
+    "type": "fighting",
+    "power": 40,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Puñetazo de velocidad fulminante. Este movimiento tiene prioridad alta.",
+      "en": "The user throws a punch at blinding speed. This move always goes first."
     }
   },
   {
@@ -2676,6 +3417,44 @@
     "flavorText": {
       "es": "Echa lodo en la cara para bajar la Precisión.",
       "en": "The user hurls mud in the target's face to inflict damage and lower its accuracy."
+    }
+  },
+  {
+    "slug": "octazooka",
+    "id": 190,
+    "names": {
+      "es": "Pulpocañón",
+      "en": "Octazooka"
+    },
+    "type": "water",
+    "power": 65,
+    "damageClass": "special",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Has a chance to lower the target’s accuracy by one stage."
+    },
+    "flavorText": {
+      "es": "Dispara tinta a la cara. Puede bajar la Precisión.",
+      "en": "The user attacks by spraying ink in the target’s face or eyes. This may also lower the target’s accuracy."
+    }
+  },
+  {
+    "slug": "spikes",
+    "id": 191,
+    "names": {
+      "es": "Púas",
+      "en": "Spikes"
+    },
+    "type": "ground",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Scatters Spikes, hurting opposing Pokémon that switch in."
+    },
+    "flavorText": {
+      "es": "Esparce púas alrededor del equipo rival que hieren a los Pokémon rivales que entran en combate.",
+      "en": "The user lays a trap of spikes at the feet of the opposing team. The spikes will damage opposing Pokémon that switch into battle."
     }
   },
   {
@@ -2790,6 +3569,25 @@
     "flavorText": {
       "es": "Frena todos los ataques, pero puede fallar si se usa repetidamente.",
       "en": "This move enables the user to protect itself from all attacks. Its chance of failing rises if it is used in succession."
+    }
+  },
+  {
+    "slug": "bone-rush",
+    "id": 198,
+    "names": {
+      "es": "Ataque Óseo",
+      "en": "Bone Rush"
+    },
+    "type": "ground",
+    "power": 25,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Hits 2-5 times in one turn."
+    },
+    "flavorText": {
+      "es": "Hueso en ristre, aporrea al objetivo de dos a cinco veces.",
+      "en": "The user attacks by striking the target with a hard bone. This move hits two to five times in a row."
     }
   },
   {
@@ -3116,6 +3914,25 @@
     }
   },
   {
+    "slug": "present",
+    "id": 217,
+    "names": {
+      "es": "Presente",
+      "en": "Present"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Randomly inflicts damage with power from 40 to 120 or heals the target for 1/4 its max HP."
+    },
+    "flavorText": {
+      "es": "Quien lo usa ataca al objetivo dándole un regalo con una bomba trampa. Sin embargo, a veces restaura sus PS.",
+      "en": "The user attacks by giving the target a gift with a hidden trap. The gift restores HP sometimes, however."
+    }
+  },
+  {
     "slug": "frustration",
     "id": 218,
     "names": {
@@ -3208,6 +4025,25 @@
     "flavorText": {
       "es": "Puñetazo con toda la fuerza concentrada. Causa confusión si atina.",
       "en": "The user attacks by punching the target with full concentrated power. This also confuses the target."
+    }
+  },
+  {
+    "slug": "megahorn",
+    "id": 224,
+    "names": {
+      "es": "Megacuerno",
+      "en": "Megahorn"
+    },
+    "type": "bug",
+    "power": 120,
+    "damageClass": "physical",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Violenta embestida con cuernos imponentes.",
+      "en": "Using its tough and impressive horn, the user rams into the target with no letup."
     }
   },
   {
@@ -3667,6 +4503,25 @@
     }
   },
   {
+    "slug": "whirlpool",
+    "id": 250,
+    "names": {
+      "es": "Torbellino",
+      "en": "Whirlpool"
+    },
+    "type": "water",
+    "power": 35,
+    "damageClass": "special",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Prevents the target from leaving battle and inflicts 1/16 its max HP in damage for 2-5 turns."
+    },
+    "flavorText": {
+      "es": "Una tromba de agua atrapa al objetivo durante cuatro o cinco turnos.",
+      "en": "The user traps the target inside a violent, swirling whirlpool that inflicts damage for four to five turns."
+    }
+  },
+  {
     "slug": "beat-up",
     "id": 251,
     "names": {
@@ -3721,6 +4576,63 @@
     "flavorText": {
       "es": "Ataca de forma alborotada durante tres turnos. Mantiene despiertos a todos.",
       "en": "The user attacks in an uproar for three turns. During that time, no Pokémon can fall asleep."
+    }
+  },
+  {
+    "slug": "stockpile",
+    "id": 254,
+    "names": {
+      "es": "Reserva",
+      "en": "Stockpile"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Stores energy up to three times for use with Spit Up and Swallow."
+    },
+    "flavorText": {
+      "es": "Acumula energía y sube la Defensa y la Defensa Especial. Puede utilizarse hasta tres veces.",
+      "en": "The user stores power and boosts its Defense and Sp. Def stats. This move can be used up to three times."
+    }
+  },
+  {
+    "slug": "spit-up",
+    "id": 255,
+    "names": {
+      "es": "Escupir",
+      "en": "Spit Up"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Power is 100 times the amount of energy Stockpiled."
+    },
+    "flavorText": {
+      "es": "Libera de una vez la energía acumulada con Reserva. La potencia del ataque será proporcional a la cantidad de energía acumulada.",
+      "en": "The power stored using the move Stockpile is released at once in an attack. The more power is stored, the greater the move's power."
+    }
+  },
+  {
+    "slug": "swallow",
+    "id": 256,
+    "names": {
+      "es": "Tragar",
+      "en": "Swallow"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Recovers 1/4 HP after one Stockpile, 1/2 HP after two Stockpiles, or full HP after three Stockpiles."
+    },
+    "flavorText": {
+      "es": "Absorbe la energía acumulada con Reserva para recobrar salud. Cuanta más se haya acumulado, mayor será el número de PS que se recuperen.",
+      "en": "The power stored using the move Stockpile is absorbed by the user to restore its own HP. The more power is stored, the more HP is restored."
     }
   },
   {
@@ -3781,6 +4693,25 @@
     }
   },
   {
+    "slug": "flatter",
+    "id": 260,
+    "names": {
+      "es": "Camelo",
+      "en": "Flatter"
+    },
+    "type": "dark",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Raises the target’s Special Attack by one stage and confuses the target."
+    },
+    "flavorText": {
+      "es": "Halaga al objetivo y lo confunde, pero también sube su Ataque Especial.",
+      "en": "Flattery is used to confuse the target. However, this also boosts the target's Sp. Atk stat."
+    }
+  },
+  {
     "slug": "will-o-wisp",
     "id": 261,
     "names": {
@@ -3797,6 +4728,25 @@
     "flavorText": {
       "es": "Siniestra llama morada que produce quemaduras.",
       "en": "The user shoots a sinister flame at the target to inflict a burn."
+    }
+  },
+  {
+    "slug": "memento",
+    "id": 262,
+    "names": {
+      "es": "Legado",
+      "en": "Memento"
+    },
+    "type": "dark",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Lowers the target’s Attack and Special Attack by two stages. User faints."
+    },
+    "flavorText": {
+      "es": "El usuario se debilita, pero baja mucho tanto el Ataque como el Ataque Especial del objetivo.",
+      "en": "The user faints. In return, the target's Attack and Sp. Atk stats are harshly lowered."
     }
   },
   {
@@ -4009,6 +4959,25 @@
     }
   },
   {
+    "slug": "assist",
+    "id": 274,
+    "names": {
+      "es": "Ayuda",
+      "en": "Assist"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Randomly selects and uses one of the trainer’s other Pokémon’s moves."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "ingrain",
     "id": 275,
     "names": {
@@ -4199,6 +5168,25 @@
     }
   },
   {
+    "slug": "imprison",
+    "id": 286,
+    "names": {
+      "es": "Sellar",
+      "en": "Imprison"
+    },
+    "type": "psychic",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Prevents the target from using any moves that the user also knows."
+    },
+    "flavorText": {
+      "es": "Impide a los contrincantes usar ataques conocidos por el usuario durante el combate.",
+      "en": "If opposing Pokémon know any move also known by the user, they are prevented from using it."
+    }
+  },
+  {
     "slug": "refresh",
     "id": 287,
     "names": {
@@ -4256,6 +5244,63 @@
     }
   },
   {
+    "slug": "secret-power",
+    "id": 290,
+    "names": {
+      "es": "Daño Secreto",
+      "en": "Secret Power"
+    },
+    "type": "normal",
+    "power": 70,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to inflict a status effect which depends upon the terrain."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "dive",
+    "id": 291,
+    "names": {
+      "es": "Buceo",
+      "en": "Dive"
+    },
+    "type": "water",
+    "power": 80,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "User dives underwater, dodging all attacks, and hits next turn."
+    },
+    "flavorText": {
+      "es": "El usuario se sumerge en el primer turno y ataca en el segundo.",
+      "en": "The user dives on the first turn, then floats up and attacks on the next turn."
+    }
+  },
+  {
+    "slug": "camouflage",
+    "id": 293,
+    "names": {
+      "es": "Camuflaje",
+      "en": "Camouflage"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "User’s type changes to match the terrain."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "feather-dance",
     "id": 297,
     "names": {
@@ -4275,6 +5320,44 @@
     }
   },
   {
+    "slug": "teeter-dance",
+    "id": 298,
+    "names": {
+      "es": "Danza Caos",
+      "en": "Teeter Dance"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Confuses the target."
+    },
+    "flavorText": {
+      "es": "Danza histérica que confunde a los Pokémon que están alrededor del usuario.",
+      "en": "The user performs a wobbly dance that confuses every Pokémon around it."
+    }
+  },
+  {
+    "slug": "blaze-kick",
+    "id": 299,
+    "names": {
+      "es": "Patada Ígnea",
+      "en": "Blaze Kick"
+    },
+    "type": "fire",
+    "power": 85,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Has an increased chance for a critical hit and a chance to burn the target."
+    },
+    "flavorText": {
+      "es": "Patada que suele ser un golpe crítico y puede causar quemaduras.",
+      "en": "The user launches a kick that has a heightened chance of landing a critical hit. This may also leave the target with a burn."
+    }
+  },
+  {
     "slug": "mud-sport",
     "id": 300,
     "names": {
@@ -4291,6 +5374,44 @@
     "flavorText": {
       "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
       "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "ice-ball",
+    "id": 301,
+    "names": {
+      "es": "Bola Hielo",
+      "en": "Ice Ball"
+    },
+    "type": "ice",
+    "power": 30,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Power doubles every turn this move is used in succession after the first, resetting after five turns."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "slack-off",
+    "id": 303,
+    "names": {
+      "es": "Relajo",
+      "en": "Slack Off"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Heals the user by half its max HP."
+    },
+    "flavorText": {
+      "es": "El usuario se relaja y restaura la mitad de sus PS máximos.",
+      "en": "The user slacks off, restoring its own HP by up to half its max HP."
     }
   },
   {
@@ -4424,6 +5545,44 @@
     "flavorText": {
       "es": "Lanza un grito tan tremendo que impresiona y puede amedrentar al objetivo.",
       "en": "The user attacks the target by crying out in a startling fashion. This may also make the target flinch."
+    }
+  },
+  {
+    "slug": "weather-ball",
+    "id": 311,
+    "names": {
+      "es": "Meteorobola",
+      "en": "Weather Ball"
+    },
+    "type": "normal",
+    "power": 50,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "If there be weather, this move has doubled power and the weather’s type."
+    },
+    "flavorText": {
+      "es": "El tipo y fuerza del ataque varían según el tiempo que haga.",
+      "en": "This move's type and power change depending on the weather at the time the move is used."
+    }
+  },
+  {
+    "slug": "aromatherapy",
+    "id": 312,
+    "names": {
+      "es": "Aromaterapia",
+      "en": "Aromatherapy"
+    },
+    "type": "grass",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Cures the entire party of major status effects."
+    },
+    "flavorText": {
+      "es": "Cura todos los problemas de estado del equipo con un suave aroma.",
+      "en": "This move can't be used. It's recommended that this move is forgotten. Once forgotten, this move can't be remembered."
     }
   },
   {
@@ -4674,6 +5833,44 @@
     }
   },
   {
+    "slug": "extrasensory",
+    "id": 326,
+    "names": {
+      "es": "Paranormal",
+      "en": "Extrasensory"
+    },
+    "type": "psychic",
+    "power": 80,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to make the target flinch."
+    },
+    "flavorText": {
+      "es": "Emite una energía muy extraña que puede amedrentar al objetivo.",
+      "en": "The user attacks with an odd, unseeable power. This may also make the target flinch."
+    }
+  },
+  {
+    "slug": "sky-uppercut",
+    "id": 327,
+    "names": {
+      "es": "Gancho Alto",
+      "en": "Sky Uppercut"
+    },
+    "type": "fighting",
+    "power": 85,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Inflicts regular damage and can hit Bounce and Fly users."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "sand-tomb",
     "id": 328,
     "names": {
@@ -4728,6 +5925,25 @@
     "flavorText": {
       "es": "Ataque con agua lodosa que puede bajar la Precisión del equipo rival.",
       "en": "The user attacks by shooting muddy water at opposing Pokémon. This may also lower their accuracy."
+    }
+  },
+  {
+    "slug": "bullet-seed",
+    "id": 331,
+    "names": {
+      "es": "Semilladora",
+      "en": "Bullet Seed"
+    },
+    "type": "grass",
+    "power": 25,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Hits 2-5 times in one turn."
+    },
+    "flavorText": {
+      "es": "Dispara rápido de dos a cinco ráfagas de semillas de manera consecutiva.",
+      "en": "The user attacks by forcefully shooting seeds at the target. This move hits two to five times in a row."
     }
   },
   {
@@ -4921,6 +6137,25 @@
     }
   },
   {
+    "slug": "poison-tail",
+    "id": 342,
+    "names": {
+      "es": "Cola Veneno",
+      "en": "Poison Tail"
+    },
+    "type": "poison",
+    "power": 50,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has an increased chance for a critical hit and a chance to poison the target."
+    },
+    "flavorText": {
+      "es": "Puede envenenar y dar un golpe crítico.",
+      "en": "The user hits the target with its tail. This move has a heightened chance of landing a critical hit and may also poison the target."
+    }
+  },
+  {
     "slug": "covet",
     "id": 343,
     "names": {
@@ -4978,6 +6213,25 @@
     }
   },
   {
+    "slug": "water-sport",
+    "id": 346,
+    "names": {
+      "es": "Hidrochorro",
+      "en": "Water Sport"
+    },
+    "type": "water",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Halves all Fire-type damage."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "calm-mind",
     "id": 347,
     "names": {
@@ -4994,6 +6248,25 @@
     "flavorText": {
       "es": "Aumenta la concentración y calma el espíritu para subir el Ataque Especial y la Defensa Especial.",
       "en": "The user quietly focuses its mind and calms its spirit to boost its Sp. Atk and Sp. Def stats."
+    }
+  },
+  {
+    "slug": "leaf-blade",
+    "id": 348,
+    "names": {
+      "es": "Hoja Aguda",
+      "en": "Leaf Blade"
+    },
+    "type": "grass",
+    "power": 90,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has an increased chance for a critical hit."
+    },
+    "flavorText": {
+      "es": "Acuchilla con una hoja fina. Suele dar un golpe crítico.",
+      "en": "The user handles a sharp leaf like a sword and cuts the target to inflict damage. This move has a heightened chance of landing a critical hit."
     }
   },
   {
@@ -5301,6 +6574,44 @@
     }
   },
   {
+    "slug": "acupressure",
+    "id": 367,
+    "names": {
+      "es": "Acupresión",
+      "en": "Acupressure"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Raises one of a friendly Pokémon’s stats at random by two stages."
+    },
+    "flavorText": {
+      "es": "Aplica presión en puntos clave del cuerpo para potenciar mucho una de sus características.",
+      "en": "The user applies pressure to stress points, sharply boosting one of its or its allies' stats."
+    }
+  },
+  {
+    "slug": "metal-burst",
+    "id": 368,
+    "names": {
+      "es": "Represión Metal",
+      "en": "Metal Burst"
+    },
+    "type": "steel",
+    "power": null,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Strikes back at the last Pokémon to hit the user this turn with 1.5× the damage."
+    },
+    "flavorText": {
+      "es": "Devuelve al rival el último ataque recibido, pero con mucha más fuerza.",
+      "en": "The user retaliates with much greater force against the opponent that last inflicted damage on it."
+    }
+  },
+  {
     "slug": "u-turn",
     "id": 369,
     "names": {
@@ -5453,6 +6764,25 @@
     }
   },
   {
+    "slug": "wring-out",
+    "id": 378,
+    "names": {
+      "es": "Estrujón",
+      "en": "Wring Out"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Power increases against targets with more HP remaining, up to a maximum of 121 power."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
     "slug": "power-trick",
     "id": 379,
     "names": {
@@ -5526,6 +6856,25 @@
     "flavorText": {
       "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
       "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "copycat",
+    "id": 383,
+    "names": {
+      "es": "Copión",
+      "en": "Copycat"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Uses the target’s last used move."
+    },
+    "flavorText": {
+      "es": "Imita el movimiento usado justo antes. El movimiento falla si no se ha usado aún ninguno.",
+      "en": "The user mimics the move used immediately before it. The move fails if no other move has been used yet."
     }
   },
   {
@@ -5640,6 +6989,25 @@
     "flavorText": {
       "es": "Permite atacar con prioridad. Falla si el objetivo no está preparando ningún ataque.",
       "en": "This move enables the user to attack first. This move fails if the target is not readying an attack."
+    }
+  },
+  {
+    "slug": "toxic-spikes",
+    "id": 390,
+    "names": {
+      "es": "Púas Tóxicas",
+      "en": "Toxic Spikes"
+    },
+    "type": "poison",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Scatters poisoned spikes, poisoning opposing Pokémon that switch in."
+    },
+    "flavorText": {
+      "es": "Lanza una trampa de púas tóxicas a los pies del objetivo. El veneno afecta a los Pokémon oponentes que entran en combate.",
+      "en": "The user lays a trap of poison spikes at the feet of the opposing team. The spikes will poison opposing Pokémon that switch into battle."
     }
   },
   {
@@ -5928,6 +7296,25 @@
     }
   },
   {
+    "slug": "power-gem",
+    "id": 408,
+    "names": {
+      "es": "Joya de Luz",
+      "en": "Power Gem"
+    },
+    "type": "rock",
+    "power": 80,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Ataca con un rayo de luz que centellea como si lo formaran miles de joyas.",
+      "en": "The user attacks with a ray of light that sparkles as if it were made of gemstones."
+    }
+  },
+  {
     "slug": "drain-punch",
     "id": 409,
     "names": {
@@ -5944,6 +7331,25 @@
     "flavorText": {
       "es": "Un golpe que drena energía. El Pokémon recupera la mitad de los PS arrebatados al objetivo.",
       "en": "The user attacks with an energy-draining punch. The user's HP is restored by up to half the damage taken by the target."
+    }
+  },
+  {
+    "slug": "vacuum-wave",
+    "id": 410,
+    "names": {
+      "es": "Onda Vacío",
+      "en": "Vacuum Wave"
+    },
+    "type": "fighting",
+    "power": 40,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Gira los puños y libera una onda de vacío contra el objetivo. Este movimiento tiene prioridad alta.",
+      "en": "The user whirls its fists to send a wave of pure vacuum at the target. This move always goes first."
     }
   },
   {
@@ -6020,6 +7426,25 @@
     "flavorText": {
       "es": "La tierra a los pies del objetivo erupciona violentamente. Puede disminuir la Defensa Especial del objetivo.",
       "en": "The user makes the ground under the target erupt with power. This may also lower the target's Sp. Def stat."
+    }
+  },
+  {
+    "slug": "switcheroo",
+    "id": 415,
+    "names": {
+      "es": "Trapicheo",
+      "en": "Switcheroo"
+    },
+    "type": "dark",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "User and target swap items."
+    },
+    "flavorText": {
+      "es": "Intercambia con el objetivo los objetos que llevan tan rápido que es imposible verlo a simple vista.",
+      "en": "The user trades held items with the target faster than the eye can follow."
     }
   },
   {
@@ -6191,6 +7616,25 @@
     "flavorText": {
       "es": "El usuario muerde al objetivo con colmillos en llamas y puede hacer que se amedrente o sufra quemaduras.",
       "en": "The user bites with flame-cloaked fangs. This may also make the target flinch or leave it with a burn."
+    }
+  },
+  {
+    "slug": "shadow-sneak",
+    "id": 425,
+    "names": {
+      "es": "Sombra Vil",
+      "en": "Shadow Sneak"
+    },
+    "type": "ghost",
+    "power": 40,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Extiende su sombra y ataca al objetivo por la espalda. Este movimiento tiene prioridad alta.",
+      "en": "The user extends its shadow and attacks the target from behind. This move always goes first."
     }
   },
   {
@@ -6631,6 +8075,25 @@
     }
   },
   {
+    "slug": "wood-hammer",
+    "id": 452,
+    "names": {
+      "es": "Mazazo",
+      "en": "Wood Hammer"
+    },
+    "type": "grass",
+    "power": 120,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "User receives 1/3 the damage inflicted in recoil."
+    },
+    "flavorText": {
+      "es": "Arremete contra el objetivo con su robusto cuerpo. El agresor también sufre bastante daño.",
+      "en": "The user slams its rugged body into the target to attack. This also damages the user quite a lot."
+    }
+  },
+  {
     "slug": "aqua-jet",
     "id": 453,
     "names": {
@@ -6647,6 +8110,44 @@
     "flavorText": {
       "es": "Ataque de una rapidez espeluznante. Este movimiento tiene prioridad alta.",
       "en": "The user lunges at the target to inflict damage, moving at blinding speed. This move always goes first."
+    }
+  },
+  {
+    "slug": "head-smash",
+    "id": 457,
+    "names": {
+      "es": "Testarazo",
+      "en": "Head Smash"
+    },
+    "type": "rock",
+    "power": 150,
+    "damageClass": "physical",
+    "accuracy": 80,
+    "shortEffect": {
+      "en": "User receives 1/2 the damage inflicted in recoil."
+    },
+    "flavorText": {
+      "es": "El usuario arriesga su vida y lanza un cabezazo con toda su fuerza. El agresor resulta seriamente dañado.",
+      "en": "The user attacks the target with a hazardous full-power headbutt. This also damages the user terribly."
+    }
+  },
+  {
+    "slug": "double-hit",
+    "id": 458,
+    "names": {
+      "es": "Doble Golpe",
+      "en": "Double Hit"
+    },
+    "type": "normal",
+    "power": 35,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Hits twice in one turn."
+    },
+    "flavorText": {
+      "es": "Golpea al objetivo dos veces seguidas con la cola u otras partes de su cuerpo.",
+      "en": "The user slams the target with a tail or the like. The target is hit twice in a row."
     }
   },
   {
@@ -6704,6 +8205,25 @@
     "flavorText": {
       "es": "El usuario emplea sus poderes para hacer la media de su Defensa y Defensa Especial con las de su objetivo y compartirlas.",
       "en": "The user employs its psychic power to average its Defense and Sp. Def stats with those of the target."
+    }
+  },
+  {
+    "slug": "power-split",
+    "id": 471,
+    "names": {
+      "es": "Isofuerza",
+      "en": "Power Split"
+    },
+    "type": "psychic",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Averages Attack and Special Attack with the target."
+    },
+    "flavorText": {
+      "es": "El usuario emplea sus poderes para hacer la media de su Ataque y Ataque Especial con los de su objetivo y compartirlos.",
+      "en": "The user employs its psychic power to average its Attack and Sp. Atk stats with those of the target."
     }
   },
   {
@@ -6859,6 +8379,25 @@
     }
   },
   {
+    "slug": "storm-throw",
+    "id": 480,
+    "names": {
+      "es": "Llave Corsé",
+      "en": "Storm Throw"
+    },
+    "type": "fighting",
+    "power": 60,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Always scores a critical hit."
+    },
+    "flavorText": {
+      "es": "Lanza un golpe devastador. Siempre asesta un golpe crítico.",
+      "en": "The user strikes the target with a fierce blow. This attack always results in a critical hit."
+    }
+  },
+  {
     "slug": "flame-burst",
     "id": 481,
     "names": {
@@ -6973,6 +8512,25 @@
     }
   },
   {
+    "slug": "soak",
+    "id": 487,
+    "names": {
+      "es": "Empapar",
+      "en": "Soak"
+    },
+    "type": "water",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Changes the target’s type to Water."
+    },
+    "flavorText": {
+      "es": "Potente lluvia que transforma al objetivo en un Pokémon de tipo Agua.",
+      "en": "The user shoots a torrent of water that changes the target's type to Water."
+    }
+  },
+  {
     "slug": "flame-charge",
     "id": 488,
     "names": {
@@ -6989,6 +8547,25 @@
     "flavorText": {
       "es": "Llamas que golpean al objetivo y aumentan la Velocidad del atacante.",
       "en": "Cloaking itself in flame, the user attacks the target. Then, building up momentum, the user boosts its Speed stat."
+    }
+  },
+  {
+    "slug": "coil",
+    "id": 489,
+    "names": {
+      "es": "Enrosque",
+      "en": "Coil"
+    },
+    "type": "poison",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Raises the user’s Attack, Defense, and accuracy by one stage each."
+    },
+    "flavorText": {
+      "es": "El usuario se concentra, lo que le permite aumentar su Ataque, Defensa y Precisión.",
+      "en": "The user coils up and concentrates. This boosts its Attack and Defense stats as well as its accuracy."
     }
   },
   {
@@ -7011,6 +8588,25 @@
     }
   },
   {
+    "slug": "acid-spray",
+    "id": 491,
+    "names": {
+      "es": "Bomba Ácida",
+      "en": "Acid Spray"
+    },
+    "type": "poison",
+    "power": 40,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Lowers the target’s Special Defense by two stages."
+    },
+    "flavorText": {
+      "es": "Ataca con un líquido corrosivo que reduce mucho la Defensa Especial del objetivo.",
+      "en": "The user attacks by spitting fluid that works to melt the target. This also harshly lowers the target's Sp. Def stat."
+    }
+  },
+  {
     "slug": "foul-play",
     "id": 492,
     "names": {
@@ -7027,6 +8623,44 @@
     "flavorText": {
       "es": "El usuario emplea la fuerza del objetivo para atacarlo. Cuanto mayor es el Ataque del objetivo, más daño provoca.",
       "en": "The user turns the target's strength against it. The higher the target's Attack stat, the greater the damage this move inflicts."
+    }
+  },
+  {
+    "slug": "simple-beam",
+    "id": 493,
+    "names": {
+      "es": "Onda Simple",
+      "en": "Simple Beam"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Changes the target’s ability to Simple."
+    },
+    "flavorText": {
+      "es": "Lanza una onda psíquica que hace que la habilidad del objetivo pase a ser Simple.",
+      "en": "The user emits a mysterious psychic wave that changes the target's Ability to Simple."
+    }
+  },
+  {
+    "slug": "entrainment",
+    "id": 494,
+    "names": {
+      "es": "Danza Amiga",
+      "en": "Entrainment"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Copies the user’s ability onto the target."
+    },
+    "flavorText": {
+      "es": "Una extraña danza que hace que el usuario y el objetivo tengan la misma habilidad.",
+      "en": "The user dances with an odd rhythm that compels the target to mimic it, making the target's Ability the same as the user's."
     }
   },
   {
@@ -7201,6 +8835,44 @@
     }
   },
   {
+    "slug": "shell-smash",
+    "id": 504,
+    "names": {
+      "es": "Rompecoraza",
+      "en": "Shell Smash"
+    },
+    "type": "normal",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Raises user’s Attack, Special Attack, and Speed by two stages. Lower user’s Defense and Special Defense by one stage."
+    },
+    "flavorText": {
+      "es": "El usuario rompe su coraza y baja su Defensa y Defensa Especial, pero aumenta mucho su Ataque, Ataque Especial y Velocidad.",
+      "en": "The user breaks its shell, which lowers its Defense and Sp. Def stats but sharply boosts its Attack, Sp. Atk, and Speed stats."
+    }
+  },
+  {
+    "slug": "heal-pulse",
+    "id": 505,
+    "names": {
+      "es": "Pulso Cura",
+      "en": "Heal Pulse"
+    },
+    "type": "psychic",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "Heals the target for half its max HP."
+    },
+    "flavorText": {
+      "es": "Una onda curativa restaura la mitad de los PS máximos del objetivo.",
+      "en": "The user emits a healing pulse that restores the target's HP by up to half its max HP."
+    }
+  },
+  {
     "slug": "hex",
     "id": 506,
     "names": {
@@ -7236,6 +8908,25 @@
     "flavorText": {
       "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
       "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "circle-throw",
+    "id": 509,
+    "names": {
+      "es": "Llave Giro",
+      "en": "Circle Throw"
+    },
+    "type": "fighting",
+    "power": 60,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Ends wild battles. Forces trainers to switch Pokémon."
+    },
+    "flavorText": {
+      "es": "Lanza por los aires al objetivo y hace que salga otro Pokémon. Si es uno salvaje, acaba el combate.",
+      "en": "The target is thrown, and a different Pokémon is dragged out. In the wild, this ends a battle against a single Pokémon."
     }
   },
   {
@@ -7293,6 +8984,44 @@
     "flavorText": {
       "es": "Cambia el tipo del Pokémon al mismo tipo que el del objetivo.",
       "en": "The user reflects the target's type to become the same type as the target."
+    }
+  },
+  {
+    "slug": "retaliate",
+    "id": 514,
+    "names": {
+      "es": "Represalia",
+      "en": "Retaliate"
+    },
+    "type": "normal",
+    "power": 70,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has double power if a friendly Pokémon fainted last turn."
+    },
+    "flavorText": {
+      "es": "Venga a los amigos caídos. Si en el turno anterior han derrotado a alguno, la potencia del ataque aumentará.",
+      "en": "The user takes revenge for a fainted ally. This move's power is boosted if an ally fainted in the previous turn."
+    }
+  },
+  {
+    "slug": "final-gambit",
+    "id": 515,
+    "names": {
+      "es": "Sacrificio",
+      "en": "Final Gambit"
+    },
+    "type": "fighting",
+    "power": null,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Inflicts damage equal to the user’s remaining HP. User faints."
+    },
+    "flavorText": {
+      "es": "El usuario se sacrifica causándole un daño al objetivo equivalente a sus propios PS perdidos.",
+      "en": "The user risks everything to attack the target. The user faints but inflicts damage equal to its own HP."
     }
   },
   {
@@ -7562,6 +9291,63 @@
     }
   },
   {
+    "slug": "heart-stamp",
+    "id": 531,
+    "names": {
+      "es": "Arrumaco",
+      "en": "Heart Stamp"
+    },
+    "type": "psychic",
+    "power": 60,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Has a chance to make the target flinch."
+    },
+    "flavorText": {
+      "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
+      "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "razor-shell",
+    "id": 534,
+    "names": {
+      "es": "Concha Filo",
+      "en": "Razor Shell"
+    },
+    "type": "water",
+    "power": 75,
+    "damageClass": "physical",
+    "accuracy": 95,
+    "shortEffect": {
+      "en": "Has a chance to lower the target’s Defense by one stage."
+    },
+    "flavorText": {
+      "es": "Una afilada vieira ataca al objetivo. También puede hacer disminuir su Defensa.",
+      "en": "The user cuts the target with sharp shells to inflict damage. This may also lower the target's Defense stat."
+    }
+  },
+  {
+    "slug": "leaf-tornado",
+    "id": 536,
+    "names": {
+      "es": "Ciclón de Hojas",
+      "en": "Leaf Tornado"
+    },
+    "type": "grass",
+    "power": 65,
+    "damageClass": "special",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Has a chance to lower the target’s accuracy by one stage."
+    },
+    "flavorText": {
+      "es": "Tritura con afiladas hojas y puede bajar la Precisión del objetivo.",
+      "en": "The user attacks its target by encircling it in sharp leaves. This attack may also lower the target’s accuracy."
+    }
+  },
+  {
     "slug": "steamroller",
     "id": 537,
     "names": {
@@ -7597,6 +9383,25 @@
     "flavorText": {
       "es": "Crea una onda psíquica que causa daño físico al objetivo.",
       "en": "The user materializes an odd psychic wave to attack the target. This move deals physical damage."
+    }
+  },
+  {
+    "slug": "tail-slap",
+    "id": 541,
+    "names": {
+      "es": "Plumerazo",
+      "en": "Tail Slap"
+    },
+    "type": "normal",
+    "power": 25,
+    "damageClass": "physical",
+    "accuracy": 85,
+    "shortEffect": {
+      "en": "Hits 2-5 times in one turn."
+    },
+    "flavorText": {
+      "es": "Golpea con la cola de dos a cinco veces seguidas.",
+      "en": "The user attacks by striking the target with its hard tail. This move hits two to five times in a row."
     }
   },
   {
@@ -7657,6 +9462,25 @@
     }
   },
   {
+    "slug": "belch",
+    "id": 562,
+    "names": {
+      "es": "Eructo",
+      "en": "Belch"
+    },
+    "type": "poison",
+    "power": 120,
+    "damageClass": "special",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Can only be used after the user has eaten a berry."
+    },
+    "flavorText": {
+      "es": "El Pokémon causa daño a su oponente lanzándole un eructo. Para poder utilizar este movimiento tiene que llevar una baya y comérsela.",
+      "en": "The user lets out a damaging belch at the target. The user must eat a held Berry to use this move."
+    }
+  },
+  {
     "slug": "rototiller",
     "id": 563,
     "names": {
@@ -7673,6 +9497,25 @@
     "flavorText": {
       "es": "Este movimiento no se puede usar, por lo que sería mejor olvidarlo, aunque eso implique que no se pueda recordar posteriormente.",
       "en": "This move can’t be used. It’s recommended that this move is forgotten. Once forgotten, this move can’t be remembered."
+    }
+  },
+  {
+    "slug": "fell-stinger",
+    "id": 565,
+    "names": {
+      "es": "Aguijón Letal",
+      "en": "Fell Stinger"
+    },
+    "type": "bug",
+    "power": 50,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Raises the user’s Attack by two stages if it KOs the target."
+    },
+    "flavorText": {
+      "es": "Si se derrota al objetivo utilizando este movimiento, aumenta muchísimo el Ataque del usuario.",
+      "en": "When the user knocks out a target with this move, the user's Attack stat is boosted drastically."
     }
   },
   {
@@ -7733,6 +9576,25 @@
     }
   },
   {
+    "slug": "draining-kiss",
+    "id": 577,
+    "names": {
+      "es": "Beso Drenaje",
+      "en": "Draining Kiss"
+    },
+    "type": "fairy",
+    "power": 50,
+    "damageClass": "special",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Drains 75% of the damage inflicted to heal the user."
+    },
+    "flavorText": {
+      "es": "El usuario absorbe PS del objetivo con un beso y restaura su propia energía en una cantidad igual o superior a la mitad del daño infligido.",
+      "en": "The user steals the target's HP with a kiss. The user's HP is restored by over half the damage taken by the target."
+    }
+  },
+  {
     "slug": "grassy-terrain",
     "id": 580,
     "names": {
@@ -7749,6 +9611,44 @@
     "flavorText": {
       "es": "Durante cinco turnos, se potencian los movimientos de tipo Planta y los Pokémon que están en contacto con el suelo recuperan PS en cada turno.",
       "en": "The user turns the ground into Grassy Terrain for five turns. This restores the HP of Pokémon on the ground a little every turn and powers up Grass-type moves."
+    }
+  },
+  {
+    "slug": "misty-terrain",
+    "id": 581,
+    "names": {
+      "es": "Campo de Niebla",
+      "en": "Misty Terrain"
+    },
+    "type": "fairy",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": null,
+    "shortEffect": {
+      "en": "For five turns, protects all Pokémon on the ground from major status ailments and confusion, and halves the power of incoming Dragon moves."
+    },
+    "flavorText": {
+      "es": "Durante cinco turnos, los Pokémon que están en el suelo no sufren problemas de estado y se reduce a la mitad el daño de los movimientos de tipo Dragón.",
+      "en": "This protects Pokémon on the ground from status conditions and halves damage from Dragon-type moves for five turns."
+    }
+  },
+  {
+    "slug": "play-rough",
+    "id": 583,
+    "names": {
+      "es": "Carantoña",
+      "en": "Play Rough"
+    },
+    "type": "fairy",
+    "power": 90,
+    "damageClass": "physical",
+    "accuracy": 90,
+    "shortEffect": {
+      "en": "Has a chance to lower the target’s Attack by one stage."
+    },
+    "flavorText": {
+      "es": "El Pokémon que lo usa le hace cucamonas al objetivo y lo ataca. Puede disminuir el Ataque del objetivo.",
+      "en": "The user attacks by playing rough with the target. This may also lower the target's Attack stat."
     }
   },
   {
@@ -7806,6 +9706,25 @@
     "flavorText": {
       "es": "Hace que el objetivo pierda la concentración contándole un secreto. Disminuye el Ataque Especial del oponente.",
       "en": "The user tells the target a secret, and the target loses its ability to concentrate. This lowers the target's Sp. Atk stat."
+    }
+  },
+  {
+    "slug": "eerie-impulse",
+    "id": 598,
+    "names": {
+      "es": "Onda Anómala",
+      "en": "Eerie Impulse"
+    },
+    "type": "electric",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Lowers the target’s Special Attack by two stages."
+    },
+    "flavorText": {
+      "es": "El usuario irradia unas raras ondas que, al alcanzar a un oponente, hacen que disminuya mucho su Ataque Especial.",
+      "en": "The user's body generates an eerie impulse. Exposing the target to it harshly lowers the target's Sp. Atk stat."
     }
   },
   {
@@ -7942,6 +9861,82 @@
     }
   },
   {
+    "slug": "power-up-punch",
+    "id": 612,
+    "names": {
+      "es": "Puño Incremento",
+      "en": "Power-Up Punch"
+    },
+    "type": "fighting",
+    "power": 40,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Raises the user’s Attack by one stage after inflicting damage."
+    },
+    "flavorText": {
+      "es": "Cada vez que golpea a un oponente se endurecen sus puños. Si acierta al objetivo, el Ataque del usuario aumenta.",
+      "en": "Striking opponents over and over makes the user’s fists harder. Hitting a target raises the Attack stat."
+    }
+  },
+  {
+    "slug": "first-impression",
+    "id": 660,
+    "names": {
+      "es": "Escaramuza",
+      "en": "First Impression"
+    },
+    "type": "bug",
+    "power": 90,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Can only be used as the first move after the user enters battle."
+    },
+    "flavorText": {
+      "es": "Movimiento de gran potencia que solo puede usarse en el turno en que el usuario sale al combate.",
+      "en": "Although this move has great power, it works only on the first turn each time the user enters battle."
+    }
+  },
+  {
+    "slug": "high-horsepower",
+    "id": 667,
+    "names": {
+      "es": "Fuerza Equina",
+      "en": "High Horsepower"
+    },
+    "type": "ground",
+    "power": 95,
+    "damageClass": "physical",
+    "accuracy": 95,
+    "shortEffect": {
+      "en": "Inflicts regular damage with no additional effect."
+    },
+    "flavorText": {
+      "es": "Asesta un golpe devastador usando todo su cuerpo.",
+      "en": "The user fiercely attacks the target using its entire body."
+    }
+  },
+  {
+    "slug": "strength-sap",
+    "id": 668,
+    "names": {
+      "es": "Absorbefuerza",
+      "en": "Strength Sap"
+    },
+    "type": "grass",
+    "power": null,
+    "damageClass": "status",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Heals the user by the target’s current Attack stat and lowers the target’s Attack by one stage."
+    },
+    "flavorText": {
+      "es": "Restaura una cantidad de PS equivalente al valor de Ataque del rival, que además verá reducida esta característica.",
+      "en": "The user restores its own HP by the same amount as the target's Attack stat. It then lowers the target's Attack stat."
+    }
+  },
+  {
     "slug": "spotlight",
     "id": 671,
     "names": {
@@ -8015,6 +10010,25 @@
     "flavorText": {
       "es": "Durante cinco turnos, se potencian los movimientos de tipo Psíquico y los Pokémon que están en el suelo quedan protegidos contra movimientos con prioridad.",
       "en": "This protects Pokémon on the ground from priority moves and powers up Psychic-type moves for five turns."
+    }
+  },
+  {
+    "slug": "power-trip",
+    "id": 681,
+    "names": {
+      "es": "Chulería",
+      "en": "Power Trip"
+    },
+    "type": "dark",
+    "power": 20,
+    "damageClass": "physical",
+    "accuracy": 100,
+    "shortEffect": {
+      "en": "Power is higher the more the user’s stats have been raised, to a maximum of 31×."
+    },
+    "flavorText": {
+      "es": "Ataca al oponente presumiendo de su fuerza. Cuanto más hayan subido las características del usuario, mayor será el daño.",
+      "en": "The user boasts its strength and attacks the target. The more the user's stats are boosted, the greater the move's power."
     }
   },
   {
