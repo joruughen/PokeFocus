@@ -70,7 +70,7 @@ const elevate = async (h: Harness, u: Acct) => expect((await h.call('POST', '/ap
 const audits = async () => await database.db.select().from(adminAudit).orderBy(asc(adminAudit.createdAt), asc(adminAudit.id))
 const C = '/api/admin/content'
 const E = '/api/admin/events'
-const wave = (n: number) => ({ config: { encounters: { baseWaveSize: n } } })
+const wave = (n: number) => ({ config: { encounters: { roamingSessions: n } } })
 const RISKY = { config: { encounters: { shinyChance: 0.01 } } } // x5.7 the base: needs confirm
 const asVersion = (r: { json: Record<string, unknown> | null }) => r.json as unknown as AdminContentVersionResponse
 const asEvent = (r: { json: Record<string, unknown> | null }) => (r.json as unknown as AdminEventResponse).event

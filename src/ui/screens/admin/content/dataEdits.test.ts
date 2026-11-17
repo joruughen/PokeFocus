@@ -76,7 +76,7 @@ describe('raw sections', () => {
   })
 
   it('replaces a whole section and an empty object removes it', () => {
-    const p = setRawSection({ config: { encounters: { baseWaveSize: 5 } } }, 'missions', { dailyCount: 4 })
+    const p = setRawSection({ config: { encounters: { roamingSessions: 5 } } }, 'missions', { dailyCount: 4 })
     expect(p.missions).toEqual({ dailyCount: 4 })
     expect(p.config).toBeDefined()
     expect(setRawSection(p, 'missions', {}).missions).toBeUndefined()

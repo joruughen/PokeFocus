@@ -11,7 +11,7 @@ import { countryName } from '../../lib/countries'
 import { LeaderRow } from './Leaderboards'
 
 function row(patch: Partial<LeaderboardRow> = {}): LeaderboardRow {
-  return { rank: 4, userId: 'u4', trainerName: 'Misty', anonymous: false, country: 'PE', points: 1200, league: 'base', leader: 'pikachu', me: false, ...patch }
+  return { rank: 4, userId: 'u4', trainerName: 'Misty', anonymous: false, country: 'PE', points: 1200, league: 'base', sub: 1, leader: 'pikachu', me: false, ...patch }
 }
 
 function render(r: LeaderboardRow, scope?: LeaderboardScope): string {

@@ -38,7 +38,7 @@ describe('the generated form has copy for every limit', () => {
 })
 
 describe('ConfigForm', () => {
-  const patch = setConfigValue(setConfigValue({}, 'encounters.baseWaveSize', 6), 'encounters.shinyChance', 0.02)
+  const patch = setConfigValue(setConfigValue({}, 'encounters.roamingSessions', 6), 'encounters.shinyChance', 0.02)
   const render = (group: (typeof LIMIT_GROUPS)[number], p = patch) =>
     renderToStaticMarkup(<ConfigForm patch={p} issues={NO_ISSUES} group={group} onGroup={noop} onPatch={noop} />)
 
@@ -54,9 +54,9 @@ describe('ConfigForm', () => {
       // Probabilities are percentages: the shiny override 0.02 is 2 %, ×11 the base, so it carries the ×5 badge.
       expect(enc).toContain('value="2"')
       expect(enc).toContain(i18n.t('admin.content.bigChange', { factor: 5 }))
-      // The wave size override (4 → 6) shows +50 % and its reset button is enabled.
-      expect(enc).toMatch(/\+50%/)
-      expect(enc).toContain(i18n.t('admin.content.reset', { name: i18n.t('admin.config.encounters.baseWaveSize') }))
+      // The roaming sessions override (3 → 6) shows +100 % and its reset button is enabled.
+      expect(enc).toMatch(/\+100%/)
+      expect(enc).toContain(i18n.t('admin.content.reset', { name: i18n.t('admin.config.encounters.roamingSessions') }))
       // The wild-level table and the list field are in the same group.
       expect(enc).toContain(i18n.t('admin.config.encounters.wildLevelByTrainerLevel'))
       expect(enc).toContain(i18n.t('admin.config.encounters.longSessionLegendaryMult'))

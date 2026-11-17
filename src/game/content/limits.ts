@@ -10,7 +10,7 @@
  * Not editable live (read at module load by the server or would invalidate
  * saves): `session.*`, `focus.*`, `progression.ivMax/maxLevel`, `statCurves`,
  * `starters`, `starterLevel`, `historyLimit`, `trainer.expCoef/expExponent/maxLevel`,
- * `energy.dailyResetHour`, `leagues.order`. Anything not listed here is rejected.
+ * `energy.dailyResetHour`, `leagues.order`, `leagues.subranks`, `leagues.podium.placeMult`. Anything not listed here is rejected.
  */
 
 /**
@@ -111,12 +111,18 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
   scalar(E, 'encounters.conditionTypeWeight', b('mult', 1, 5)),
   scalar(E, 'encounters.soundProfileWeight', b('mult', 1, 5)),
   scalar(E, 'encounters.teamTypeWeight', b('mult', 1, 5)),
-  scalar(E, 'encounters.baseWaveSize', b('int', 1, 8)),
   scalar(E, 'encounters.waveSizeJitter', b('int', 0, 3)),
   scalar(E, 'encounters.minWaveSize', b('int', 1, 8)),
   scalar(E, 'encounters.lowFocusThreshold', b('fraction', 0, 1)),
-  ...LEAGUES.map((l) => scalar(E, `encounters.leagueMaxWaveSize.${l}`, b('int', 1, 12))),
-  ...LEAGUES.map((l) => scalar(E, `encounters.leagueWaveBonus.${l}`, b('int', 0, 6))),
+  ...LEAGUES.flatMap((l) => [scalar(E, `encounters.leagueWaveSize.${l}.from`, b('int', 1, 12)), scalar(E, `encounters.leagueWaveSize.${l}.to`, b('int', 1, 12))]),
+  scalar(E, 'encounters.leagueRampSubranks', b('int', 1, 25)),
+  ...LEAGUES.flatMap((l) => [
+    scalar(E, `encounters.leagueStageWeights.${l}.stage2.from`, b('mult', 0, 5)),
+    scalar(E, `encounters.leagueStageWeights.${l}.stage2.to`, b('mult', 0, 5)),
+    scalar(E, `encounters.leagueStageWeights.${l}.stage3.from`, b('mult', 0, 5)),
+    scalar(E, `encounters.leagueStageWeights.${l}.stage3.to`, b('mult', 0, 5)),
+    scalar(E, `encounters.leagueStageWeights.${l}.legendary`, b('mult', 0, 5)),
+  ]),
   scalar(E, 'encounters.roamingSessions', b('int', 1, 10)),
   scalar(E, 'encounters.roamingChance', b('prob', 0, 1, '%')),
   scalar(E, 'encounters.studyBallMaxLevel', b('int', 1, 100, 'lv')),
@@ -209,7 +215,14 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
   scalar(L, 'leagues.weeklyThresholds.super', b('int', 1, 10_000_000, 'pts'), 'leagueWeek'),
   scalar(L, 'leagues.weeklyThresholds.ultra', b('int', 1, 10_000_000, 'pts'), 'leagueWeek'),
   scalar(L, 'leagues.weeklyThresholds.master', b('int', 1, 10_000_000, 'pts'), 'leagueWeek'),
+  scalar(L, 'leagues.secondRankPoints', b('int', 1, 1_000_000, 'pts'), 'leagueWeek'),
+  scalar(L, 'leagues.topRankPoints', b('int', 1, 100_000_000, 'pts'), 'leagueWeek'),
   scalar(L, 'leagues.monthlyMultiplier', b('mult', 1, 10), 'leagueWeek'),
+  scalar(L, 'leagues.rankUpDust.base', b('int', 0, 1000)),
+  scalar(L, 'leagues.rankUpDust.perRank', b('int', 0, 200)),
+  scalar(L, 'leagues.podium.minPlayers', b('int', 3, 1000)),
+  scalar(L, 'leagues.podium.dustBase', b('int', 0, 5000)),
+  scalar(L, 'leagues.podium.dustPerRank', b('int', 0, 500)),
 
   // --- Type conditions (point multipliers) --------------------------------
   ...CONDITION_TYPES.map((t) => scalar(K, `conditions.${t}`, b('mult', 1, 3))),

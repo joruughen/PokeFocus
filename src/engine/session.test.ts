@@ -228,8 +228,8 @@ describe('session Focus: 100 % on time, 50 % late, Grit on top (GDD §4)', () =>
 
   it('the wave loses one wild on a late claim only', () => {
     const c = createEngineContext({ config: { encounters: { waveSizeJitter: 0 } } }).config
-    const onTime = rollWaveSize(createRng(1), cfg.focus.baseValue, 'super', 0, c)
-    const late = rollWaveSize(createRng(1), cfg.focus.baseValue * cfg.session.lateClaimMultiplier, 'super', 0, c)
+    const onTime = rollWaveSize(createRng(1), cfg.focus.baseValue, { league: 'super', sub: 5 }, 0, c)
+    const late = rollWaveSize(createRng(1), cfg.focus.baseValue * cfg.session.lateClaimMultiplier, { league: 'super', sub: 5 }, 0, c)
     expect(late).toBe(onTime - 1)
     // Even with the strongest Grit the session Focus (not the Pokémon's) decides the wave size.
     expect(cfg.focus.baseValue).toBeGreaterThanOrEqual(cfg.encounters.lowFocusThreshold)

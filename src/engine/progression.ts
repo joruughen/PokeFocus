@@ -138,7 +138,11 @@ export type ProgressEvent =
   | { type: 'levelCapped'; uid: string; cap: number }
   /** `items`/`dust`: the rewards of the levels gained (`trainerLevelRewards`); absent in events of older code. */
   | { type: 'trainerLevelUp'; from: number; to: number; items?: Record<string, number>; dust?: number }
-  | { type: 'leagueUp'; from: string; to: string }
+  /**
+   * A higher league rung this week. `from`/`to` are league ids; `fromSub`/`toSub` the subranks and `dust` the
+   * prize of the rungs climbed (absent in events of older code).
+   */
+  | { type: 'leagueUp'; from: string; to: string; fromSub?: number; toSub?: number; dust?: number }
 
 /**
  * Add EXP to a Pokémon (pure). EXP keeps accumulating, but the level never

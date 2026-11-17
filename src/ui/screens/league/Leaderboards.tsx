@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { LeagueId } from '../../../engine'
+import { weeklyLadderOf } from '../../../engine'
 import type { LeaderboardPeriod, LeaderboardResponse, LeaderboardRow, LeaderboardScope } from '../../../game/protocol'
 import { leaderboardApi } from '../../api/endpoints'
-import { Button, EmptyState, Panel, PixelIcon, Segmented, Sprite, Tooltip } from '../../components'
+import { Button, EmptyState, Panel, PixelIcon, Segmented, Select, Sprite, Tooltip } from '../../components'
 import { hintAnchor } from '../../hints'
 import { countryName, flagEmoji } from '../../lib/countries'
 import { cx } from '../../lib/cx'
@@ -13,13 +13,8 @@ import { useNames } from '../../lib/names'
 import { navigate } from '../../router'
 import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
-
-const LEAGUE_STYLE: Record<string, string> = {
-  base: 'bg-dusk-600 text-mist-100',
-  super: 'bg-exp-400 text-ink',
-  ultra: 'bg-volt-400 text-ink',
-  master: 'bg-type-psychic text-ink',
-}
+import { useContent } from '../../store/content'
+import { LEAGUE_STYLE, rankName, rankShort } from './rank'
 
 /** Podium colors for ranks 1–3 (gold is the app's one accent). */
 const PODIUM: Record<number, string> = {
@@ -31,46 +26,58 @@ const PODIUM: Record<number, string> = {
 type State = { key: string; data: LeaderboardResponse | null; error: string | null }
 
 /**
- * Rankings (GET /api/leaderboard): global, my country or friends × this week
- * or this month. Top 100 with my row highlighted; if I'm further down, my row
- * is pinned under the table.
+ * Rankings (GET /api/leaderboard): my country, global or friends × this week or this month, limited to one
+ * rank of the ladder (mine by default), to any other, or to none. Top 100 with my row highlighted; if I'm
+ * further down, my row is pinned under the table. A country with too few trainers in a rank shows the global
+ * board of that rank, with a note.
  */
 export function Leaderboards() {
   const { t, i18n } = useTranslation()
   const lng = i18n.language
   const country = useAuth((s) => s.user?.country ?? '')
   const version = useGame((s) => s.version)
-  const [scope, setScope] = useState<LeaderboardScope>('global')
+  // The ladder comes from the live config (re-read when the content changes).
+  const cfg = useContent().config
+  const [scope, setScope] = useState<LeaderboardScope>('country')
   const [period, setPeriod] = useState<LeaderboardPeriod>('week')
+  const [rank, setRank] = useState('mine')
   const [state, setState] = useState<State>({ key: '', data: null, error: null })
   const [retry, setRetry] = useState(0)
-  const key = `${scope}:${period}`
+  // Friends are few: their board is never cut by rank.
+  const rankFilter = scope === 'friends' ? 'all' : rank
+  const key = `${scope}:${period}:${rankFilter}`
 
   useEffect(() => {
     let alive = true
     leaderboardApi
-      .get(scope, period)
+      .get(scope, period, rankFilter)
       .then((data) => alive && setState({ key, data, error: null }))
       .catch((e: unknown) => alive && setState((s) => ({ key, data: s.key === key ? s.data : null, error: requestErrorText(e) })))
     return () => {
       alive = false
     }
     // `version`: my points change after a claim (here or in another tab), so refresh.
-  }, [scope, period, key, version, retry])
+  }, [scope, period, rankFilter, key, version, retry])
 
   const current = state.key === key ? state : null
   const data = current?.data ?? null
   const mineOutside = data?.mine && !data.rows.some((r) => r.me) ? data.mine : null
+  // The last answer names my rank even while another board loads.
+  const myRank = (data ?? state.data)?.myRank ?? null
+  const rankOptions = [
+    { value: 'mine', label: myRank ? t('leaderboard.rankMine', { rank: rankShort(t, myRank) }) : t('leaderboard.rankMine', { rank: '…' }) },
+    { value: 'all', label: t('leaderboard.rankAll') },
+    ...weeklyLadderOf(cfg).map((r) => ({ value: `${r.league}:${r.sub}`, label: rankName(t, r) })),
+  ]
 
   return (
     <Panel title={t('leaderboard.title')} help="league.leaderboards" {...hintAnchor('league.leaderboards')}>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <Segmented<LeaderboardScope>
           label={t('leaderboard.scopeLabel')}
           value={scope}
           onChange={setScope}
           options={[
-            { value: 'global', label: <ScopeLabel icon="globe" text={t('leaderboard.scope.global')} />, ariaLabel: t('leaderboard.scope.global') },
             {
               value: 'country',
               label: (
@@ -83,6 +90,7 @@ export function Leaderboards() {
               ),
               ariaLabel: t('leaderboard.scope.countryOf', { country: countryName(country, lng) }),
             },
+            { value: 'global', label: <ScopeLabel icon="globe" text={t('leaderboard.scope.global')} />, ariaLabel: t('leaderboard.scope.global') },
             { value: 'friends', label: <ScopeLabel icon="friends" text={t('leaderboard.scope.friends')} />, ariaLabel: t('leaderboard.scope.friends') },
           ]}
         />
@@ -95,11 +103,19 @@ export function Leaderboards() {
             { value: 'month', label: t('leaderboard.period.month') },
           ]}
         />
+        {scope !== 'friends' && <Select className="w-full sm:w-64" label={t('leaderboard.rankLabel')} value={rank} onChange={setRank} options={rankOptions} />}
       </div>
+
+      {data?.fallback && data.rank && (
+        <p role="status" className="mb-3 flex items-start gap-2 bg-dusk-900 p-3 text-sm text-mist-100 inset-shadow-well">
+          <PixelIcon name="globe" size={16} className="mt-0.5 shrink-0 text-volt-400" />
+          {t('leaderboard.fallback', { min: data.fallback.minPlayers, rank: rankName(t, data.rank) })}
+        </p>
+      )}
 
       {data && (
         <p className="mb-3 text-sm text-mist-300">
-          {periodLabel(data, lng, t)} {t('leaderboard.total', { count: data.total })}
+          {periodLabel(data, lng, t)} {data.rank ? t('leaderboard.totalRank', { count: data.total, rank: rankName(t, data.rank) }) : t('leaderboard.total', { count: data.total })}
         </p>
       )}
 
@@ -115,11 +131,26 @@ export function Leaderboards() {
           {t('common.loading')}
         </p>
       ) : data.rows.length === 0 ? (
-        <EmptyLeaderboard scope={scope} period={period} />
+        data.rank && data.rank.index !== data.myRank.index ? (
+          <div className="bg-dusk-900 inset-shadow-well">
+            <EmptyState
+              pose="think"
+              title={t('leaderboard.empty.rankTitle', { rank: rankName(t, data.rank) })}
+              body={t('leaderboard.empty.rankBody')}
+              action={
+                <Button variant="secondary" onClick={() => setRank('mine')}>
+                  {t('leaderboard.rankMine', { rank: rankShort(t, data.myRank) })}
+                </Button>
+              }
+            />
+          </div>
+        ) : (
+          <EmptyLeaderboard scope={scope} period={period} />
+        )
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[30rem] border-separate border-spacing-y-1.5 text-left">
-            <caption className="sr-only">{t('leaderboard.caption', { scope: t(`leaderboard.scope.${scope}`), period: t(`leaderboard.period.${period}`) })}</caption>
+            <caption className="sr-only">{t('leaderboard.caption', { scope: t(`leaderboard.scope.${data.scope}`), period: t(`leaderboard.period.${period}`) })}</caption>
             <thead className="text-xs text-mist-400">
               <tr>
                 <th scope="col" className="w-14 px-2 font-normal">
@@ -138,7 +169,7 @@ export function Leaderboards() {
             </thead>
             <tbody>
               {data.rows.map((r) => (
-                <LeaderRow key={r.userId} row={r} scope={scope} />
+                <LeaderRow key={r.userId} row={r} scope={data.scope} />
               ))}
               {mineOutside && (
                 <>
@@ -147,12 +178,16 @@ export function Leaderboards() {
                       ⋮
                     </td>
                   </tr>
-                  <LeaderRow row={mineOutside} scope={scope} />
+                  <LeaderRow row={mineOutside} scope={data.scope} />
                 </>
               )}
             </tbody>
           </table>
-          {!data.mine && <p className="mt-3 text-sm text-mist-400">{t('leaderboard.notRanked')}</p>}
+          {!data.mine && (
+            <p className="mt-3 text-sm text-mist-400">
+              {data.rank && data.rank.index !== data.myRank.index ? t('leaderboard.notInRank', { rank: rankName(t, data.myRank) }) : t('leaderboard.notRanked')}
+            </p>
+          )}
         </div>
       )}
     </Panel>
@@ -208,9 +243,9 @@ export function LeaderRow({ row, scope = 'global' }: { row: LeaderboardRow; scop
         </span>
       </td>
       <td className={cell}>
-        <Tooltip content={t(`league.names.${row.league as LeagueId}`, { defaultValue: row.league })}>
-          <span tabIndex={0} className={cx('inline-flex h-7 items-center px-2 font-display text-base shadow-frame', LEAGUE_STYLE[row.league] ?? LEAGUE_STYLE.base)}>
-            {t(`league.short.${row.league as LeagueId}`, { defaultValue: row.league })}
+        <Tooltip content={rankName(t, { league: row.league, sub: row.sub ?? 1 })}>
+          <span tabIndex={0} className={cx('inline-flex h-7 items-center px-2 font-display text-base whitespace-nowrap shadow-frame', LEAGUE_STYLE[row.league] ?? LEAGUE_STYLE.base)}>
+            {rankShort(t, { league: row.league, sub: row.sub ?? 1 })}
           </span>
         </Tooltip>
       </td>

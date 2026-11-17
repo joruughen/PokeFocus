@@ -116,11 +116,21 @@ export interface GameConfig {
     earlyMorningWindow: [number, number]
   }
   encounters: {
-    baseWaveSize: number
     waveSizeJitter: number
     minWaveSize: number
     lowFocusThreshold: number
-    leagueMaxWaveSize: Record<LeagueId, number>
+    /**
+     * Wilds per wave by league (GDD §10.1): the cap goes from `from` (subrank 1) to `to` (subrank
+     * `leagueRampSubranks`), interpolated and rounded; later subranks keep `to`.
+     */
+    leagueWaveSize: Record<LeagueId, { from: number; to: number }>
+    /** Subranks over which `leagueWaveSize` and `leagueStageWeights` go from `from` to `to`. */
+    leagueRampSubranks: number
+    /**
+     * Which wilds a league offers (GDD §10.2): weight multiplier of 2nd- and 3rd-stage species (0 = they never
+     * appear), interpolated like the wave size, and the multiplier of the legendary roll.
+     */
+    leagueStageWeights: Record<LeagueId, { stage2: { from: number; to: number }; stage3: { from: number; to: number }; legendary: number }>
     legendaryChance: number
     longSessionLegendaryMult: number[]
     longSessionRareBoost: number[]
@@ -135,8 +145,6 @@ export interface GameConfig {
     studyBallLevelMargin: number
     /** Highest the Study Ball limit can grow with the trainer level (absent = no cap). */
     studyBallLevelCap?: number
-    /** Added to the base wave size by current league (still capped by leagueMaxWaveSize). */
-    leagueWaveBonus: Record<LeagueId, number>
     wildLevelByTrainerLevel: { trainerLevel: number; min: number; max: number }[]
     legendaryMinLevel: number
     /** Types favoured by the dominant sound profile (GDD §4.3). */
@@ -230,8 +238,22 @@ export interface GameConfig {
   box: { baseCapacity: number; perStep: number; stepLevels: number; maxCapacity: number; maxPending: number }
   leagues: {
     order: LeagueId[]
+    /** Weekly points of the first subrank of each league. */
     weeklyThresholds: Record<LeagueId, number>
     monthlyMultiplier: number
+    /** Subranks of each league (GDD §14): Base/Super/Ultra 1–5, Master 1–25. */
+    subranks: Record<LeagueId, number>
+    /** Weekly points of the second rung of the ladder (the first one is 0). */
+    secondRankPoints: number
+    /** Weekly points of the last rung (the last subrank of the last league). */
+    topRankPoints: number
+    /** Dust for each rung reached in a week: `base + perRank · rung` (rung 1 = the second one of the ladder). */
+    rankUpDust: { base: number; perRank: number }
+    /**
+     * Weekly podium of a rank board (GDD §14): needs `minPlayers` on the board; the place `i` (0 = first) gets
+     * `(dustBase + dustPerRank · rung) · placeMult[i]` Dust.
+     */
+    podium: { minPlayers: number; dustBase: number; dustPerRank: number; placeMult: number[] }
   }
   /**
    * Advanced items (GDD F4: §9.4 Tera, §7 TMs, §6.2 Mints, §6.1 Bottle Caps, §6.3 Ability Capsule).

@@ -373,7 +373,7 @@ function sec4(c: Ctx): string {
   for (const p of profs) for (const s of rewardedSessions(base[p] as ProfileAgg)) sizes[s.league].push(...s.waveSizes)
   const waveRows = lg.map((l) => {
     const xs = sizes[l]
-    const cap = cfg.encounters.leagueMaxWaveSize[l]
+    const cap = cfg.encounters.leagueWaveSize[l].to
     return [l === 'base' ? 'Base' : l === 'super' ? 'Super' : l === 'ultra' ? 'Ultra' : 'Maestra', String(cap), n0(xs.length), xs.length ? n2(mean(xs)) : '—', xs.length ? pct(xs.filter((v) => v >= cap).length / xs.length) : '—', xs.length ? String(Math.max(...xs)) : '—']
   })
   const perProf = profs.map((p) => {
@@ -396,7 +396,7 @@ function sec4(c: Ctx): string {
   const st = profs.map((p) => [PN[p], n1(t(p).statusCharges / Math.max(1, (base[p] as ProfileAgg).meanSessionsPerSeed)), pct(t(p).statusChargesUsed / Math.max(1, t(p).statusCharges)), n1(t(p).rerollCharges / Math.max(1, (base[p] as ProfileAgg).meanSessionsPerSeed)), pct(t(p).rerollChargesUsed / Math.max(1, t(p).rerollCharges))])
   return `## 4. Encuentros
 
-**Tamaño de oleada por liga** (todas las sesiones recompensadas de todos los perfiles; "liga" = la que fija el máximo; base ${cfg.encounters.baseWaveSize} ± ${cfg.encounters.waveSizeJitter}, mín. ${cfg.encounters.minWaveSize}):
+**Tamaño de oleada por liga** (todas las sesiones recompensadas de todos los perfiles; "liga" = la de la sesión; el tope crece con el subrango hasta el valor de la columna «Máx.»; tamaño = tope − 1 ± ${cfg.encounters.waveSizeJitter}, mín. ${cfg.encounters.minWaveSize}):
 
 ${mdTable(['Liga', 'Máx.', 'Oleadas', 'Tamaño medio', '% en el máximo', 'Mayor visto'], waveRows)}
 
@@ -653,7 +653,7 @@ function engineNotes(c: Ctx): string {
   const lift = [m('super') - m('base'), m('ultra') - m('super'), m('master') - m('ultra')].filter(Number.isFinite)
   if (lift.length === 0 || Math.max(...lift) < 0.3) {
     notes.push(
-      `**El máximo de salvajes por liga no tiene efecto.** El tamaño de la oleada es ${cfg.encounters.baseWaveSize} ± ${cfg.encounters.waveSizeJitter} (+1 con Dulce Aroma, −1 con Foco bajo), así que solo roza el tope de Base (${cfg.encounters.leagueMaxWaveSize.base}); los topes 6/7/8 de Super/Ultra/Maestra nunca se alcanzan y el tamaño medio es el mismo en todas las ligas (${profs.length ? n2(mean(Object.values(sizes).flat())) : '—'}). El GDD §14 busca que "las oleadas crezcan a medida que estudias". Propuesta de motor: sumar al tamaño un bono por liga antes de aplicar el tope (\`leagueWaveBonus: { base: 0, super: 1, ultra: 2, master: 3 }\` ⇒ medias 4/5/6/7).`,
+      `**El tamaño de oleada apenas cambia entre ligas** (tamaño medio ${profs.length ? n2(mean(Object.values(sizes).flat())) : '—'}; tope − 1 ± ${cfg.encounters.waveSizeJitter}, GDD §10.1). Revisar encounters.leagueWaveSize.`,
     )
   }
   // Damage saturation

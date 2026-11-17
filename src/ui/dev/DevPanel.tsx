@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DAY_MS, defaultContext, HOUR_MS, trainerExpForLevel, type FocusLabel } from '../../engine'
+import { DAY_MS, defaultContext, HOUR_MS, trainerExpForLevel, weeklyPoints, type FocusLabel } from '../../engine'
 import { Button, IconButton, PixelIcon, Segmented, toast } from '../components'
 import { cx } from '../lib/cx'
 import { WEATHER_PRESETS, weatherKind, type WeatherKind } from '../lib/conditions'
@@ -212,6 +212,14 @@ export function DevPanel() {
               </Button>
             </div>
             <p className="mt-1 text-xs text-mist-400">{t('dev.trainerExpNote')}</p>
+            <p className="mt-4 mb-2 font-num text-xl leading-none">{t('dev.leaguePointsNow', { points: weeklyPoints(player, Date.now()) })}</p>
+            <div className="flex flex-wrap gap-2">
+              {[1000, 10_000, 100_000].map((n) => (
+                <Button key={n} size="sm" variant="secondary" disabled={busy} onClick={() => void run(game.devAddLeaguePoints(n))}>
+                  +{n}
+                </Button>
+              ))}
+            </div>
           </>
         )}
       </Section>

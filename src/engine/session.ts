@@ -17,7 +17,7 @@ import type { Effect, ModStat } from './effect-types'
 import { ofKind, passiveEffects, selfStatMult, teamStatMults, type SourcedEffect } from './effects'
 import { refreshEnergy } from './energy'
 import { finishEncounter } from './capture'
-import { leagueForPoints, leagueRank } from './league'
+import { addLeaguePoints, rankForPoints } from './league'
 import { recordMissionEvent } from './missions'
 import { getTechnique, type TechniqueInfo } from './moves'
 import { gainExp, grantTrainerLevelUp, levelCap, trainerLevelFromExp, trainerLevelRewards, type ProgressEvent } from './progression'
@@ -1089,7 +1089,8 @@ export function completeSession(
   const totalPoints = memberResults.reduce((a, m) => a + m.points, 0)
 
   // --- Waves -------------------------------------------------------------------
-  const league = leagueForPoints(state.league.weeklyPoints[weekKey] ?? 0, 'week', ctx)
+  const rank = rankForPoints(state.league.weeklyPoints[weekKey] ?? 0, 'week', ctx)
+  const league = rank.league
   const typeWeightMults: Partial<Record<TypeSlug, number>> = {}
   let sync: WaveGenParams['syncNature'] = null
   const typeWeightSources: Partial<Record<TypeSlug, { uid: string; source: string }>> = {}
@@ -1120,6 +1121,7 @@ export function completeSession(
     teamTypes: [...new Set(members.flatMap((p) => getSpecies(p.speciesSlug, ctx).types))],
     typeWeightMults,
     syncNature: sync,
+    rank: { league: rank.league, sub: rank.sub },
   }
   const waves: Wave[] = []
   const waveSizes: number[] = []
@@ -1132,7 +1134,7 @@ export function completeSession(
       const forcedTypes = new Set([...forced].filter(([, at]) => at < blockEnd).map(([ty]) => ty))
       const activeTypes = activeConditionTypes(env, cfg, forcedTypes)
       const contributions = [...(contrib[i] as Map<string, EnergyContribution>).values()]
-      const size = rollWaveSize(rng, focus, league, i === 0 ? extraWild : 0, cfg)
+      const size = rollWaveSize(rng, focus, rank, i === 0 ? extraWild : 0, cfg)
       waveSizes.push(size)
       let wilds: Wave['wilds'] = []
       if (i === 0) {
@@ -1288,17 +1290,11 @@ export function applySessionResult(
   const inventory: Record<string, number> = { ...s.inventory, 'poke-ball': (s.inventory['poke-ball'] ?? 0) + result.pokeBalls + converted }
   for (const [item, n] of Object.entries(result.eventItems ?? {})) inventory[item] = (inventory[item] ?? 0) + n
 
-  // League
-  const prevWeek = s.league.weeklyPoints[result.weekKey] ?? 0
-  const weekPts = prevWeek + result.totalPoints
-  const fromL = leagueForPoints(prevWeek, 'week', ctx)
-  const toL = leagueForPoints(weekPts, 'week', ctx)
-  if (toL !== fromL) events.push({ type: 'leagueUp', from: fromL, to: toL })
-  const league = {
-    weeklyPoints: { ...s.league.weeklyPoints, [result.weekKey]: weekPts },
-    monthlyPoints: { ...s.league.monthlyPoints, [result.monthKey]: (s.league.monthlyPoints[result.monthKey] ?? 0) + result.totalPoints },
-    bestLeague: leagueRank(toL, ctx) > leagueRank(s.league.bestLeague, ctx) ? toL : s.league.bestLeague,
-  }
+  // League (GDD §14): points, best rung, rank-up Dust and its notice.
+  const climb = addLeaguePoints(s, result.weekKey, result.monthKey, result.totalPoints, result.claimedAt, ctx)
+  if (climb.event) events.push(climb.event)
+  const league = climb.league
+  const rankDust = climb.dust
 
   // Streak & days
   let streak = s.streak
@@ -1370,8 +1366,9 @@ export function applySessionResult(
     ...s,
     pokemon,
     inventory,
-    dust: s.dust + result.dust,
+    dust: s.dust + result.dust + rankDust,
     league,
+    ...(climb.notices && { pendingLeagueNotices: climb.notices }),
     streak,
     days,
     trainer: { level: trainerLevel, exp: trainerExp },

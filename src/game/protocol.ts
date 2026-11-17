@@ -110,6 +110,8 @@ export type GameAction =
   | { type: 'dismissResults' }
   /** The trainer level-up window was closed: empties `PlayerState.pendingLevelUps` (idempotent). */
   | { type: 'ackLevelUp' }
+  /** The league notice (rungs climbed, weekly podium) was seen: empties `PlayerState.pendingLeagueNotices` (idempotent). */
+  | { type: 'ackLeagueNotices' }
   /** The trade arrival window was closed: empties `PlayerState.pendingTrades` (idempotent; GDD §12.8). */
   | { type: 'ackTrade' }
   // Waves
@@ -169,6 +171,8 @@ export type GameAction =
   | { type: 'devLevelUp'; levels: number }
   /** Trainer EXP, positive or negative (dev only): recomputes the trainer level; going up pays the level rewards, going down takes nothing back. */
   | { type: 'devAddTrainerExp'; amount: number }
+  /** Dev: add points to this week and month (same path as a claim: rank-up Dust and notice). */
+  | { type: 'devAddLeaguePoints'; points: number }
   | { type: 'devAddRandomPokemon'; count: number }
   | { type: 'resetAll' }
 
@@ -188,6 +192,7 @@ export interface ActionResults {
   claim: { outcome: LastOutcome }
   dismissResults: null
   ackLevelUp: null
+  ackLeagueNotices: null
   ackTrade: null
   throwBall: { outcome: ThrowOutcome }
   applyStatus: null
@@ -229,6 +234,7 @@ export interface ActionResults {
   devAddCandies: null
   devLevelUp: null
   devAddTrainerExp: null
+  devAddLeaguePoints: null
   devAddRandomPokemon: null
   resetAll: null
 }
@@ -379,6 +385,8 @@ export interface FriendSummary {
   trainerLevel?: number
   weeklyPoints?: number
   league?: string
+  /** Subrank of `league` this week. */
+  leagueSub?: number
   /** Species slugs of the team, leader first. */
   team?: { speciesSlug: string; shiny: boolean; level: number }[]
   /** Accepted friends: since when (ms). Trades need `trade.minFriendshipDays` of friendship (GDD §12.8). */
@@ -402,6 +410,8 @@ export interface LeaderboardRow {
   country: string
   points: number
   league: string
+  /** Subrank inside the league (from the points, GDD §14). */
+  sub: number
   /** Leader species slug (for the avatar). */
   leader: string | null
   me: boolean
@@ -413,9 +423,33 @@ export interface LeaderboardResponse {
   /** e.g. '2026-W45' or '2026-11'. */
   periodKey: string
   rows: LeaderboardRow[]
-  /** The caller's own row, even if outside `rows`. null if no points yet. */
+  /** The caller's own row, even if outside `rows`. null if no points yet (or outside the rung shown). */
   mine: LeaderboardRow | null
   total: number
+  /** The rung this board is limited to (points in `[from, to)`), or null = every rung. */
+  rank: LeaderboardRank | null
+  /** The caller's own rung in this period (from their points; the first rung without points). */
+  myRank: { league: string; sub: number; index: number }
+  /**
+   * Set when the country board of a rung had fewer than `minPlayers` trainers and the global board of the
+   * rung is shown instead (`scope` is then 'global').
+   */
+  fallback?: { from: 'country'; minPlayers: number }
+}
+
+/** A ladder rung as a board filter. `to` null = the last rung. */
+export interface LeaderboardRank {
+  league: string
+  sub: number
+  index: number
+  from: number
+  to: number | null
+}
+
+/** POST /api/leaderboard/podium: the week that was closed for the caller, if any (the notice is in the player doc). */
+export interface PodiumResponse {
+  /** null = nothing to settle now (already settled, no points that week, or the week is not final everywhere yet). */
+  settled: { weekKey: string; league: string; sub: number; place: number | null; scope: 'country' | 'global' | null; dust: number } | null
 }
 
 // ---------------------------------------------------------------------------

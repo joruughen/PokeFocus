@@ -98,8 +98,7 @@ describe('friendly phrasing helpers', () => {
   })
 
   it('example wave sizes come from the config (min, middle, top league)', () => {
-    const e = ctx.config.encounters
-    expect(exampleWaveSizes(ctx)).toEqual([e.minWaveSize, 6, Math.max(...Object.values(e.leagueMaxWaveSize))])
+    expect(exampleWaveSizes(ctx)).toEqual([2, 6, 10])
   })
 
   it('at least one in a wave: 1 − (1 − p)^n', () => {

@@ -172,8 +172,10 @@ describe('validateContentPatch: shape', () => {
 
 describe('validateContentPatch: config rules', () => {
   it('league thresholds must strictly increase', () => {
-    const r = validateContentPatch({ config: { leagues: { weeklyThresholds: { ultra: 5000 } } } }, NO_SMOKE)
+    const r = validateContentPatch({ config: { leagues: { weeklyThresholds: { ultra: 3000 } } } }, NO_SMOKE)
     expect(codes(r)).toContain('thresholds_not_increasing')
+    expect(codes(validateContentPatch({ config: { leagues: { topRankPoints: 90_000 } } }, NO_SMOKE))).toContain('thresholds_not_increasing')
+    expect(codes(validateContentPatch({ config: { leagues: { secondRankPoints: 5000 } } }, NO_SMOKE))).toContain('thresholds_not_increasing')
     const ok = validateContentPatch({ config: { leagues: { weeklyThresholds: { super: 7000 } } } }, NO_SMOKE)
     expect(ok.ok).toBe(true)
     expect(ok.warnings.map((w) => w.code)).toContain('live_league_week')
@@ -195,8 +197,8 @@ describe('validateContentPatch: config rules', () => {
     expect(codes(validateContentPatch({ config: { progression: { levelCaps: [...caps].reverse() } } }, NO_SMOKE))).toContain('table_not_sorted')
   })
 
-  it('wave sizes: league max ≥ minWaveSize', () => {
-    const r = validateContentPatch({ config: { encounters: { minWaveSize: 7 } } }, NO_SMOKE)
+  it('wave sizes: the cap never goes down inside a league', () => {
+    const r = validateContentPatch({ config: { encounters: { leagueWaveSize: { super: { to: 3 } } } } }, NO_SMOKE)
     expect(codes(r)).toContain('wave_size_range')
   })
 
@@ -395,7 +397,7 @@ describe('smoke test', () => {
   })
 
   it('reports engine failures as errors', () => {
-    const ctx = createEngineContext(resolveContent({ config: { encounters: { baseWaveSize: 3 } } }, [], {}))
+    const ctx = createEngineContext(resolveContent({ config: { encounters: { roamingSessions: 4 } } }, [], {}))
     // A context the schema would never allow: a NaN scale must be caught.
     const broken = { ...ctx, config: { ...ctx.config, capture: { ...ctx.config.capture, captureDamageScale: Number.NaN } } }
     const issues = smokeTest(broken, { sessions: 3 })

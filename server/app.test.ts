@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { monthKeyOf, weekKeyOf } from '../src/engine'
-import type { ActionResponse, FriendSummary, GameAction, GameSnapshot, LeaderboardResponse, PublicUser } from '../src/game/protocol'
+import { defaultContext, monthKeyOf, podiumDust, rankInterval, rankOf, weekKeyOf } from '../src/engine'
+import type { ActionResponse, FriendSummary, GameAction, GameSnapshot, LeaderboardResponse, PodiumResponse, PublicUser } from '../src/game/protocol'
 import { createApp } from './app'
 import { hashToken } from './auth/tokens'
 import { openDatabase, type Database } from './db/client'
-import { activeStudySessions, authSessions, leagueScores } from './db/schema'
+import { activeStudySessions, authSessions, leagueScores, playerDocs } from './db/schema'
 import { loadEnv } from './env'
 import { EventBus } from './events'
 import { deleteExpiredSessions } from './routes/auth'
@@ -514,4 +514,90 @@ describe('leaderboard', () => {
     expect((await call('GET', '/api/leaderboard?scope=galaxy', { cookie: me.cookie })).status).toBe(400)
     now = T0
   }, 30_000)
+
+  it('rung boards (league + subrank), the few-players fallback and the weekly podium', async () => {
+    now = T0 + 21 * 24 * 3_600_000
+    const week = weekKeyOf(now, 0)
+    const cfg = defaultContext().config
+    const s3 = rankOf('super', 3)
+    const { from, to } = rankInterval(s3.index)
+    // Scores live in league_scores (the boards) and in the player doc (the caller's own rung and the podium).
+    const seed = async (name: string, country: string, pts: number, withPlayer = false) => {
+      const u = await register({ trainerName: name, country })
+      await database.db.insert(leagueScores).values({ userId: u.user.id, period: 'week', periodKey: week, points: pts, updatedAt: new Date(now + pts) })
+      if (withPlayer) {
+        await act(u.cookie, { type: 'createPlayer', locale: 'es', timezone: 0, starterSlug: 'charmander' })
+        const [row] = await database.db.select().from(playerDocs).where(eq(playerDocs.userId, u.user.id))
+        const player = row!.doc.player!
+        await database.db
+          .update(playerDocs)
+          .set({ doc: { ...row!.doc, player: { ...player, league: { ...player.league, weeklyPoints: { [week]: pts } } } } })
+          .where(eq(playerDocs.userId, u.user.id))
+      }
+      return u
+    }
+    const top = await seed('Rk Pe Top', 'PE', to! - 1, true)
+    const third = await seed('Rk Pe Third', 'PE', to! - 3, true)
+    await seed('Rk Pe Second', 'PE', to! - 2)
+    for (let i = 0; i < cfg.leagues.podium.minPlayers - 3; i++) await seed(`Rk Pe ${i}`, 'PE', from + i)
+    const usa = await seed('Rk Us', 'US', from + 500, true)
+    const low = await seed('Rk Pe Low', 'PE', 10, true)
+    const get = async (cookie: string, q: string) => (await call('GET', `/api/leaderboard?period=week&${q}`, { cookie })).json as unknown as LeaderboardResponse
+
+    // My rung in my country: only Super 3 trainers of Peru.
+    const mine = await get(top.cookie, 'scope=country&rank=mine')
+    expect(mine.rank).toMatchObject({ league: 'super', sub: 3, index: s3.index, from, to })
+    expect(mine.myRank).toMatchObject({ league: 'super', sub: 3 })
+    expect(mine.fallback).toBeUndefined()
+    expect(mine.scope).toBe('country')
+    expect(mine.total).toBe(cfg.leagues.podium.minPlayers)
+    expect(mine.rows.slice(0, 3).map((r) => [r.trainerName, r.rank, r.league, r.sub])).toEqual([
+      ['Rk Pe Top', 1, 'super', 3],
+      ['Rk Pe Second', 2, 'super', 3],
+      ['Rk Pe Third', 3, 'super', 3],
+    ])
+    expect(mine.mine).toMatchObject({ rank: 1, me: true })
+
+    // Too few trainers of that rung in the USA: the global board of the rung, flagged.
+    const us = await get(usa.cookie, 'scope=country&rank=mine')
+    expect(us.scope).toBe('global')
+    expect(us.fallback).toEqual({ from: 'country', minPlayers: cfg.leagues.podium.minPlayers })
+    expect(us.total).toBe(cfg.leagues.podium.minPlayers + 1)
+    expect(us.mine?.me).toBe(true)
+
+    // Any other rung can be read; my own row is only there when I am in it.
+    const base = await get(top.cookie, 'scope=global&league=base&sub=1')
+    expect(base.rank).toMatchObject({ league: 'base', sub: 1, from: 0 })
+    expect(base.rows.map((r) => r.trainerName)).toEqual(['Rk Pe Low'])
+    expect(base.mine).toBeNull()
+    expect(base.myRank).toMatchObject({ league: 'super', sub: 3 })
+    // Without a rung the board is the whole country, as before.
+    expect((await get(low.cookie, 'scope=country')).rank).toBeNull()
+    expect((await call('GET', '/api/leaderboard?league=galaxy', { cookie: top.cookie })).status).toBe(400)
+    expect((await call('GET', '/api/leaderboard?rank=best', { cookie: top.cookie })).status).toBe(400)
+
+        const podium = async (cookie: string) => (await call('POST', '/api/leaderboard/podium', { cookie, headers: { origin: ORIGIN } })).json as unknown as PodiumResponse
+    // While the week is open only the week before it can be closed (no points there: no prize).
+    expect((await podium(top.cookie)).settled).toMatchObject({ weekKey: '2026-11-16', place: null, dust: 0 })
+    // The next local week has started, but UTC−12 is still playing the old one.
+    now = Date.UTC(2026, 10, 30, 6, 0)
+    expect(weekKeyOf(now, 0)).not.toBe(week)
+    expect((await podium(top.cookie)).settled).toBeNull()
+    now = Date.UTC(2026, 10, 30, 13, 0)
+    const before = ((await call('GET', '/api/game', { cookie: top.cookie })).json as unknown as GameSnapshot).doc.player!.dust
+    const first = await podium(top.cookie)
+    expect(first.settled).toEqual({ weekKey: week, league: 'super', sub: 3, place: 1, scope: 'country', dust: podiumDust(s3.index, 1, cfg) })
+    const after = ((await call('GET', '/api/game', { cookie: top.cookie })).json as unknown as GameSnapshot).doc.player!
+    expect(after.dust).toBe(before + podiumDust(s3.index, 1, cfg))
+    expect(after.pendingLeagueNotices).toEqual([expect.objectContaining({ kind: 'podium', weekKey: week, rank: s3.index, place: 1, scope: 'country' })])
+    expect((await podium(top.cookie)).settled).toBeNull() // once
+    expect((await podium(third.cookie)).settled).toMatchObject({ place: 3, scope: 'country', dust: podiumDust(s3.index, 3, cfg) })
+    // The USA trainer competes on the global board of the rung (20 Peruvians above → no podium).
+    expect((await podium(usa.cookie)).settled).toMatchObject({ place: null, scope: null, dust: 0 })
+    // A Base 1 board with one trainer has no podium.
+    expect((await podium(low.cookie)).settled).toMatchObject({ league: 'base', sub: 1, place: null, dust: 0 })
+    await act(top.cookie, { type: 'ackLeagueNotices' })
+    expect(((await call('GET', '/api/game', { cookie: top.cookie })).json as unknown as GameSnapshot).doc.player!.pendingLeagueNotices).toBeUndefined()
+    now = T0
+  }, 120_000)
 })

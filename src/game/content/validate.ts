@@ -19,6 +19,7 @@ import { buildConfig, type GameConfig, type LeagueId } from '../../engine/config
 import { baseContent, baseContext, createEngineContext, type EngineContext } from '../../engine/context'
 import { resolveContent, type ContentItem, type ContentPatch, type EventOverlay } from '../../engine/content'
 import { createIndividual, isLegendarySpecies, toOwnedPokemon } from '../../engine/individual'
+import { weeklyLadderOf } from '../../engine/league'
 import type { MissionDef, MissionRewardDef, PokedexMilestoneDef } from '../../engine/missions'
 import { createRng } from '../../engine/rng'
 import { applySessionResult, completeSession, startSession } from '../../engine/session'
@@ -276,9 +277,19 @@ function checkConfig(issues: Issues, cfg: GameConfig, touched: ContentPatch['con
   if (caps[0] && caps[0].species !== 0) issues.error('table_first_row', 'config.progression.levelCaps.0.species', 'first level cap must start at 0 species')
   const e = cfg.encounters
   for (const l of order) {
-    if (e.leagueMaxWaveSize[l] < e.minWaveSize) issues.error('wave_size_range', `config.encounters.leagueMaxWaveSize.${l}`, 'max wave size below minWaveSize', { league: l })
+    const w = e.leagueWaveSize[l]
+    if (w.to < w.from) issues.error('wave_size_range', `config.encounters.leagueWaveSize.${l}.to`, 'wave size goes down inside the league', { league: l })
   }
-  if (e.baseWaveSize < e.minWaveSize) issues.warn('wave_size_range', 'config.encounters.baseWaveSize', 'base wave size below minWaveSize (always the minimum)')
+  // The whole ladder must grow: the generated thresholds depend on the league starts, the second rung and the top.
+  const ladder = weeklyLadderOf(cfg)
+  if ((cfg.leagues.secondRankPoints ?? 0) >= (th[order[1] as LeagueId] ?? Infinity)) {
+    issues.error('thresholds_not_increasing', 'config.leagues.secondRankPoints', 'the second rung must be below the second league', {})
+  }
+  const last = order[order.length - 1] as LeagueId
+  if ((cfg.leagues.topRankPoints ?? Infinity) <= th[last]) issues.error('thresholds_not_increasing', 'config.leagues.topRankPoints', 'the top rung must be above the last league', { league: last })
+  if (ladder.some((r, i) => i > 0 && r.points <= (ladder[i - 1] as (typeof ladder)[number]).points)) {
+    issues.error('thresholds_not_increasing', 'config.leagues.weeklyThresholds', 'ladder thresholds must grow', {})
+  }
   const balls = cfg.capture.balls
   if (!(balls['poke-ball'].mult <= balls['great-ball'].mult && balls['great-ball'].mult <= balls['ultra-ball'].mult)) {
     issues.warn('balls_order', 'config.capture.balls', 'better balls should not have a lower multiplier')

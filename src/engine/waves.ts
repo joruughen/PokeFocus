@@ -1,10 +1,11 @@
 /**
  * Encounters (GDD §10) and wild damage (GDD §11.3: classic damage formula per action).
  */
-import type { BallSlug, GameConfig, LeagueId } from './config'
+import type { BallSlug, GameConfig } from './config'
 import { defaultContext, getSpecies, getSpeciesById, type EngineContext } from './context'
 import type { Species, TypeChart, TypeSlug } from './data-types'
 import { createIndividual, isLegendarySpecies } from './individual'
+import { stageWeight, stageWeightsForRank, waveSizeForRank, type LeagueRank } from './league'
 import { chance, pick, randInt, weightedPick, type Rng } from './rng'
 import type { EnergyContribution, IndividualCore, WaveGenParams, WaveHit, WildPokemon } from './state'
 import { legendaryChanceFor, shinyChanceFor, spawnMultiplier, spawnWeatherOf, type SpawnEnv } from './spawn'
@@ -51,15 +52,16 @@ export function blockIndexAt(seconds: number, waves: number, cfg: GameConfig): n
 }
 
 /**
- * Wave size: base + league bonus ± jitter + extra − (session focus < lowFocusThreshold 0.75, i.e. a late claim), min 3,
- * max by league. `leagueWaveBonus` rewards climbing leagues within the week.
+ * Wave size (GDD §10.1): the league rung gives the cap (`waveSizeForRank`); a wave has cap − 1 ± jitter wilds,
+ * + extra, − 1 when the session focus is under `lowFocusThreshold` (a late claim), never under `minWaveSize`
+ * (or the cap, when that is smaller) nor above the cap.
  */
-export function rollWaveSize(rng: Rng, focus: number, league: LeagueId, extraWild: number, cfg: GameConfig): number {
+export function rollWaveSize(rng: Rng, focus: number, rank: Pick<LeagueRank, 'league' | 'sub'>, extraWild: number, cfg: GameConfig): number {
   const e = cfg.encounters
-  let size = e.baseWaveSize + (e.leagueWaveBonus?.[league] ?? 0) + randInt(rng, -e.waveSizeJitter, e.waveSizeJitter) + extraWild
+  const cap = waveSizeForRank(rank, cfg)
+  let size = cap - 1 + randInt(rng, -e.waveSizeJitter, e.waveSizeJitter) + extraWild
   if (focus < e.lowFocusThreshold) size -= 1
-  size = Math.max(e.minWaveSize, size)
-  return Math.min(size, e.leagueMaxWaveSize[league])
+  return Math.min(Math.max(Math.min(e.minWaveSize, cap), size), cap)
 }
 
 /** Wild level range for a trainer level (last entry with trainerLevel ≤ TL). */
@@ -246,6 +248,8 @@ export function speciesWeight(sp: Species, p: Omit<RollWildParams, 'contribution
   for (const t of sp.types) typeMult = Math.max(typeMult, p.gen.typeWeightMults[t] ?? 1)
   // Live spawn rules (admin × featured): only for species with a rule, so the base weights stay bit-identical.
   if (ctx.spawn.has(sp.slug)) w *= spawnMultiplier(sp.slug, spawnEnvOf(p), ctx)
+  // League rung (GDD §10.2): evolved stages weigh more, less or nothing; base forms are never touched.
+  if (sp.stage > 1 && p.gen.rank) w *= stageWeight(sp.stage, stageWeightsForRank(p.gen.rank, ctx.config))
   return w * typeMult
 }
 
@@ -269,19 +273,21 @@ export function rollWild(rng: Rng, p: RollWildParams, ctx: EngineContext = defau
   const range = wildLevelRange(p.gen.trainerLevel, cfg)
   const legendaryPool = all.filter(isLegendarySpecies)
   let rolledLegendary: Species | null = null
+  // Without a rung (encounters saved before the subranks) nothing is restricted.
+  const stages = p.gen.rank ? stageWeightsForRank(p.gen.rank, cfg) : { stage2: 1, stage3: 1, legendary: 1 }
   if (p.forceSpecies) {
     sp = getSpecies(p.forceSpecies, ctx)
     level = isLegendarySpecies(sp) ? Math.max(e.legendaryMinLevel, randInt(rng, range.min, range.max)) : randInt(rng, Math.max(range.min, minWildLevel(sp, ctx)), Math.max(range.max, minWildLevel(sp, ctx)))
   } else if (
     legendaryPool.length > 0 &&
-    chance(rng, legendaryChanceFor(ctx) * p.gen.focus * multAt(e.longSessionLegendaryMult, p.waveIndex)) &&
+    chance(rng, legendaryChanceFor(ctx) * p.gen.focus * multAt(e.longSessionLegendaryMult, p.waveIndex) * stages.legendary) &&
     (rolledLegendary = pickLegendary(rng, legendaryPool, p, ctx)) !== null
   ) {
     sp = rolledLegendary
     level = Math.max(e.legendaryMinLevel, randInt(rng, range.min, range.max))
   } else {
     level = randInt(rng, range.min, range.max)
-    let pool = all.filter((s) => !isLegendarySpecies(s) && minWildLevel(s, ctx) <= level)
+    let pool = all.filter((s) => !isLegendarySpecies(s) && minWildLevel(s, ctx) <= level && stageWeight(s.stage, stages) > 0)
     if (pool.length === 0) pool = all.filter((s) => !isLegendarySpecies(s) && s.stage === 1)
     sp = weightedPick(rng, pool, (s) => speciesWeight(s, p, ctx)) ?? (pool[0] as Species)
   }

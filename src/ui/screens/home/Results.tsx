@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { pokemonView, type MemberResult, type ProgressEvent, type TypeSlug } from '../../../engine'
+import { defaultContext, pokemonView, waveSizeForRank, type LeagueId, type MemberResult, type ProgressEvent, type TypeSlug } from '../../../engine'
 import { BallIcon, Button, Panel, PixelIcon, ProgressBar, Sprite, Stage, StageTeam, toast, Tooltip, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -12,6 +12,7 @@ import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene } from '../../store/selectors'
+import { rankName } from '../league/rank'
 import { SessionReportButton } from './SessionReport'
 import { eventDrops } from './sessionReportModel'
 import { GroupFairyNote } from './GroupStudy'
@@ -176,7 +177,11 @@ export function Results() {
                     ? e.dust || (e.items && Object.keys(e.items).length > 0)
                       ? t('results.trainerLevelUpRewards', { level: e.to, rewards: levelUpRewardsText(e, t, names, lng) })
                       : t('results.trainerLevelUp', { level: e.to })
-                    : t('results.leagueUp', { league: t(`league.names.${e.to}`) })}
+                    : t(e.dust ? 'results.leagueUpDust' : 'results.leagueUp', {
+                        rank: rankName(t, { league: e.to, sub: e.toSub ?? 1 }),
+                        dust: fmtInt(e.dust ?? 0, lng),
+                        count: waveSizeForRank({ league: e.to as LeagueId, sub: e.toSub ?? 1 }, defaultContext().config),
+                      })}
                 </p>
               ))}
           </Panel>

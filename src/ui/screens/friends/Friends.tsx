@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { LeagueId } from '../../../engine'
+import { rankName, rankShort } from '../league/rank'
 import type { FriendSummary } from '../../../game/protocol'
 import { Button, Dialog, DialogClose, EmptyState, HelpDot, IconButton, Panel, PixelIcon, Sprite, TextField, toast, Tooltip } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
@@ -325,9 +325,9 @@ function FriendCard({ friend }: { friend: FriendSummary }) {
         </ul>
         <div className="flex items-center gap-2">
           <TradeButton friend={friend} />
-          <Tooltip content={t(`league.names.${league as LeagueId}`, { defaultValue: league })}>
-            <span tabIndex={0} className={cx('inline-flex h-7 items-center px-2 font-display text-base shadow-frame', LEAGUE_STYLE[league] ?? LEAGUE_STYLE.base)}>
-              {t(`league.short.${league as LeagueId}`, { defaultValue: league })}
+          <Tooltip content={rankName(t, { league, sub: friend.leagueSub ?? 1 })}>
+            <span tabIndex={0} className={cx('inline-flex h-7 items-center px-2 font-display text-base whitespace-nowrap shadow-frame', LEAGUE_STYLE[league] ?? LEAGUE_STYLE.base)}>
+              {rankShort(t, { league, sub: friend.leagueSub ?? 1 })}
             </span>
           </Tooltip>
           <IconButton icon="trash" size="sm" variant="ghost" label={t('friends.removeOf', { name: friend.trainerName })} onClick={() => setConfirm(true)} />

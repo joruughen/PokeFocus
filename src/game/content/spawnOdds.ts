@@ -22,6 +22,8 @@ import type { EngineContext } from '../../engine/context'
 import type { ResolvedSpawn } from '../../engine/content'
 import { isLegendarySpecies } from '../../engine/individual'
 import { minWildLevel } from '../../engine/waves'
+import type { LeagueId } from '../../engine/config'
+import { leagueLadder, stageWeight, stageWeightsForRank, waveSizeForRank, type LeagueRank } from '../../engine/league'
 import type { Species } from '../../engine/data-types'
 import { spawnPreview } from './preview'
 
@@ -38,8 +40,11 @@ export type SpawnReach =
 export type BaseSpawn =
   | { kind: 'chance'; probability: number }
   | { kind: 'fromLevel'; wildLevel: number; trainerLevel: number }
+  /** Its evolution stage does not appear in the player's league yet (GDD §10.2); `league` = the first one that offers it. */
+  | { kind: 'fromLeague'; league: LeagueId }
   | { kind: 'evolution' }
-  | { kind: 'legendary'; chance: number; minLevel: number; count: number }
+  /** `fromLeague`: legendaries do not appear in the player's league; the first league where they do. */
+  | { kind: 'legendary'; chance: number; minLevel: number; count: number; fromLeague?: LeagueId }
 
 /** The context with no live rules and no events: the neutral baseline (memoized per context). */
 const neutrals = new WeakMap<EngineContext, EngineContext>()
@@ -49,21 +54,32 @@ function neutralOf(ctx: EngineContext): EngineContext {
   return n
 }
 
+type Rank = Pick<LeagueRank, 'league' | 'sub'>
 type Shares = Map<string, number>
-const sharesCache = new WeakMap<EngineContext, Map<number, Shares>>()
+const sharesCache = new WeakMap<EngineContext, Map<string, Shares>>()
 const NEUTRAL_ENV = { hour: 12, weather: 'clear' } as const
 
 /** Probability of every wild species at a trainer level under the neutral conditions (cached per context and level). */
-function neutralShares(ctx: EngineContext, trainerLevel: number): Shares {
+function neutralShares(ctx: EngineContext, trainerLevel: number, rank?: Rank): Shares {
   let byLevel = sharesCache.get(ctx)
   if (!byLevel) sharesCache.set(ctx, (byLevel = new Map()))
-  let hit = byLevel.get(trainerLevel)
+  const key = `${trainerLevel}|${rank ? `${rank.league}:${rank.sub}` : ''}`
+  let hit = byLevel.get(key)
   if (!hit) {
-    const pre = spawnPreview(neutralOf(ctx), { ...NEUTRAL_ENV, trainerLevel })
+    const pre = spawnPreview(neutralOf(ctx), { ...NEUTRAL_ENV, trainerLevel, ...(rank && { rank }) })
     hit = new Map(pre.species.map((s) => [s.slug, s.probability]))
-    byLevel.set(trainerLevel, hit)
+    byLevel.set(key, hit)
   }
   return hit
+}
+
+/** First league that offers wilds of an evolution stage (`'legendary'`: the legendary roll), or null when none does. */
+export function firstLeagueOffering(ctx: EngineContext, what: number | 'legendary'): LeagueId | null {
+  for (const r of leagueLadder('week', ctx)) {
+    const w = stageWeightsForRank(r, ctx.config)
+    if (what === 'legendary' ? w.legendary > 0 : stageWeight(what, w) > 0) return r.league
+  }
+  return null
 }
 
 /** Lowest trainer level whose wild band reaches `wildLevel`, or null when none does. */
@@ -89,16 +105,23 @@ export function canAppearAt(reach: SpawnReach, trainerLevel: number): boolean {
  * Pokédex number: how often a species is the wild, on average, for a trainer
  * level (see the file header for what "base" means).
  */
-export function baseSpawn(ctx: EngineContext, slug: string, trainerLevel: number): BaseSpawn | null {
+export function baseSpawn(ctx: EngineContext, slug: string, trainerLevel: number, rank?: Rank): BaseSpawn | null {
   const sp = ctx.speciesBySlug.get(slug)
   if (!sp) return null
+  const stages = rank ? stageWeightsForRank(rank, ctx.config) : null
   if (isLegendarySpecies(sp)) {
     const e = ctx.config.encounters
-    return { kind: 'legendary', chance: e.legendaryChance, minLevel: e.legendaryMinLevel, count: ctx.data.species.filter(isLegendarySpecies).length }
+    const from = stages && stages.legendary <= 0 ? firstLeagueOffering(ctx, 'legendary') : null
+    return { kind: 'legendary', chance: e.legendaryChance * (stages?.legendary ?? 1), minLevel: e.legendaryMinLevel, count: ctx.data.species.filter(isLegendarySpecies).length, ...(from && { fromLeague: from }) }
   }
-  const probability = neutralShares(ctx, trainerLevel).get(slug) ?? 0
+  const probability = neutralShares(ctx, trainerLevel, rank).get(slug) ?? 0
   if (probability > 0) return { kind: 'chance', probability }
   const reach = speciesReach(ctx, sp)
+  // The level comes first: a league only matters once the wild levels reach the species.
+  if (stages && stageWeight(sp.stage, stages) <= 0 && canAppearAt(reach, trainerLevel)) {
+    const league = firstLeagueOffering(ctx, sp.stage)
+    if (league) return { kind: 'fromLeague', league }
+  }
   return reach.kind === 'wild' ? { kind: 'fromLevel', wildLevel: reach.wildLevel, trainerLevel: reach.trainerLevel } : { kind: 'evolution' }
 }
 
@@ -136,9 +159,10 @@ export function featuredOdds(ctx: EngineContext, featured: readonly { species: s
   return out
 }
 
-/** Average wild count of a wave (config base size; leagues add a little on top). */
+/** Typical wild count of a wave: the cap of the second league's first subrank (4 with the shipped config). */
 export function averageWaveSize(ctx: EngineContext): number {
-  return ctx.config.encounters.baseWaveSize
+  const order = ctx.config.leagues.order
+  return waveSizeForRank({ league: (order[1] ?? order[0]) as LeagueId, sub: 1 }, ctx.config)
 }
 
 /**
@@ -156,12 +180,13 @@ export const FEATURED_REACH_TRAINER_LEVEL = 20
 
 /**
  * Wave sizes the help texts give examples for, from the config: the smallest wave, the biggest one of the
- * top league and the one in between (3, 6 and 8 with the shipped config).
+ * top league and the one in between (2, 6 and 10 with the shipped config).
  */
 export function exampleWaveSizes(ctx: EngineContext): number[] {
-  const e = ctx.config.encounters
-  const max = Math.max(e.minWaveSize, ...Object.values(e.leagueMaxWaveSize))
-  return [...new Set([e.minWaveSize, Math.round((e.minWaveSize + max) / 2), max])]
+  const caps = leagueLadder('week', ctx).map((r) => waveSizeForRank(r, ctx.config))
+  const min = Math.min(...caps)
+  const max = Math.max(...caps)
+  return [...new Set([min, Math.round((min + max) / 2), max])]
 }
 
 /** Above this "1 in N" the number stops being meaningful: it is shown as "fewer than 1 in N". */

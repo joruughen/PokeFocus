@@ -17,6 +17,7 @@ import {
   type GameSnapshot,
   type LeaderboardPeriod,
   type LeaderboardResponse,
+  type PodiumResponse,
   type LeaderboardScope,
   type MaintenanceCreateRequest,
   type PublicUser,
@@ -75,8 +76,14 @@ export const friendsApi = {
 }
 
 export const leaderboardApi = {
-  get: (scope: LeaderboardScope, period: LeaderboardPeriod) =>
-    api.get<LeaderboardResponse>(`/leaderboard?scope=${scope}&period=${period}`),
+  /** `rank`: 'mine' = my rung, 'all' = every rung, or a rung as 'league:sub'. */
+  get: (scope: LeaderboardScope, period: LeaderboardPeriod, rank = 'all') => {
+    const [league, sub] = rank.split(':')
+    const filter = rank === 'mine' ? '&rank=mine' : rank === 'all' || !league ? '' : `&league=${encodeURIComponent(league)}&sub=${encodeURIComponent(sub ?? '1')}`
+    return api.get<LeaderboardResponse>(`/leaderboard?scope=${scope}&period=${period}${filter}`)
+  },
+  /** Close my previous week: podium Dust and notice, if any (idempotent). */
+  settlePodium: () => api.post<PodiumResponse>('/leaderboard/podium'),
 }
 
 export const weatherApi = {

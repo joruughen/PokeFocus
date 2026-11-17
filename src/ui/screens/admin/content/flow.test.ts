@@ -75,18 +75,18 @@ describe('schedule input', () => {
 
 describe('drafts', () => {
   it('creates a draft from the live version and edits it through the store, saved to the server', async () => {
-    admin.seedPublished({ config: { encounters: { baseWaveSize: 5 } } }, 'Wave 5')
+    admin.seedPublished({ config: { encounters: { roamingSessions: 5 } } }, 'Wave 5')
     const created = await contentApi.createDraft({ from: 'active' })
     expect(created.version).toMatchObject({ status: 'draft', parentId: 1 })
-    expect(created.version.patch.config?.encounters?.baseWaveSize).toBe(5)
+    expect(created.version.patch.config?.encounters?.roamingSessions).toBe(5)
 
     const store = createDraftStore(created, { save: contentApi.saveDraft, debounceMs: 5 })
-    store.edit((p) => setConfigValue(p, 'encounters.baseWaveSize', 6))
+    store.edit((p) => setConfigValue(p, 'encounters.roamingSessions', 6))
     store.setTitle('Wave 6')
     expect(await store.flush()).toBe(true)
-    expect(admin.rows.get(created.version.id)).toMatchObject({ title: 'Wave 6', patch: { config: { encounters: { baseWaveSize: 6 } } } })
+    expect(admin.rows.get(created.version.id)).toMatchObject({ title: 'Wave 6', patch: { config: { encounters: { roamingSessions: 6 } } } })
     // The server's diff against the live content comes back with the save.
-    expect(store.getState().diff).toEqual([expect.objectContaining({ path: 'config.encounters.baseWaveSize', kind: 'changed', before: 5, after: 6 })])
+    expect(store.getState().diff).toEqual([expect.objectContaining({ path: 'config.encounters.roamingSessions', kind: 'changed', before: 5, after: 6 })])
   })
 
   it('validation errors do not stop a save, and the live validator reports them by path', async () => {
@@ -126,7 +126,7 @@ describe('publishing', () => {
   const draftWith = async (patch: ContentPatch) => (await contentApi.createDraft({ from: 'empty' }).then((r) => contentApi.saveDraft(r.version.id, { patch }))).version
 
   it('asks for the sudo password first, then publishes', async () => {
-    const d = await draftWith({ config: { encounters: { baseWaveSize: 5 } } })
+    const d = await draftWith({ config: { encounters: { roamingSessions: 5 } } })
     expect(await publishDraft(d.id, {})).toEqual({ kind: 'elevation' })
 
     expect(await reauthThen('wrong', () => publishDraft(d.id, {}))).toMatchObject({ kind: 'error', code: 'wrong_password' })
@@ -165,27 +165,27 @@ describe('publishing', () => {
 
   it('schedules for later: the draft becomes a scheduled version and the live one stays', async () => {
     admin.elevated = true
-    const base = admin.seedPublished({ config: { encounters: { baseWaveSize: 5 } } })
-    const d = await draftWith({ config: { encounters: { baseWaveSize: 6 } } })
+    const base = admin.seedPublished({ config: { encounters: { roamingSessions: 5 } } })
+    const d = await draftWith({ config: { encounters: { roamingSessions: 6 } } })
     const out = await publishDraft(d.id, publishInput({ mode: 'later', at: NOW + 86_400_000 }, false, 'Monday'))
     expect(out).toMatchObject({ kind: 'ok', value: { scheduled: true, active: false, note: 'Monday' } })
     const live = await contentApi.live()
     expect(live.active?.id).toBe(base.id)
     expect(live.scheduled?.id).toBe(d.id)
     // Out of the 60-day window the server says no.
-    const d2 = await draftWith({ config: { encounters: { baseWaveSize: 7 } } })
+    const d2 = await draftWith({ config: { encounters: { roamingSessions: 7 } } })
     expect(await publishDraft(d2.id, { effectiveAt: NOW + 70 * 86_400_000 })).toMatchObject({ kind: 'error', code: 'invalid_effective_at' })
   })
 
   it('rolls back: an old version becomes a new published one; a scheduled or draft one cannot', async () => {
     admin.elevated = true
-    const v1 = admin.seedPublished({ config: { encounters: { baseWaveSize: 5 } } }, 'v1')
+    const v1 = admin.seedPublished({ config: { encounters: { roamingSessions: 5 } } }, 'v1')
     v1.effectiveAt = NOW - 2 * 86_400_000
-    const v2 = admin.seedPublished({ config: { encounters: { baseWaveSize: 6 } } }, 'v2')
+    const v2 = admin.seedPublished({ config: { encounters: { roamingSessions: 6 } } }, 'v2')
     expect((await contentApi.live()).active?.id).toBe(v2.id)
 
     const out = await rollbackTo(v1.id)
-    expect(out).toMatchObject({ kind: 'ok', value: { status: 'published', active: true, parentId: v1.id, patch: { config: { encounters: { baseWaveSize: 5 } } } } })
+    expect(out).toMatchObject({ kind: 'ok', value: { status: 'published', active: true, parentId: v1.id, patch: { config: { encounters: { roamingSessions: 5 } } } } })
     expect((await contentApi.live()).active?.id).not.toBe(v2.id)
 
     const draft = admin.seedDraft({})
@@ -207,7 +207,7 @@ describe('publishing', () => {
 
 describe('publishing together with an event', () => {
   const draftWith = async (patch: ContentPatch) => (await contentApi.createDraft({ from: 'empty' }).then((r) => contentApi.saveDraft(r.version.id, { patch }))).version
-  const wave = (n: number): ContentPatch => ({ config: { encounters: { baseWaveSize: n } } })
+  const wave = (n: number): ContentPatch => ({ config: { encounters: { roamingSessions: n } } })
 
   it('the dialog reads the events from the events API, and the version is tied to the chosen one', async () => {
     admin.elevated = true

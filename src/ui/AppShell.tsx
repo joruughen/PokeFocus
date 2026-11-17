@@ -8,6 +8,7 @@ import { StageBadge } from './changelog/StageBadge'
 import { WhatsNewDialog } from './changelog/WhatsNewDialog'
 import { MoreNav, PRIMARY_NAV, splitNav, type NavBadges } from './MoreNav'
 import { LevelUpHost } from './levelUp/LevelUpDialog'
+import { LeagueNoticeHost } from './leagueNotice/LeagueNoticeDialog'
 import { EventPopupHost } from './screens/events/EventPopup'
 import { GroupInviteNotice } from './GroupInviteNotice'
 import { ContentNotice } from './ContentNotice'
@@ -54,6 +55,7 @@ export function AppShell() {
       <GroupInviteNotice />
       <WhatsNewDialog />
       <LevelUpHost />
+      <LeagueNoticeHost />
       <PendingCaptureDialog />
       <TradeArrivalHost />
       <EventPopupHost />

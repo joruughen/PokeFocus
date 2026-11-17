@@ -63,6 +63,9 @@ import {
   type SessionResult,
   type TypeSlug,
   type WeatherInput,
+  addLeaguePoints,
+  monthKey,
+  weekKey,
 } from '../engine'
 import { EMPTY_DOC, type ActionResults, type GameAction, type GameActionType, type GameDoc, type LastOutcome, type SessionTimer } from './protocol'
 import { resolveSessionWeather, toGeoCell } from './weather'
@@ -106,6 +109,7 @@ export const DEV_ACTIONS: ReadonlySet<GameActionType> = new Set<GameActionType>(
   'devAddCandies',
   'devLevelUp',
   'devAddTrainerExp',
+  'devAddLeaguePoints',
   'devAddRandomPokemon',
   'resetAll',
   // Manual weather: dev-panel override only (players never pick the weather, GDD §9.2).
@@ -180,6 +184,11 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
     case 'ackLevelUp': {
       if (!p.pendingLevelUps) return withPlayer(p)
       const { pendingLevelUps: _done, ...rest } = p
+      return withPlayer(rest)
+    }
+    case 'ackLeagueNotices': {
+      if (!p.pendingLeagueNotices) return withPlayer(p)
+      const { pendingLeagueNotices: _seen, ...rest } = p
       return withPlayer(rest)
     }
     case 'ackTrade': {
@@ -484,6 +493,11 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       let next: PlayerState = { ...p, trainer: { level, exp } }
       if (level > from) next = grantTrainerLevelUp(next, from, level, t, ctx)
       return withPlayer(next)
+    }
+    case 'devAddLeaguePoints': {
+      // Same path as a claim: rank-up Dust, the leagueUp notice and the best rung.
+      const r = addLeaguePoints(p, weekKey(p, t), monthKey(p, t), a.points, t, ctx)
+      return withPlayer({ ...p, league: r.league, dust: p.dust + r.dust, ...(r.notices && { pendingLeagueNotices: r.notices }) })
     }
     case 'devAddRandomPokemon': {
       const pool = ctx.data.species.filter((sp) => !sp.isLegendary && !sp.isMythical)

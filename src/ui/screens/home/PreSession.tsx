@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  currentLeague,
+  currentRank,
   currentMaxWaveSize,
   defaultContext,
   isAsleepAt,
   MINUTE_MS,
-  nextLeagueProgress,
+  nextRankProgress,
   waveCount,
   weeklyPoints,
   type PokemonView,
@@ -21,6 +21,7 @@ import { useNames } from '../../lib/names'
 import { primeSignals } from '../../lib/notify'
 import { scheduleSessionEnd, sfx } from '../../lib/sound'
 import { EventBanner } from '../events/EventBanner'
+import { rankName } from '../league/rank'
 import { AutoDamageToggle } from './AutoDamageToggle'
 import { BreakOffer, useBreakOffer } from './Break'
 import { PendingBanner } from '../box/PendingCaptureDialog'
@@ -285,11 +286,11 @@ function ConditionsPanel({ rows, minutes }: { rows: ReturnType<typeof conditions
 function LeaguePanel({ now }: { now: number }) {
   const { t, i18n } = useTranslation()
   const player = usePlayer()
-  const league = currentLeague(player, now)
+  const rank = currentRank(player, now)
+  const league = rank.league
   const points = weeklyPoints(player, now)
-  const next = nextLeagueProgress(player, now)
+  const next = nextRankProgress(player, now)
   const maxWave = currentMaxWaveSize(player, now)
-  const threshold = next ? points + next.pointsNeeded : points
   return (
     <Panel title={t('league.title')} help="home.league" {...hintAnchor('home.league')}>
       <div className="flex items-center gap-4">
@@ -297,7 +298,7 @@ function LeaguePanel({ now }: { now: number }) {
           <PixelIcon name="league" size={30} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-display text-xl">{t(`league.names.${league}`)}</p>
+          <p className="font-display text-xl">{rankName(t, rank)}</p>
           <p className="text-sm text-mist-300">{t('league.maxWave', { count: maxWave })}</p>
         </div>
         <div className="text-right">
@@ -307,10 +308,8 @@ function LeaguePanel({ now }: { now: number }) {
       </div>
       {next ? (
         <div className="mt-4">
-          <ProgressBar variant="volt" value={points} max={threshold} label={t('league.progressLabel', { league: t(`league.names.${next.next}`) })} />
-          <p className="mt-2 text-sm text-mist-300">
-            {t('league.toNext', { points: fmtInt(next.pointsNeeded, i18n.language), league: t(`league.names.${next.next}`) })}
-          </p>
+          <ProgressBar variant="volt" value={points - next.from} max={next.to - next.from} label={t('league.progressLabel', { rank: rankName(t, next.next) })} />
+          <p className="mt-2 text-sm text-mist-300">{t('league.toNext', { points: fmtInt(next.pointsNeeded, i18n.language), rank: rankName(t, next.next) })}</p>
         </div>
       ) : (
         <p className="mt-4 text-sm text-mist-300">{t('league.top')}</p>

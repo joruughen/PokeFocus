@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { defaultContext } from '../../../engine'
+import { currentRank, defaultContext } from '../../../engine'
 import { atLeastOne, baseSpawn, exampleWaveSizes, oneInN, type BaseSpawn } from '../../../game/content/spawnOdds'
 import { InfoTip } from '../../components'
 import { fmtChance } from '../events/model'
+import { useNow } from '../../store/clock'
+import { usePlayer } from '../../store/selectors'
 
 /**
  * One quiet line of a Pokédex entry: how often the species is a wild Pokémon at the player's trainer level
@@ -10,7 +12,9 @@ import { fmtChance } from '../events/model'
  */
 export function SpawnLine({ slug, trainerLevel }: { slug: string; trainerLevel: number }) {
   const { t, i18n } = useTranslation()
-  const spawn: BaseSpawn | null = baseSpawn(defaultContext(), slug, trainerLevel)
+  // The league rung of the week decides which evolved forms and legendaries can appear (GDD §10.2).
+  const rank = currentRank(usePlayer(), useNow())
+  const spawn: BaseSpawn | null = baseSpawn(defaultContext(), slug, trainerLevel, rank)
   if (!spawn) return null
 
   let text: string
@@ -24,11 +28,14 @@ export function SpawnLine({ slug, trainerLevel }: { slug: string; trainerLevel: 
   } else if (spawn.kind === 'fromLevel') {
     text = t('dex.spawn.fromLevel', { wild: spawn.wildLevel, trainer: spawn.trainerLevel })
     help = 'helpFrom'
+  } else if (spawn.kind === 'fromLeague') {
+    text = t('dex.spawn.fromLeague', { league: t(`league.names.${spawn.league}`) })
+    help = 'helpFromLeague'
   } else if (spawn.kind === 'evolution') {
     text = t('dex.spawn.evolution')
     help = 'helpEvolution'
   } else {
-    text = t('dex.spawn.legendary', { level: spawn.minLevel })
+    text = spawn.fromLeague ? t('dex.spawn.legendaryFromLeague', { league: t(`league.names.${spawn.fromLeague}`), level: spawn.minLevel }) : t('dex.spawn.legendary', { level: spawn.minLevel })
     help = 'helpLegendary'
   }
 

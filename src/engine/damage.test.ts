@@ -240,14 +240,15 @@ describe('damage split: tokens and attacks (GDD §11.4)', () => {
     wave0(s).wilds.forEach((x, i) => expect(pv.wilds[i]!.damage).toBeCloseTo(x.damage))
   })
 
-  it('the throw uses the locked HP for the catch chance (same as auto mode)', () => {
+  it('a throw in a manual wave with nobody sent sees the wild at full HP (auto mode: the HP after the split)', () => {
     const auto = claimed(true)
     const manual = claimed(false)
     const ta = throwBall(auto, { waveIndex: 0, wildIndex: 0 }, 'poke-ball', createRng(4), T0 + 3_600_000)
     const tm = throwBall(manual, { waveIndex: 0, wildIndex: 0 }, 'poke-ball', createRng(4), T0 + 3_600_000)
     if (!ta.ok || !tm.ok) throw new Error('throw failed')
-    expect(tm.value.outcome.chance).toBeCloseTo(ta.value.outcome.chance)
-    expect(tm.value.outcome.kind).toBe(ta.value.outcome.kind)
+    const damaged = wave0(auto).wilds[0]!.damage > 0
+    if (damaged) expect(tm.value.outcome.chance).toBeLessThan(ta.value.outcome.chance)
+    else expect(tm.value.outcome.chance).toBeCloseTo(ta.value.outcome.chance)
   })
 
   it('status charges do not lock; a reroll keeps the slot\'s assigned damage for the new wild', () => {

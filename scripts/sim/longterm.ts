@@ -2,7 +2,7 @@
  * Long-term report (52–104 weeks): runs the profile matrix and renders docs/longterm-report.md.
  * Pure consumer of the simulator: it changes no rule; only reads the per-day records of `runPlayer`.
  */
-import { leagueForPoints, type EngineContext, type LeagueId } from '../../src/engine/index.ts'
+import { leagueLadder, rankForPoints, waveSizeForRank, type EngineContext, type LeagueId } from '../../src/engine/index.ts'
 import { runPlayer } from './run.ts'
 import { type ProfileId, PROFILE_DESC } from './profiles.ts'
 import type { DayRec, PlayerMetrics } from './types.ts'
@@ -98,7 +98,8 @@ export function renderLongterm(res: LongtermRuns, o: LongtermOptions): string {
   P(`- Horizonte: **${o.weeks} semanas**; **${o.seeds} semillas** por perfil (las mismas semillas 1..${o.seeds} en cada ejecución, así que dos configuraciones se comparan en pareado); misiones del motor reclamadas: ${o.missions ? 'sí' : 'no'}.`)
   P(`- Configuración: ${o.variant ?? 'la actual del juego (`src/data/game/custom-game-config.json`)'}.`)
   P(`- Pack: **${nSpecies} especies** (${nLegend} legendarias/míticas). Topes de nivel por Pokédex: ${caps.map((c) => `${c.species} especies → nv. ${c.cap}`).join(', ')}. Nivel máximo: ${cfg.progression.maxLevel}.`)
-  P(`- Ligas semanales (puntos): Super ≥ ${n0(th.super)}, Ultra ≥ ${n0(th.ultra)}, Master ≥ ${n0(th.master)}.`)
+  const ladder = leagueLadder('week', ctx)
+  P(`- Ligas semanales con subrangos (${ladder.length} escalones; puntos del primer subrango): Super ≥ ${n0(th.super)}, Ultra ≥ ${n0(th.ultra)}, Master ≥ ${n0(th.master)}; último escalón (${LEAGUE_ES[(ladder[ladder.length - 1] as (typeof ladder)[number]).league]} ${(ladder[ladder.length - 1] as (typeof ladder)[number]).sub}) ≥ ${n0((ladder[ladder.length - 1] as (typeof ladder)[number]).points)}. Oleadas de hasta ${waveSizeForRank(ladder[0] as (typeof ladder)[number], cfg)}–${Math.max(...ladder.map((r) => waveSizeForRank(r, cfg)))} salvajes según el escalón; las etapas evolutivas y los legendarios dependen de la liga (GDD §10.2).`)
   P(`- Tiempo de cálculo: ${n0(res.seconds)} s.`)
   P()
   P('Las cifras son **medianas entre semillas** salvo que se indique. «Nivel EXP máx.» es el nivel que daría la EXP del mejor miembro sin tope; «Nivel máx.» es el real (limitado por el tope de Pokédex). «Pts/sem» es la media de las 4 semanas hasta la muestra (las semanas en blanco cuentan 0) y la liga se calcula con esa media.')
@@ -117,7 +118,7 @@ export function renderLongterm(res: LongtermRuns, o: LongtermOptions): string {
     P()
     const rows = samples.map((w) => {
       const last4 = mean(runs.map((r) => mean(r.weeklyPoints.slice(Math.max(0, w - 4), w))))
-      const lg = leagueForPoints(last4, 'week', ctx)
+      const lg = rankForPoints(last4, 'week', ctx)
       return [
         w,
         n1(med(runs, (d) => d.meanTeamLevel, w)),
@@ -129,7 +130,7 @@ export function renderLongterm(res: LongtermRuns, o: LongtermOptions): string {
         n0(med(runs, (d) => d.dustTotal, w)),
         n0(med(runs, (d) => d.dust, w)),
         n0(last4),
-        LEAGUE_ES[lg],
+        `${LEAGUE_ES[lg.league]} ${lg.sub}`,
         n1(mean(runs.map((r) => dayAt(r, w).legendariesCaught))),
       ]
     })
@@ -140,6 +141,10 @@ export function renderLongterm(res: LongtermRuns, o: LongtermOptions): string {
         ['r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'l', 'r'],
       ),
     )
+    P()
+    const bestWeek = median(runs.map((r) => Math.max(0, ...r.weeklyPoints.slice(0, o.weeks))))
+    const bestRung = rankForPoints(bestWeek, 'week', ctx)
+    P(`Mejor semana (mediana entre semillas): **${n0(bestWeek)} puntos → ${LEAGUE_ES[bestRung.league]} ${bestRung.sub}**.`)
     P()
     const lvl = [30, 36, 40, 50, 60].map((t) => [`nivel ${t} (real)`, crossCell(crossing(runs, (d) => d.maxLevel, t)), crossCell(crossing(runs, (d) => d.maxExpLevel, t))])
     const spec = [...caps.map((c) => c.species).filter((s) => s > 0), nSpecies].map((t) => [`${t} especies`, crossCell(crossing(runs, (d) => d.caught, t)), ''])

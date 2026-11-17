@@ -95,6 +95,8 @@ export interface GameState extends GameDoc {
   dismissResults: () => Promise<GameActionError | null>
   /** The trainer level-up window was closed: the server empties `pendingLevelUps`. */
   ackLevelUp: () => Promise<GameActionError | null>
+  /** The league notice was seen: the server empties `pendingLeagueNotices`. */
+  ackLeagueNotices: () => Promise<GameActionError | null>
   /** The trade arrival window was closed: the server empties `pendingTrades`. */
   ackTrade: () => Promise<GameActionError | null>
 
@@ -157,6 +159,7 @@ export interface GameState extends GameDoc {
   devLevelUp: (levels: number) => Promise<GameActionError | null>
   /** Trainer EXP, positive or negative (dev). */
   devAddTrainerExp: (amount: number) => Promise<GameActionError | null>
+  devAddLeaguePoints: (points: number) => Promise<GameActionError | null>
   devAddRandomPokemon: (count: number) => Promise<GameActionError | null>
   resetAll: () => Promise<GameActionError | null>
 }
@@ -294,6 +297,7 @@ export const useGame = create<GameState>()((set, get) => {
     },
     dismissResults: async () => errOf(await dispatch({ type: 'dismissResults' })),
     ackLevelUp: async () => errOf(await dispatch({ type: 'ackLevelUp' })),
+    ackLeagueNotices: async () => errOf(await dispatch({ type: 'ackLeagueNotices' })),
     ackTrade: async () => errOf(await dispatch({ type: 'ackTrade' })),
 
     throwBall: async (ref, ball) => {
@@ -389,6 +393,7 @@ export const useGame = create<GameState>()((set, get) => {
     },
     devLevelUp: async (levels) => errOf(await dispatch({ type: 'devLevelUp', levels })),
     devAddTrainerExp: async (amount) => errOf(await dispatch({ type: 'devAddTrainerExp', amount })),
+    devAddLeaguePoints: async (points) => errOf(await dispatch({ type: 'devAddLeaguePoints', points })),
     devAddRandomPokemon: async (count) => errOf(await dispatch({ type: 'devAddRandomPokemon', count })),
     resetAll: async () => errOf(await dispatch({ type: 'resetAll' })),
   }

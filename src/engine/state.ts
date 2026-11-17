@@ -308,6 +308,11 @@ export interface WaveGenParams {
   teamTypes: TypeSlug[]
   typeWeightMults: Partial<Record<TypeSlug, number>>
   syncNature: { nature: string; chance: number } | null
+  /**
+   * League rung of the session (GDD §10.2): decides which evolved stages and legendaries can appear.
+   * Absent (encounters saved before the subranks) = no restriction.
+   */
+  rank?: { league: LeagueId; sub: number }
 }
 
 export interface EncounterState {
@@ -379,6 +384,10 @@ export interface PlayerState {
     weeklyPoints: Record<string, number>
     monthlyPoints: Record<string, number>
     bestLeague: LeagueId
+    /** Best ladder rung ever reached (0 = Base 1). Absent in saves from before the subranks: first subrank of `bestLeague`. */
+    bestRank?: number
+    /** Week keys whose podium prize was already settled (kept short), see `settlePodium`. */
+    podiumSettled?: string[]
   }
   roaming: { speciesSlug: string; sessionsLeft: number }[]
   pendingWishes: { sourceUid: string; pct: number; target: 'self' | 'team' | 'lowestAlly' }[]
@@ -406,6 +415,11 @@ export interface PlayerState {
    * `inventory`/`dust`). Emptied by the `ackLevelUp` action. Absent in older saves = none.
    */
   pendingLevelUps?: PendingLevelUp[]
+  /**
+   * League news not yet seen (GDD §14): rungs climbed this week and the podium of a closed week. The Dust is
+   * already in `dust`. Emptied by the `ackLeagueNotices` action. Absent = none.
+   */
+  pendingLeagueNotices?: LeagueNotice[]
   /** Completed trades of the local day `dayKey` (GDD §12.8 daily limit). Absent = none yet. */
   trades?: { dayKey: string; count: number }
   /** Pokémon received by trade whose arrival window has not been closed yet (`ackTrade`). Absent = none. */
@@ -425,6 +439,15 @@ export interface TradeArrival {
   partnerName: string
   at: number
 }
+
+/**
+ * League news awaiting its notice. `from`/`to`/`rank` are ladder positions (0 = the first rung).
+ * - `rankUp`: rungs climbed in the week `weekKey` (consecutive climbs of a week are merged).
+ * - `podium`: place on the board of `rank` (the player's country, or the global one) when `weekKey` closed.
+ */
+export type LeagueNotice =
+  | { kind: 'rankUp'; weekKey: string; from: number; to: number; dust: number; at: number }
+  | { kind: 'podium'; weekKey: string; rank: number; place: number; scope: 'country' | 'global'; dust: number; at: number }
 
 /** A trainer level-up awaiting its window: levels `from`→`to`, the rewards granted (summed) and when (ms). */
 export interface PendingLevelUp {

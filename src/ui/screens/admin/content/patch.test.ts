@@ -58,12 +58,12 @@ describe('config values against the base', () => {
   })
 
   it('a value equal to the base removes the override; another one adds it', () => {
-    const over = setConfigValue({}, 'encounters.baseWaveSize', base.encounters.baseWaveSize + 1)
-    expect(over).toEqual({ config: { encounters: { baseWaveSize: base.encounters.baseWaveSize + 1 } } })
-    expect(isOverridden(over, 'encounters.baseWaveSize')).toBe(true)
-    const back = setConfigValue(over, 'encounters.baseWaveSize', base.encounters.baseWaveSize)
+    const over = setConfigValue({}, 'encounters.roamingSessions', base.encounters.roamingSessions + 1)
+    expect(over).toEqual({ config: { encounters: { roamingSessions: base.encounters.roamingSessions + 1 } } })
+    expect(isOverridden(over, 'encounters.roamingSessions')).toBe(true)
+    const back = setConfigValue(over, 'encounters.roamingSessions', base.encounters.roamingSessions)
     expect(back).toEqual({})
-    expect(isOverridden(back, 'encounters.baseWaveSize')).toBe(false)
+    expect(isOverridden(back, 'encounters.roamingSessions')).toBe(false)
   })
 
   it('reset (undefined) removes the path; a list or table equal to the base also goes away', () => {
@@ -75,9 +75,9 @@ describe('config values against the base', () => {
   })
 
   it('counts overrides by group', () => {
-    let p = setConfigValue({}, 'encounters.baseWaveSize', 6)
+    let p = setConfigValue({}, 'encounters.roamingSessions', 6)
     p = setConfigValue(p, 'energy.costBase', 1.5)
-    p = setConfigValue(p, 'encounters.minWaveSize', 2)
+    p = setConfigValue(p, 'encounters.minWaveSize', 3)
     const counts = overridesByGroup(p)
     expect(counts.get('encounters')).toBe(2)
     expect(counts.get('energy')).toBe(1)
@@ -87,7 +87,7 @@ describe('config values against the base', () => {
 
 describe('numbers', () => {
   const prob = CONFIG_LIMITS.find((l) => l.path === 'encounters.shinyChance')!
-  const int = CONFIG_LIMITS.find((l) => l.path === 'encounters.baseWaveSize')!
+  const int = CONFIG_LIMITS.find((l) => l.path === 'encounters.roamingSessions')!
 
   it('probabilities are edited as percentages', () => {
     expect(toDisplay('prob', 0.025)).toBe(2.5)
@@ -103,7 +103,7 @@ describe('numbers', () => {
     expect(parseNumber('abc', int)).toEqual({ ok: false, problem: 'invalid' })
     expect(parseNumber('2.5', int)).toEqual({ ok: false, problem: 'integer' })
     expect(parseNumber('0', int)).toEqual({ ok: false, problem: 'range' })
-    expect(parseNumber('9', int)).toEqual({ ok: false, problem: 'range' })
+    expect(parseNumber('11', int)).toEqual({ ok: false, problem: 'range' })
     expect(parseNumber(' 5 ', int)).toEqual({ ok: true, value: 5 })
   })
 

@@ -1,31 +1,42 @@
 import { useTranslation } from 'react-i18next'
 import {
   addDays,
-  currentLeague,
+  bestRank,
   currentMaxWaveSize,
-  leagueForPoints,
+  currentRank,
+  leagueLadder,
   monthlyPoints,
-  nextLeagueProgress,
+  nextRankProgress,
+  rankForPoints,
+  rankUpDust,
+  stageWeightsForRank,
   toLocal,
+  waveSizeForRank,
   weekKey,
   weeklyPoints,
+  type GameConfig,
+  type LadderRung,
   type LeagueId,
 } from '../../../engine'
-import { BarChart, Button, EmptyState, HelpDot, LineChart, Panel, PixelIcon, Tooltip } from '../../components'
+import { BarChart, Button, EmptyState, HelpDot, LineChart, Panel, PixelIcon, ProgressBar, Tooltip } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { fmtInt, fmtPct } from '../../lib/format'
 import { navigate } from '../../router'
 import { Leaderboards } from './Leaderboards'
+import { LEAGUE_STYLE, rankName } from './rank'
 import { useNow } from '../../store/clock'
 import { usePlayer } from '../../store/selectors'
 import { useContent } from '../../store/content'
 
-export const LEAGUE_STYLE: Record<LeagueId, string> = {
-  base: 'bg-dusk-600 text-mist-100',
-  super: 'bg-exp-400 text-ink',
-  ultra: 'bg-volt-400 text-ink',
-  master: 'bg-type-psychic text-ink',
+export { LEAGUE_STYLE } from './rank'
+
+/** Which wilds a league offers, from its stage weights at the last subrank (GDD §10.2). */
+function stagesKey(league: LeagueId, subs: number, cfg: GameConfig): 's1' | 's12' | 's123' | 'all' {
+  const w = stageWeightsForRank({ league, sub: subs }, cfg)
+  if (w.legendary > 0) return 'all'
+  if (w.stage3 > 0) return 's123'
+  return w.stage2 > 0 ? 's12' : 's1'
 }
 
 /** League of the week (thresholds, wave-size cap, weekly reset) and study stats. */
@@ -38,12 +49,15 @@ export default function League() {
   const now = useNow()
   const player = usePlayer()
   const tz = player.profile.timezone
-  const league = currentLeague(player, now)
+  const rank = currentRank(player, now)
+  const league = rank.league
   const points = weeklyPoints(player, now)
-  const next = nextLeagueProgress(player, now)
+  const next = nextRankProgress(player, now)
   const maxWave = currentMaxWaveSize(player, now)
   const month = monthlyPoints(player, now)
-  const monthLeague = leagueForPoints(month, 'month')
+  const monthRank = rankForPoints(month, 'month')
+  const best = bestRank(player)
+  const ladder = leagueLadder('week')
   const local = toLocal(now, tz)
   const daysLeft = (8 - local.weekday) % 7 || 7
   const minsLeft = daysLeft * 1440 - local.minuteOfDay
@@ -80,53 +94,93 @@ export default function League() {
       {/* The weekly climb. */}
       <Panel padded={false} className="p-6" {...hintAnchor('league.ladder')}>
         <div className="flex flex-wrap items-center gap-6">
-          <span className={cx('grid size-24 shrink-0 place-items-center shadow-plate', LEAGUE_STYLE[league])}>
-            <PixelIcon name="league" size={60} />
+          <span className={cx('grid size-16 shrink-0 place-items-center shadow-plate sm:size-24', LEAGUE_STYLE[league])}>
+            <PixelIcon name="league" size={48} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-3xl">{t(`league.names.${league}`)}</h2>
+            <h2 className="text-2xl sm:text-3xl">{rankName(t, rank)}</h2>
             <p className="mt-1 text-mist-300">{t('league.maxWave', { count: maxWave })}</p>
-            <p className="mt-1 text-sm text-mist-400">{t('league.best', { league: t(`league.names.${player.league.bestLeague}`) })}</p>
+            <p className="mt-1 text-sm text-mist-400">{t('league.best', { rank: rankName(t, best) })}</p>
           </div>
-          <div className="text-right">
+          <div className="w-full sm:w-auto sm:text-right">
             <p className="font-num text-[4rem] leading-[0.8] tabular">{fmtInt(points, lng)}</p>
             <p className="mt-1 text-sm text-mist-300">{t('league.weekPoints')}</p>
           </div>
         </div>
 
-        {/* The climb: one equal step per league (thresholds grow fast, so a linear scale would squash the first steps). */}
-        <ol className="mt-8 mb-6 grid grid-cols-4 gap-1.5" aria-label={t('league.ladderLabel')}>
-          {ORDER.map((id, i) => {
-            const from = cfg.leagues.weeklyThresholds[id]
-            const nextId = ORDER[i + 1]
-            const to = nextId ? cfg.leagues.weeklyThresholds[nextId] : null
-            const fill = points >= (to ?? Infinity) ? 1 : points < from ? 0 : to ? (points - from) / (to - from) : 1
+        {/* The step in progress: from this rank to the next one. */}
+        <div className="mt-6 bg-dusk-900 p-4 inset-shadow-well">
+          {next ? (
+            <>
+              <div className="mb-2 flex items-baseline justify-between gap-3 font-display text-base">
+                <span>{rankName(t, rank)}</span>
+                <span className="text-mist-300">{rankName(t, next.next)}</span>
+              </div>
+              <ProgressBar size="lg" variant="volt" value={points - next.from} max={next.to - next.from} label={t('league.progressLabel', { rank: rankName(t, next.next) })} ariaValueText={fmtPct(next.progress, lng)} />
+              <p className="mt-3 text-mist-100">{t('league.toNext', { points: fmtInt(next.pointsNeeded, lng), rank: rankName(t, next.next) })}</p>
+              {rankUpDust(next.next.index, cfg) > 0 && (
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-mist-300">
+                  <PixelIcon name="dust" size={14} className="text-exp-400" />
+                  {t('league.rankUpDust', { dust: fmtInt(rankUpDust(next.next.index, cfg), lng) })}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-mist-100">{t('league.top')}</p>
+          )}
+        </div>
+
+        {/* The whole ladder: one block per league, one pip per rank. */}
+        <ol className="mt-6 mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('league.ladderLabel')}>
+          {ORDER.map((id) => {
+            const rungs = ladder.filter((r) => r.league === id)
+            const first = rungs[0] as LadderRung
             const here = id === league
+            const reached = points >= first.points
+            const waveFrom = waveSizeForRank(first, cfg)
+            const waveTo = waveSizeForRank(rungs[rungs.length - 1] as LadderRung, cfg)
             return (
-              <li key={id} className="flex flex-col gap-2" aria-current={here ? 'step' : undefined}>
-                <div className="flex items-center gap-2">
-                  <span className={cx('inline-flex h-7 items-center px-2 font-display text-base shadow-frame', points >= from ? LEAGUE_STYLE[id] : 'bg-dusk-900 text-mist-400')}>{t(`league.short.${id}`)}</span>
-                  {here && <PixelIcon name="star" size={10} className="text-volt-400" />}
+              <li key={id} className={cx('flex flex-col gap-3 p-3', here ? 'bg-dusk-900 shadow-frame' : 'bg-dusk-900/50')} aria-current={here ? 'step' : undefined}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={cx('inline-flex h-7 items-center px-2 font-display text-base shadow-frame', reached ? LEAGUE_STYLE[id] : 'bg-dusk-900 text-mist-400')}>{t(`league.short.${id}`)}</span>
+                  <span className="text-xs text-mist-400">{t('league.from', { points: fmtInt(first.points, lng) })}</span>
                 </div>
-                <div className="h-4 bg-ink shadow-frame" role="meter" aria-label={t(`league.names.${id}`)} aria-valuemin={from} aria-valuemax={to ?? from} aria-valuenow={Math.min(points, to ?? points)}>
-                  <div className={cx('h-full transition-[width] duration-700', here ? 'bg-volt-400' : 'bg-volt-500/70')} style={{ width: `${fill * 100}%` }}>
-                    <div className="h-1 bg-white/35" />
-                  </div>
-                </div>
-                <p className="text-xs text-mist-400">
-                  <span className="font-num text-lg leading-none text-mist-100">{fmtInt(from, lng)}</span> {t('league.from')}
+                <ul className="flex flex-wrap gap-1" aria-label={t(`league.names.${id}`)}>
+                  {rungs.map((r) => {
+                    const done = points >= r.points
+                    const current = r.index === rank.index
+                    return (
+                      <li key={r.sub}>
+                        <Tooltip content={t('league.subOf', { rank: rankName(t, r), points: fmtInt(r.points, lng), wave: waveSizeForRank(r, cfg) })}>
+                          <span
+                            tabIndex={0}
+                            aria-label={t('league.subOf', { rank: rankName(t, r), points: fmtInt(r.points, lng), wave: waveSizeForRank(r, cfg) })}
+                            className={cx(
+                              'grid h-7 w-7 place-items-center font-num text-lg leading-none tabular',
+                              current ? 'bg-volt-400 text-ink shadow-frame' : done ? 'bg-volt-500/50 text-ink' : 'bg-ink text-mist-400',
+                            )}
+                          >
+                            {r.sub}
+                          </span>
+                        </Tooltip>
+                      </li>
+                    )
+                  })}
+                </ul>
+                <p className="text-xs leading-relaxed text-mist-300">
+                  {waveFrom === waveTo ? t('league.wavesFlat', { to: waveTo }) : t('league.waves', { from: waveFrom, to: waveTo })}
                   <br />
-                  {t('league.waveTypical', { n: cfg.encounters.baseWaveSize + (cfg.encounters.leagueWaveBonus?.[id] ?? 0), max: cfg.encounters.leagueMaxWaveSize[id] })}
+                  {t(`league.stages.${stagesKey(id, rungs.length, cfg)}`)}
                 </p>
               </li>
             )
           })}
         </ol>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <p className="bg-dusk-900 p-3 text-sm text-mist-100 inset-shadow-well">{next ? t('league.toNext', { points: fmtInt(next.pointsNeeded, lng), league: t(`league.names.${next.next}`) }) : t('league.top')}</p>
           <p className="bg-dusk-900 p-3 text-sm text-mist-300 inset-shadow-well">{t('league.resetsLong')}</p>
+          <p className="bg-dusk-900 p-3 text-sm text-mist-300 inset-shadow-well">{t('league.podiumRule', { min: cfg.leagues.podium.minPlayers })}</p>
           <p className="bg-dusk-900 p-3 text-sm text-mist-300 inset-shadow-well">
-            {t('league.month', { points: fmtInt(month, lng), league: t(`league.names.${monthLeague}`), mult: cfg.leagues.monthlyMultiplier })}
+            {t('league.month', { points: fmtInt(month, lng), rank: rankName(t, monthRank), mult: cfg.leagues.monthlyMultiplier })}
           </p>
         </div>
       </Panel>

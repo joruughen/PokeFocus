@@ -386,10 +386,10 @@
     "maxWave_one": "Waves of up to {{count}} wild Pokémon",
     "maxWave_other": "Waves of up to {{count}} wild Pokémon",
     "weekPoints": "points this week",
-    "progressLabel": "Progress to {{league}}",
-    "toNext": "{{points}} points to go for {{league}}.",
-    "top": "You're in the top league. Keep it up!",
-    "resets": "Every Monday everyone goes back to Base League.",
+    "progressLabel": "Progress towards {{rank}}",
+    "toNext": "{{points}} points to reach {{rank}}.",
+    "top": "You are in the highest rank. Keep it up!",
+    "resets": "Every Monday everyone goes back to Base League 1.",
     "pageTitle": "League and stats",
     "short": {
       "base": "Base",
@@ -398,14 +398,39 @@
       "master": "Master"
     },
     "resetIn": "The league resets in {{d}} d {{h}} h, on Monday at 00:00.",
-    "best": "Your best league: {{league}}",
-    "ladderLabel": "This week's points towards the leagues",
-    "waveCap_one": "up to {{count}} wild",
-    "waveCap_other": "up to {{count}} wild",
-    "resetsLong": "Every Monday everyone goes back to the Base League. Each league adds one more wild per wave, so waves start small and grow as you study.",
-    "month": "This month you have {{points}} points ({{league}} monthly, thresholds ×{{mult}}). It's only a ranking: it doesn't change waves.",
-    "from": "points",
-    "waveTypical": "about {{n}} per wave, up to {{max}}"
+    "best": "Your best rank: {{rank}}",
+    "ladderLabel": "The leagues and their ranks",
+    "resetsLong": "Every Monday everyone goes back to Base League 1. Each rank asks for more points than the one before and brings bigger waves and more evolved wild Pokémon.",
+    "month": "This month you have {{points}} points (monthly {{rank}}, thresholds ×{{mult}}). It is only a ranking: it does not change the waves.",
+    "from": "from {{points}} points",
+    "rank": "{{league}} {{sub}}",
+    "waves": "Up to {{from}}–{{to}} wild Pokémon per wave",
+    "wavesFlat": "Up to {{to}} wild Pokémon per wave",
+    "stages": {
+      "s1": "Wild Pokémon: first forms only",
+      "s12": "Wild Pokémon: 1st and 2nd forms",
+      "s123": "Wild Pokémon: 1st, 2nd and 3rd forms (the 3rd is rare at first)",
+      "all": "Wild Pokémon: every form and, very rarely, legendaries"
+    },
+    "subLabel": "Rank {{sub}} of {{total}}",
+    "subOf": "{{rank}}: from {{points}} points, waves of up to {{wave}}",
+    "rankUpDust": "Each new rank of the week gives Dust: the next one, +{{dust}}.",
+    "podiumRule": "Weekly podium: the top 3 of each rank in their country win Dust (with {{min}} trainers or more).",
+    "notice": {
+      "title": "League up!",
+      "label": "League news",
+      "reached": "You reached {{rank}}",
+      "fromTo": "From {{from}} to {{to}} this week",
+      "waves": "Your waves now bring up to {{count}} wild Pokémon.",
+      "podiumTitle": "Podium of the week!",
+      "podiumCountry": "You finished in place {{place}} of {{rank}} in your country.",
+      "podiumGlobal": "You finished in place {{place}} of {{rank}} in the global ranking.",
+      "rewards": "Your prize",
+      "added": "The Dust is already in your account.",
+      "gotIt": "Great!",
+      "toast": "You reached {{rank}}",
+      "toastDust": "+{{dust}} Dust"
+    }
   },
   "session": {
     "title_one": "{{count}}-minute session",
@@ -473,7 +498,7 @@
     "leaguePoints": "League points",
     "trainerLevelUp": "You reached trainer level {{level}}.",
     "trainerLevelUpRewards": "You reached trainer level {{level}}. Reward: {{rewards}}.",
-    "leagueUp": "You moved up to {{league}}! Waves will be bigger.",
+    "leagueUp": "You reached {{rank}}! Waves can bring up to {{count}} wild Pokémon.",
     "wavesReady_one": "{{count}} wave is waiting",
     "wavesReady_other": "{{count}} waves are waiting",
     "wavesNote": "Your team already weakened the wild Pokémon. Time to catch them.",
@@ -493,7 +518,8 @@
     "howPoints": "How is it calculated?",
     "cancelledTitle": "Session given up",
     "cancelledSubtitle": "You studied {{minutes}} of {{planned}} min: you get what those minutes earned and the waves of the full 25-min blocks.",
-    "eventItem": "{{item}} (event)"
+    "eventItem": "{{item}} (event)",
+    "leagueUpDust": "You reached {{rank}}! +{{dust}} Dust. Waves can bring up to {{count}} wild Pokémon."
   },
   "waves": {
     "title": "Wave {{n}} of {{total}}",
@@ -942,6 +968,7 @@
     "trainerExp": "Trainer EXP",
     "trainerExpNow": "Lv. {{level}} · {{exp}} EXP",
     "trainerExpNote": "Going up pays the level rewards and opens the congratulations window. Going down does not take back rewards already given (climbing again pays them again).",
+    "leaguePointsNow": "League points this week: {{points}}",
     "trainerLevelUp": "Level up once",
     "trainerLevelDown": "Level down once"
   },
@@ -1701,7 +1728,10 @@
       "helpFrom": "Fully evolved species only show up in the wild at high levels. Raise your trainer level and they will start to appear; the day's conditions, weather, hour and events also count.",
       "helpEvolution": "This species does not show up on its own among the wild ones: you get it by evolving its earlier form.",
       "helpLegendary": "Legendaries are not part of the normal draw: every wild Pokémon has a very small chance of being one (depending on your Focus and the session length), shared among all of them.",
-      "helpLabel": "How the spawn chance is worked out"
+      "helpLabel": "How the spawn chance is worked out",
+      "fromLeague": "Appears in the wild from the {{league}}",
+      "helpFromLeague": "Evolved forms only show up in the wild in the higher leagues. Earn points this week to climb and they will start to appear.",
+      "legendaryFromLeague": "Legendary: only appears in the {{league}}, very rarely and at level {{level}} or higher"
     }
   },
   "break": {
@@ -1995,8 +2025,17 @@
       "bodyMonth": "The monthly leaderboard fills up with every claimed session. Study and be first this month.",
       "friendsTitle": "Compete with your friends",
       "friendsBody": "Add friends with their code and you'll see who studied the most.",
-      "friendsCta": "Go to Friends"
-    }
+      "friendsCta": "Go to Friends",
+      "rankTitle": "Nobody in {{rank}} yet",
+      "rankBody": "Nobody has the points of this rank right now. Try another rank or see them all."
+    },
+    "rankLabel": "Rank",
+    "rankMine": "My rank: {{rank}}",
+    "rankAll": "All ranks",
+    "fallback": "Your country has fewer than {{min}} trainers in {{rank}}, so you see the global ranking of that rank.",
+    "notInRank": "You are not in this rank right now. Your rank is {{rank}}.",
+    "totalRank_one": "{{count}} trainer in {{rank}}.",
+    "totalRank_other": "{{count}} trainers in {{rank}}."
   },
   "friends": {
     "title": "Friends",
@@ -3087,7 +3126,6 @@
         "conditionTypeWeight": "Weight of the condition type",
         "soundProfileWeight": "Weight of the sound profile type",
         "teamTypeWeight": "Weight of the team types",
-        "baseWaveSize": "Base wave size",
         "waveSizeJitter": "Wave size jitter",
         "minWaveSize": "Minimum wave size",
         "lowFocusThreshold": "Low Focus threshold",
@@ -3101,17 +3139,70 @@
         "longSessionLegendaryMult": "Long session: legendary multiplier (per tier)",
         "longSessionRareBoost": "Long session: rare Pokémon boost (per tier)",
         "wildLevelByTrainerLevel": "Wild levels by trainer level",
-        "leagueMaxWaveSize": {
-          "base": "Max wave size: Base League",
-          "super": "Max wave size: Super League",
-          "ultra": "Max wave size: Ultra League",
-          "master": "Max wave size: Master League"
+        "leagueWaveSize": {
+          "base": {
+            "from": "Max wave size: Base League, first rank",
+            "to": "Max wave size: Base League, top rank"
+          },
+          "super": {
+            "from": "Max wave size: Super League, first rank",
+            "to": "Max wave size: Super League, top rank"
+          },
+          "ultra": {
+            "from": "Max wave size: Ultra League, first rank",
+            "to": "Max wave size: Ultra League, top rank"
+          },
+          "master": {
+            "from": "Max wave size: Master League, first rank",
+            "to": "Max wave size: Master League, top rank"
+          }
         },
-        "leagueWaveBonus": {
-          "base": "Wave size bonus: Base League",
-          "super": "Wave size bonus: Super League",
-          "ultra": "Wave size bonus: Ultra League",
-          "master": "Wave size bonus: Master League"
+        "leagueRampSubranks": "Ranks over which wave size and stages ramp",
+        "leagueStageWeights": {
+          "base": {
+            "stage2": {
+              "from": "2nd-stage weight: Base League, first rank",
+              "to": "2nd-stage weight: Base League, top rank"
+            },
+            "stage3": {
+              "from": "3rd-stage weight: Base League, first rank",
+              "to": "3rd-stage weight: Base League, top rank"
+            },
+            "legendary": "Legendary multiplier: Base League"
+          },
+          "super": {
+            "stage2": {
+              "from": "2nd-stage weight: Super League, first rank",
+              "to": "2nd-stage weight: Super League, top rank"
+            },
+            "stage3": {
+              "from": "3rd-stage weight: Super League, first rank",
+              "to": "3rd-stage weight: Super League, top rank"
+            },
+            "legendary": "Legendary multiplier: Super League"
+          },
+          "ultra": {
+            "stage2": {
+              "from": "2nd-stage weight: Ultra League, first rank",
+              "to": "2nd-stage weight: Ultra League, top rank"
+            },
+            "stage3": {
+              "from": "3rd-stage weight: Ultra League, first rank",
+              "to": "3rd-stage weight: Ultra League, top rank"
+            },
+            "legendary": "Legendary multiplier: Ultra League"
+          },
+          "master": {
+            "stage2": {
+              "from": "2nd-stage weight: Master League, first rank",
+              "to": "2nd-stage weight: Master League, top rank"
+            },
+            "stage3": {
+              "from": "3rd-stage weight: Master League, first rank",
+              "to": "3rd-stage weight: Master League, top rank"
+            },
+            "legendary": "Legendary multiplier: Master League"
+          }
         }
       },
       "capture": {
@@ -3228,7 +3319,18 @@
           "ultra": "Weekly threshold: Ultra League",
           "master": "Weekly threshold: Master League"
         },
-        "monthlyMultiplier": "Monthly multiplier"
+        "monthlyMultiplier": "Monthly multiplier",
+        "secondRankPoints": "Points of the second rung (Base 2)",
+        "topRankPoints": "Points of the last rung (Master 25)",
+        "rankUpDust": {
+          "base": "Rank-up Dust: base",
+          "perRank": "Rank-up Dust: per rung"
+        },
+        "podium": {
+          "minPlayers": "Podium: minimum trainers",
+          "dustBase": "Podium: base Dust",
+          "dustPerRank": "Podium: Dust per rung"
+        }
       },
       "conditions": {
         "poisonPerSession": "Poison: bonus per session",
@@ -4351,7 +4453,7 @@
       "legendary": "Legendaries caught",
       "traded": "Received in trades",
       "tradedNote": "In your box",
-      "league": "Best league",
+      "league": "Best rank",
       "dust": "Dust earned",
       "dustNote": "From sessions",
       "bond": "Most time together",

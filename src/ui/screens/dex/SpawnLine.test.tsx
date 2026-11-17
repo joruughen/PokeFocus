@@ -42,7 +42,15 @@ describe('Dex entry: spawn line', () => {
       await i18n.changeLanguage(lng)
       const html = render('mewtwo', 1)
       expect(html).not.toMatch(RAW_KEY)
-      expect(html).toContain(i18n.t('dex.spawn.legendary', { level: defaultContext().config.encounters.legendaryMinLevel }))
+      // A new player is in Base 1, where legendaries do not appear: the line names the league that has them.
+      expect(html).toContain(i18n.t('dex.spawn.legendaryFromLeague', { league: i18n.t('league.names.master'), level: defaultContext().config.encounters.legendaryMinLevel }))
+    })
+
+    it(`an evolved form within level reach names the league that offers it (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const html = render('ivysaur', 40)
+      expect(html).not.toMatch(RAW_KEY)
+      expect(html).toContain(i18n.t('dex.spawn.fromLeague', { league: i18n.t('league.names.super') }))
     })
   }
 })

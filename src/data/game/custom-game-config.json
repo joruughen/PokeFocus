@@ -137,21 +137,21 @@
     ]
   },
   "encounters": {
-    "baseWaveSize": 4,
     "waveSizeJitter": 1,
-    "minWaveSize": 3,
+    "minWaveSize": 2,
     "lowFocusThreshold": 0.75,
-    "leagueMaxWaveSize": {
-      "base": 5,
-      "super": 6,
-      "ultra": 7,
-      "master": 8
+    "leagueWaveSize": {
+      "base": { "from": 2, "to": 4 },
+      "super": { "from": 4, "to": 6 },
+      "ultra": { "from": 6, "to": 7 },
+      "master": { "from": 7, "to": 10 }
     },
-    "leagueWaveBonus": {
-      "base": 0,
-      "super": 1,
-      "ultra": 2,
-      "master": 3
+    "leagueRampSubranks": 5,
+    "leagueStageWeights": {
+      "base": { "stage2": { "from": 0, "to": 0 }, "stage3": { "from": 0, "to": 0 }, "legendary": 0 },
+      "super": { "stage2": { "from": 1, "to": 2 }, "stage3": { "from": 0, "to": 0 }, "legendary": 0 },
+      "ultra": { "stage2": { "from": 2, "to": 2 }, "stage3": { "from": 0.25, "to": 1 }, "legendary": 0 },
+      "master": { "stage2": { "from": 2, "to": 2 }, "stage3": { "from": 1, "to": 1.5 }, "legendary": 1 }
     },
     "legendaryChance": 0.00136,
     "longSessionLegendaryMult": [
@@ -361,11 +361,21 @@
     ],
     "weeklyThresholds": {
       "base": 0,
-      "super": 6000,
-      "ultra": 60000,
-      "master": 95000
+      "super": 4000,
+      "ultra": 30000,
+      "master": 100000
     },
-    "monthlyMultiplier": 4
+    "monthlyMultiplier": 4,
+    "subranks": {
+      "base": 5,
+      "super": 5,
+      "ultra": 5,
+      "master": 25
+    },
+    "secondRankPoints": 400,
+    "topRankPoints": 1000000,
+    "rankUpDust": { "base": 10, "perRank": 2 },
+    "podium": { "minPlayers": 20, "dustBase": 50, "dustPerRank": 10, "placeMult": [1, 0.6, 0.4] }
   },
   "trainer": {
     "levelRewards": {

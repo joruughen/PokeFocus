@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { toLocal, weekKey, type PlayerState } from '../../../engine'
+import { rankName } from '../league/rank'
 import { BarChart, Button, EmptyState, Mascot, Panel, PixelIcon, Platform, ProgressBar, Sprite, Tooltip } from '../../components'
 import { cx } from '../../lib/cx'
 import { countryName, flagEmoji } from '../../lib/countries'
@@ -451,7 +452,7 @@ export function StatsSection({ player }: { player: PlayerState }) {
         <Tile label={t('profile.stats.shiny')} value={fmtInt(st.shinyOwned, lng)} />
         <Tile label={t('profile.stats.legendary')} value={fmtInt(st.legendaryCaught, lng)} />
         <Tile label={t('profile.stats.traded')} value={fmtInt(st.tradedOwned, lng)} note={t('profile.stats.tradedNote')} />
-        <Tile label={t('profile.stats.league')} value={<span className="font-display text-2xl">{t(`league.names.${st.bestLeague}`)}</span>} />
+        <Tile label={t('profile.stats.league')} value={<span className="font-display text-2xl">{rankName(t, { league: st.bestLeague, sub: st.bestSub })}</span>} />
         {has && <Tile label={t('profile.stats.dust')} value={fmtInt(st.dustEarned, lng)} note={t('profile.stats.dustNote')} icon={<PixelIcon name="dust" size={20} className="text-exp-400" />} />}
         {bond && (
           <Tile

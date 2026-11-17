@@ -8,6 +8,7 @@
 import {
   defaultContext,
   isDaylight,
+  waveSizeForRank,
   isNight,
   type Charge,
   type ConditionLog,
@@ -27,7 +28,7 @@ export type WildFactor =
   | { kind: 'sound'; dominant: SoundKind | null; types: TypeSlug[]; mult: number }
   | { kind: 'typeWeight'; type: TypeSlug; mult: number; uid: string | null; source: string | null }
   | { kind: 'sync'; uid: string | null; source: string | null; nature: string; chance: number }
-  | { kind: 'league'; league: LeagueId; max: number; sizes: number[] }
+  | { kind: 'league'; league: LeagueId; sub: number; max: number; sizes: number[] }
   | { kind: 'extraWild'; count: number }
   | { kind: 'lowFocus'; focus: number }
   | { kind: 'roaming'; species: string[] }
@@ -62,7 +63,7 @@ export function wildFactors(result: SessionResult, cfg: GameConfig = defaultCont
   }
 
   const league = wf?.league ?? result.league
-  out.push({ kind: 'league', league, max: e.leagueMaxWaveSize[league], sizes: wf?.waveSizes ?? result.waves.map((w) => w.wilds.length) })
+  out.push({ kind: 'league', league, sub: result.gen.rank?.sub ?? 1, max: waveSizeForRank({ league, sub: result.gen.rank?.sub ?? 1 }, cfg), sizes: wf?.waveSizes ?? result.waves.map((w) => w.wilds.length) })
   if (result.extraWild > 0) out.push({ kind: 'extraWild', count: result.extraWild })
   if (result.focus < e.lowFocusThreshold) out.push({ kind: 'lowFocus', focus: result.focus })
   if (wf && wf.roaming.length > 0) out.push({ kind: 'roaming', species: wf.roaming })

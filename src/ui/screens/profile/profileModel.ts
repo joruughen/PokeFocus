@@ -15,6 +15,7 @@ import {
   type OwnedPokemon,
   type PlayerState,
   type TrainerLevelRewards,
+  bestRank,
 } from '../../../engine'
 
 // --- Trainer level -----------------------------------------------------------
@@ -213,6 +214,8 @@ export interface ProfileStats {
   /** Pokémon in the box that arrived by trade. */
   tradedOwned: number
   bestLeague: LeagueId
+  /** Subrank of the best rung reached. */
+  bestSub: number
   /** The Pokémon with the most Bond minutes (null if there are none). */
   longestBond: OwnedPokemon | null
 }
@@ -242,7 +245,8 @@ export function profileStats(player: PlayerState, ctx: EngineContext = defaultCo
     shinyOwned: mons.filter((m) => m.isShiny).length,
     legendaryCaught: legendary,
     tradedOwned: mons.filter((m) => (m.traded?.count ?? 0) > 0).length,
-    bestLeague: player.league.bestLeague,
+    bestLeague: bestRank(player, ctx).league,
+    bestSub: bestRank(player, ctx).sub,
     longestBond,
   }
 }

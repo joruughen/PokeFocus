@@ -386,10 +386,10 @@
     "maxWave_one": "Oleadas de hasta {{count}} salvaje",
     "maxWave_other": "Oleadas de hasta {{count}} salvajes",
     "weekPoints": "puntos esta semana",
-    "progressLabel": "Progreso hacia la {{league}}",
-    "toNext": "Faltan {{points}} puntos para la {{league}}.",
-    "top": "Estás en la liga más alta. ¡A mantenerla!",
-    "resets": "Cada lunes todos vuelven a la Liga Base.",
+    "progressLabel": "Progreso hacia {{rank}}",
+    "toNext": "Faltan {{points}} puntos para {{rank}}.",
+    "top": "Estás en el rango más alto. ¡A mantenerlo!",
+    "resets": "Cada lunes todos vuelven a Liga Base 1.",
     "pageTitle": "Liga y estadísticas",
     "short": {
       "base": "Base",
@@ -398,14 +398,39 @@
       "master": "Maestra"
     },
     "resetIn": "La liga se reinicia en {{d}} d {{h}} h, el lunes a las 00:00.",
-    "best": "Tu mejor liga: {{league}}",
-    "ladderLabel": "Puntos de la semana hacia las ligas",
-    "waveCap_one": "hasta {{count}} salvaje",
-    "waveCap_other": "hasta {{count}} salvajes",
-    "resetsLong": "Cada lunes todos vuelven a la Liga Base. Cada liga suma un salvaje más por oleada, así que las oleadas empiezan pequeñas y crecen a medida que estudias.",
-    "month": "Este mes llevas {{points}} puntos ({{league}} mensual, umbrales ×{{mult}}). Es solo un ranking: no cambia las oleadas.",
-    "from": "puntos",
-    "waveTypical": "unas {{n}} por oleada, hasta {{max}}"
+    "best": "Tu mejor rango: {{rank}}",
+    "ladderLabel": "Las ligas y sus rangos",
+    "resetsLong": "Cada lunes todos vuelven a Liga Base 1. Cada rango pide más puntos que el anterior y trae oleadas más grandes y salvajes más evolucionados.",
+    "month": "Este mes llevas {{points}} puntos ({{rank}} mensual, umbrales ×{{mult}}). Es solo un ranking: no cambia las oleadas.",
+    "from": "desde {{points}} puntos",
+    "rank": "{{league}} {{sub}}",
+    "waves": "Hasta {{from}}–{{to}} salvajes por oleada",
+    "wavesFlat": "Hasta {{to}} salvajes por oleada",
+    "stages": {
+      "s1": "Salvajes: solo 1.ª forma",
+      "s12": "Salvajes: 1.ª y 2.ª forma",
+      "s123": "Salvajes: 1.ª, 2.ª y 3.ª forma (la 3.ª, rara al principio)",
+      "all": "Salvajes: todas las formas y, muy rara vez, legendarios"
+    },
+    "subLabel": "Rango {{sub}} de {{total}}",
+    "subOf": "{{rank}}: desde {{points}} puntos, oleadas de hasta {{wave}}",
+    "rankUpDust": "Cada rango nuevo de la semana da Polvo: el siguiente, +{{dust}}.",
+    "podiumRule": "Podio semanal: los 3 primeros de cada rango en su país ganan Polvo (con {{min}} entrenadores o más).",
+    "notice": {
+      "title": "¡Subiste de liga!",
+      "label": "Novedades de liga",
+      "reached": "Subiste a {{rank}}",
+      "fromTo": "De {{from}} a {{to}} esta semana",
+      "waves": "Ahora tus oleadas traen hasta {{count}} salvajes.",
+      "podiumTitle": "¡Podio de la semana!",
+      "podiumCountry": "Quedaste en el puesto {{place}} de {{rank}} en tu país.",
+      "podiumGlobal": "Quedaste en el puesto {{place}} de {{rank}} en el ranking global.",
+      "rewards": "Tu premio",
+      "added": "El Polvo ya está en tu cuenta.",
+      "gotIt": "¡Genial!",
+      "toast": "Subiste a {{rank}}",
+      "toastDust": "+{{dust}} de Polvo"
+    }
   },
   "session": {
     "title_one": "Sesión de {{count}} minuto",
@@ -473,7 +498,7 @@
     "leaguePoints": "Puntos de liga",
     "trainerLevelUp": "Subiste a entrenador nivel {{level}}.",
     "trainerLevelUpRewards": "Subiste a entrenador nivel {{level}}. Premio: {{rewards}}.",
-    "leagueUp": "¡Subiste a la {{league}}! Las oleadas serán más grandes.",
+    "leagueUp": "¡Subiste a {{rank}}! Las oleadas pueden traer hasta {{count}} salvajes.",
     "wavesReady_one": "Te espera {{count}} oleada",
     "wavesReady_other": "Te esperan {{count}} oleadas",
     "wavesNote": "Tu equipo ya debilitó a los salvajes. Es hora de capturarlos.",
@@ -493,7 +518,8 @@
     "howPoints": "¿Cómo se calculan?",
     "cancelledTitle": "Sesión abandonada",
     "cancelledSubtitle": "Estudiaste {{minutes}} de {{planned}} min: recibes lo de esos minutos y las oleadas de los bloques de 25 min completos.",
-    "eventItem": "{{item}} (evento)"
+    "eventItem": "{{item}} (evento)",
+    "leagueUpDust": "¡Subiste a {{rank}}! +{{dust}} de Polvo. Las oleadas pueden traer hasta {{count}} salvajes."
   },
   "waves": {
     "title": "Oleada {{n}} de {{total}}",
@@ -942,6 +968,7 @@
     "trainerExp": "EXP de entrenador",
     "trainerExpNow": "Nv. {{level}} · {{exp}} EXP",
     "trainerExpNote": "Subir paga los premios del nivel y abre la ventana de felicitación. Bajar no quita premios ya dados (si vuelves a subir, se pagan otra vez).",
+    "leaguePointsNow": "Puntos de liga esta semana: {{points}}",
     "trainerLevelUp": "Subir 1 nivel",
     "trainerLevelDown": "Bajar 1 nivel"
   },
@@ -1701,7 +1728,10 @@
       "helpFrom": "Las especies muy evolucionadas solo salen como salvajes cuando los niveles son altos. Sube de nivel de entrenador y empezarán a aparecer; las condiciones del día, el clima, la hora y los eventos también cuentan.",
       "helpEvolution": "Esta especie no aparece sola entre los salvajes: la consigues evolucionando a su forma anterior.",
       "helpLegendary": "Los legendarios no entran en el reparto normal: cada salvaje tiene una probabilidad muy pequeña de ser uno (según tu Focus y la duración de la sesión), repartida entre todos ellos.",
-      "helpLabel": "Cómo se calcula la aparición"
+      "helpLabel": "Cómo se calcula la aparición",
+      "fromLeague": "Aparece en salvajes desde la {{league}}",
+      "helpFromLeague": "Las formas evolucionadas solo salen como salvajes en las ligas altas. Suma puntos esta semana para subir de liga y empezarán a aparecer.",
+      "legendaryFromLeague": "Legendario: solo aparece en la {{league}}, muy rara vez y a nivel {{level}} o más"
     }
   },
   "break": {
@@ -1995,8 +2025,17 @@
       "bodyMonth": "El ranking mensual se llena con cada sesión reclamada. Estudia y sé el primero del mes.",
       "friendsTitle": "Compite con tus amigos",
       "friendsBody": "Agrega amigos con su código y aquí verás quién estudió más.",
-      "friendsCta": "Ir a Amigos"
-    }
+      "friendsCta": "Ir a Amigos",
+      "rankTitle": "Nadie en {{rank}} todavía",
+      "rankBody": "Nadie tiene los puntos de este rango ahora mismo. Prueba con otro rango o mira todos."
+    },
+    "rankLabel": "Rango",
+    "rankMine": "Mi rango: {{rank}}",
+    "rankAll": "Todos los rangos",
+    "fallback": "En tu país hay menos de {{min}} entrenadores en {{rank}}, así que ves el ranking global de ese rango.",
+    "notInRank": "No estás en este rango esta vez. Tu rango es {{rank}}.",
+    "totalRank_one": "{{count}} entrenador en {{rank}}.",
+    "totalRank_other": "{{count}} entrenadores en {{rank}}."
   },
   "friends": {
     "title": "Amigos",
@@ -3087,7 +3126,6 @@
         "conditionTypeWeight": "Peso del tipo de la condición",
         "soundProfileWeight": "Peso del tipo del perfil de sonido",
         "teamTypeWeight": "Peso de los tipos del equipo",
-        "baseWaveSize": "Tamaño base de oleada",
         "waveSizeJitter": "Variación del tamaño de oleada",
         "minWaveSize": "Tamaño mínimo de oleada",
         "lowFocusThreshold": "Umbral de Enfoque bajo",
@@ -3101,17 +3139,70 @@
         "longSessionLegendaryMult": "Sesión larga: multiplicador de legendario (por tramo)",
         "longSessionRareBoost": "Sesión larga: refuerzo de raros (por tramo)",
         "wildLevelByTrainerLevel": "Niveles salvajes según el nivel de entrenador",
-        "leagueMaxWaveSize": {
-          "base": "Tamaño máximo de oleada: Liga Base",
-          "super": "Tamaño máximo de oleada: Liga Super",
-          "ultra": "Tamaño máximo de oleada: Liga Ultra",
-          "master": "Tamaño máximo de oleada: Liga Master"
+        "leagueWaveSize": {
+          "base": {
+            "from": "Oleada máxima: Liga Base, primer rango",
+            "to": "Oleada máxima: Liga Base, rango tope"
+          },
+          "super": {
+            "from": "Oleada máxima: Liga Super, primer rango",
+            "to": "Oleada máxima: Liga Super, rango tope"
+          },
+          "ultra": {
+            "from": "Oleada máxima: Liga Ultra, primer rango",
+            "to": "Oleada máxima: Liga Ultra, rango tope"
+          },
+          "master": {
+            "from": "Oleada máxima: Liga Master, primer rango",
+            "to": "Oleada máxima: Liga Master, rango tope"
+          }
         },
-        "leagueWaveBonus": {
-          "base": "Bonus de tamaño de oleada: Liga Base",
-          "super": "Bonus de tamaño de oleada: Liga Super",
-          "ultra": "Bonus de tamaño de oleada: Liga Ultra",
-          "master": "Bonus de tamaño de oleada: Liga Master"
+        "leagueRampSubranks": "Rangos en los que crecen la oleada y las etapas",
+        "leagueStageWeights": {
+          "base": {
+            "stage2": {
+              "from": "Peso de 2.ª etapa: Liga Base, primer rango",
+              "to": "Peso de 2.ª etapa: Liga Base, rango tope"
+            },
+            "stage3": {
+              "from": "Peso de 3.ª etapa: Liga Base, primer rango",
+              "to": "Peso de 3.ª etapa: Liga Base, rango tope"
+            },
+            "legendary": "Multiplicador de legendarios: Liga Base"
+          },
+          "super": {
+            "stage2": {
+              "from": "Peso de 2.ª etapa: Liga Super, primer rango",
+              "to": "Peso de 2.ª etapa: Liga Super, rango tope"
+            },
+            "stage3": {
+              "from": "Peso de 3.ª etapa: Liga Super, primer rango",
+              "to": "Peso de 3.ª etapa: Liga Super, rango tope"
+            },
+            "legendary": "Multiplicador de legendarios: Liga Super"
+          },
+          "ultra": {
+            "stage2": {
+              "from": "Peso de 2.ª etapa: Liga Ultra, primer rango",
+              "to": "Peso de 2.ª etapa: Liga Ultra, rango tope"
+            },
+            "stage3": {
+              "from": "Peso de 3.ª etapa: Liga Ultra, primer rango",
+              "to": "Peso de 3.ª etapa: Liga Ultra, rango tope"
+            },
+            "legendary": "Multiplicador de legendarios: Liga Ultra"
+          },
+          "master": {
+            "stage2": {
+              "from": "Peso de 2.ª etapa: Liga Master, primer rango",
+              "to": "Peso de 2.ª etapa: Liga Master, rango tope"
+            },
+            "stage3": {
+              "from": "Peso de 3.ª etapa: Liga Master, primer rango",
+              "to": "Peso de 3.ª etapa: Liga Master, rango tope"
+            },
+            "legendary": "Multiplicador de legendarios: Liga Master"
+          }
         }
       },
       "capture": {
@@ -3228,7 +3319,18 @@
           "ultra": "Umbral semanal: Liga Ultra",
           "master": "Umbral semanal: Liga Master"
         },
-        "monthlyMultiplier": "Multiplicador mensual"
+        "monthlyMultiplier": "Multiplicador mensual",
+        "secondRankPoints": "Puntos del segundo escalón (Base 2)",
+        "topRankPoints": "Puntos del último escalón (Master 25)",
+        "rankUpDust": {
+          "base": "Polvo por subir de rango: base",
+          "perRank": "Polvo por subir de rango: por escalón"
+        },
+        "podium": {
+          "minPlayers": "Podio: mínimo de entrenadores",
+          "dustBase": "Podio: Polvo base",
+          "dustPerRank": "Podio: Polvo por escalón"
+        }
       },
       "conditions": {
         "poisonPerSession": "Veneno: bonus por sesión",
@@ -4351,7 +4453,7 @@
       "legendary": "Legendarios capturados",
       "traded": "Recibidos por intercambio",
       "tradedNote": "En tu caja",
-      "league": "Mejor liga",
+      "league": "Mejor rango",
       "dust": "Polvo ganado",
       "dustNote": "En sesiones",
       "bond": "Más tiempo juntos",

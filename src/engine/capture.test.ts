@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { boxCapacity, isBoxFull, resolvePendingCapture } from './box'
 import { applySessionResult } from './session'
 import { advanceWave, applyStatusCharge, ballCounterTarget, captureChance, catchBreakdown, counterDamage, encounterModifiers, rerollWild, resolveCounter, resolveCounterOn, throwBall, wildCatchChance } from './capture'
-import { createEngineContext, defaultContext, type EngineContext } from './context'
+import { createEngineContext, defaultContext, getSpecies, type EngineContext } from './context'
+import { stageWeightsForRank, waveSizeForRank } from './league'
 import type { AbilityDef } from './effect-types'
 import { passiveEffects } from './effects'
 import { createRng, type Rng } from './rng'
@@ -176,25 +177,60 @@ describe('waves (GDD §10)', () => {
     expect([15, 25, 49, 50, 74, 75, 99, 100, 120].map((m) => waveCount(m, cfg))).toEqual([1, 1, 1, 2, 2, 3, 3, 4, 4])
   })
 
-  it('wave size respects min 3 and the league cap', () => {
+  it('wave size respects the minimum and the cap of the league rung', () => {
     const rng = createRng(9)
     for (let i = 0; i < 300; i++) {
-      const base = rollWaveSize(rng, 1, 'base', 3, cfg)
-      expect(base).toBeLessThanOrEqual(5)
-      expect(rollWaveSize(rng, 0.2, 'master', 0, cfg)).toBeGreaterThanOrEqual(3)
-      expect(rollWaveSize(rng, 1, 'master', 6, cfg)).toBeLessThanOrEqual(8)
+      expect(rollWaveSize(rng, 1, { league: 'base', sub: 1 }, 3, cfg)).toBe(2)
+      expect(rollWaveSize(rng, 1, { league: 'base', sub: 5 }, 3, cfg)).toBeLessThanOrEqual(4)
+      expect(rollWaveSize(rng, 0.2, { league: 'master', sub: 1 }, 0, cfg)).toBeGreaterThanOrEqual(cfg.encounters.minWaveSize)
+      expect(rollWaveSize(rng, 1, { league: 'master', sub: 25 }, 6, cfg)).toBeLessThanOrEqual(10)
     }
-    expect(rollWaveSize(createRng(1), 1, 'master', 10, cfg)).toBe(8)
-    expect(rollWaveSize(createRng(1), 1, 'super', 10, cfg)).toBe(6)
+    expect(rollWaveSize(createRng(1), 1, { league: 'master', sub: 7 }, 10, cfg)).toBe(10)
+    expect(rollWaveSize(createRng(1), 1, { league: 'super', sub: 5 }, 10, cfg)).toBe(6)
   })
 
-  it('league wave bonus is added before the league cap', () => {
-    const c = createEngineContext({
-      config: { encounters: { baseWaveSize: 4, waveSizeJitter: 0, minWaveSize: 3, leagueWaveBonus: { base: 0, super: 1, ultra: 2, master: 3 }, leagueMaxWaveSize: { base: 5, super: 6, ultra: 7, master: 8 } } } }).config
-    const sizes = (['base', 'super', 'ultra', 'master'] as const).map((l) => rollWaveSize(createRng(1), 1, l, 0, c))
-    expect(sizes).toEqual([4, 5, 6, 7])
-    expect(rollWaveSize(createRng(1), 1, 'master', 2, c)).toBe(8) // capped
-    expect(rollWaveSize(createRng(1), 0.2, 'super', 0, c)).toBe(4) // low focus −1
+  it('the wave cap is interpolated by subrank and rounded (GDD §10.1)', () => {
+    const caps = (league: 'base' | 'super' | 'ultra' | 'master', n: number) => Array.from({ length: n }, (_, i) => waveSizeForRank({ league, sub: i + 1 }, cfg))
+    expect(caps('base', 5)).toEqual([2, 3, 3, 4, 4])
+    expect(caps('super', 5)).toEqual([4, 5, 5, 6, 6])
+    expect(caps('ultra', 5)).toEqual([6, 6, 7, 7, 7])
+    expect(caps('master', 7)).toEqual([7, 8, 9, 9, 10, 10, 10])
+    expect(waveSizeForRank({ league: 'master', sub: 25 }, cfg)).toBe(10)
+  })
+
+  it('a wave has cap − 1 wilds without jitter, one less on low focus', () => {
+    const c = createEngineContext({ config: { encounters: { waveSizeJitter: 0 } } }).config
+    const sizes = (['base', 'super', 'ultra', 'master'] as const).map((league) => rollWaveSize(createRng(1), 1, { league, sub: 5 }, 0, c))
+    expect(sizes).toEqual([3, 5, 6, 9])
+    expect(rollWaveSize(createRng(1), 1, { league: 'master', sub: 5 }, 2, c)).toBe(10) // capped
+    expect(rollWaveSize(createRng(1), 0.2, { league: 'super', sub: 5 }, 0, c)).toBe(4) // low focus −1
+  })
+
+  it('the league rung decides which evolution stages and legendaries appear (GDD §10.2)', () => {
+    const gen = (rank: { league: 'base' | 'super' | 'ultra' | 'master'; sub: number }, trainerLevel = 50) => ({ focus: 1, trainerLevel, soundDominant: null, teamTypes: [], typeWeightMults: {}, syncNature: null, rank })
+    const stagesSeen = (rank: Parameters<typeof gen>[0], c = createEngineContext()) => {
+      const rng = createRng(4)
+      const seen = new Set<number>()
+      let legendaries = 0
+      for (let i = 0; i < 4000; i++) {
+        const w = rollWild(rng, { waveIndex: 0, gen: gen(rank), activeConditionTypes: [], contributions: [] }, c)
+        if (w.isLegendary) legendaries++
+        else seen.add(getSpecies(w.speciesSlug).stage)
+      }
+      return { stages: [...seen].sort(), legendaries }
+    }
+    expect(stagesSeen({ league: 'base', sub: 5 })).toEqual({ stages: [1], legendaries: 0 })
+    expect(stagesSeen({ league: 'super', sub: 1 })).toEqual({ stages: [1, 2], legendaries: 0 })
+    expect(stagesSeen({ league: 'ultra', sub: 1 })).toEqual({ stages: [1, 2, 3], legendaries: 0 })
+    // Legendaries only in the top league (a much higher chance here to see one in 4,000 rolls).
+    const boosted = createEngineContext({ config: { encounters: { legendaryChance: 0.05 } } })
+    expect(stagesSeen({ league: 'ultra', sub: 5 }, boosted).legendaries).toBe(0)
+    expect(stagesSeen({ league: 'master', sub: 1 }, boosted).legendaries).toBeGreaterThan(0)
+    // Third stages are rarer in Ultra 1 than in Ultra 5.
+    const w1 = stageWeightsForRank({ league: 'ultra', sub: 1 }, cfg)
+    const w5 = stageWeightsForRank({ league: 'ultra', sub: 5 }, cfg)
+    expect(w1.stage3).toBeLessThan(w5.stage3)
+    expect(w1.stage3).toBeGreaterThan(0)
   })
 
   it('evolved forms only appear at or above their evolution level', () => {
