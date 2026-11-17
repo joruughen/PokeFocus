@@ -400,7 +400,7 @@ Cada técnica pertenece a **una de tres categorías**, que definen **cuándo** t
 
 Las activaciones se calculan en el servidor a lo largo de la sesión y se muestran en el **resumen al terminar** ("Gengar activó Hipnosis ×2").
 
-Técnicas especiales del Pack 1 (41, diseñadas a mano; la lista completa y sus parámetros están en `data/overrides/custom-techniques.json`, construidas con las primitivas de `docs/effects.md`). La **probabilidad base** es por acción **[calibrar]**:
+Técnicas especiales (81: las 40 del Pack 1 y 41 más con Kanto completo, diseñadas a mano; la lista completa y sus parámetros están en `data/overrides/custom-techniques.json`, construidas con las primitivas de `docs/effects.md`). La **probabilidad base** es por acción **[calibrar]**:
 
 | Técnica | Categoría | Efecto en PokeFocus | Prob. base | Límite por sesión |
 |---|---|---|---|---|
@@ -739,10 +739,12 @@ Conclusión: los caramelos **aceleran mucho a niveles bajos** (ponerse al día c
 | Nivel máximo | Requisito (especies distintas capturadas) |
 |---|---|
 | 30 | — |
-| 40 | 25 |
-| 50 | 36 |
-| 60 | 50 |
+| 40 | 70 |
+| 50 | 100 |
+| 60 | 140 |
 | 60+ | Se amplía con cada pack de contenido **[calibrar]** |
+
+Los requisitos van **en proporción al total de especies** del juego (`progression.levelCaps` en `custom-game-config.json`): con Kanto completo hay 158 especies (las 151 de Kanto y 7 de otras regiones que ya estaban en el Pack 1), y los umbrales son ≈ 45 %, 64 % y 89 % del total (antes, 25 / 36 / 50 con 56 especies). **Al añadir un pack:** recalcular los tres umbrales con esos porcentajes sobre el nuevo total y añadir un escalón más (nivel 65-70) cerca del 95 % de la Pokédex; el motor ya admite hasta `progression.maxLevel` (100), así que el techo sube solo con datos, sin tocar código (decisión 9 de `docs/beta-balance-plan.md`).
 
 ### 12.6 Evolución
 
@@ -896,34 +898,16 @@ Vistas **diaria, semanal y mensual**:
 
 ---
 
-## 18. Contenido: Pack 1
+## 18. Contenido: Kanto completo
 
-Unas **50 especies** elegidas para cubrir los 18 tipos, más 4 legendarios y míticos:
+**158 especies:** las **151 de Kanto** (n.º 1-151, forma por defecto) y 7 de otras regiones que ya estaban en el Pack 1 y se conservan porque los jugadores las tienen: Crobat, Espeon, Umbreon, Swinub, Piloswine, Houndour y Houndoom. Cubren los 18 tipos.
 
-| Línea evolutiva | Tipos |
-|---|---|
-| Bulbasaur → Ivysaur → Venusaur | Planta/Veneno |
-| Charmander → Charmeleon → Charizard | Fuego (Charizard: Fuego/Volador) |
-| Squirtle → Wartortle → Blastoise | Agua |
-| Caterpie → Metapod → Butterfree | Bicho (Butterfree: Bicho/Volador) |
-| Pidgey → Pidgeotto → Pidgeot | Normal/Volador |
-| Pikachu → Raichu | Eléctrico |
-| Sandshrew → Sandslash | Tierra |
-| Clefairy → Clefable | Hada |
-| Zubat → Golbat → Crobat | Veneno/Volador |
-| Abra → Kadabra → Alakazam | Psíquico |
-| Machop → Machoke → Machamp | Lucha |
-| Geodude → Graveler → Golem | Roca/Tierra |
-| Magnemite → Magneton | Eléctrico/Acero |
-| Gastly → Haunter → Gengar | Fantasma/Veneno |
-| Eevee → Vaporeon / Jolteon / Flareon / Espeon / Umbreon | Normal y sus evoluciones |
-| Dratini → Dragonair → Dragonite | Dragón (Dragonite: Dragón/Volador) |
-| Houndour → Houndoom | Siniestro/Fuego |
-| Swinub → Piloswine | Hielo/Tierra |
-| **Legendarios y míticos:** Articuno, Zapdos, Moltres, Mewtwo, Mew | |
-
-- Unas **40 técnicas especiales** (§7.1) y las **habilidades** de estas especies (§6.3).
-- **Packs siguientes:** el resto de Kanto → Johto → … Todo el contenido son **datos** (JSON o tablas), no código.
+- **No se añaden formas de otras generaciones.** Las líneas que en los juegos siguen fuera de Kanto terminan aquí: Onix, Scyther, Chansey, Porygon, Electabuzz, Magmar, Lickitung, Tangela, Rhydon, Seadra… son etapa final (y Pikachu, Clefairy, Jigglypuff… son 1.ª etapa: no hay crías). Los Pokémon de **una sola etapa** (Tauros, Lapras, Snorlax, Aerodactyl…) cuentan como 1.ª forma para las apariciones por liga (§10.2) y se curan con la fuerza de una 2.ª etapa (§20.1).
+- **Evoluciones** (§12.6): por nivel, con piedra (Fuego, Agua, Trueno, Hoja, Lunar), por amistad (Golbat, Eevee) y por intercambio (Kadabra, Machoke, Graveler, Haunter).
+- **Legendarios y míticos:** Articuno, Zapdos, Moltres, Mewtwo y Mew.
+- **115 habilidades** con efecto propio (§6.3, `data/overrides/custom-abilities.json`) y **81 técnicas especiales** (§7.1, `data/overrides/custom-techniques.json`); los demás movimientos de daño de cada learnset son técnicas de daño genéricas.
+- **Curación** de cada especie (rol, stats ajustados y motivo): `data/overrides/species.json`; resultado del simulador y huecos conocidos en `docs/kanto-report.md`.
+- **Packs siguientes:** Johto → … Todo el contenido son **datos** (JSON o tablas), no código. Al añadir un pack: `PACK_IDS` en `scripts/import-pokeapi.ts`, `npm run import:pokeapi`, `npm run download:sprites`, definir habilidades y técnicas nuevas, curar las especies (§20.1), recalcular los topes de nivel (§12.5) y `npm run build:data`.
 
 ---
 

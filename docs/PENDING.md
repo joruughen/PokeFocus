@@ -51,6 +51,8 @@ Panel de desarrollo contra un servidor de producción: con `?dev` el panel se ab
 
 ## ▶ Para continuar (estado al 2026-11-15)
 
+**Kanto completo (paso 9, 2026-11-16):** 158 especies (151 de Kanto + 7 del Pack 1), 115 habilidades, 81 técnicas especiales, sprites descargados, topes de nivel 70/100/140; curación y lo que debe revisar el usuario en `docs/kanto-report.md`. Falta: revisión del usuario (roles, Abra/Gastly/Houndour, etapa única en liga Base), regenerar `docs/balance-report.md` cuando el motor de ligas esté cerrado y repetir la medición de la curva de EXP.
+
 Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí.
 
 **`main` = v0.12.0** (commit local; ver `git status -sb` para saber si falta el push). Sobre la v0.11.0 desplegada añade: F5 intercambios entre amigos (migración 0012), F4 objetos avanzados (MT 15, Tera 20, Menta a elegir 25, Cápsula 30, Chapa 40 solo de eventos; Teralitos desde el nivel 15), recompensas y ventana de subida de nivel, página Perfil (`#/profile`, con acciones dev de EXP), Mochila como página, selección múltiple para soltar en la Caja, importar/exportar JSON en el admin (`docs/admin-json.md`), buscador con filtro para especies y objetos, viñetas de color en las descripciones, probabilidad de aparición en la Pokédex y destacadas «Desde nv. N», menú «Más» móvil, cola de avisos y sprites grandes que caben. Typecheck limpio y 1720 tests.

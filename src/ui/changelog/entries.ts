@@ -36,6 +36,20 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
+          es: '¡Kanto al completo! Ya pueden aparecer los 151 Pokémon de la primera región (más de 100 especies nuevas), con sus habilidades y 41 técnicas especiales nuevas como Canto, Espora, Danza Espada o Transformación. Con tantas especies, los iniciales son ahora más difíciles de encontrar.',
+          en: 'All of Kanto is here! All 151 Pokémon of the first region can now appear (over 100 new species), with their abilities and 41 new special techniques such as Sing, Spore, Swords Dance or Transform. With so many species, starters are now harder to find.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'El nivel máximo de tus Pokémon se desbloquea con más especies en la Pokédex, en proporción a las nuevas: nivel 40 con 70 especies, 50 con 100 y 60 con 140.',
+          en: 'Your Pokémon\'s level cap now unlocks with more species in the Pokédex, in proportion to the new ones: level 40 at 70 species, 50 at 100 and 60 at 140.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
           es: 'La Caja tiene capacidad: 150 Pokémon al empezar, +25 cada 5 niveles de entrenador, hasta 400. Si está llena, tu captura queda pendiente y puedes cambiarla por otro Pokémon, convertirla en caramelos o guardarla cuando haya sitio.',
           en: 'The Box now has a capacity: 150 Pokémon at the start, +25 every 5 trainer levels, up to 400. When it is full, your catch waits as pending and you can swap it for another Pokémon, turn it into candies or keep it once there is room.',
         },
