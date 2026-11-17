@@ -5,6 +5,26 @@ import { MAINTENANCE_MAX_MS, MAINTENANCE_NOTE_MAX, type GameAction } from '../sr
 import { PASSWORD_MAX, PASSWORD_MIN } from './auth/password'
 
 // ---------------------------------------------------------------------------
+// Admin notes shown to players (plain text only)
+// ---------------------------------------------------------------------------
+
+const plainLine = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    // No HTML and no control characters (so no line breaks): the client renders it as text, this is the second belt.
+    .refine((s) => !/[<>\u0000-\u001f\u007f]/.test(s), 'plain_text')
+
+/** `{ es?, en? }`: at least one non-empty language, each a plain line up to `max` characters. Empty strings are dropped. */
+export const localizedNote = (max: number) =>
+  z
+    .object({ es: plainLine(max).optional(), en: plainLine(max).optional() })
+    .strict()
+    .transform((n) => ({ ...(n.es ? { es: n.es } : {}), ...(n.en ? { en: n.en } : {}) }))
+    .refine((n) => n.es !== undefined || n.en !== undefined, 'empty_note')
+
+// ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
 
@@ -107,6 +127,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('claim', { devFocusLabel: z.string().max(32).nullable().optional(), soundProfile: soundProfileSchema.nullable().optional() }),
   act('dismissResults', {}),
   act('ackLevelUp', {}),
+  act('ackGifts', {}),
   act('ackLeagueNotices', {}),
   act('ackTrade', {}),
   act('throwBall', { ref, ball }),

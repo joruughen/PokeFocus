@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ADMIN_GRANT_LIMITS } from '../../../../game/admin'
+import { GIFT_MESSAGE_MAX } from '../../../../game/protocol'
 import { Button, Panel, TextField } from '../../../components'
+import { localizedNoteInput } from '../content/flow'
 import { ItemCombobox } from '../pickers'
 import type { GrantInput } from './api'
 
@@ -22,6 +24,8 @@ export function GrantForm({ onGrant, onReauth, elevated, error, busy }: GrantFor
   const [count, setCount] = useState('')
   const [dust, setDust] = useState('')
   const [reason, setReason] = useState('')
+  const [msgEs, setMsgEs] = useState('')
+  const [msgEn, setMsgEn] = useState('')
   const [password, setPassword] = useState('')
 
   const n = count.trim() === '' ? 0 : Number(count)
@@ -33,10 +37,13 @@ export function GrantForm({ onGrant, onReauth, elevated, error, busy }: GrantFor
     e.preventDefault()
     if (!valid || busy) return
     if (!elevated) await onReauth(password)
-    await onGrant({ ...(n > 0 && { items: { [item]: n } }), ...(d > 0 && { dust: d }), reason: reason.trim() }).then(() => {
+    const message = localizedNoteInput(msgEs, msgEn)
+    await onGrant({ ...(n > 0 && { items: { [item]: n } }), ...(d > 0 && { dust: d }), ...(message && { message }), reason: reason.trim() }).then(() => {
       setCount('')
       setDust('')
       setReason('')
+      setMsgEs('')
+      setMsgEn('')
     })
   }
 
@@ -56,6 +63,12 @@ export function GrantForm({ onGrant, onReauth, elevated, error, busy }: GrantFor
           maxLength={ADMIN_GRANT_LIMITS.reasonMax}
           hint={t('admin.players.grant.reasonHint', { min: ADMIN_GRANT_LIMITS.reasonMin })}
         />
+        <fieldset className="flex flex-col gap-3 bg-dusk-900 p-3 inset-shadow-well">
+          <legend className="px-1 font-display text-base">{t('admin.players.grant.message.title')}</legend>
+          <p className="text-sm text-mist-300">{t('admin.players.grant.message.hint', { max: GIFT_MESSAGE_MAX })}</p>
+          <TextField label={t('admin.players.grant.message.es')} value={msgEs} onChange={(e) => setMsgEs(e.target.value)} maxLength={GIFT_MESSAGE_MAX} />
+          <TextField label={t('admin.players.grant.message.en')} value={msgEn} onChange={(e) => setMsgEn(e.target.value)} maxLength={GIFT_MESSAGE_MAX} />
+        </fieldset>
         {!elevated && (
           <TextField
             label={t('admin.players.grant.password')}

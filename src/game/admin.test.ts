@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_DOC, type GameDoc } from './protocol'
+import { EMPTY_DOC, GIFT_MESSAGE_MAX, type GameDoc } from './protocol'
 import { ADMIN_GRANT_LIMITS, applyAdminGrant, checkAdminGrant } from './admin'
 import { applyAction } from './actions'
 import { createRng } from '../engine'
@@ -49,5 +49,31 @@ describe('applyAdminGrant', () => {
     const many = Object.fromEntries(Array.from({ length: maxItemKinds + 1 }, (_, i) => [`x${i}`, 1]))
     expect(checkAdminGrant({ items: many })).toBe('too_many_items')
     expect(applyAdminGrant(doc, { items: { potion: -3 } })).toEqual({ ok: false, error: 'invalid_amount' })
+  })
+
+  it('a message queues a gift window entry (items, dust, message, at); no message adds nothing', () => {
+    const silent = applyAdminGrant(doc, { dust: 5 })
+    if (!silent.ok) throw new Error(silent.error)
+    expect(silent.doc.player!.pendingGifts).toBeUndefined()
+    const r = applyAdminGrant(doc, { items: { potion: 2 }, dust: 5, message: { es: 'Hola', en: 'Hi' }, at: 99 })
+    if (!r.ok) throw new Error(r.error)
+    expect(r.doc.player!.pendingGifts).toEqual([{ items: { potion: 2 }, dust: 5, message: { es: 'Hola', en: 'Hi' }, at: 99 }])
+    expect(doc.player!.pendingGifts).toBeUndefined()
+    // Older entries are kept, up to the cap (the oldest go first).
+    let cur = doc
+    for (let i = 0; i < ADMIN_GRANT_LIMITS.maxPendingGifts + 2; i++) {
+      const n = applyAdminGrant(cur, { dust: 1, message: { en: `m${i}` }, at: i })
+      if (!n.ok) throw new Error(n.error)
+      cur = n.doc
+    }
+    expect(cur.player!.pendingGifts).toHaveLength(ADMIN_GRANT_LIMITS.maxPendingGifts)
+    expect(cur.player!.pendingGifts![0]!.at).toBe(2)
+  })
+
+  it('validates the message: plain text, es/en only, within the limit', () => {
+    expect(checkAdminGrant({ dust: 1, message: { es: 'ok' } })).toBeNull()
+    for (const message of [{}, { es: '' }, { es: '<b>x</b>' }, { en: 'a\nb' }, { es: 'x'.repeat(GIFT_MESSAGE_MAX + 1) }, { fr: 'x' } as never]) {
+      expect(checkAdminGrant({ dust: 1, message }), JSON.stringify(message)).toBe('invalid_message')
+    }
   })
 })

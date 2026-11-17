@@ -1,0 +1,1 @@
+ALTER TABLE "content_versions" ADD COLUMN "player_note" jsonb;

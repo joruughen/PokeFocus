@@ -57,6 +57,13 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         kind: 'new',
         text: {
+          es: 'Cuando el equipo de PokeFocus cambia las reglas del juego o te hace un regalo, puede dejarte un mensaje: una ventana breve, solo en un momento tranquilo (nunca durante una sesión), que sale una sola vez.',
+          en: 'When the PokeFocus team changes the game rules or sends you a gift, it can leave you a message: a short window, only at a calm moment (never during a session), shown just once.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
           es: 'La Caja tiene capacidad: 150 Pokémon al empezar, +25 cada 5 niveles de entrenador, hasta 400. Si está llena, tu captura queda pendiente y puedes cambiarla por otro Pokémon, convertirla en caramelos o guardarla cuando haya sitio.',
           en: 'The Box now has a capacity: 150 Pokémon at the start, +25 every 5 trainer levels, up to 400. When it is full, your catch waits as pending and you can swap it for another Pokémon, turn it into candies or keep it once there is room.',
         },

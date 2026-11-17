@@ -101,8 +101,7 @@ export function LevelUpModal({ pending, onClose }: { pending: readonly PendingLe
 
 /** Mascot, the level(s) reached and what the climb gave: items with sprite and name, and Dust. */
 export function LevelUpBody({ pending }: { pending: readonly PendingLevelUp[] }) {
-  const { t, i18n } = useTranslation()
-  const names = useNames()
+  const { t } = useTranslation()
   const merged = mergeLevelUps(pending)
   if (!merged) return null
   const items = Object.entries(merged.items).filter(([, n]) => n > 0)
@@ -113,28 +112,37 @@ export function LevelUpBody({ pending }: { pending: readonly PendingLevelUp[] })
       <p className="text-center font-display text-xl text-volt-300">{several ? t('levelUp.fromTo', { from: merged.from, to: merged.to }) : t('levelUp.reached', { level: merged.to })}</p>
       <section aria-label={t('levelUp.rewards')} className="flex w-full flex-col gap-2">
         <h3 className="font-display text-base text-mist-300">{t('levelUp.rewards')}</h3>
-        <ul className="flex flex-col gap-1.5 bg-dusk-900 p-3 inset-shadow-well">
-          {merged.dust > 0 && (
-            <li className="flex items-center gap-2">
-              <span className="grid h-8 w-10 place-items-center">
-                <PixelIcon name="dust" size={20} className="text-exp-400" />
-              </span>
-              <span className="min-w-0 flex-1 text-sm">{t('items.dust')}</span>
-              <span className="font-num text-xl leading-none tabular">+{fmtInt(merged.dust, i18n.language)}</span>
-            </li>
-          )}
-          {items.map(([slug, n]) => (
-            <li key={slug} className="flex items-center gap-2">
-              <span className="grid h-8 w-10 place-items-center">
-                <Sprite kind="item" slug={slug} fit={30} alt="" />
-              </span>
-              <span className="min-w-0 flex-1 text-sm">{names.item(slug)}</span>
-              <span className="font-num text-xl leading-none tabular">×{n}</span>
-            </li>
-          ))}
-        </ul>
+        <RewardList dust={merged.dust} items={items} />
         <p className="text-sm text-mist-300">{t('levelUp.added')}</p>
       </section>
     </div>
+  )
+}
+
+/** The Dust and items of a reward as a list with sprites (shared with the support-gift window). */
+export function RewardList({ dust, items }: { dust: number; items: readonly (readonly [string, number])[] }) {
+  const { t, i18n } = useTranslation()
+  const names = useNames()
+  return (
+    <ul className="flex flex-col gap-1.5 bg-dusk-900 p-3 inset-shadow-well">
+      {dust > 0 && (
+        <li className="flex items-center gap-2">
+          <span className="grid h-8 w-10 place-items-center">
+            <PixelIcon name="dust" size={20} className="text-exp-400" />
+          </span>
+          <span className="min-w-0 flex-1 text-sm">{t('items.dust')}</span>
+          <span className="font-num text-xl leading-none tabular">+{fmtInt(dust, i18n.language)}</span>
+        </li>
+      )}
+      {items.map(([slug, n]) => (
+        <li key={slug} className="flex items-center gap-2">
+          <span className="grid h-8 w-10 place-items-center">
+            <Sprite kind="item" slug={slug} fit={30} alt="" />
+          </span>
+          <span className="min-w-0 flex-1 text-sm">{names.item(slug)}</span>
+          <span className="font-num text-xl leading-none tabular">×{n}</span>
+        </li>
+      ))}
+    </ul>
   )
 }

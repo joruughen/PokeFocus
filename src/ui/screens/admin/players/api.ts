@@ -1,10 +1,12 @@
 /** Player-support calls (server/routes/admin/players.ts). Every call uses the signed-in staff session. */
-import type { AdminMeResponse, AdminPlayerDetail, AdminPlayersResponse, AdminUnlockField } from '../../../../game/protocol'
+import type { LocalizedNote, AdminMeResponse, AdminPlayerDetail, AdminPlayersResponse, AdminUnlockField } from '../../../../game/protocol'
 import { api } from '../../../api'
 
 export interface GrantInput {
   items?: Record<string, number>
   dust?: number
+  /** A short message the player sees in a window with the gift. */
+  message?: LocalizedNote
   reason: string
 }
 

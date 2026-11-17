@@ -12,6 +12,7 @@ import { LeagueNoticeHost } from './leagueNotice/LeagueNoticeDialog'
 import { EventPopupHost } from './screens/events/EventPopup'
 import { GroupInviteNotice } from './GroupInviteNotice'
 import { ContentNotice } from './ContentNotice'
+import { ContentNoteHost, GiftHost } from './notices/NoticeHosts'
 import { PendingCaptureDialog } from './screens/box/PendingCaptureDialog'
 import { MaintenanceBanner } from './MaintenanceBanner'
 import { BallIcon, IconButton, Logo, PixelIcon, Tooltip } from './components'
@@ -55,6 +56,8 @@ export function AppShell() {
       <GroupInviteNotice />
       <WhatsNewDialog />
       <LevelUpHost />
+      <GiftHost />
+      <ContentNoteHost />
       <LeagueNoticeHost />
       <PendingCaptureDialog />
       <TradeArrivalHost />

@@ -3012,6 +3012,12 @@
           "goesBack": "Volverá a lo anterior",
           "revert": "Volver a lo anterior cuando termine el evento",
           "revertHint": "Programa también una copia de lo que esté en vigor justo antes de que empiece el evento, para cuando termine. Si publicas otra versión por tu cuenta mientras tanto, la vuelta sigue programada y verás un aviso."
+        },
+        "playerNote": {
+          "title": "Nota para jugadores (opcional)",
+          "hint": "Los jugadores la ven una vez en una ventana cuando esta versión entra en vigor (si la programas, a su hora). Texto plano, sin HTML, hasta {{max}} caracteres por idioma. Escribe al menos un idioma; si falta uno, se muestra el otro.",
+          "es": "Nota en español",
+          "en": "Nota en inglés"
         }
       },
       "rollback": {
@@ -3541,7 +3547,13 @@
         "reasonHint": "Al menos {{min}} caracteres. Se guarda en el registro de auditoría.",
         "password": "Tu contraseña",
         "passwordHint": "Confirma que eres tú; vale 30 minutos.",
-        "submit": "Conceder"
+        "submit": "Conceder",
+        "message": {
+          "title": "Mensaje para el jugador (opcional)",
+          "hint": "Si escribes un mensaje, el jugador ve una ventana con el regalo la próxima vez que esté tranquilo (nunca en mitad de una sesión). Sin mensaje, el regalo llega en silencio. Texto plano, hasta {{max}} caracteres por idioma.",
+          "es": "Mensaje en español",
+          "en": "Mensaje en inglés"
+        }
       },
       "errors": {
         "invalid_query": "Escribe al menos 2 caracteres.",
@@ -4481,5 +4493,16 @@
       "weekTip": "Semana del {{date}}: {{minutes}} min",
       "weeksNote": "Cada columna es una semana (de lunes a domingo); la última es la actual."
     }
+  },
+  "gift": {
+    "title": "¡Un regalo para ti!",
+    "label": "Regalo del equipo de PokeFocus",
+    "added": "Ya está en tu mochila.",
+    "gotIt": "¡Gracias!"
+  },
+  "contentNote": {
+    "title": "Novedades del juego",
+    "label": "Nota de actualización del contenido",
+    "gotIt": "Entendido"
   }
 }

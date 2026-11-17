@@ -2,6 +2,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { asc, eq } from 'drizzle-orm'
 import type {
+  AnnouncementsResponse,
   AdminContentLiveResponse,
   AdminContentValidateResponse,
   AdminContentVersionResponse,
@@ -306,6 +307,58 @@ describe('publish and schedule', () => {
     const live = (await h.call('GET', `${B}/live`, { cookie: a.cookie })).json as unknown as AdminContentLiveResponse
     expect(live).toMatchObject({ hash: (pub.json as { hash: string }).hash, active: { id }, scheduled: null, events: [] })
     expect(await auditActions()).toEqual(['admin.reauth', 'content.draft.create', 'content.draft.update', 'content.publish'])
+  })
+
+  it('a note for players is stored with the version, audited, plain text and served by /api/announcements once in force', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithDraft(h)
+    const noteOf = async () => ((await h.call('GET', '/api/announcements')).json as unknown as AnnouncementsResponse).contentNote
+    expect(await noteOf()).toBeNull()
+    const playerNote = { es: 'Subimos la probabilidad de legendarios', en: 'Legendary odds are up' }
+    const r = await h.call('POST', `${B}/drafts/${id}/publish`, { cookie: a.cookie, body: { playerNote } })
+    expect(r.status).toBe(200)
+    expect(asVersion(r).version.playerNote).toEqual(playerNote)
+    expect(await noteOf()).toEqual({ versionId: id, effectiveAt: T0, note: playerNote })
+    const row = (await database.db.select().from(contentVersions).where(eq(contentVersions.id, id)))[0]!
+    expect(row.playerNote).toEqual(playerNote)
+    const audit = (await database.db.select().from(adminAudit).where(eq(adminAudit.action, 'content.publish')))[0]!
+    expect(audit.after).toMatchObject({ playerNote })
+    // It stops being offered after two weeks.
+    now = T0 + 14 * DAY + 1
+    expect(await noteOf()).toBeNull()
+  })
+
+  it('a scheduled version shows its note only when it takes effect; cancelling the schedule drops the note', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithDraft(h)
+    const at = T0 + 2 * HOUR
+    const noteOf = async () => ((await h.call('GET', '/api/announcements')).json as unknown as AnnouncementsResponse).contentNote
+    await h.call('POST', `${B}/drafts/${id}/publish`, { cookie: a.cookie, body: { effectiveAt: at, playerNote: { en: 'Soon' } } })
+    expect(await noteOf()).toBeNull()
+    now = at + 1
+    expect(await noteOf()).toEqual({ versionId: id, effectiveAt: at, note: { en: 'Soon' } })
+
+    const h2 = makeApp()
+    now = T0
+    const second = await adminWithDraft(h2)
+    await h2.call('POST', `${B}/drafts/${second.id}/publish`, { cookie: second.a.cookie, body: { effectiveAt: T0 + 3 * HOUR, playerNote: { en: 'Never' } } })
+    expect((await h2.call('POST', `${B}/versions/${second.id}/unschedule`, { cookie: second.a.cookie, body: {} })).status).toBe(200)
+    const [r] = await database.db.select().from(contentVersions).where(eq(contentVersions.id, second.id))
+    expect(r!.playerNote).toBeNull()
+    now = T0 + 4 * HOUR
+    expect(((await h2.call('GET', '/api/announcements')).json as unknown as AnnouncementsResponse).contentNote?.versionId).not.toBe(second.id)
+  })
+
+  it('rejects a note with HTML, control characters, too long or empty (400 invalid_body) and publishes nothing', async () => {
+    const h = makeApp()
+    const { a, id } = await adminWithDraft(h)
+    const bad: unknown[] = [{ es: '<img src=x onerror=alert(1)>' }, { en: 'x'.repeat(201) }, { es: ' ' }, {}, { es: 'a\nb' }, 'text']
+    for (const playerNote of bad) {
+      const r = await h.call('POST', `${B}/drafts/${id}/publish`, { cookie: a.cookie, body: { playerNote } })
+      expect([r.status, r.json?.error], JSON.stringify(playerNote)).toEqual([400, 'invalid_body'])
+    }
+    expect((await database.db.select().from(contentVersions).where(eq(contentVersions.id, id)))[0]!.status).toBe('draft')
+    expect((await h.call('POST', `${B}/drafts/${id}/publish`, { cookie: a.cookie, body: { playerNote: { es: 'x'.repeat(200) } } })).status).toBe(200)
   })
 
   it('schedules for the future: not active until then; /live shows it as next; audited as content.schedule', async () => {

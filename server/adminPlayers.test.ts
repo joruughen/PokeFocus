@@ -231,6 +231,48 @@ describe('grant', () => {
     expect(rows[0]!.before).toMatchObject({ dust: before.doc!.dust })
   })
 
+  it('a message queues the gift window (pendingGifts), is audited and is plain text; without one the gift is silent', async () => {
+    const { h, t, a, grant } = await setup()
+    const gifts = async () => ((await h.call('GET', '/api/game', { cookie: t.cookie })).json as unknown as { doc: { player: { pendingGifts?: unknown[] } } }).doc.player.pendingGifts
+    expect((await grant({ dust: 10, reason: 'silent gift' })).status).toBe(200)
+    expect(await gifts()).toBeUndefined()
+    const message = { es: 'Perdiste una recompensa, aquí la tienes', en: 'You lost a reward, here it is' }
+    expect((await grant({ items: { potion: 2 }, dust: 30, message, reason: 'Ticket #7' })).status).toBe(200)
+    expect(await gifts()).toEqual([{ items: { potion: 2 }, dust: 30, message, at: T0 }])
+    const row = (await auditRows()).filter((x) => x.action === 'player.grant').at(-1)!
+    expect(row.after).toMatchObject({ granted: { dust: 30, items: { potion: 2 } }, message })
+    expect(row.note).toBe('Ticket #7')
+    // Only one language is fine; the older gifts stay, at most 10 are kept.
+    for (let i = 0; i < 11; i++) expect((await grant({ dust: 1, message: { en: `gift ${i}` }, reason: 'many gifts' })).status).toBe(200)
+    const list = (await gifts()) as { message: { en: string } }[]
+    expect(list).toHaveLength(10)
+    expect(list.at(-1)!.message).toEqual({ en: 'gift 10' })
+    void a
+  })
+
+  it('rejects bad messages with 400 invalid_body and writes nothing', async () => {
+    const { h, t, a, grant } = await setup()
+    const v0 = detail(await h.call('GET', base(t.id), { cookie: a.cookie })).doc!.version
+    const bad: unknown[] = [
+      { es: '<script>alert(1)</script>' },
+      { en: 'a <b>bold</b> claim' },
+      { es: 'x'.repeat(121) },
+      { es: '   ', en: '' },
+      {},
+      { es: 'two\nlines' },
+      { fr: 'bonjour' },
+      'just text',
+    ]
+    for (const message of bad) {
+      const r = await grant({ dust: 5, message, reason: 'valid reason' })
+      expect([r.status, r.json?.error], JSON.stringify(message)).toEqual([400, 'invalid_body'])
+    }
+    expect((await auditRows()).filter((x) => x.action === 'player.grant')).toHaveLength(0)
+    expect(detail(await h.call('GET', base(t.id), { cookie: a.cookie })).doc!.version).toBe(v0)
+    // The limit itself is allowed.
+    expect((await grant({ dust: 5, message: { es: 'x'.repeat(120) }, reason: 'valid reason' })).status).toBe(200)
+  })
+
   it('rejects bad grants with 400 and writes nothing (no audit row, same version)', async () => {
     const { h, t, a, grant } = await setup()
     const v0 = detail(await h.call('GET', base(t.id), { cookie: a.cookie })).doc!.version

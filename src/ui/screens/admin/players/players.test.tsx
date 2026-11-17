@@ -118,6 +118,9 @@ describe('search view and grant form', () => {
       expect(warm).not.toContain(i18n.t('admin.players.grant.password'))
       expect(warm).toContain('nope')
       expect(warm).toContain(i18n.t('admin.players.grant.reason'))
+      // The optional message: a legend, a hint with the limit and one field per language.
+      for (const k of ['title', 'es', 'en']) expect(warm).toContain(i18n.t(`admin.players.grant.message.${k}`))
+      expect(warm).toContain('maxLength="120"')
     })
   }
 

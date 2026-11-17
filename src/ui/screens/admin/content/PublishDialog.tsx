@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { AdminContentVersion, AdminEvent, ContentIssue } from '../../../../game/protocol'
+import { PLAYER_NOTE_MAX, type AdminContentVersion, type AdminEvent, type ContentIssue } from '../../../../game/protocol'
 import { Combobox, Segmented, TextField, toast } from '../../../components'
 import { browserTimeZone } from '../../../lib/format'
 import { toLocalInput } from '../../../lib/maintenance'
@@ -9,7 +9,7 @@ import { eventText } from '../../events/model'
 import { eventsAdminApi } from '../events/api'
 import { ActionDialog } from './ActionDialog'
 import { contentApi } from './api'
-import { checkSchedule, linkableEvents, linkedEffectiveAt, publishDraft, publishInput, rollbackTo, unscheduleVersion } from './flow'
+import { checkSchedule, linkableEvents, linkedEffectiveAt, localizedNoteInput, publishDraft, publishInput, rollbackTo, unscheduleVersion } from './flow'
 
 const NOTE_MAX = 400
 const HOUR = 3_600_000
@@ -38,6 +38,8 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
   const [mode, setMode] = useState<'now' | 'later' | 'event'>('now')
   const [when, setWhen] = useState('')
   const [note, setNote] = useState('')
+  const [noteEs, setNoteEs] = useState('')
+  const [noteEn, setNoteEn] = useState('')
   const [events, setEvents] = useState<AdminEvent[] | null>(null)
   const [eventId, setEventId] = useState('')
   const [revert, setRevert] = useState(false)
@@ -51,6 +53,8 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
     setMode('now')
     setWhen(toLocalInput(Math.ceil((Date.now() + HOUR) / HOUR) * HOUR))
     setNote('')
+    setNoteEs('')
+    setNoteEn('')
     setEventId('')
     setRevert(false)
     setEvents(null)
@@ -88,7 +92,7 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
       warnings={warnings}
       canSubmit={mode === 'now' || (mode === 'later' && at !== null) || (mode === 'event' && event !== null)}
       prepare={flush}
-      run={(confirm) => publishDraft(draftId, publishInput(plan, confirm, note))}
+      run={(confirm) => publishDraft(draftId, publishInput(plan, confirm, note, localizedNoteInput(noteEs, noteEn)))}
       onDone={(v) => {
         const key = plan.mode === 'event' ? (plan.revert ? 'doneEventRevert' : 'doneEvent') : v.scheduled ? 'scheduledDone' : 'done'
         toast.add({ title: t(`admin.content.publish.${key}`, { id: v.id }), type: 'success' })
@@ -184,6 +188,12 @@ export function PublishDialog({ open, onOpenChange, draftId, changes, flush, war
         </div>
       )}
       <TextField label={t('admin.content.publish.note')} value={note} onChange={(e) => setNote(e.target.value)} maxLength={NOTE_MAX} hint={t('admin.content.publish.noteHint')} />
+      <fieldset className="flex flex-col gap-3 bg-dusk-900 p-3 inset-shadow-well">
+        <legend className="px-1 font-display text-base">{t('admin.content.publish.playerNote.title')}</legend>
+        <p className="text-sm text-mist-300">{t('admin.content.publish.playerNote.hint', { max: PLAYER_NOTE_MAX })}</p>
+        <TextField label={t('admin.content.publish.playerNote.es')} value={noteEs} onChange={(e) => setNoteEs(e.target.value)} maxLength={PLAYER_NOTE_MAX} />
+        <TextField label={t('admin.content.publish.playerNote.en')} value={noteEn} onChange={(e) => setNoteEn(e.target.value)} maxLength={PLAYER_NOTE_MAX} />
+      </fieldset>
     </ActionDialog>
   )
 }

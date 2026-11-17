@@ -95,6 +95,8 @@ export interface GameState extends GameDoc {
   dismissResults: () => Promise<GameActionError | null>
   /** The trainer level-up window was closed: the server empties `pendingLevelUps`. */
   ackLevelUp: () => Promise<GameActionError | null>
+  /** The support-gift window was closed: the server empties `pendingGifts`. */
+  ackGifts: () => Promise<GameActionError | null>
   /** The league notice was seen: the server empties `pendingLeagueNotices`. */
   ackLeagueNotices: () => Promise<GameActionError | null>
   /** The trade arrival window was closed: the server empties `pendingTrades`. */
@@ -297,6 +299,7 @@ export const useGame = create<GameState>()((set, get) => {
     },
     dismissResults: async () => errOf(await dispatch({ type: 'dismissResults' })),
     ackLevelUp: async () => errOf(await dispatch({ type: 'ackLevelUp' })),
+    ackGifts: async () => errOf(await dispatch({ type: 'ackGifts' })),
     ackLeagueNotices: async () => errOf(await dispatch({ type: 'ackLeagueNotices' })),
     ackTrade: async () => errOf(await dispatch({ type: 'ackTrade' })),
 

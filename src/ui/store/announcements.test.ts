@@ -16,7 +16,7 @@ describe('announcements store', () => {
   it('loads the windows and measures the clock skew', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(1_000_000)
-    const body: AnnouncementsResponse = { maintenance: [{ id: 'a', startsAt: 2_000_000, endsAt: 3_000_000, note: 'x' }], serverNow: 1_030_000 }
+    const body: AnnouncementsResponse = { maintenance: [{ id: 'a', startsAt: 2_000_000, endsAt: 3_000_000, note: 'x' }], contentNote: null, serverNow: 1_030_000 }
     const fetchMock = vi.fn(async () => json(200, body))
     vi.stubGlobal('fetch', fetchMock)
     await useAnnouncements.getState().load()

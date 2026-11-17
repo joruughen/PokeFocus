@@ -1,5 +1,6 @@
 /** Live-content admin calls (server/routes/admin/content.ts). Every call uses the signed-in staff session. */
 import type {
+  LocalizedNote,
   AdminContentLiveResponse,
   AdminContentStatus,
   AdminContentValidateResponse,
@@ -41,6 +42,8 @@ export interface PublishInput {
   revertWhenEnds?: boolean
   confirm?: boolean
   note?: string
+  /** What players read once when the version takes effect (at least one language, ≤ 200 characters each). */
+  playerNote?: LocalizedNote
 }
 
 export interface SpawnPreviewQuery {

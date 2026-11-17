@@ -147,7 +147,7 @@ export async function moveLinked(tx: Tx, c: AuditActor, ev: EventRow, now: numbe
 export async function toDraft(tx: Tx, c: AuditActor, v: VersionRow, note?: string): Promise<void> {
   await tx
     .update(contentVersions)
-    .set({ status: 'draft', effectiveAt: null, publishedBy: null, publishedAt: null, linkedEventId: null, linkedRole: null, revertOfVersionId: null })
+    .set({ status: 'draft', effectiveAt: null, publishedBy: null, publishedAt: null, linkedEventId: null, linkedRole: null, revertOfVersionId: null, playerNote: null })
     .where(eq(contentVersions.id, v.id))
   await audit(tx, c, {
     action: 'content.unschedule',

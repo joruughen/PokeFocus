@@ -3,7 +3,7 @@
  *
  *   GET  /players?q=                  support+   search by email, trainer name or friend code (2..60 chars, at most 20)
  *   GET  /players/:id                 support+   profile, locks, game summary, last 20 sessions, signed-in browsers
- *   POST /players/:id/grant           admin + sudo   { items?, dust?, reason }  (capped, see src/game/admin.ts)
+ *   POST /players/:id/grant           admin + sudo   { items?, dust?, message?: {es?,en?} (≤120), reason }  (capped, see src/game/admin.ts)
  *   POST /players/:id/unlock          support+   { field: trainerName|country|timezone, reason? }  clears a 30-day lock
  *   POST /players/:id/cancel-session  support+   { reason? }  cancels a stuck study session (the player's own cancel rules: a long session keeps its studied minutes, GDD §3.4)
  *   POST /players/:id/logout-all      support+   { reason? }  signs the player out everywhere
@@ -19,13 +19,14 @@ import { z } from 'zod'
 import { createRng } from '../../../src/engine'
 import { ADMIN_GRANT_LIMITS, applyAdminGrant } from '../../../src/game/admin'
 import { TIMEZONE_LOCK_DAYS, timerOf } from '../../../src/game/actions'
-import { COUNTRY_LOCK_DAYS, NAME_LOCK_DAYS, type AdminPlayerDetail, type AdminPlayerSummary, type AdminPlayersResponse } from '../../../src/game/protocol'
+import { COUNTRY_LOCK_DAYS, GIFT_MESSAGE_MAX, NAME_LOCK_DAYS, type AdminPlayerDetail, type AdminPlayerSummary, type AdminPlayersResponse } from '../../../src/game/protocol'
 import { audit } from '../../admin/audit'
 import type { Db, Tx } from '../../db/client'
 import { authSessions, playerDocs, users, type UserRow } from '../../db/schema'
 import { publishGroupEvents } from '../../groups'
 import { ApiError, readBody, requireElevated, UUID_RE, type AppEnv, type Ctx, type Deps } from '../../http'
 import { RULES, type RateRule } from '../../rate-limit'
+import { localizedNote } from '../../validation'
 import { runGameAction } from '../game'
 
 const DAY_MS = 86_400_000
@@ -41,6 +42,8 @@ const optionalReason = z.object({ reason: reasonField.optional() })
 const grantBody = z.object({
   items: z.record(z.string().max(64), z.number()).optional(),
   dust: z.number().optional(),
+  /** A short message the player sees in a window when they receive the gift. */
+  message: localizedNote(GIFT_MESSAGE_MAX).optional(),
   reason: reasonField.min(ADMIN_GRANT_LIMITS.reasonMin),
 })
 const unlockBody = z.object({ field: z.enum(['trainerName', 'country', 'timezone']), reason: reasonField.optional() })
@@ -170,7 +173,7 @@ export function playersRoutes(deps: Deps, staff: Staff, limit: Limit) {
       await lockTarget(tx, c, id)
       const [row] = await tx.select().from(playerDocs).where(eq(playerDocs.userId, id)).for('update')
       if (!row) throw new ApiError(409, 'no_player')
-      const r = applyAdminGrant(row.doc, { ...(body.items && { items: body.items }), ...(body.dust !== undefined && { dust: body.dust }) })
+      const r = applyAdminGrant(row.doc, { ...(body.items && { items: body.items }), ...(body.dust !== undefined && { dust: body.dust }), ...(body.message && { message: body.message, at: deps.clock() }) })
       if (!r.ok) throw new ApiError(r.error === 'no_player' ? 409 : 400, r.error)
       const was = row.doc.player!
       const touched = (inv: Record<string, number>) => Object.fromEntries(Object.keys(r.applied.items).map((k) => [k, inv[k] ?? 0]))
@@ -181,7 +184,7 @@ export function playersRoutes(deps: Deps, staff: Staff, limit: Limit) {
         targetType: 'user',
         targetId: id,
         before: { dust: was.dust, items: touched(was.inventory) },
-        after: { dust: r.doc.player!.dust, items: touched(r.doc.player!.inventory), granted: r.applied },
+        after: { dust: r.doc.player!.dust, items: touched(r.doc.player!.inventory), granted: r.applied, ...(body.message && { message: body.message }) },
         note: body.reason,
       })
       return next

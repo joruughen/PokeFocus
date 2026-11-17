@@ -11,7 +11,7 @@ import { installFakeAdminContent, type FakeAdminContent } from '../../../test/fa
 import { contentApi } from './api'
 import { createDraftStore } from './draftStore'
 import { eventsAdminApi } from '../events/api'
-import { checkSchedule, classify, linkableEvents, linkedEffectiveAt, publishDraft, publishInput, reauthThen, rollbackTo, unscheduleVersion } from './flow'
+import { checkSchedule, classify, linkableEvents, linkedEffectiveAt, localizedNoteInput, publishDraft, publishInput, reauthThen, rollbackTo, unscheduleVersion } from './flow'
 import { liveValidate } from './live'
 import { setConfigValue } from './patch'
 import { previewRows } from './previewRows'
@@ -57,6 +57,14 @@ describe('schedule input', () => {
   it('builds the publish body: now has no effectiveAt, confirm and note only when set', () => {
     expect(publishInput({ mode: 'now' }, false, '  ')).toEqual({})
     expect(publishInput({ mode: 'later', at: 5 }, true, ' hi ')).toEqual({ effectiveAt: 5, confirm: true, note: 'hi' })
+  })
+
+  it('the note for players: both languages trimmed, empty ones dropped, nothing when blank', () => {
+    expect(localizedNoteInput('  ', '')).toBeUndefined()
+    expect(localizedNoteInput(' Hola ', '')).toEqual({ es: 'Hola' })
+    expect(localizedNoteInput('Hola', ' Hi ')).toEqual({ es: 'Hola', en: 'Hi' })
+    expect(publishInput({ mode: 'now' }, false, '', { en: 'Hi' })).toEqual({ playerNote: { en: 'Hi' } })
+    expect(publishInput({ mode: 'now' }, false, '', undefined)).toEqual({})
   })
 
   it('together with an event: the body carries the event (and the go-back box), never a time', () => {

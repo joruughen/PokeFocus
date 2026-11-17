@@ -3012,6 +3012,12 @@
           "goesBack": "Goes back",
           "revert": "Go back to what was before when the event ends",
           "revertHint": "Also schedules a copy of whatever is in force just before the event starts, for when it ends. If you publish another version by hand in the meantime, the return stays scheduled and you will see a warning."
+        },
+        "playerNote": {
+          "title": "Note for players (optional)",
+          "hint": "Players see it once in a window when this version takes effect (if you schedule it, at its time). Plain text, no HTML, up to {{max}} characters per language. Write at least one language; if one is missing the other is shown.",
+          "es": "Note in Spanish",
+          "en": "Note in English"
         }
       },
       "rollback": {
@@ -3541,7 +3547,13 @@
         "reasonHint": "At least {{min}} characters. Kept in the audit log.",
         "password": "Your password",
         "passwordHint": "Confirms it is you; valid for 30 minutes.",
-        "submit": "Grant"
+        "submit": "Grant",
+        "message": {
+          "title": "Message for the player (optional)",
+          "hint": "With a message the player sees a window with the gift the next time they are calm (never in the middle of a session). Without one the gift arrives silently. Plain text, up to {{max}} characters per language.",
+          "es": "Message in Spanish",
+          "en": "Message in English"
+        }
       },
       "errors": {
         "invalid_query": "Type at least 2 characters.",
@@ -4481,5 +4493,16 @@
       "weekTip": "Week of {{date}}: {{minutes}} min",
       "weeksNote": "Each column is one week (Monday to Sunday); the last one is this week."
     }
+  },
+  "gift": {
+    "title": "A gift for you!",
+    "label": "Gift from the PokeFocus team",
+    "added": "It is already in your bag.",
+    "gotIt": "Thanks!"
+  },
+  "contentNote": {
+    "title": "Game updates",
+    "label": "Content update note",
+    "gotIt": "Got it"
   }
 }

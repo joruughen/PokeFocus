@@ -416,6 +416,11 @@ export interface PlayerState {
    */
   pendingLevelUps?: PendingLevelUp[]
   /**
+   * Gifts from support with a message whose window has not been dismissed yet (the items and Dust are already in
+   * `inventory`/`dust`). Emptied by the `ackGifts` action. Absent = none. A grant without a message adds nothing here.
+   */
+  pendingGifts?: PendingGift[]
+  /**
    * League news not yet seen (GDD §14): rungs climbed this week and the podium of a closed week. The Dust is
    * already in `dust`. Emptied by the `ackLeagueNotices` action. Absent = none.
    */
@@ -455,6 +460,14 @@ export interface PendingLevelUp {
   to: number
   items: Record<string, number>
   dust: number
+  at: number
+}
+
+/** A support gift awaiting its window: what was added, the admin's short plain-text message (ES and/or EN) and when (ms). */
+export interface PendingGift {
+  items: Record<string, number>
+  dust: number
+  message: { es?: string; en?: string }
   at: number
 }
 

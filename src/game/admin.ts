@@ -4,7 +4,7 @@
  * Positive amounts only (a grant never takes anything away), with hard per-request caps.
  */
 import { defaultContext, type EngineContext } from '../engine'
-import type { GameDoc } from './protocol'
+import { GIFT_MESSAGE_MAX, type GameDoc, type LocalizedNote } from './protocol'
 
 /** Per-request caps. Generous for a lost-reward fix, too small to mint an account. */
 export const ADMIN_GRANT_LIMITS = {
@@ -16,15 +16,21 @@ export const ADMIN_GRANT_LIMITS = {
   maxDust: 5_000,
   reasonMin: 5,
   reasonMax: 280,
+  /** Gift messages a player can have waiting at once (older ones go first). */
+  maxPendingGifts: 10,
 } as const
 
 export interface AdminGrant {
   /** Item slug → units (balls, potions, stones…). */
   items?: Record<string, number>
   dust?: number
+  /** A short plain-text message the player sees in a window (`PlayerState.pendingGifts`). Needs `at`. */
+  message?: LocalizedNote
+  /** When the gift was made (epoch ms): the clock is the caller's, the reducer never reads it. */
+  at?: number
 }
 
-export type AdminGrantError = 'no_player' | 'empty_grant' | 'unknown_item' | 'invalid_amount' | 'too_many_items' | 'amount_too_large'
+export type AdminGrantError = 'no_player' | 'empty_grant' | 'unknown_item' | 'invalid_amount' | 'too_many_items' | 'amount_too_large' | 'invalid_message'
 
 export type AdminGrantResult = { ok: true; doc: GameDoc; applied: { items: Record<string, number>; dust: number } } | { ok: false; error: AdminGrantError }
 
@@ -45,7 +51,15 @@ export function checkAdminGrant(grant: AdminGrant, ctx: EngineContext = defaultC
     if (!isCount(grant.dust)) return 'invalid_amount'
     if (grant.dust > ADMIN_GRANT_LIMITS.maxDust) return 'amount_too_large'
   }
+  if (grant.message !== undefined && !isGiftMessage(grant.message)) return 'invalid_message'
   return null
+}
+
+const okText = (s: unknown): s is string => typeof s === 'string' && s.trim().length > 0 && s.length <= GIFT_MESSAGE_MAX && !/[<>\u0000-\u001f\u007f]/.test(s)
+/** At least one of es/en, each plain text within the limit (no `<`, `>` or control characters), nothing else. */
+const isGiftMessage = (m: LocalizedNote): boolean => {
+  const keys = Object.keys(m)
+  return keys.length > 0 && keys.every((k) => (k === 'es' || k === 'en') && okText((m as Record<string, unknown>)[k]))
 }
 
 /** Add the granted items and dust to the player's state. Never reads the clock or the RNG. */
@@ -58,5 +72,7 @@ export function applyAdminGrant(doc: GameDoc, grant: AdminGrant, ctx: EngineCont
   const dust = grant.dust ?? 0
   const inventory = { ...p.inventory }
   for (const [slug, n] of Object.entries(items)) inventory[slug] = (inventory[slug] ?? 0) + n
-  return { ok: true, doc: { ...doc, player: { ...p, inventory, dust: p.dust + dust } }, applied: { items: { ...items }, dust } }
+  // With a message the gift also queues a window; without one it is silent (as always).
+  const gifts = grant.message ? [...(p.pendingGifts ?? []), { items: { ...items }, dust, message: { ...grant.message }, at: grant.at ?? 0 }].slice(-ADMIN_GRANT_LIMITS.maxPendingGifts) : p.pendingGifts
+  return { ok: true, doc: { ...doc, player: { ...p, inventory, dust: p.dust + dust, ...(gifts && { pendingGifts: gifts }) } }, applied: { items: { ...items }, dust } }
 }

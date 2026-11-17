@@ -110,6 +110,8 @@ export type GameAction =
   | { type: 'dismissResults' }
   /** The trainer level-up window was closed: empties `PlayerState.pendingLevelUps` (idempotent). */
   | { type: 'ackLevelUp' }
+  /** The support-gift window was closed: empties `PlayerState.pendingGifts` (idempotent). */
+  | { type: 'ackGifts' }
   /** The league notice (rungs climbed, weekly podium) was seen: empties `PlayerState.pendingLeagueNotices` (idempotent). */
   | { type: 'ackLeagueNotices' }
   /** The trade arrival window was closed: empties `PlayerState.pendingTrades` (idempotent; GDD §12.8). */
@@ -192,6 +194,7 @@ export interface ActionResults {
   claim: { outcome: LastOutcome }
   dismissResults: null
   ackLevelUp: null
+  ackGifts: null
   ackLeagueNotices: null
   ackTrade: null
   throwBall: { outcome: ThrowOutcome }
@@ -624,6 +627,26 @@ export interface MaintenanceNotice {
 }
 
 export const MAINTENANCE_NOTE_MAX = 280
+
+/** A short plain-text note in Spanish and/or English (at least one). Never HTML: the client renders it as text. */
+export interface LocalizedNote {
+  es?: string
+  en?: string
+}
+/** Longest «note for players» of a published content version. */
+export const PLAYER_NOTE_MAX = 200
+/** Longest message of a support gift. */
+export const GIFT_MESSAGE_MAX = 120
+/** A content note is shown to players for this long after its version takes effect (a player away longer never sees it). */
+export const PLAYER_NOTE_WINDOW_MS = 14 * 86_400_000
+
+/** The note of the latest content version that took effect with one: shown once per device (`versionId`). */
+export interface ContentNoteNotice {
+  versionId: number
+  /** When the version took effect (epoch ms). */
+  effectiveAt: number
+  note: LocalizedNote
+}
 /** Longest window the admin can schedule. */
 export const MAINTENANCE_MAX_MS = 14 * 24 * 60 * 60 * 1000
 
@@ -667,6 +690,8 @@ export interface ContentResponse {
  */
 export interface AnnouncementsResponse {
   maintenance: MaintenanceNotice[]
+  /** Note for players of the latest version in force that has one (≤ `PLAYER_NOTE_WINDOW_MS` old); null = none. */
+  contentNote: ContentNoteNotice | null
   serverNow: number
 }
 
@@ -769,7 +794,7 @@ export interface PushPayload {
 /**
  *   GET  /api/admin/players?q=                → AdminPlayersResponse   (support+; q = 2..60 chars, at most 20 results)
  *   GET  /api/admin/players/:id               → AdminPlayerDetail      (support+)
- *   POST /api/admin/players/:id/grant         { items?, dust?, reason } → AdminPlayerDetail   (admin + sudo; audited)
+ *   POST /api/admin/players/:id/grant         { items?, dust?, message?, reason } → AdminPlayerDetail   (admin + sudo; audited)
  *   POST /api/admin/players/:id/unlock        { field } → AdminPlayerDetail                    (support+; audited)
  *   POST /api/admin/players/:id/cancel-session                → AdminPlayerDetail              (support+; audited)
  *   POST /api/admin/players/:id/logout-all                    → AdminPlayerDetail              (support+; audited)
@@ -922,6 +947,8 @@ export interface AdminContentVersionSummary {
    * event's start and end, or what was in force before the start changed. It still fires at the event's end.
    */
   revertStale: boolean
+  /** The note players see when this version takes effect (null = none). Set when publishing; never changes after. */
+  playerNote?: LocalizedNote | null
 }
 
 /** One changed path of a patch compared with the active one. `before`/`after`: the patch value, else the base value when known, else null. */

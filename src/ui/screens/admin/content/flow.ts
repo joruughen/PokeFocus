@@ -3,7 +3,7 @@
  * non-error statuses the screen has to handle: sudo needed, confirmation needed, validation failed), the schedule
  * input check and the «re-enter the password, then retry» helper.
  */
-import type { AdminContentVersion, ContentIssue } from '../../../../game/protocol'
+import type { AdminContentVersion, ContentIssue, LocalizedNote } from '../../../../game/protocol'
 import { errorCode, isApiError } from '../../../api'
 import { fromLocalInput } from '../../../lib/maintenance'
 import { contentApi, type PublishInput } from './api'
@@ -87,13 +87,21 @@ export function checkSchedule(localValue: string, now: number): { ok: true; at: 
 }
 
 /** Body of the publish request for the chosen plan. */
-export function publishInput(plan: SchedulePlan, confirm: boolean, note: string): PublishInput {
+/** The ES/EN note fields as the API wants them: trimmed, empty languages dropped, `undefined` when both are empty. */
+export function localizedNoteInput(es: string, en: string): LocalizedNote | undefined {
+  const e = es.trim()
+  const n = en.trim()
+  return e || n ? { ...(e && { es: e }), ...(n && { en: n }) } : undefined
+}
+
+export function publishInput(plan: SchedulePlan, confirm: boolean, note: string, playerNote?: LocalizedNote): PublishInput {
   const n = note.trim()
   return {
     ...(plan.mode === 'later' && { effectiveAt: plan.at }),
     ...(plan.mode === 'event' && { linkEventId: plan.eventId, ...(plan.revert && { revertWhenEnds: true }) }),
     ...(confirm && { confirm: true }),
     ...(n && { note: n }),
+    ...(playerNote && { playerNote }),
   }
 }
 

@@ -100,6 +100,8 @@ export interface EventLinkInput {
 }
 
 export interface PublishDraftInput extends EventLinkInput {
+  /** Note players see once when the version takes effect (already validated: plain text). */
+  playerNote?: { es?: string; en?: string }
   effectiveAt?: number
   userId?: string | null
   validation?: unknown
@@ -353,6 +355,7 @@ export function createContentService(opts: ContentServiceOptions): ContentServic
         ...(input.validation !== undefined && { validation: input.validation }),
         publishedBy: input.userId ?? null,
         publishedAt: new Date(t),
+        ...(input.playerNote && { playerNote: input.playerNote }),
         ...(input.linkedEventId && { linkedEventId: input.linkedEventId, linkedRole: input.linkedRole ?? 'start' }),
       })
       .where(eq(contentVersions.id, id))

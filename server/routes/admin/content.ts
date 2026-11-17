@@ -8,7 +8,7 @@
  *   PUT    /drafts/:id                 admin      { patch?, title?, note? }: saved even with errors (the validation is stored)
  *   DELETE /drafts/:id                 admin      → 204
  *   POST   /drafts/:id/validate        admin      full validation (with the engine smoke test) + diff; stores the result
- *   POST   /drafts/:id/publish         admin + sudo   { effectiveAt?, linkEventId?, revertWhenEnds?, confirm?, note? }: now, scheduled when in the future,
+ *   POST   /drafts/:id/publish         admin + sudo   { effectiveAt?, linkEventId?, revertWhenEnds?, confirm?, note?, playerNote?: {es?,en?} (≤200) }: now, scheduled when in the future,
  *                                                     or tied to a live event: it takes effect with it and follows its dates (see below)
  *   POST   /versions/:id/rollback      admin + sudo   { confirm?, note? }: a NEW version copying that patch, in force now
  *   POST   /versions/:id/unschedule    admin + sudo   cancels a scheduled version that is not in force yet: it goes back to a draft (409 not_scheduled otherwise);
@@ -58,7 +58,7 @@ import type {
   AdminSimRunSummary,
   AdminSpawnPreview,
 } from '../../../src/game/protocol'
-import { ADMIN_SIM_MAX_PLAYER_WEEKS, ADMIN_SIM_MAX_SEEDS, ADMIN_SIM_MAX_WEEKS, ADMIN_SIM_PROFILES, ADMIN_SIM_RECENT_MS } from '../../../src/game/protocol'
+import { PLAYER_NOTE_MAX, ADMIN_SIM_MAX_PLAYER_WEEKS, ADMIN_SIM_MAX_SEEDS, ADMIN_SIM_MAX_WEEKS, ADMIN_SIM_PROFILES, ADMIN_SIM_RECENT_MS } from '../../../src/game/protocol'
 import { audit } from '../../admin/audit'
 import { cancelReverts, contentBeforeEvent, linkedEvents, staleReverts, startEffectiveAt, toDraft } from '../../content/eventLink'
 import { patchHash, type ResolvedContent } from '../../content/service'
@@ -68,6 +68,7 @@ import { overlayOf } from '../../content/events'
 import { contentSimRuns, contentVersions, liveEvents, users } from '../../db/schema'
 import { ApiError, readBody, requireElevated, UUID_RE, type AppEnv, type Ctx, type Deps } from '../../http'
 import { RULES } from '../../rate-limit'
+import { localizedNote } from '../../validation'
 import type { Limit, Staff } from './players'
 
 export const MAX_OPEN_DRAFTS = 20
@@ -95,6 +96,8 @@ const publishBody = z
     revertWhenEnds: z.boolean().optional(),
     confirm: z.boolean().optional(),
     note: noteField.optional(),
+    /** What players read once when the version takes effect (ES and/or EN, plain text ≤ `PLAYER_NOTE_MAX`). */
+    playerNote: localizedNote(PLAYER_NOTE_MAX).optional(),
   })
   .refine((b) => !(b.linkEventId !== undefined && b.effectiveAt !== undefined), { message: 'link_and_time' })
   .refine((b) => !(b.revertWhenEnds && b.linkEventId === undefined), { message: 'revert_without_link' })
@@ -183,6 +186,7 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       linkedRole: r.linkedEventId ? r.linkedRole : null,
       revertOfVersionId: r.revertOfVersionId,
       revertStale: stale.has(r.id),
+      playerNote: r.playerNote ?? null,
     }
   }
 
@@ -427,7 +431,7 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
       const effectiveAt = ev ? startEffectiveAt(ev.startsAt.getTime(), now) : (body.effectiveAt ?? now)
       // What «going back» restores: what is in force at that moment without this version (and without anything else tied to the event).
       const before = ev && body.revertWhenEnds ? await contentBeforeEvent(tx, ev.id, effectiveAt) : null
-      const pub = await content.publishDraft(tx, id, { effectiveAt, userId: c.get('user').id, validation, ...(ev && { linkedEventId: ev.id, linkedRole: 'start' as const }) })
+      const pub = await content.publishDraft(tx, id, { effectiveAt, userId: c.get('user').id, validation, ...(body.playerNote && { playerNote: body.playerNote }), ...(ev && { linkedEventId: ev.id, linkedRole: 'start' as const }) })
       if (!pub) throw new ApiError(409, 'not_draft')
       if (body.note) await tx.update(contentVersions).set({ note: body.note }).where(eq(contentVersions.id, id))
       await audit(tx, c, {
@@ -442,6 +446,7 @@ export function contentAdminRoutes(deps: Deps, staff: Staff, limit: Limit) {
           changedPaths: diffPatches(active.patch, row.patch).length,
           warnings: validation.warnings.length,
           confirmed: !!body.confirm,
+          ...(body.playerNote && { playerNote: body.playerNote }),
           simRunId: row.hash === pre?.hash ? simulated : null,
           ...(ev && { linkedEventId: ev.id, eventSlug: ev.slug, linkedRole: 'start', eventStartsAt: ev.startsAt.getTime(), eventEndsAt: ev.endsAt.getTime(), immediate: effectiveAt <= now, revertWhenEnds: !!before }),
         },

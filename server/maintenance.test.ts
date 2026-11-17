@@ -96,7 +96,7 @@ describe('GET /api/announcements (public)', () => {
     const { call } = makeApp()
     const r = await call('GET', '/api/announcements', { token: null })
     expect(r.status).toBe(200)
-    expect(r.json).toEqual({ maintenance: [], serverNow: T0 })
+    expect(r.json).toEqual({ maintenance: [], contentNote: null, serverNow: T0 })
     expect(r.res.headers.get('cache-control')).toBe('no-store')
   })
 

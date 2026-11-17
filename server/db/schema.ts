@@ -274,6 +274,8 @@ export const contentVersions = pgTable(
     parentId: integer('parent_id'),
     title: text('title'),
     note: text('note'),
+    /** The note players see once when the version takes effect (`{ es?, en? }`, plain text ≤ 200). Set when publishing. */
+    playerNote: jsonb('player_note').$type<{ es?: string; en?: string }>(),
     /** null while a draft; in the future = scheduled. */
     effectiveAt: ts('effective_at'),
     /** Validation result (errors, warnings) of the last save/publish. */

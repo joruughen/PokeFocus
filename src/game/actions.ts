@@ -186,6 +186,11 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
       const { pendingLevelUps: _done, ...rest } = p
       return withPlayer(rest)
     }
+    case 'ackGifts': {
+      if (!p.pendingGifts) return withPlayer(p)
+      const { pendingGifts: _done, ...rest } = p
+      return withPlayer(rest)
+    }
     case 'ackLeagueNotices': {
       if (!p.pendingLeagueNotices) return withPlayer(p)
       const { pendingLeagueNotices: _seen, ...rest } = p

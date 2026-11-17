@@ -380,6 +380,18 @@ describe('damage split', () => {
   })
 })
 
+describe('support gift window (ackGifts)', () => {
+  it('empties pendingGifts, touches nothing else, is idempotent and needs a player', () => {
+    const doc = newPlayer()
+    const withGift: GameDoc = { ...doc, player: { ...doc.player!, dust: 30, pendingGifts: [{ items: {}, dust: 30, message: { en: 'Hi' }, at: T0 }] } }
+    const acked = must(withGift, { type: 'ackGifts' }, env(T0 + 1))
+    expect(acked.player!.pendingGifts).toBeUndefined()
+    expect(acked.player!.dust).toBe(30)
+    expect(must(acked, { type: 'ackGifts' }, env(T0 + 2)).player).toEqual(acked.player)
+    expect(applyAction(EMPTY_DOC, { type: 'ackGifts' }, env(T0))).toEqual({ ok: false, error: 'no_player' })
+  })
+})
+
 describe('trainer level-up window (ackLevelUp)', () => {
   const pending = [{ from: 1, to: 3, items: { 'poke-ball': 6 }, dust: 130, at: T0 }]
 
