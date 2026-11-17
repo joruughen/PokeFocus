@@ -202,12 +202,21 @@ export type EvolutionBlock =
   | 'wrong_time_of_day'
   | 'trade_unavailable'
   | 'unsupported'
+  | 'trainer_level_too_low'
+  | 'not_enough_candies'
+
+/** Candies of the line an evolution into a form of this stage costs (GDD §12.6). */
+export function evolutionCandyCost(targetStage: number, ctx: EngineContext = defaultContext()): number {
+  return ctx.config.evolution.candyCost[targetStage - 1] ?? 0
+}
 
 export interface EvolutionOption {
   to: string
   evolution: Evolution
   /** Null if it can evolve now. */
   blockedBy: EvolutionBlock | null
+  /** Candies of the line it costs. */
+  candyCost: number
 }
 
 /** Evolution options for a Pokémon right now (`now` decides the time of day). */
@@ -236,6 +245,16 @@ export function evolutionOptions(
     } else {
       blockedBy = 'unsupported'
     }
-    return { to, evolution: e, blockedBy }
+    // Requirements of the new form on top of the trigger (GDD §12.6): a third stage needs a minimum trainer level;
+    // every evolution costs candies of the line.
+    const target = getSpeciesById(e.to, ctx)
+    const evo = ctx.config.evolution
+    if (!blockedBy && target.stage >= 3) {
+      if (state.trainer.level < evo.stage3.minTrainerLevel) blockedBy = 'trainer_level_too_low'
+    }
+    const candyCost = evolutionCandyCost(target.stage, ctx)
+    const chainKey = String(sp.evolutionChainId)
+    if (!blockedBy && (state.candies.chains[chainKey] ?? 0) < candyCost) blockedBy = 'not_enough_candies'
+    return { to, evolution: e, blockedBy, candyCost }
   })
 }

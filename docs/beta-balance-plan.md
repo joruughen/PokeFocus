@@ -14,7 +14,7 @@ Objetivo: que el juego dure **años** (no infinito, pero sostenible) y que un ju
 8. **Polvo como freno real:** coste por caramelo creciente más que lineal (idea: `25 + 3·L + 0,05·L²`), al estilo de los Fragmentos de Sueño de Sleep. Hoy sobra el 99 % del Polvo. Decidir con el simulador.
 9. **Tope de nivel por Pokédex:** se reescribe en proporción al total de especies; sube 5-10 niveles con cada pack.
 10. **Evolucionar cuesta caramelos de su línea** (idea del usuario, 2026-11-16, importe a criterio de Claude): provisional **25 caramelos a 2.ª etapa y 100 a 3.ª** (como en Pokémon GO), a comprobar con el simulador porque compiten con los caramelos de subir nivel (hoy una evolución no cuesta nada, solo el objeto en las de piedra). Se aplica en el paso 6.
-10b. **3.ª etapa (opción A):** requisitos acumulativos (nivel, nivel de entrenador mínimo, horas de Vínculo, Pokédex mínima). La 2.ª etapa sigue fácil. Comprobar que los salvajes de 3.ª etapa no se capturen pronto fuera de la liga Ultra.
+10b. **3.ª etapa (el usuario quitó el 2026-11-16 los requisitos de Vínculo y de 20 especies; queda solo el nivel de entrenador 15 y el coste en caramelos):** solo nivel de entrenador mínimo (15) y el coste en caramelos de la decisión 10. La 2.ª etapa sigue fácil. Comprobar que los salvajes de 3.ª etapa no se capturen pronto fuera de la liga Ultra.
 11. **Contenido:** Kanto completo (151 especies) para la beta; un pack cada 4-6 meses, rellenando con eventos entre medias.
 12. **Alpha:** NO se resetea a los jugadores (son ~6 amigos de nivel bajo). Si hay que cambiar técnicas o pasivas, se ven afectados.
 13. **Pruebas de estrés automatizadas**, midiendo CPU, RAM, red, conexiones y latencia según la carga de usuarios, para saber si el servidor actual aguanta.
@@ -69,6 +69,8 @@ Objetivo del constante: nv. 36 a los ~2-3 meses (sem. 11), nv. 50 a los ~9 meses
 
 **Aplicado el 2026-11-16 (confirmado por el usuario):** `expCurve` con codo en el nivel 20 y exponente 4,0 después; coste de Polvo `25 + 3·L + 0,03·L²`. Ver GDD §12.1 y §12.3. Pendiente: repetir la medición con Kanto (151) y reajustar los topes por Pokédex en proporción.
 **Cambio de combate (2026-11-16, a petición del usuario):** lanzar una Ball en una oleada manual ya no hace atacar a nadie ni bloquea la oleada (GDD §11.4).
+
+**Kanto (paso 9, hecho por un agente el 2026-11-16, ver `docs/kanto-report.md`):** 158 especies (151 de Kanto + 7 de Johto del Pack 1), 115 habilidades, 81 técnicas especiales. Topes de nivel por Pokédex: 0→30, **55**→40 (bajado de 70 el 2026-11-16 para que el casual no se quede topado un año en el nv. 30), 100→50, 140→60. Pendiente: repetir la medición de la curva de EXP con Kanto cuando las ligas estén cerradas (el simulador con Kanto dio nv. 60 hacia la semana 40 con la métrica del nivel máximo, que se contamina con salvajes de nivel alto; hay que mirar el nivel medio del equipo).
 
 ## Pasos 4 y 5 — ligas con subrangos (hecho el 2026-11-17)
 

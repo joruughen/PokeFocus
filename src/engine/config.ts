@@ -235,6 +235,11 @@ export interface GameConfig {
    * With the Box full, a capture waits as pending (up to `maxPending`; shinies and legendaries always wait) until the
    * player swaps it for a Pokémon, converts it into candies or keeps it; past `maxPending` a normal capture becomes candies.
    */
+  /**
+   * Evolving (GDD §12.6): costs `candyCost[stage of the new form − 1]` candies of the line (index 0 = stage 1, never
+   * used), and a third-stage form also needs a minimum trainer level.
+   */
+  evolution: { candyCost: number[]; stage3: { minTrainerLevel: number } }
   box: { baseCapacity: number; perStep: number; stepLevels: number; maxCapacity: number; maxPending: number }
   leagues: {
     order: LeagueId[]
@@ -313,6 +318,7 @@ export const ENGINE_DEFAULTS = {
   },
   capture: { counter: { immuneHealPct: 0.25, damageMult: 1 } },
   progression: { maxLevel: 100 },
+  evolution: { candyCost: [0, 25, 100], stage3: { minTrainerLevel: 15 } },
   box: { baseCapacity: 150, perStep: 25, stepLevels: 5, maxCapacity: 400, maxPending: 10 },
   trainer: { expCoef: 100, expExponent: 1.5, expPerMinute: 1, expPerNewSpecies: 60, maxLevel: 50, levelRewards: { dustBase: 0, dustPerLevel: 0, tiers: [] } },
   advanced: {

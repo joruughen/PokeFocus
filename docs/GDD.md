@@ -755,7 +755,7 @@ Conclusión: los caramelos **aceleran mucho a niveles bajos** (ponerse al día c
 | Nivel máximo | Requisito (especies distintas capturadas) |
 |---|---|
 | 30 | — |
-| 40 | 70 |
+| 40 | 55 |
 | 50 | 100 |
 | 60 | 140 |
 | 60+ | Se amplía con cada pack de contenido **[calibrar]** |

@@ -301,11 +301,13 @@ export function evolvePokemon(
   const newMax = maxEnergyOf(evolved, ctx)
   evolved.energy = { ...p.energy, current: Math.min(newMax, p.energy.current + Math.max(0, newMax - oldMax)) }
   evolved.equippedMoves = evolved.equippedMoves.slice(0, techniqueSlots(evolved.level, ctx))
+  const chainKey = String(getSpecies(p.speciesSlug, ctx).evolutionChainId)
+  const chains = { ...state.candies.chains, [chainKey]: (state.candies.chains[chainKey] ?? 0) - opt.candyCost }
   const inventory = { ...state.inventory }
   if (opt.evolution.trigger === 'item' && opt.evolution.item) inventory[opt.evolution.item] = (inventory[opt.evolution.item] ?? 0) - 1
   const caught = state.pokedex.caught.includes(toSlug) ? state.pokedex.caught : [...state.pokedex.caught, toSlug]
   const seen = state.pokedex.seen.includes(toSlug) ? state.pokedex.seen : [...state.pokedex.seen, toSlug]
-  const next = recordMissionEvent({ ...state, inventory, pokedex: { seen, caught }, pokemon: { ...state.pokemon, [uid]: evolved } }, { kind: 'evolve' }, now, ctx)
+  const next = recordMissionEvent({ ...state, inventory, candies: { ...state.candies, chains }, pokedex: { seen, caught }, pokemon: { ...state.pokemon, [uid]: evolved } }, { kind: 'evolve' }, now, ctx)
   return ok({ state: next, pokemon: evolved })
 }
 

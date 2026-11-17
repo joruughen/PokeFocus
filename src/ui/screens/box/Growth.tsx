@@ -178,6 +178,10 @@ export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locke
         return o.evolution.timeOfDay === 'day' ? t('evo.block.day') : t('evo.block.night')
       case 'trade_unavailable':
         return t('evo.block.trade')
+      case 'trainer_level_too_low':
+        return t('evo.block.trainer', { need: cfg.evolution.stage3.minTrainerLevel, now: player.trainer.level })
+      case 'not_enough_candies':
+        return t('evo.block.candies', { count: o.candyCost - (player.candies.chains[String(view.species.evolutionChainId)] ?? 0) })
       default:
         return t('evo.block.other')
     }
@@ -198,6 +202,7 @@ export function Evolution({ view, locked, onEvolve }: { view: PokemonView; locke
                   <span className="block font-display text-lg leading-tight">{player.pokedex.seen.includes(o.to) ? names.species(o.to) : t('dex.unknownName')}</span>
                   <span className="block text-sm text-mist-300">{cond(o.evolution)}</span>
                   {o.blockedBy && <span className="block text-xs text-amber-400">{blocked(o)}</span>}
+                  {o.candyCost > 0 && <span className="block text-xs text-mist-300">{t('evo.cost', { count: o.candyCost, have: player.candies.chains[String(view.species.evolutionChainId)] ?? 0 })}</span>}
                   {o.evolution.trigger === 'item' && o.evolution.item && <span className="block text-xs text-mist-400">{t('evo.itemHave', { count: player.inventory[o.evolution.item] ?? 0 })}</span>}
                 </span>
               </div>

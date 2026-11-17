@@ -1647,6 +1647,7 @@
     "none": "{{name}} no evoluciona.",
     "final": "{{name}} ya está en su forma final.",
     "itemHave": "Tienes {{count}}",
+    "cost": "Cuesta {{count}} caramelos de su línea (tienes {{have}}).",
     "cond": {
       "level": "Al nivel {{level}}",
       "item": "Con una piedra",
@@ -1664,6 +1665,8 @@
       "day": "Solo de día (05:00 a 18:00).",
       "night": "Solo de noche (18:00 a 05:00).",
       "trade": "Evoluciona al recibirlo en un intercambio con un amigo.",
+      "trainer": "Necesitas nivel de entrenador {{need}} (ahora {{now}}).",
+      "candies": "Faltan caramelos de su línea: {{count}} más.",
       "other": "Aún no disponible en el prototipo."
     },
     "whatTitle": "¿Qué? ¡{{name}} está evolucionando!",

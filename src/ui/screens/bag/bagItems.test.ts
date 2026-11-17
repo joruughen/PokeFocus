@@ -83,7 +83,8 @@ describe('buildBagEntries', () => {
     expect(by('potion').users.map((u) => u.uid).sort()).toEqual(['hurt', 'out'])
     expect(by('revive').users.map((u) => u.uid)).toEqual(['out'])
     expect(by('moon-stone').users.map((u) => u.uid)).toEqual(['clef'])
-    expect(by('moon-stone').users[0]!.ready).toBe(true)
+    // The stone is there but the evolution also costs 25 candies of the line (GDD §12.6), which this player lacks.
+    expect(by('moon-stone').users[0]!.ready).toBe(false)
     // Advanced items: real descriptions, locked below their trainer level (the test player is level 1).
     expect(by('tera-shard').description).toContain('Teracristaliza')
     expect(by('tera-shard').description).toContain('2 Teralitos')

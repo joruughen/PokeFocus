@@ -163,7 +163,9 @@ describe('missions (GDD §13)', () => {
     const v = missionsView(r.value.state, T0, mctx)
     expect(v.daily.missions.find((m) => m.defId === 'd-study')!.completed).toBe(true)
     expect(v.weekly.missions.find((m) => m.defId === 'w-type')!.completed).toBe(true) // pidgey is normal/flying
-    const e = evolvePokemon(r.value.state, 'c', 'charmeleon', T0, createRng(2), mctx)
+    const chain = String(mctx.speciesBySlug.get('charmander')!.evolutionChainId) // evolving costs candies of the line (GDD §12.6)
+    const funded = { ...r.value.state, candies: { ...r.value.state.candies, chains: { ...r.value.state.candies.chains, [chain]: 25 } } }
+    const e = evolvePokemon(funded, 'c', 'charmeleon', T0, createRng(2), mctx)
     if (!e.ok) throw new Error(e.error)
     expect(missionsView(e.value.state, T0, mctx).weekly.missions.find((m) => m.defId === 'w-evolve')!.completed).toBe(true)
   })

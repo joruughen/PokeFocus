@@ -1647,6 +1647,7 @@
     "none": "{{name}} doesn't evolve.",
     "final": "{{name}} is already in its final form.",
     "itemHave": "You have {{count}}",
+    "cost": "Costs {{count}} candies of its line (you have {{have}}).",
     "cond": {
       "level": "At level {{level}}",
       "item": "With a stone",
@@ -1664,6 +1665,8 @@
       "day": "Only by day (05:00 to 18:00).",
       "night": "Only at night (18:00 to 05:00).",
       "trade": "It evolves when received in a trade with a friend.",
+      "trainer": "You need trainer level {{need}} (now {{now}}).",
+      "candies": "Missing candies of its line: {{count}} more.",
       "other": "Not available in the prototype yet."
     },
     "whatTitle": "What? {{name}} is evolving!",

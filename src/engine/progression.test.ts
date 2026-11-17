@@ -33,8 +33,8 @@ describe('EXP curve (GDD §12.1)', () => {
 
   it('level caps by distinct species caught (GDD §12.5)', () => {
     expect(levelCapFor(0)).toBe(30)
-    expect(levelCapFor(69)).toBe(30)
-    expect(levelCapFor(70)).toBe(40)
+    expect(levelCapFor(54)).toBe(30)
+    expect(levelCapFor(55)).toBe(40)
     expect(levelCapFor(100)).toBe(50)
     expect(levelCapFor(139)).toBe(50)
     expect(levelCapFor(140)).toBe(60)
@@ -118,22 +118,51 @@ describe('releaseMany', () => {
   })
 })
 
+const chainOf = (slug: string) => String(ctx.speciesBySlug.get(slug)!.evolutionChainId)
+const candiesFor = (slug: string, n: number) => ({ chains: { [chainOf(slug)]: n }, types: {} })
+
+describe('evolution costs and third-stage requirements (GDD §12.6)', () => {
+  const mon = (patch = {}) => makeMon('charmeleon', 40, { uid: 'c', ...patch })
+  const block = (s: ReturnType<typeof makePlayer>, m: ReturnType<typeof mon>) => evolutionOptions(s, m, T0).find((o) => o.to === 'charizard')?.blockedBy
+
+  it('a second stage costs 25 candies of its line, a third stage 100', () => {
+    expect(evolutionOptions(makePlayer([makeMon('charmander', 20, { uid: 'a' })]), makeMon('charmander', 20, { uid: 'a' }), T0)[0]!.candyCost).toBe(25)
+    expect(evolutionOptions(makePlayer([mon()]), mon(), T0)[0]!.candyCost).toBe(100)
+  })
+
+  it('a third stage needs trainer level 15 and the candies, in that order (no Bond or Pokédex requirement)', () => {
+    const base = makePlayer([mon()])
+    expect(block(base, mon())).toBe('trainer_level_too_low')
+    const lvl = { ...base, trainer: { ...base.trainer, level: 15 } }
+    expect(block(lvl, mon())).toBe('not_enough_candies') // no bond minutes and a tiny Pokédex are fine
+    const rich = { ...lvl, candies: candiesFor('charmander', 100) }
+    expect(block(rich, mon())).toBeNull()
+    expect(evolvePokemon({ ...rich, pokemon: { c: mon() }, team: ['c'] }, 'c', 'charizard', T0, createRng(1))).toMatchObject({ ok: true })
+  })
+
+  it('without enough candies the evolution fails and nothing is spent', () => {
+    const base = makePlayer([makeMon('charmander', 20, { uid: 'a' })], { candies: candiesFor('charmander', 24) })
+    expect(evolvePokemon(base, 'a', 'charmeleon', T0, createRng(1))).toEqual({ ok: false, error: 'not_enough_candies' })
+  })
+})
+
 describe('evolution (GDD §12.6)', () => {
   it('stone evolutions consume the item; trade is unavailable; friendship needs Bond and time', () => {
     const pika = makeMon('pikachu', 10, { uid: 'a' })
-    const s = makePlayer([pika], { inventory: { 'thunder-stone': 1 } })
+    const s = makePlayer([pika], { inventory: { 'thunder-stone': 1 }, candies: candiesFor('pikachu', 25) })
     const r = evolvePokemon(s, 'a', 'raichu', T0, createRng(1))
     expect(r.ok).toBe(true)
     if (r.ok) {
       expect(r.value.state.inventory['thunder-stone']).toBe(0)
       expect(r.value.state.pokemon.a!.speciesSlug).toBe('raichu')
       expect(r.value.state.pokedex.caught).toContain('raichu')
+      expect(r.value.state.candies.chains[chainOf('pikachu')]).toBe(0) // the evolution cost 25 candies
     }
     expect(evolvePokemon({ ...s, inventory: {} }, 'a', 'raichu', T0, createRng(1))).toEqual({ ok: false, error: 'missing_item' })
     const kadabra = makeMon('kadabra', 40, { uid: 'k' })
     expect(evolvePokemon(makePlayer([kadabra]), 'k', 'alakazam', T0, createRng(1))).toEqual({ ok: false, error: 'trade_unavailable' })
     const eevee = makeMon('eevee', 20, { uid: 'e', bondMinutes: 2000 })
-    const es = makePlayer([eevee])
+    const es = makePlayer([eevee], { candies: candiesFor('eevee', 25) })
     const day = Date.UTC(2026, 10, 3, 10)
     const night = Date.UTC(2026, 10, 3, 22)
     const opt = (now: number, slug: string) => evolutionOptions(es, eevee, now).find((o) => o.to === slug)?.blockedBy
