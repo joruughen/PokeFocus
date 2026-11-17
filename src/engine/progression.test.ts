@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evolvePokemon, MAX_RELEASE_BATCH, releaseMany, releasePokemon, useCandy } from './box'
+import { evolvePokemon, MAX_RELEASE_BATCH, previewCandies, releaseMany, releasePokemon, useCandy } from './box'
 import { defaultContext } from './context'
 import { candyDustCost, evolutionOptions, expForLevel, gainExp, levelCapFor, levelFromExp, trainerLevelFromExp } from './progression'
 import { createRng } from './rng'
@@ -65,6 +65,43 @@ describe('candies and dust (GDD §12.2–12.3)', () => {
     expect(useCandy(s, 'a', { kind: 'type', type: 'water' }, 1, ctx)).toEqual({ ok: false, error: 'wrong_type' })
     const capped = makePlayer([makeMon('charmander', 30, { uid: 'a' })], { dust: 1000, candies: { chains: { '2': 5 }, types: {} } })
     expect(useCandy(capped, 'a', { kind: 'species' }, 1, ctx)).toEqual({ ok: false, error: 'level_cap' })
+  })
+
+  it('previewCandies simulates useCandy without touching the state', () => {
+    const p = makeMon('charmander', 10, { uid: 'a' })
+    const s = makePlayer([p], { dust: 5000, candies: { chains: { '2': 40 }, types: {} } })
+    const snap = JSON.stringify(s)
+    const pv = previewCandies(s, 'a', { kind: 'species' }, 6, ctx)
+    expect(JSON.stringify(s)).toBe(snap)
+    const real = useCandy(s, 'a', { kind: 'species' }, 6, ctx)
+    expect(pv.ok && real.ok).toBe(true)
+    if (!pv.ok || !real.ok) return
+    expect(pv.value.used).toBe(6)
+    expect(pv.value.stoppedBy).toBeNull()
+    expect(pv.value.dustSpent).toBe(real.value.dustSpent)
+    expect(pv.value.dustLeft).toBe(real.value.state.dust)
+    expect(pv.value.candiesLeft).toBe(real.value.state.candies.chains['2'])
+    expect(pv.value.levelTo).toBe(real.value.state.pokemon.a!.level)
+    expect(pv.value.expGained).toBe(real.value.state.pokemon.a!.exp - p.exp)
+    expect(pv.value.levelTo).toBeGreaterThan(pv.value.levelFrom)
+  })
+
+  it('previewCandies stops at the level cap and reports unused candies; never errors on cap/dust', () => {
+    const cap = levelCapFor(makePlayer([]).pokedex.caught.length, ctx)
+    const p = makeMon('charmander', cap - 1, { uid: 'a' })
+    const s = makePlayer([p], { dust: 100000, candies: { chains: { '2': 50 }, types: {} } })
+    const pv = previewCandies(s, 'a', { kind: 'species' }, 50, ctx)
+    expect(pv.ok).toBe(true)
+    if (!pv.ok) return
+    expect(pv.value.levelTo).toBe(cap)
+    expect(pv.value.used).toBeLessThan(50)
+    expect(pv.value.unused).toBe(50 - pv.value.used)
+    expect(pv.value.stoppedBy).toBe('level_cap')
+    const atCap = previewCandies({ ...s, pokemon: { a: makeMon('charmander', cap, { uid: 'a' }) } }, 'a', { kind: 'species' }, 3, ctx)
+    expect(atCap.ok && atCap.value.used).toBe(0)
+    const broke = previewCandies({ ...s, dust: 0 }, 'a', { kind: 'species' }, 3, ctx)
+    expect(broke.ok && broke.value.stoppedBy).toBe('not_enough_dust')
+    expect(previewCandies(s, 'a', { kind: 'type', type: 'water' }, 1, ctx)).toEqual({ ok: false, error: 'wrong_type' })
   })
 
   it('release gives candies by stage; team members cannot be released', () => {

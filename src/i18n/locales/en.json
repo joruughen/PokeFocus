@@ -992,7 +992,7 @@
       },
       "league": {
         "title": "This week's league",
-        "body": "Your team's points move you up, and a higher league brings bigger waves. Every Monday everyone goes back to Base League."
+        "body": "Your team's points move you up, and a higher league brings bigger waves. You climb through ranks: Base 1-5, Super 1-5, Ultra 1-5 and Master 1-25. Every Monday everyone goes back to Base 1."
       },
       "energy": {
         "title": "Energy",
@@ -1174,7 +1174,7 @@
     "league": {
       "intro": {
         "title": "This week's league",
-        "body": "Your team's points raise your league, and each league lets more wild Pokémon appear per wave. Every Monday everyone goes back to Base."
+        "body": "Your team's points raise your league, and each league lets more wild Pokémon appear per wave. You climb through ranks: Base 1-5, Super 1-5, Ultra 1-5 and Master 1-25. Every Monday everyone goes back to Base 1."
       },
       "stats": {
         "title": "Your stats",
@@ -1621,8 +1621,6 @@
     "more": "One more",
     "use_one": "Use {{count}}",
     "use_other": "Use {{count}}",
-    "reach": "It will reach Lv {{level}}.",
-    "reachSame": "Gets it closer to the next level.",
     "noneOfThese": "You have none of these. Catch or release Pokémon of this line.",
     "noDust": "Not enough Dust: each candy costs {{cost}} at this level.",
     "costNote": "Each candy costs {{cost}} Dust at this level, and more as it levels up. You have {{dust}}.",
@@ -1637,6 +1635,19 @@
   },
   "evo": {
     "title": "Evolution",
+    "preview": {
+      "title": "Preview (nothing applies until you confirm)",
+      "level": "Lv. {{level}}",
+      "levelUp": "Lv. {{from}} → {{to}}",
+      "before": "Now",
+      "after": "After",
+      "exp": "EXP gained",
+      "candies": "Candies",
+      "dust": "Dust",
+      "fromTo": "{{from}} → {{to}} (−{{spent}})",
+      "capStop": "Level cap {{cap}}: only what is needed is spent. {{count}} of {{asked}} candies stay unused.",
+      "dustStop": "Not enough Dust: {{count}} of {{asked}} candies stay unused."
+    },
     "button": "Evolve",
     "previewShow": "See stat changes",
     "previewHide": "Hide stat changes",

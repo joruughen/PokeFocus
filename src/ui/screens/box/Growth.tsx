@@ -5,7 +5,8 @@ import {
   isAsleepAt,
   candyDustCost,
   levelCap,
-  levelFromExp,
+  previewCandies,
+  type CandyPreview,
   type CandyKind,
   type EvolutionOption,
   type PokemonView,
@@ -98,7 +99,7 @@ export function Candies({ view, locked }: { view: PokemonView; locked: string | 
       ) : (
         <ul className="flex flex-col gap-3">
           {kinds.map((k) => (
-            <CandyRow key={k.key} label={k.label} have={k.have} exp={k.exp} cost={cost} dust={player.dust} disabled={Boolean(locked) || busy} level={p.level} exp0={p.exp} cap={cap}
+            <CandyRow key={k.key} label={k.label} have={k.have} exp={k.exp} cost={cost} kind={k.kind} uid={p.uid} disabled={Boolean(locked) || busy}
               onUse={async (n) => {
                 if (busy) return
                 const r = await feed(p.uid, k.kind, n)
@@ -122,13 +123,15 @@ export function Candies({ view, locked }: { view: PokemonView; locked: string | 
   )
 }
 
-function CandyRow({ label, have, exp, cost, dust, disabled, level, exp0, cap, onUse }: { label: string; have: number; exp: number; cost: number; dust: number; disabled: boolean; level: number; exp0: number; cap: number; onUse: (n: number) => void }) {
+function CandyRow({ label, have, exp, cost, kind, disabled, uid, onUse }: { label: string; have: number; exp: number; cost: number; kind: CandyKind; disabled: boolean; uid: string; onUse: (n: number) => void }) {
   const { t } = useTranslation()
-  const affordable = Math.max(0, Math.min(have, Math.floor(dust / Math.max(1, cost))))
+  const player = usePlayer()
   const [n, setN] = useState(1)
-  const count = Math.max(1, Math.min(n, Math.max(1, affordable)))
-  const reach = Math.min(cap, levelFromExp(exp0 + count * exp))
-  const why = have === 0 ? t('candy.noneOfThese') : affordable === 0 ? t('candy.noDust', { cost }) : null
+  const dustOk = player.dust >= cost
+  const count = Math.max(1, Math.min(n, Math.max(1, have)))
+  const r = previewCandies(player, uid, kind, count)
+  const preview = r.ok ? r.value : null
+  const why = have === 0 ? t('candy.noneOfThese') : !dustOk ? t('candy.noDust', { cost }) : null
   return (
     <li className={cx('bg-dusk-900 p-3 inset-shadow-well', have === 0 && 'opacity-60')}>
       <div className="flex items-center gap-3">
@@ -142,17 +145,70 @@ function CandyRow({ label, have, exp, cost, dust, disabled, level, exp0, cap, on
       {why ? (
         <p className="mt-2 text-xs text-mist-400">{why}</p>
       ) : (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <IconButton icon="minus" size="sm" label={t('candy.less')} onClick={() => setN(Math.max(1, count - 1))} disabled={count <= 1} />
-          <span className="w-8 text-center font-num text-2xl leading-none tabular" aria-live="polite">{count}</span>
-          <IconButton icon="plus" size="sm" label={t('candy.more')} onClick={() => setN(Math.min(affordable, count + 1))} disabled={count >= affordable} />
-          <Button size="sm" className="ml-auto" disabled={disabled} onClick={() => onUse(count)} data-sfx="none">
-            {t('candy.use', { count })}
-          </Button>
-          <span className="w-full text-xs text-mist-300">{reach > level ? t('candy.reach', { level: reach }) : t('candy.reachSame')}</span>
+        <div className="mt-3 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <IconButton icon="minus" size="sm" label={t('candy.less')} onClick={() => setN(Math.max(1, count - 1))} disabled={count <= 1} />
+            <span className="w-8 text-center font-num text-2xl leading-none tabular" aria-live="polite">{count}</span>
+            <IconButton icon="plus" size="sm" label={t('candy.more')} onClick={() => setN(Math.min(have, count + 1))} disabled={count >= have} />
+            <Button size="sm" className="ml-auto" disabled={disabled || !preview || preview.used < 1} onClick={() => preview && onUse(preview.used)} data-sfx="none">
+              {t('candy.use', { count: preview?.used ?? count })}
+            </Button>
+          </div>
+          {preview && <CandyPreviewBox preview={preview} asked={count} />}
         </div>
       )}
     </li>
+  )
+}
+
+/** What the chosen amount would do (engine `previewCandies`). Nothing is applied until the button is pressed. */
+export function CandyPreviewBox({ preview: v, asked }: { preview: CandyPreview; asked: number }) {
+  const { t, i18n } = useTranslation()
+  const lng = i18n.language
+  const up = v.levelTo > v.levelFrom
+  const sameLevel = !up
+  return (
+    <div className="flex flex-col gap-2 border-2 border-dashed border-mist-400/30 p-2" data-testid="candy-preview">
+      <span className="font-display text-sm uppercase tracking-wide text-mist-400">{t('candy.preview.title')}</span>
+      {up ? (
+        <span key={v.levelTo} className="flex animate-pop-in items-center gap-1.5 whitespace-nowrap font-num text-2xl leading-none text-volt-300 tabular">
+          <PixelIcon name="sparkle" size={14} className="animate-twinkle" />
+          {t('candy.preview.levelUp', { from: v.levelFrom, to: v.levelTo })}
+        </span>
+      ) : (
+        <span className="whitespace-nowrap font-num text-2xl leading-none tabular text-mist-100">{t('candy.preview.level', { level: v.levelTo })}</span>
+      )}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-baseline justify-between text-xs text-mist-400">
+            <span>{t('candy.preview.before')}</span>
+            <span className="font-num tabular">{fmtInt(v.intoFrom, lng)}/{fmtInt(v.forNextFrom, lng)}</span>
+          </div>
+          <ProgressBar size="sm" variant="exp" value={v.intoFrom} max={v.forNextFrom} label={t('candy.preview.before')} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-baseline justify-between text-xs text-mist-100">
+            <span>{t('candy.preview.after')}</span>
+            <span className="font-num tabular">{fmtInt(v.intoTo, lng)}/{fmtInt(v.forNextTo, lng)}</span>
+          </div>
+          <ProgressBar size="sm" variant="exp" value={v.intoTo} max={v.forNextTo} from={sameLevel ? v.intoFrom : undefined} label={t('candy.preview.after')} />
+        </div>
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-mist-300">
+        <dt>{t('candy.preview.exp')}</dt>
+        <dd className="text-right font-num tabular text-exp-400">+{fmtInt(v.expGained, lng)}</dd>
+        <dt>{t('candy.preview.candies')}</dt>
+        <dd className="whitespace-nowrap text-right font-num tabular">{t('candy.preview.fromTo', { from: fmtInt(v.candiesLeft + v.used, lng), to: fmtInt(v.candiesLeft, lng), spent: v.used })}</dd>
+        <dt>{t('candy.preview.dust')}</dt>
+        <dd className="whitespace-nowrap text-right font-num tabular">{t('candy.preview.fromTo', { from: fmtInt(v.dustLeft + v.dustSpent, lng), to: fmtInt(v.dustLeft, lng), spent: fmtInt(v.dustSpent, lng) })}</dd>
+      </dl>
+      {v.unused > 0 && (
+        <p className="flex items-start gap-1 text-xs text-amber-400" role="status">
+          <PixelIcon name="lock" size={12} className="mt-0.5 shrink-0" />
+          {v.stoppedBy === 'level_cap' ? t('candy.preview.capStop', { cap: v.levelTo, count: v.unused, asked }) : t('candy.preview.dustStop', { count: v.unused, asked })}
+        </p>
+      )}
+    </div>
   )
 }
 

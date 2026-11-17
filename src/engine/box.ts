@@ -240,6 +240,70 @@ export function useCandy(
   }
 }
 
+export interface CandyPreview {
+  /** Candies really spent (can be fewer than asked: the level cap or the Dust stop the loop). */
+  used: number
+  /** Asked but not spent. */
+  unused: number
+  /** Why `unused > 0`. */
+  stoppedBy: 'level_cap' | 'not_enough_dust' | null
+  dustSpent: number
+  dustLeft: number
+  candiesLeft: number
+  levelFrom: number
+  levelTo: number
+  expFrom: number
+  expTo: number
+  expGained: number
+  /** EXP into the level and EXP the level needs (for the bar), before and after. */
+  intoFrom: number
+  intoTo: number
+  forNextFrom: number
+  forNextTo: number
+  events: ProgressEvent[]
+}
+
+/**
+ * Pure preview of `useCandy` (same loop, nothing applied). Unlike `useCandy`, a request that
+ * cannot spend a single candy (cap / Dust) is not an error: it returns `used: 0` with `stoppedBy`.
+ */
+export function previewCandies(
+  state: PlayerState,
+  uid: string,
+  candy: CandyKind,
+  count: number,
+  ctx: EngineContext = defaultContext(),
+): Result<CandyPreview, BoxError> {
+  const p = state.pokemon[uid]
+  const r = useCandy(state, uid, candy, count, ctx)
+  if (!r.ok && r.error !== 'level_cap' && r.error !== 'not_enough_dust') return err(r.error)
+  const after = r.ok ? r.value.state : state
+  const q = after.pokemon[uid] as OwnedPokemon
+  const sp = getSpecies((p as OwnedPokemon).speciesSlug, ctx)
+  const bag = (s: PlayerState) => (candy.kind === 'species' ? (s.candies.chains[String(sp.evolutionChainId)] ?? 0) : (s.candies.types[candy.type] ?? 0))
+  const used = bag(state) - bag(after)
+  const span = (lv: number) => expForLevel(lv + 1, ctx) - expForLevel(lv, ctx)
+  const p0 = p as OwnedPokemon
+  return ok({
+    used,
+    unused: count - used,
+    stoppedBy: used >= count ? null : r.ok ? (q.level >= levelCap(state, ctx) ? 'level_cap' : 'not_enough_dust') : (r.error as 'level_cap' | 'not_enough_dust'),
+    dustSpent: state.dust - after.dust,
+    dustLeft: after.dust,
+    candiesLeft: bag(after),
+    levelFrom: p0.level,
+    levelTo: q.level,
+    expFrom: p0.exp,
+    expTo: q.exp,
+    expGained: q.exp - p0.exp,
+    intoFrom: p0.exp - expForLevel(p0.level, ctx),
+    intoTo: q.exp - expForLevel(q.level, ctx),
+    forNextFrom: span(p0.level),
+    forNextTo: span(q.level),
+    events: r.ok ? r.value.events : [],
+  })
+}
+
 /** Equip techniques (validated against slots, known and usable moves). Not during a session. */
 export function equipMoves(state: PlayerState, uid: string, moves: string[], ctx: EngineContext = defaultContext()): Result<PlayerState, BoxError> {
   const p = state.pokemon[uid]

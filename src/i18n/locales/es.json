@@ -992,7 +992,7 @@
       },
       "league": {
         "title": "Tu liga de la semana",
-        "body": "Los puntos de tu equipo te suben de liga, y una liga más alta trae oleadas más grandes. Cada lunes todos vuelven a la Liga Base."
+        "body": "Los puntos de tu equipo te suben de liga, y una liga más alta trae oleadas más grandes. Subes por rangos: Base 1-5, Super 1-5, Ultra 1-5 y Maestra 1-25. Cada lunes todos vuelven a Base 1."
       },
       "energy": {
         "title": "Energía",
@@ -1174,7 +1174,7 @@
     "league": {
       "intro": {
         "title": "La liga de la semana",
-        "body": "Los puntos de tu equipo suben tu liga, y cada liga deja aparecer más salvajes por oleada. Cada lunes todos vuelven a la Base."
+        "body": "Los puntos de tu equipo suben tu liga, y cada liga deja aparecer más salvajes por oleada. Subes por rangos: Base 1-5, Super 1-5, Ultra 1-5 y Maestra 1-25. Cada lunes todos vuelven a Base 1."
       },
       "stats": {
         "title": "Tus estadísticas",
@@ -1621,8 +1621,6 @@
     "more": "Uno más",
     "use_one": "Usar {{count}}",
     "use_other": "Usar {{count}}",
-    "reach": "Llegará al Nv {{level}}.",
-    "reachSame": "Le acerca al siguiente nivel.",
     "noneOfThese": "No tienes de estos. Captura o suelta Pokémon de esta línea.",
     "noDust": "Te falta Polvo: cada caramelo cuesta {{cost}} a este nivel.",
     "costNote": "Cada caramelo cuesta {{cost}} de Polvo a este nivel y sube con el nivel. Tienes {{dust}}.",
@@ -1637,6 +1635,19 @@
   },
   "evo": {
     "title": "Evolución",
+    "preview": {
+      "title": "Vista previa (no se aplica hasta confirmar)",
+      "level": "Nv. {{level}}",
+      "levelUp": "Nv. {{from}} → {{to}}",
+      "before": "Ahora",
+      "after": "Después",
+      "exp": "EXP ganada",
+      "candies": "Caramelos",
+      "dust": "Polvo",
+      "fromTo": "{{from}} → {{to}} (−{{spent}})",
+      "capStop": "Tope de nivel {{cap}}: solo se gastan los necesarios. {{count}} de {{asked}} caramelos se quedan sin usar.",
+      "dustStop": "No alcanza el Polvo: {{count}} de {{asked}} caramelos se quedan sin usar."
+    },
     "button": "Evolucionar",
     "previewShow": "Ver cambios de estadísticas",
     "previewHide": "Ocultar cambios de estadísticas",
