@@ -24,9 +24,9 @@ describe('Dex entry: spawn line', () => {
       expect(html).not.toMatch(RAW_KEY)
       const n = /(?:1 de cada|1 in) (\d+) (?:salvajes|wild)/.exec(html)
       expect(n).not.toBeNull()
-      // ≈1.5 % → about 1 in 65-70
-      expect(Number(n![1])).toBeGreaterThanOrEqual(60)
-      expect(Number(n![1])).toBeLessThanOrEqual(70)
+      // ≈0.4 % with all of Kanto → about 1 in 260
+      expect(Number(n![1])).toBeGreaterThanOrEqual(170)
+      expect(Number(n![1])).toBeLessThanOrEqual(330)
       expect(html).toContain(i18n.t('dex.spawn.helpLabel'))
     })
 

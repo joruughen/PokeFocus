@@ -7,12 +7,13 @@ const ctx = baseContext()
 const sp = (slug: string) => ctx.speciesBySlug.get(slug)!
 
 describe('base spawn odds (Pokédex)', () => {
-  it('Bulbasaur is about 1.5 % of the wilds at a low trainer level', () => {
+  // With all of Kanto (158 species) a starter (capture rate 45) is about 0.4 % of the wilds.
+  it('Bulbasaur is about 0.4 % of the wilds at a low trainer level', () => {
     const b = baseSpawn(ctx, 'bulbasaur', 1)
     expect(b?.kind).toBe('chance')
     if (b?.kind === 'chance') {
-      expect(b.probability).toBeGreaterThan(0.012)
-      expect(b.probability).toBeLessThan(0.018)
+      expect(b.probability).toBeGreaterThan(0.003)
+      expect(b.probability).toBeLessThan(0.006)
     }
   })
 

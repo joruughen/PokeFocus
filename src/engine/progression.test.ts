@@ -33,9 +33,11 @@ describe('EXP curve (GDD §12.1)', () => {
 
   it('level caps by distinct species caught (GDD §12.5)', () => {
     expect(levelCapFor(0)).toBe(30)
-    expect(levelCapFor(24)).toBe(30)
-    expect(levelCapFor(25)).toBe(40)
-    expect(levelCapFor(45)).toBe(50)
+    expect(levelCapFor(69)).toBe(30)
+    expect(levelCapFor(70)).toBe(40)
+    expect(levelCapFor(100)).toBe(50)
+    expect(levelCapFor(139)).toBe(50)
+    expect(levelCapFor(140)).toBe(60)
   })
 
   it('trainer level grows with study', () => {
