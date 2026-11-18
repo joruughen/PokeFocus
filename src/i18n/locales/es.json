@@ -2266,8 +2266,8 @@
   },
   "group": {
     "title": "Estudiar con amigos",
-    "intro": "Invita a tus amigos a la misma sesión. Tus Pokémon de tipo Hada ganan hasta +{{pct}} %, en proporción al tiempo que estudias acompañado.",
-    "noFairyHint": "Ahora no tienes ningún Pokémon de tipo Hada en el equipo: el bonus solo les afecta a ellos.",
+    "intro": "Invita a tus amigos a la misma sesión. Todo tu equipo gana hasta +{{teamPct}} % de puntos y EXP, y la sesión da hasta +{{dustPct}} % de Polvo, y tus Pokémon de tipo Hada hasta +{{pct}} % más, en proporción al tiempo que estudias acompañado.",
+    "noFairyHint": "Ahora no tienes ningún Pokémon de tipo Hada en el equipo: solo cuenta el bonus de equipo.",
     "studyWithFriends": "Estudiar con amigos",
     "pickFriends": "Elige a quién invitar a una sesión de {{minutes}} min (la duración que tienes seleccionada).",
     "sendInvites_one": "Invitar a {{count}} amigo · {{minutes}} min",

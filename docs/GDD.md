@@ -499,6 +499,8 @@ Los tipos importan **dos veces**:
 | Acero | Sesión iniciada ±1 h de la hora de inicio de la primera sesión de ayer | ×1.35 |
 | Hada | Sesión en grupo con amigos: proporcional al tiempo acompañado, `1 + 0.40 × fracción` (sin umbral) | hasta ×1.40 |
 
+**Bonus de equipo en grupo (0.13.1):** además, en una sesión de grupo **todo el equipo** (de cualquier tipo) multiplica sus puntos y su EXP por `1 + groupTeamBonus × fracción acompañada` (`conditions.groupTeamBonus` = 0.05, hasta ×1.05). Se suma al Hada, no lo sustituye. El **Polvo** de la sesión se multiplica por `1 + groupDustBonus × fracción` (`conditions.groupDustBonus` = 0.10, hasta ×1.10). No afecta a las Balls ni al Vínculo. Entra en la etapa «mods» del desglose de puntos.
+
 **Cobertura por estilo:**
 
 | Estilo | Tipos a favor |

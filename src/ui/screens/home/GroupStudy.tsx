@@ -58,7 +58,10 @@ export function GroupStudyPanel({ minutes }: { minutes: number }) {
 }
 
 function CreateGroup({ minutes }: { minutes: number }) {
-  const fairyPct = Math.round((useContent().config.conditions.fairy - 1) * 100)
+  const cond = useContent().config.conditions
+  const fairyPct = Math.round((cond.fairy - 1) * 100)
+  const teamPct = Math.round(cond.groupTeamBonus * 100)
+  const dustPct = Math.round(cond.groupDustBonus * 100)
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const create = useGroups((s) => s.create)
@@ -68,7 +71,7 @@ function CreateGroup({ minutes }: { minutes: number }) {
   if (!open) {
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-mist-300">{t('group.intro', { pct: fairyPct })}</p>
+        <p className="text-sm text-mist-300">{t('group.intro', { pct: fairyPct, teamPct, dustPct })}</p>
         {!hasFairy && <p className="text-xs text-mist-400">{t('group.noFairyHint')}</p>}
         <div>
           <Button variant="secondary" icon="friends" onClick={() => setOpen(true)}>

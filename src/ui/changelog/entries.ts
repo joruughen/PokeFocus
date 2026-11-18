@@ -29,6 +29,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.13.1',
+    date: '2026-11-17',
+    title: { es: 'Estudiar en grupo da más', en: 'Studying in a group pays more' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Estudiar con amigos da ahora un bonus a todo tu equipo: hasta +5 % de puntos y EXP, en proporción al tiempo que estudias acompañado, tengas o no Pokémon de tipo Hada. Además, el Polvo de la sesión sube hasta +10 %. Los Hada siguen ganando su bonus aparte.',
+          en: 'Studying with friends now gives your whole team a bonus: up to +5% points and EXP, in proportion to the time you study together, whether or not you have Fairy-type Pokémon. Session Dust also grows by up to +10%. Fairy types still get their own bonus on top.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.13.0',
     date: '2026-11-16',
     title: { es: 'Progreso a largo plazo y Caja con límite', en: 'Long-term progression and a limited Box' },

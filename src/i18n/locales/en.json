@@ -2266,8 +2266,8 @@
   },
   "group": {
     "title": "Study with friends",
-    "intro": "Invite friends to the same session. Your Fairy-type Pokémon get up to +{{pct}}%, in proportion to the time you study together.",
-    "noFairyHint": "You have no Fairy-type Pokémon on your team right now: the bonus only affects them.",
+    "intro": "Invite friends to the same session. Your whole team earns up to +{{teamPct}}% points and EXP, the session gives up to +{{dustPct}}% Dust, and your Fairy-type Pokémon up to +{{pct}}% more, in proportion to the time you study together.",
+    "noFairyHint": "You have no Fairy-type Pokémon on your team right now: only the team bonus applies.",
     "studyWithFriends": "Study with friends",
     "pickFriends": "Choose who to invite to a {{minutes}}-min session (the duration you have selected).",
     "sendInvites_one": "Invite {{count}} friend · {{minutes}} min",

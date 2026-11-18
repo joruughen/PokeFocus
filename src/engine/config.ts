@@ -102,6 +102,10 @@ export interface GameConfig {
     steel: number
     steelWindowMinutes: number
     fairy: number
+    /** Study group: every member of the team earns `1 + groupTeamBonus × accompanied share` of points and EXP (any types). */
+    groupTeamBonus: number
+    /** Study group: the session's Dust is multiplied by `1 + groupDustBonus × accompanied share`. */
+    groupDustBonus: number
     electricMaxMinutes: number
     electricChainGapMinutes: number
     fightingMinMinutes: number

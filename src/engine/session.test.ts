@@ -414,3 +414,26 @@ describe('cancelling a long session (GDD §3.4)', () => {
     expect(paused).toMatchObject({ lateClaim: false, focus: 1 })
   })
 })
+
+describe('study group team bonus', () => {
+  it('every Pokémon earns points and EXP in proportion to the accompanied share, whatever its types', () => {
+    const mon = () => makePlayer([makeMon('machop', 50, { uid: 'a' })])
+    const solo = runSession(mon(), 25, 3).result.members[0]!
+    const half = runSession(mon(), 25, 3, { friendOverlap: 0.5 }).result.members[0]!
+    const full = runSession(mon(), 25, 3, { friendOverlap: 1 }).result.members[0]!
+    const b = cfg.conditions.groupTeamBonus
+    expect(b).toBeGreaterThan(0)
+    expect(full.exp).toBeGreaterThan(solo.exp)
+    expect(full.exp / solo.exp).toBeCloseTo(1 + b, 1)
+    expect(half.exp / solo.exp).toBeCloseTo(1 + b / 2, 1)
+    expect(full.points).toBeGreaterThanOrEqual(solo.points)
+  })
+
+  it('the session Dust grows with the accompanied share', () => {
+    const run = (o?: number) => runSession(makePlayer([makeMon('machop', 50, { uid: 'a' })]), 50, 3, o === undefined ? {} : { friendOverlap: o }).result.dust
+    const solo = run()
+    expect(run(1)).toBe(Math.round(solo * (1 + cfg.conditions.groupDustBonus)))
+    expect(run(0.5)).toBeGreaterThan(solo)
+    expect(run(0.5)).toBeLessThan(run(1))
+  })
+})

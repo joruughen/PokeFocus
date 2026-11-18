@@ -638,6 +638,10 @@ export function completeSession(
   const lateMult = lateClaim ? cfg.session.lateClaimMultiplier : 1
   const today = state.days[dayKey]
   const rewardFactor = valid ? dailyRewardFactor(today?.minutes ?? 0, minutes, cfg) : 0
+  // Study group: the whole team earns a small bonus in proportion to the accompanied share (the Fairy type adds its own on top).
+  const groupShare = Math.min(1, Math.max(0, input.friendOverlap ?? 0))
+  const groupMult = 1 + cfg.conditions.groupTeamBonus * groupShare
+  const groupDustMult = 1 + cfg.conditions.groupDustBonus * groupShare
   const baseCapture = captureValue(input.focusInputs, cfg)
   const focus = baseCapture * lateMult
   const totalSeconds = minutes * 60
@@ -889,7 +893,7 @@ export function completeSession(
         }
       }
       const basePts = basePointsPerAction(s.stats.specialAttack, cfg)
-      const pointsMod = mult(s, 'points', wc)
+      const pointsMod = mult(s, 'points', wc) * groupMult
       const pts = basePts * cond * s.bond * s.focusEff * pointsMod * burst
       // Breakdown (report only): the same product, stage by stage.
       {
@@ -1027,7 +1031,7 @@ export function completeSession(
   }
   const memberResults: MemberResult[] = sims.map((s) => {
     const staticWc = { ...baseWc, isLeader: s.slot === 0, energyFraction: s.energyStart / s.max }
-    const expMult = selfStatMult(s.passives, 'exp', staticWc, cfg) * (teamMods.exp ?? 1)
+    const expMult = selfStatMult(s.passives, 'exp', staticWc, cfg) * (teamMods.exp ?? 1) * groupMult
     const bondMult = selfStatMult(s.passives, 'bondGain', staticWc, cfg) * (teamMods.bondGain ?? 1)
     const cm = pokemonConditionMult(s.types, env, cfg, new Set(), s.bonusMult)
     if (rewarded) {
@@ -1199,7 +1203,7 @@ export function completeSession(
     forcedConditions: forcedList,
     members: memberResults,
     totalPoints,
-    dust: rewarded ? Math.round(cfg.rewards.dustPerMinute * minutes * focus * rewardFactor) : 0,
+    dust: rewarded ? Math.round(cfg.rewards.dustPerMinute * minutes * focus * rewardFactor * groupDustMult) : 0,
     // Per-session Poké Balls are for completed sessions: a cancelled one would double them with cancel + restart (GDD §3.4).
     pokeBalls: rewarded && !cancelled ? Math.round(cfg.rewards.pokeBallsPerSession * rewardFactor) : 0,
     ...(Object.keys(eventItems).length > 0 ? { eventItems } : {}),

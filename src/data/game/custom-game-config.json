@@ -116,6 +116,8 @@
     "steel": 1.35,
     "steelWindowMinutes": 60,
     "fairy": 1.4,
+    "groupTeamBonus": 0.05,
+    "groupDustBonus": 0.1,
     "electricMaxMinutes": 25,
     "electricChainGapMinutes": 15,
     "fightingMinMinutes": 50,
