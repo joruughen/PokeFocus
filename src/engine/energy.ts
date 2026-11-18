@@ -70,6 +70,22 @@ export function completeBreak(state: PlayerState, now: number, ctx: EngineContex
   return { ...s, pokemon }
 }
 
+export type GroupHealError = 'unknown_pokemon' | 'session_active' | 'already_full'
+
+/**
+ * Receive a study-group heal: `+groupHeal.amount` energy for one Pokémon (capped
+ * at its max). Not while the Pokémon is in the running session (its energy is
+ * simulated from the start); the receiver accepts after claiming.
+ */
+export function receiveGroupHeal(state: PlayerState, uid: string, now: number, ctx: EngineContext = defaultContext()): Result<PlayerState, GroupHealError> {
+  if (state.activeSession && state.activeSession.teamUids.includes(uid)) return err('session_active')
+  const s = refreshEnergy(state, now, ctx)
+  const p = s.pokemon[uid]
+  if (!p) return err('unknown_pokemon')
+  if (p.energy.current >= maxEnergyOf(p, ctx)) return err('already_full')
+  return ok({ ...s, pokemon: { ...s.pokemon, [uid]: healMember(p, ctx.config.energy.groupHeal.amount, ctx) } })
+}
+
 export type UseItemError = 'unknown_pokemon' | 'no_item' | 'not_a_heal_item' | 'already_full' | 'not_exhausted' | 'session_active'
 
 /** Use a potion (flat energy) or a revive (from 0 to `revivePct`). */

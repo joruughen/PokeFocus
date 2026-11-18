@@ -2264,9 +2264,58 @@
       "note": "Objetos que cayeron esta sesión por un evento activo. Ya están en tu inventario."
     }
   },
+  "heal": {
+    "errors": {
+      "not_in_group": "Solo puedes curar a alguien de tu grupo de estudio.",
+      "not_in_waves": "Solo puedes enviar curaciones al terminar tu sesión de grupo, mientras ves tus oleadas.",
+      "heal_window_closed": "Ya pasó el tiempo para enviar curaciones de esa sesión.",
+      "heal_limit": "Ya usaste las curaciones de esta oleada. Pasa a la siguiente oleada para enviar otra.",
+      "heal_already_sent": "Ya le enviaste una curación a esa persona. Elige a otro compañero.",
+      "unknown_pokemon": "Ese Pokémon ya no está en el equipo de tu amigo. Actualiza e inténtalo de nuevo.",
+      "session_active": "Sigues estudiando: acepta la curación cuando termines tu sesión.",
+      "already_full": "Ese Pokémon ya tiene la energía al máximo.",
+      "heal_closed": "Esa curación ya no está disponible.",
+      "heal_expired": "Esa curación caducó."
+    },
+    "notice": {
+      "incoming": "{{name}} quiere curar a un Pokémon tuyo (+{{amount}} de energía)",
+      "incomingBody": "Elegiste a {{mon}}. Acéptala cuando termines tu sesión.",
+      "accepted": "{{name}}: {{mon}} aceptó tu curación",
+      "declined": "{{name}} rechazó tu curación",
+      "declinedBody": "Puedes enviársela a otro compañero.",
+      "cancelled": "{{name}} retiró su curación"
+    },
+    "incoming": {
+      "label": "Curaciones recibidas",
+      "title": "{{name}} quiere curar a tu {{mon}} (+{{amount}})",
+      "body": "Recupera +{{amount}} de energía, sin pasarse del máximo.",
+      "afterSession": "Podrás aceptarla cuando termines tu sesión. Caduca en unas horas.",
+      "accept": "Aceptar",
+      "decline": "Rechazar",
+      "done": "{{mon}} recuperó +{{amount}} de energía"
+    },
+    "panel": {
+      "title": "Curar a un compañero",
+      "intro": "Ofrece +{{amount}} de energía a un Pokémon de un compañero de tu grupo. Tienes una curación por oleada: te quedan {{remaining}}. Le llega aunque siga estudiando y caduca si no la acepta.",
+      "none": "No te quedan curaciones por ahora. Pasa a la siguiente oleada para tener otra.",
+      "sent": "Ya enviada",
+      "pick": "Curar a {{mon}} de {{name}} (+{{amount}})",
+      "offered": "Le ofreciste a {{name}} curar a su {{mon}} (+{{amount}})",
+      "level": "Nv. {{level}}",
+      "row": "{{name}} · {{mon}}",
+      "cancel": "Retirar"
+    },
+    "status": {
+      "pending": "Esperando",
+      "accepted": "Aceptada",
+      "declined": "Rechazada",
+      "cancelled": "Retirada",
+      "expired": "Caducada"
+    }
+  },
   "group": {
     "title": "Estudiar con amigos",
-    "intro": "Invita a tus amigos a la misma sesión. Todo tu equipo gana hasta +{{teamPct}} % de puntos y EXP, y la sesión da hasta +{{dustPct}} % de Polvo, y tus Pokémon de tipo Hada hasta +{{pct}} % más, en proporción al tiempo que estudias acompañado.",
+    "intro": "Invita a tus amigos a la misma sesión. En proporción al tiempo que estudias acompañado, todo tu equipo gana hasta +{{teamPct}} % de puntos y EXP, y la sesión da hasta +{{dustPct}} % de Polvo; tus Pokémon de tipo Hada ganan hasta +{{pct}} % más. Al terminar, puedes ofrecer una curación a un compañero en cada oleada.",
     "noFairyHint": "Ahora no tienes ningún Pokémon de tipo Hada en el equipo: solo cuenta el bonus de equipo.",
     "studyWithFriends": "Estudiar con amigos",
     "pickFriends": "Elige a quién invitar a una sesión de {{minutes}} min (la duración que tienes seleccionada).",

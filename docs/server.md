@@ -21,6 +21,7 @@ server/
   routes/events.ts    /api/events (SSE)
   routes/groups.ts    /api/groups (study groups)
   routes/trades.ts    /api/trades (trades between friends, GDD §12.8)
+  routes/heals.ts     /api/heals (study-group heals, GDD §9.2)
   groups.ts           study-group helpers (membership hooks, overlap at claim, views, events)
   routes/weather.ts   /api/weather
   routes/announcements.ts  /api/announcements (public: scheduled maintenance windows)
@@ -217,6 +218,16 @@ Tables `study_groups` (lobby → started / ended), `study_group_members` (one ro
 - **Claim**: `friendOverlap` = time of my in-group interval during which at least one other member was in theirs ÷ my session minutes (`src/game/group.ts`), passed to the reducer as `ActionEnv.friendOverlap` (never from the client) and stored in `SessionResult.friendOverlap`. Fairy multiplier = `1 + (fairy − 1) × friendOverlap`.
 - Rate limits per user: create + invite 20 / 15 min; other group writes 120 / 15 min.
 
+### Study-group heals (GDD §9.2)
+
+Table `group_heals` (migration `0015_group_heals`): `group_id`, `from_user_id`, `to_user_id`, `pokemon_uid` (the receiver's Pokémon) + `species_slug`, `amount`, `status` (`pending | accepted | declined | cancelled | expired`), `expires_at`. Config in `energy.groupHeal` (`amount` 20, `perWave` 1, `ttlHours` 12, `windowHours` 3).
+
+- A member sends a heal **once their own session is over, while its waves of wild Pokémon are on screen**: `player.encounter.sessionId` must equal the `session_id` of their member row in the group, and the allowance is `perWave × (currentWave + 1)` minus the heals they have open (pending or accepted) in that group. Each heal goes to a **different** member (`heal_already_sent`). Declined, cancelled and expired heals free the slot. It also has to be inside `windowHours` after the last member's session ended.
+- `GET /heals` → `HealsResponse { incoming (pending, to me), group (latest group, only while I am on its waves: targets with each member's team, remaining, my sent heals), amount, serverNow }`.
+- `POST /heals { groupId, toUserId, uid }` → 201 `GroupHealView`. 409 `not_in_group`, `not_in_waves`, `heal_window_closed`, `heal_limit`, `heal_already_sent`, `unknown_pokemon` (`uid` must be in the receiver's team: the running session's team if they are studying).
+- `POST /heals/:id/accept` (receiver): `receiveGroupHeal` adds `amount` energy to the Pokémon, never above its max (409 `already_full`); **not while the receiver is still studying** (409 `session_active`: the energy of a session's Pokémon is simulated from its start), so a heal waits until they claim. Only the receiver's `player_docs` row changes (locked `FOR UPDATE`, then the heal row). `POST /heals/:id/decline` (receiver) and `/cancel` (sender) → `GroupHealView`. 409 `heal_closed`, `heal_expired`; 404 for anyone else.
+- Pending heals lapse after `ttlHours` (swept lazily on every call, so they cannot pile up). SSE `{ type: 'heal', healId, status, userId, trainerName }` to the other side on every change (and `game` to the receiver on accept). Rate limit: 120 writes / 15 min / user. No Web Push yet.
+
 ### Trades between friends (GDD §12.8)
 
 Table `trade_offers` (migration `0012_trades`, which also adds `friendships.accepted_at`, backfilled with `created_at` for friendships accepted before it). One row per offer, open or closed; the closed rows are each player's trade history. Contract and error codes: `src/game/protocol.ts` «Trades»; rules: `src/engine/trade.ts`; config `trade.*` (`src/engine/config.ts`, not editable live).
@@ -306,6 +317,7 @@ Testing locally: set the three `VAPID_*` in `.env`, enable notifications in Sett
 - `{ type: 'group', groupId, kind, userId, trainerName, reason? }` to every participant of a study group on invite / accept / decline / start / join / leave / disband / failed (`kind`); `reason` on `leave` (`pause | cancel | leave | finished`). Refetch `GET /api/groups`.
 - `{ type: 'content', hash }` to **every** connection when the active live content changes (publication, scheduled version, an event starting or ending, publishing/archiving/editing an event: the 30 s tick compares the hash and `GET /api/live-events` follows it). Refetch `GET /api/content`; screens of a pinned session keep their hash.
 - `{ type: 'event_announce', eventId, rev }` to **every** connection when an admin presses «Notify players» on a published event (`POST /api/admin/events/:id/announce`). The client refetches `GET /api/live-events` and shows the event window again for `rev` (see *Live events (public)*).
+- `{ type: 'heal', healId, status, userId, trainerName }` to the other side of a study-group heal on every change. Refetch `GET /api/heals`.
 - `{ type: 'trade', offerId, status, userId, trainerName }` to both players of a trade offer on every change (offered, countered, completed, rejected, cancelled, expired). Refetch `GET /api/trades`.
 - `{ type: 'logout' }` to the connections of a revoked session (logout-all, password change, DELETE /auth/sessions/:id), then the stream closes.
 

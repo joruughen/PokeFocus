@@ -68,6 +68,16 @@ export interface GameConfig {
     /** Healing items (GDD §5.3): flat energy, or `revivePct` from 0. */
     potions: Record<string, number>
     revivePct: number
+    /** Group heal (study groups): a member sends +`amount` energy to a Pokémon of another member, who accepts it after their session. */
+    groupHeal: {
+      amount: number
+      /** Heals a member can send per wave of wild Pokémon they reach after the group session (each to a different player). */
+      perWave: number
+      /** A pending heal lapses after this many hours. */
+      ttlHours: number
+      /** Heals can be sent until this many hours after the last member's session ended. */
+      windowHours: number
+    }
   }
   rewards: {
     expPerMinute: number
@@ -309,6 +319,7 @@ export const ENGINE_DEFAULTS = {
   energy: {
     potions: { potion: 20, 'super-potion': 50, 'hyper-potion': 120 },
     revivePct: 0.5,
+    groupHeal: { amount: 20, perWave: 1, ttlHours: 12, windowHours: 3 },
   },
   conditions: { earlyMorningWindow: [5, 9] },
   encounters: {

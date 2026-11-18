@@ -176,6 +176,41 @@ export const studyGroupInvites = pgTable(
 )
 
 /**
+ * Study-group heals: a member offers +N energy to one Pokémon of another member
+ * of the same group; the receiver accepts (after their session) or declines.
+ * Only the receiver's player doc changes, when they accept.
+ */
+export const groupHeals = pgTable(
+  'group_heals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => studyGroups.id, { onDelete: 'cascade' }),
+    fromUserId: uuid('from_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    toUserId: uuid('to_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** The receiver's Pokémon (uid in their game doc) and its species when offered. */
+    pokemonUid: text('pokemon_uid').notNull(),
+    speciesSlug: text('species_slug').notNull(),
+    amount: integer('amount').notNull(),
+    status: text('status', { enum: ['pending', 'accepted', 'declined', 'cancelled', 'expired'] }).notNull(),
+    createdAt: ts('created_at').notNull(),
+    expiresAt: ts('expires_at').notNull(),
+    respondedAt: ts('responded_at'),
+  },
+  (t) => [
+    index('group_heals_to_idx').on(t.toUserId, t.status),
+    index('group_heals_group_from_idx').on(t.groupId, t.fromUserId),
+    check('group_heals_not_self', sql`${t.fromUserId} <> ${t.toUserId}`),
+    check('group_heals_status_check', sql`${t.status} in ('pending', 'accepted', 'declined', 'cancelled', 'expired')`),
+  ],
+)
+
+/**
  * Scheduled maintenance windows (informational banner; the server does not block
  * requests during a window). Written through the admin API only.
  */
@@ -502,3 +537,4 @@ export const tradeOffers = pgTable(
 export type UserRow = typeof users.$inferSelect
 export type AuthSessionRow = typeof authSessions.$inferSelect
 export type TradeOfferRow = typeof tradeOffers.$inferSelect
+export type GroupHealRow = typeof groupHeals.$inferSelect

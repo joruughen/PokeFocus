@@ -41,6 +41,7 @@ import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
 import { useBusy, usePlayer, useScene, useTeamViews } from '../../store/selectors'
 import { ChargeChip } from './ChargeChip'
+import { GroupHealPanel } from './GroupHealPanel'
 import { SessionReportButton } from './SessionReport'
 import { TeamEnergy } from './TeamEnergy'
 import { useContent } from '../../store/content'
@@ -508,6 +509,8 @@ export function Waves() {
           </div>
         </Panel>
       </div>
+
+      <GroupHealPanel />
 
       <footer className="flex flex-wrap items-center justify-between gap-4">
         <p className="max-w-[60ch] text-sm text-mist-300">

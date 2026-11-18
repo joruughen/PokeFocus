@@ -28,6 +28,7 @@ import { liveEventRoutes } from './routes/liveEvents'
 import { groupRoutes } from './routes/groups'
 import { pushRoutes } from './routes/push'
 import { friendRoutes, leaderboardRoutes } from './routes/social'
+import { healRoutes } from './routes/heals'
 import { tradeRoutes } from './routes/trades'
 import { weatherRoutes } from './routes/weather'
 import { MEDIA_FILE_RE, readMedia, UPLOAD_MAX_BYTES, UPLOAD_MIME_TYPES } from './uploads'
@@ -150,6 +151,7 @@ export function createApp(opts: AppOptions) {
   api.route('/leaderboard', leaderboardRoutes(deps))
   api.route('/groups', groupRoutes(deps))
   api.route('/trades', tradeRoutes(deps))
+  api.route('/heals', healRoutes(deps))
   api.route('/events', eventRoutes(deps))
   api.route('/weather', weatherRoutes(deps))
   api.route('/announcements', announcementRoutes(deps))

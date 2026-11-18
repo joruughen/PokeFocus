@@ -10,6 +10,7 @@ import { MoreNav, PRIMARY_NAV, splitNav, type NavBadges } from './MoreNav'
 import { LevelUpHost } from './levelUp/LevelUpDialog'
 import { LeagueNoticeHost } from './leagueNotice/LeagueNoticeDialog'
 import { EventPopupHost } from './screens/events/EventPopup'
+import { GroupHealNotice } from './GroupHealNotice'
 import { GroupInviteNotice } from './GroupInviteNotice'
 import { ContentNotice } from './ContentNotice'
 import { ContentNoteHost, GiftHost } from './notices/NoticeHosts'
@@ -54,6 +55,7 @@ export function AppShell() {
     <div className="min-h-dvh xl:grid xl:grid-cols-[15rem_minmax(0,1fr)] max-xl:sm:grid max-xl:sm:grid-cols-[5rem_minmax(0,1fr)]">
       <Rail route={route} focusing={focusing} />
       <GroupInviteNotice />
+      <GroupHealNotice />
       <WhatsNewDialog />
       <LevelUpHost />
       <GiftHost />

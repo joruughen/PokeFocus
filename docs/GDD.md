@@ -499,6 +499,8 @@ Los tipos importan **dos veces**:
 | Acero | Sesión iniciada ±1 h de la hora de inicio de la primera sesión de ayer | ×1.35 |
 | Hada | Sesión en grupo con amigos: proporcional al tiempo acompañado, `1 + 0.40 × fracción` (sin umbral) | hasta ×1.40 |
 
+**Curación entre compañeros (0.14.0):** al terminar una sesión de grupo, **mientras ves tus oleadas de salvajes**, puedes ofrecer una curación de **+20 de energía** (PS) a un Pokémon del equipo de un compañero del grupo. Tienes **una por oleada** que alcanzas (una sesión de 2 oleadas = 2; si solo completas 25 min de 50, 1), cada una a un compañero **distinto**. La oferta le llega aunque siga estudiando; **la acepta o la rechaza** cuando quiera, pero solo puede aceptarla cuando termine su sesión, y **caduca a las 12 h** (así no se acumulan). Si la rechaza, caduca o la retiras, recuperas esa curación y puedes enviarla a otro. La curación nunca pasa del máximo de energía del Pokémon, ni sirve a uno que ya lo tenga lleno. Solo cambia la partida de quien acepta. Valores en `energy.groupHeal` (`amount`, `perWave`, `ttlHours`, `windowHours`).
+
 **Bonus de equipo en grupo (0.13.1):** además, en una sesión de grupo **todo el equipo** (de cualquier tipo) multiplica sus puntos y su EXP por `1 + groupTeamBonus × fracción acompañada` (`conditions.groupTeamBonus` = 0.05, hasta ×1.05). Se suma al Hada, no lo sustituye. El **Polvo** de la sesión se multiplica por `1 + groupDustBonus × fracción` (`conditions.groupDustBonus` = 0.10, hasta ×1.10). No afecta a las Balls ni al Vínculo. Entra en la etapa «mods» del desglose de puntos.
 
 **Cobertura por estilo:**

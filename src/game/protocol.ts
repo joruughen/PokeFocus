@@ -509,6 +509,69 @@ export interface GroupsResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Study-group heals (GDD §9.2): /api/heals
+// ---------------------------------------------------------------------------
+
+/**
+ *   GET  /api/heals              → HealsResponse (heals waiting for me + what I can send in my latest group)
+ *   POST /api/heals              { groupId, toUserId, uid } → 201 GroupHealView (pending; `uid` = a Pokémon of the receiver's team)
+ *   POST /api/heals/:id/accept   → GroupHealView (receiver; +energy to the Pokémon, only after their session)
+ *   POST /api/heals/:id/decline  → GroupHealView (receiver)
+ *   POST /api/heals/:id/cancel   → GroupHealView (sender withdraws a pending heal)
+ * You send heals once your own session is over, while its waves of wild Pokémon are on screen: one per wave
+ * reached (a 2-wave session = 2, to different players). Otherwise `group` is null and POST answers not_in_waves.
+ * Errors (409 unless noted): not_in_group, not_in_waves, heal_window_closed, heal_limit, heal_already_sent,
+ * unknown_pokemon, session_active (the receiver is still studying), already_full, heal_closed,
+ * heal_expired; 404 not_found; 429 rate_limited.
+ * Declined, cancelled and expired heals free the sender's slot: they can resend or pick someone else.
+ */
+export type GroupHealStatus = 'pending' | 'accepted' | 'declined' | 'cancelled' | 'expired'
+
+export interface GroupHealView {
+  id: string
+  groupId: string
+  from: { userId: string; trainerName: string }
+  to: { userId: string; trainerName: string }
+  /** The receiver's Pokémon. */
+  pokemonUid: string
+  speciesSlug: string
+  /** Energy it gives. */
+  amount: number
+  status: GroupHealStatus
+  createdAt: number
+  expiresAt: number
+  respondedAt: number | null
+}
+
+/** A group member I can heal, with the Pokémon of their team. */
+export interface HealTarget {
+  userId: string
+  trainerName: string
+  pokemon: { uid: string; speciesSlug: string; level: number; isShiny: boolean }[]
+  /** I already have a pending or accepted heal for them in this group. */
+  sent: boolean
+}
+
+export interface HealsResponse {
+  /** Pending heals sent to me (accept them after your session). */
+  incoming: GroupHealView[]
+  /** My latest group while heals can still be sent: after my session, within the window (null = none). */
+  group: {
+    id: string
+    /** Heals can be sent until then (game time, ms). */
+    until: number
+    /** Heals I can still send now: one per wave reached, minus the open ones. */
+    remaining: number
+    targets: HealTarget[]
+    /** Heals I sent in this group (any status, newest first). */
+    sent: GroupHealView[]
+  } | null
+  /** Energy a heal gives. */
+  amount: number
+  serverNow: number
+}
+
+// ---------------------------------------------------------------------------
 // Trades between friends (GDD §12.8): /api/trades
 // ---------------------------------------------------------------------------
 
@@ -608,6 +671,8 @@ export type ServerEvent =
   | { type: 'event_announce'; eventId: string; rev: number }
   /** A trade offer I am part of changed (refetch GET /api/trades). `userId`/`trainerName`: who changed it. */
   | { type: 'trade'; offerId: string; status: TradeStatus; userId: string; trainerName: string }
+  /** A study-group heal I sent or received changed (refetch GET /api/heals). `userId`/`trainerName`: who changed it. */
+  | { type: 'heal'; healId: string; status: GroupHealStatus; userId: string; trainerName: string }
 
 /** Header names used only when the server runs with DEV_TOOLS=1. */
 export const DEV_NOW_HEADER = 'x-dev-now'

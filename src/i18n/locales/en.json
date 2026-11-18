@@ -2264,9 +2264,58 @@
       "note": "Items that dropped this session thanks to an active event. They are already in your inventory."
     }
   },
+  "heal": {
+    "errors": {
+      "not_in_group": "You can only heal someone from your study group.",
+      "not_in_waves": "You can only send heals after your group session, while you are on your waves.",
+      "heal_window_closed": "The time to send heals for that session has passed.",
+      "heal_limit": "You have used this wave's heals. Move on to the next wave to send another.",
+      "heal_already_sent": "You already sent a heal to that person. Pick another group member.",
+      "unknown_pokemon": "That Pokémon is no longer on your friend's team. Refresh and try again.",
+      "session_active": "You are still studying: accept the heal when your session is over.",
+      "already_full": "That Pokémon already has full energy.",
+      "heal_closed": "That heal is no longer available.",
+      "heal_expired": "That heal expired."
+    },
+    "notice": {
+      "incoming": "{{name}} wants to heal one of your Pokémon (+{{amount}} energy)",
+      "incomingBody": "They picked {{mon}}. Accept it when your session is over.",
+      "accepted": "{{name}}: {{mon}} accepted your heal",
+      "declined": "{{name}} declined your heal",
+      "declinedBody": "You can send it to another group member.",
+      "cancelled": "{{name}} withdrew their heal"
+    },
+    "incoming": {
+      "label": "Heals received",
+      "title": "{{name}} wants to heal your {{mon}} (+{{amount}})",
+      "body": "It recovers +{{amount}} energy, up to its max.",
+      "afterSession": "You can accept it when your session is over. It expires in a few hours.",
+      "accept": "Accept",
+      "decline": "Decline",
+      "done": "{{mon}} recovered +{{amount}} energy"
+    },
+    "panel": {
+      "title": "Heal a group member",
+      "intro": "Offer +{{amount}} energy to a Pokémon of a member of your group. You get one heal per wave: {{remaining}} left. It reaches them even while they study, and it expires if they do not accept it.",
+      "none": "No heals left for now. Move on to the next wave to get another.",
+      "sent": "Already sent",
+      "pick": "Heal {{name}}'s {{mon}} (+{{amount}})",
+      "offered": "You offered to heal {{name}}'s {{mon}} (+{{amount}})",
+      "level": "Lv. {{level}}",
+      "row": "{{name}} · {{mon}}",
+      "cancel": "Withdraw"
+    },
+    "status": {
+      "pending": "Waiting",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "cancelled": "Withdrawn",
+      "expired": "Expired"
+    }
+  },
   "group": {
     "title": "Study with friends",
-    "intro": "Invite friends to the same session. Your whole team earns up to +{{teamPct}}% points and EXP, the session gives up to +{{dustPct}}% Dust, and your Fairy-type Pokémon up to +{{pct}}% more, in proportion to the time you study together.",
+    "intro": "Invite friends to the same session. In proportion to the time you study together, your whole team earns up to +{{teamPct}}% points and EXP, and the session gives up to +{{dustPct}}% Dust; your Fairy-type Pokémon earn up to +{{pct}}% more. When you finish, you can offer a group member a heal on each wave.",
     "noFairyHint": "You have no Fairy-type Pokémon on your team right now: only the team bonus applies.",
     "studyWithFriends": "Study with friends",
     "pickFriends": "Choose who to invite to a {{minutes}}-min session (the duration you have selected).",

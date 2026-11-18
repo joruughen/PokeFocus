@@ -29,6 +29,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.14.0',
+    date: '2026-11-17',
+    title: { es: 'Curaciones entre compañeros', en: 'Heals between group members' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Al terminar una sesión de grupo, en cada oleada puedes ofrecer una curación de +20 de energía a un Pokémon de un compañero (a compañeros distintos). Le llega aunque siga estudiando: la acepta o la rechaza cuando termine su sesión, y caduca a las 12 horas. Si la rechaza, puedes enviarla a otro.',
+          en: 'After a group session, on each wave you can offer a +20 energy heal to a Pokémon of a group member (to different members). It reaches them even while they study: they accept or decline it once their session is over, and it expires after 12 hours. If they decline, you can send it to someone else.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.13.1',
     date: '2026-11-17',
     title: { es: 'Estudiar en grupo da más', en: 'Studying in a group pays more' },

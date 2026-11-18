@@ -213,6 +213,12 @@ export const tradeOfferBody = z.object({
 export const tradeCounterBody = z.object({ uid: id })
 
 // ---------------------------------------------------------------------------
+// Study-group heals (/api/heals)
+// ---------------------------------------------------------------------------
+
+export const healSendBody = z.object({ groupId: z.uuid(), toUserId: z.uuid(), uid: id })
+
+// ---------------------------------------------------------------------------
 // Admin: scheduled maintenance windows (/api/admin/maintenance)
 // ---------------------------------------------------------------------------
 

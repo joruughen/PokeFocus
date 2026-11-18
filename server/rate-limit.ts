@@ -53,6 +53,8 @@ export const RULES = {
   tradeOfferUser: { limit: 20, windowMs: 15 * 60_000 },
   /** Any other trade write (counter, accept, reject, cancel) per user. */
   tradeWriteUser: { limit: 120, windowMs: 15 * 60_000 },
+  /** Study-group heals: send, accept, decline, cancel per user. */
+  healWriteUser: { limit: 120, windowMs: 15 * 60_000 },
   /** Web Push subscribe + unsubscribe per user. */
   pushWriteUser: { limit: 30, windowMs: 15 * 60_000 },
   /** POST /api/push/test per user (each one sends real notifications). */
