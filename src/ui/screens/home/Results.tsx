@@ -16,6 +16,7 @@ import { rankName } from '../league/rank'
 import { SessionReportButton } from './SessionReport'
 import { eventDrops } from './sessionReportModel'
 import { GroupFairyNote } from './GroupStudy'
+import { PartnerCandies } from './PartnerCandies'
 import { StudyStyleLine } from './SoundStyle'
 import { useContent } from '../../store/content'
 
@@ -106,6 +107,9 @@ export function Results() {
     )
 
   const hasWaves = Boolean(player.encounter) && result.waves.length > 0
+  // A qualifying session that did not pay partner candies: the day's were already paid (see `studyCandyDue`).
+  const sc = cfg.progression.studyCandy
+  const partnerDone = (sc.amount > 0 || sc.leaderBonus > 0) && result.valid && result.rewardFactor > 0 && result.minutes >= sc.minMinutes && !events.some((e) => e.type === 'studyCandy')
 
   return (
     <div className="flex flex-col gap-8">
@@ -168,6 +172,12 @@ export function Results() {
                 <RewardRow key={d.item} icon={<PixelIcon name="sparkle" size={20} className="text-shiny-300" />} label={t('results.eventItem', { item: names.item(d.item) })} value={`+${fmtInt(d.count, lng)}`} />
               ))}
             </ul>
+            <PartnerCandies
+              grants={events.flatMap((e) => (e.type === 'studyCandy' ? e.grants : []))}
+              done={partnerDone}
+              minMinutes={sc.minMinutes}
+              perDay={sc.perDay}
+            />
             {events
               .filter((e) => e.type === 'trainerLevelUp' || e.type === 'leagueUp')
               .map((e, i) => (

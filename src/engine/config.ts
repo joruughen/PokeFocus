@@ -216,6 +216,12 @@ export interface GameConfig {
     candyDustPerLevelSq?: number
     candiesOnCatch: number
     candiesOnRelease: number[]
+    /**
+     * Partner candies (GDD §12.2): the first `perDay` valid sessions of a local day of at least `minMinutes` give
+     * every distinct evolution line of the session team `amount` candies, and the line of the leader (slot 0)
+     * `amount + leaderBonus`. `amount` and `leaderBonus` at 0 turn it off.
+     */
+    studyCandy: { amount: number; leaderBonus: number; minMinutes: number; perDay: number }
     levelCaps: { species: number; cap: number }[]
     techniqueSlots: { level: number; slots: number }[]
     extraMovesPerIndividual: [number, number]
@@ -332,7 +338,7 @@ export const ENGINE_DEFAULTS = {
     nonLevelEvolutionLevelGap: 15,
   },
   capture: { counter: { immuneHealPct: 0.25, damageMult: 1 } },
-  progression: { maxLevel: 100 },
+  progression: { maxLevel: 100, studyCandy: { amount: 1, leaderBonus: 1, minMinutes: 25, perDay: 1 } },
   evolution: { candyCost: [0, 25, 100], stage3: { minTrainerLevel: 15 } },
   box: { baseCapacity: 150, perStep: 25, stepLevels: 5, maxCapacity: 400, maxPending: 10 },
   trainer: { expCoef: 100, expExponent: 1.5, expPerMinute: 1, expPerNewSpecies: 60, maxLevel: 50, levelRewards: { dustBase: 0, dustPerLevel: 0, tiers: [] } },

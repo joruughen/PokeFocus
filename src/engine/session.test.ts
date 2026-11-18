@@ -318,7 +318,7 @@ describe('session lifecycle (GDD §15)', () => {
     expect(n.streak.current).toBe(1)
     expect(n.dust).toBe(s.dust + result.dust)
     expect(n.encounter?.waves).toHaveLength(2)
-    expect(n.days['2026-11-03']).toEqual({ minutes: 50, sessions: 1, firstStartMinute: 600 })
+    expect(n.days['2026-11-03']).toEqual({ minutes: 50, sessions: 1, firstStartMinute: 600, candySessions: 1 })
     expect(n.pokemon.a!.exp).toBe(s.pokemon.a!.exp + result.members[0]!.exp)
   })
 })

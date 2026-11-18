@@ -24,6 +24,12 @@ export interface RunOptions {
   detail: boolean
   /** Called with the state right before the captures of every encounter that holds a legendary (replay experiments). */
   onLegendaryEncounter?: (state: PlayerState, now: number) => void
+  /** Experiment hook: called right after a session is applied (before its captures); returns the state to continue with. */
+  afterSession?: (state: PlayerState, info: { valid: boolean; minutes: number; day: number }, ctx: EngineContext) => PlayerState
+  /** Experiment: the player saves the candies of a line whose evolution is blocked only by candies instead of burning them on EXP. */
+  reserveForEvolution?: boolean
+  /** Experiment hook: called with the final state of the player. */
+  onEnd?: (state: PlayerState, ctx: EngineContext) => void
   /** Damage split policy (default `auto`: the player keeps the "Auto" preference on). */
   damagePolicy?: DamagePolicy
   /**

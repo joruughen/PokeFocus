@@ -167,6 +167,8 @@ export interface DaySummary {
   sessions: number
   /** Local minute of day of the first session start. */
   firstStartMinute: number
+  /** Sessions of the day that already gave partner candies (`progression.studyCandy`); absent = 0. */
+  candySessions?: number
 }
 
 // ---------------------------------------------------------------------------

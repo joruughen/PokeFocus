@@ -150,7 +150,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
 
     // --- Box decisions before the session ------------------------------------------------------
     if (!o.soloStarter) {
-      if (o.candies) state = spendCandies(state, ctx, tally)
+      if (o.candies) state = spendCandies(state, ctx, tally, o.reserveForEvolution ?? false)
       state = evolveAll(state, startTs, rng, ctx, tally)
       if (o.captures) state = releaseDuplicates(state, protect, ctx, tally)
       const env0 = buildEnv(state, startTs, ps.minutes, weather, null, 0, 0)
@@ -191,6 +191,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
     if (!applied.ok) throw new Error(`applySessionResult: ${applied.error}`)
     const prevWeekPts = state.league.weeklyPoints[result.weekKey] ?? 0
     state = applied.value.state
+    if (o.afterSession) state = o.afterSession(state, { valid: result.valid, minutes: result.minutes, day: dayIdx }, ctx)
 
     recordSession(m, result, env, dayIdx, weekIdx, ctx)
     cumPoints += result.totalPoints
@@ -249,6 +250,7 @@ export function runPlayer(o: RunOptions): PlayerMetrics {
   m.finalCandies = Object.values(state.candies.chains).reduce((a, b) => a + b, 0)
   m.finalBalls = { ...state.inventory }
   m.boxSize = Object.keys(state.pokemon).length
+  o.onEnd?.(state, ctx)
   m.expAboveCap = state.team.reduce((a, u) => {
     const p = state.pokemon[u]
     return p && levelFromExp(p.exp, ctx) > p.level ? a + (p.exp - expForLevel(p.level, ctx)) : a

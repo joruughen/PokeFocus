@@ -282,6 +282,12 @@
       2,
       3
     ],
+    "studyCandy": {
+      "amount": 1,
+      "leaderBonus": 1,
+      "minMinutes": 25,
+      "perDay": 1
+    },
     "levelCaps": [
       {
         "species": 0,

@@ -87,6 +87,9 @@
  *            wild when its value is low (< 16).
  * Candies    Before each session, one candy at a time on the lowest-level member of {team + the 2 best
  *            bench Pokémon by potential at the level cap} that can take one and affords the Polvo.
+ *            (Experiment options of `runPlayer`, not used by the reports: `reserveForEvolution` saves the candies of a
+ *            line whose evolution only lacks candies; `afterSession` / `onEnd` hooks let a script change the state
+ *            after each session or read the final one, e.g. to test a candy rule before it is in the engine.)
  * Evolution  Everything that can evolve does (best option by potential; stones only if owned;
  *            trade evolutions are unavailable in the engine).
  * Release    Keep the 3 best (2 for evolved forms) of each species by IV quality (Rendimiento first),

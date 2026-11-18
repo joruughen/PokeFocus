@@ -9,6 +9,7 @@ import { levelUpMovesBetween, unlockedExtraMoves } from './moves'
 import type { OwnedPokemon, PlayerState } from './state'
 import { maxEnergyOf } from './stats'
 import { toLocal } from './time'
+import type { StudyCandyGrant } from './studyCandy'
 
 /** Total EXP to reach level L: round(coef · L^exponent). */
 export function expForLevel(level: number, ctx: EngineContext = defaultContext()): number {
@@ -143,6 +144,8 @@ export type ProgressEvent =
    * prize of the rungs climbed (absent in events of older code).
    */
   | { type: 'leagueUp'; from: string; to: string; fromSub?: number; toSub?: number; dust?: number }
+  /** Partner candies of a session (`studyCandyGrants`): one entry per evolution line of the team. */
+  | { type: 'studyCandy'; grants: StudyCandyGrant[] }
 
 /**
  * Add EXP to a Pokémon (pure). EXP keeps accumulating, but the level never

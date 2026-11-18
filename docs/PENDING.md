@@ -67,6 +67,8 @@ Si abres un chat nuevo, di «continúa con docs/PENDING.md» y empieza por aquí
 
 **v0.13.1 (subida) y v0.14.0 (sin commitear, 2026-11-17):** en grupo, todo el equipo gana hasta +5 % de puntos y EXP y la sesión hasta +10 % de Polvo (`conditions.groupTeamBonus` y `groupDustBonus`, v0.13.1). v0.14.0: curaciones entre compañeros (+20 de energía, una por oleada tras una sesión de grupo, a compañeros distintos, el receptor acepta cuando termine su sesión, caduca a las 12 h; `energy.groupHeal`, `server/routes/heals.ts`, migración **0015** automática, `docs/server.md` y GDD §9.2). **Falta:** revisarla en el navegador con dos cuentas reales (390 y 1280 px), medir el bonus de grupo con el simulador (hoy ningún perfil simula grupos) y, si se quiere, aviso push al receptor.
 
+**v0.15.0 (sin commitear, 2026-11-17): caramelos de compañero.** La primera sesión válida del día (≥ 25 min) da 1 caramelo a cada línea evolutiva del equipo y 2 a la del líder (`progression.studyCandy`, `src/engine/studyCandy.ts`, `DaySummary.candySessions`, evento `studyCandy`, bloque en Resultados). Decidido con simulador (GDD §12.2): sin cambios de nivel, +5-6 % de puntos en casuales, ruido en intensos. Sin migración. **Falta:** revisar el bloque de Resultados en el navegador (390 y 1280 px) y decidir si `perDay` pasa a 2; el informe `docs/longterm-report.md` no se ha regenerado con la regla nueva.
+
 **Plan de balance para la beta (2026-11-16):** decisiones cerradas y pasos en `docs/beta-balance-plan.md` (ligas con subrangos, curva de EXP, Polvo como freno, 3.ª etapa, Kanto 151, pruebas de estrés). Alpha sin reset.
 
 **Pendiente:**

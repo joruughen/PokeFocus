@@ -234,18 +234,28 @@ export function candyPool(state: PlayerState, ctx: EngineContext): string[] {
 }
 
 /** Spend candies one at a time on the lowest-level pool member that can take one. */
-export function spendCandies(state: PlayerState, ctx: EngineContext, tally: Tally): PlayerState {
+export function spendCandies(state: PlayerState, ctx: EngineContext, tally: Tally, reserveForEvolution = false): PlayerState {
   let s = state
   const cap = levelCap(s, ctx)
   const pool = candyPool(s, ctx)
   const blocked = new Set<string>()
+  // Experiment (`reserveForEvolution`): lines with a member that only lacks candies to evolve keep their candies.
+  const reserved = new Set<string>()
+  if (reserveForEvolution) {
+    for (const u of pool) {
+      const p = s.pokemon[u]
+      if (p && evolutionOptions(s, p, 0, ctx).some((o) => o.blockedBy === 'not_enough_candies')) reserved.add(String(getSpecies(p.speciesSlug, ctx).evolutionChainId))
+    }
+  }
   for (let guard = 0; guard < 400; guard++) {
     let best: OwnedPokemon | null = null
     for (const u of pool) {
       if (blocked.has(u)) continue
       const p = s.pokemon[u]
       if (!p) continue
-      const have = s.candies.chains[String(getSpecies(p.speciesSlug, ctx).evolutionChainId)] ?? 0
+      const chainKey = String(getSpecies(p.speciesSlug, ctx).evolutionChainId)
+      if (reserved.has(chainKey)) continue
+      const have = s.candies.chains[chainKey] ?? 0
       if (p.level >= cap || have < 1 || s.dust < candyDustCost(p.level, ctx)) continue
       if (!best || p.level < best.level) best = p
     }

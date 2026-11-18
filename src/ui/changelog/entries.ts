@@ -29,6 +29,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.15.0',
+    date: '2026-11-17',
+    title: { es: 'Caramelos de compañero', en: 'Partner candies' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Cada día, tu primera sesión de 25 minutos o más da caramelos a todas las líneas de tu equipo: 1 a cada una y 2 a la de tu líder. Así puedes juntar los caramelos para evolucionar a tu inicial y al resto de tu equipo, aunque casi nunca aparezcan en el campo. La pantalla de resultados muestra cuántos recibió cada uno.',
+          en: 'Each day, your first session of 25 minutes or more gives candies to every line on your team: 1 to each and 2 to the line of your leader. You can now save up the candies to evolve your starter and the rest of your team, even if they almost never show up in the wild. The results screen shows how many each one got.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.14.0',
     date: '2026-11-17',
     title: { es: 'Curaciones entre compañeros', en: 'Heals between group members' },

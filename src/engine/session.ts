@@ -58,6 +58,7 @@ import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from 
 import { activeTera } from './advanced'
 import { toManualWave } from './damage'
 import { rollEventDrops } from './spawn'
+import { studyCandyDue, studyCandyGrants } from './studyCandy'
 import { blockIndexAt, damageFromHits, fullBlocks, hpFractionAfter, rollWaveSize, rollWild, waveCount } from './waves'
 
 // ---------------------------------------------------------------------------
@@ -1316,10 +1317,21 @@ export function applySessionResult(
   const localStart = toLocal(result.startedAt, s.profile.timezone)
   const days: PlayerState['days'] = {}
   for (const [k, v] of Object.entries(s.days)) if (daysBetween(k, result.dayKey) <= 14) days[k] = v
+  // Partner candies (GDD §12.2): the lines of the session team, once per qualifying session up to `perDay` a day.
+  const candyGrants = studyCandyDue(s, result, ctx) ? studyCandyGrants(s, state.activeSession.teamUids, ctx) : []
+  let candies = s.candies
+  if (candyGrants.length > 0) {
+    const chains = { ...s.candies.chains }
+    for (const g of candyGrants) chains[g.chainId] = (chains[g.chainId] ?? 0) + g.amount
+    candies = { ...s.candies, chains }
+    events.push({ type: 'studyCandy', grants: candyGrants })
+  }
+  const candySessions = (day?.candySessions ?? 0) + (candyGrants.length > 0 ? 1 : 0)
   days[result.dayKey] = {
     minutes: (day?.minutes ?? 0) + result.minutes,
     sessions: (day?.sessions ?? 0) + (result.valid ? 1 : 0),
     firstStartMinute: day ? day.firstStartMinute : localStart.minuteOfDay,
+    ...(candySessions > 0 ? { candySessions } : {}),
   }
 
   // Trainer
@@ -1370,6 +1382,7 @@ export function applySessionResult(
     ...s,
     pokemon,
     inventory,
+    candies,
     dust: s.dust + result.dust + rankDust,
     league,
     ...(climb.notices && { pendingLeagueNotices: climb.notices }),
