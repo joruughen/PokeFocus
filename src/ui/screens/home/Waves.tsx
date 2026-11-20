@@ -30,6 +30,7 @@ import {
 } from '../../../engine'
 import { CatchTip } from './CatchTip'
 import { usableBall } from './ballChoice'
+import { clearThrowFx, loadThrowFx, saveThrowFx, throwTimeline, type ThrowFx } from './throwFx'
 import { ArtIcon, BallIcon, Button, HelpDot, IvQuality, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Sprite, Stage, StudyBallIcon, toast, Tooltip, TypeBadge } from '../../components'
 import { emitHintEvent, hintAnchor, useHintEvent, useHintScreen, useHints } from '../../hints'
 import { cx } from '../../lib/cx'
@@ -200,9 +201,19 @@ export function Waves() {
       toast.add({ title: errorText(r.error, 'throw', { level: studyMax }), type: 'danger' })
       return
     }
-    const outcome = r.outcome
+    playThrow({ sessionId: enc.sessionId, ref, ball, outcome: r.outcome, before, energyBy, cardUid: card?.pokemon.uid ?? null, at: Date.now() })
+  }
+
+  /**
+   * The throw animation: ball flight, wobble, result, then `land` applies the counterattack feedback.
+   * `elapsed` > 0 resumes it after a reload (the answer is kept in sessionStorage, see `throwFx.ts`).
+   */
+  const playThrow = (fx: ThrowFx, elapsed = 0) => {
+    const { ref, ball, outcome, before, energyBy } = fx
+    const tl = throwTimeline(outcome)
     const resultSfx = () => sfx(outcome.kind === 'caught' ? 'catchSuccess' : 'catchFail')
     const land = () => {
+      clearThrowFx()
       setAnim(null)
       setFrozenCard(null)
       setFrozenEnergy(null)
@@ -248,30 +259,41 @@ export function Waves() {
       }
       if (ball === 'study-ball') setBall('poke-ball')
     }
+    if (elapsed === 0) saveThrowFx(fx)
     if (reduceMotion()) {
       setHold(null)
       resultSfx()
       land()
       return
     }
-    sfx('ballThrow')
-    setAnim({ ref, ball, stage: 'throw', outcome, before })
+    const at = (ms: number, fn: () => void) => {
+      if (ms >= elapsed) timers.current.push(setTimeout(fn, ms - elapsed))
+    }
+    if (elapsed === 0) sfx('ballThrow')
+    setAnim({ ref, ball, stage: elapsed >= tl.result ? 'result' : elapsed >= tl.wobble ? 'wobble' : 'throw', outcome, before })
     setHold(null)
-    timers.current.push(
-      setTimeout(() => {
-        setAnim((a) => (a ? { ...a, stage: 'wobble' } : a))
-        sfx('ballShake')
-      }, 550),
-    )
-    const wobbleMs = outcome.kind === 'caught' ? 1500 : 1000
-    timers.current.push(
-      setTimeout(() => {
-        setAnim((a) => (a ? { ...a, stage: 'result' } : a))
-        resultSfx()
-      }, 550 + wobbleMs),
-    )
-    timers.current.push(setTimeout(land, 550 + wobbleMs + 900))
+    at(tl.wobble, () => {
+      setAnim((a) => (a ? { ...a, stage: 'wobble' } : a))
+      sfx('ballShake')
+    })
+    at(tl.result, () => {
+      setAnim((a) => (a ? { ...a, stage: 'result' } : a))
+      resultSfx()
+    })
+    timers.current.push(setTimeout(land, tl.land - elapsed))
   }
+
+  // Reloaded in the middle of a throw: pick the animation up where it was (the saved state is already final).
+  useEffect(() => {
+    const saved = loadThrowFx(enc.sessionId, Date.now())
+    if (!saved) return
+    const { fx, elapsed } = saved
+    const view = fx.cardUid ? pokemonView(player, fx.cardUid, now) : null
+    setFrozenCard(view && fx.cardUid ? { ...view, energy: fx.energyBy[fx.cardUid] ?? view.energy } : null)
+    setFrozenEnergy(fx.energyBy)
+    playThrow(fx, elapsed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const onTarget = async (i: number) => {
     if (!targeting || busy) return

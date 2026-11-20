@@ -399,11 +399,12 @@ export function UnlocksPanel({ player }: { player: PlayerState }) {
 
 function Tile({ label, value, note, icon }: { label: string; value: React.ReactNode; note?: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <li className="flex flex-col bg-dusk-800 p-4 shadow-frame">
+    // Container query: the big size only when the tile is wide enough (4 columns at 1024 px are narrow and a long number overflowed).
+    <li className="@container flex min-w-0 flex-col bg-dusk-800 p-4 shadow-frame">
       <p className="text-sm text-mist-300">{label}</p>
-      <p className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 font-num text-3xl leading-none tabular sm:text-4xl">
+      <p className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 font-num text-3xl leading-none tabular @[13rem]:text-4xl">
         {icon}
-        <span className="min-w-0">{value}</span>
+        <span className="min-w-0 [overflow-wrap:anywhere]">{value}</span>
       </p>
       {note && <p className="mt-1 truncate text-xs text-mist-400">{note}</p>}
     </li>

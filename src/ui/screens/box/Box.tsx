@@ -6,6 +6,7 @@ import { hintAnchor, useHintScreen } from '../../hints'
 import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
 import { useNames } from '../../lib/names'
+import { useTouchLayout } from '../../lib/useTouchLayout'
 import { sfx } from '../../lib/sound'
 import { navigate } from '../../router'
 import { useNow } from '../../store/clock'
@@ -22,6 +23,7 @@ const ROLES: SpeciesRole[] = ['scholar', 'hunter', 'sprinter', 'marathoner', 'te
 export function Box() {
   useHintScreen('box')
   const { t } = useTranslation()
+  const touch = useTouchLayout()
   const names = useNames()
   const player = usePlayer()
   const now = useNow()
@@ -150,7 +152,7 @@ export function Box() {
       <PendingBanner className="-mt-4" />
 
       <div className="flex min-w-0 flex-col gap-5">
-        {selecting && <p className="text-sm text-mist-300">{t('box.select.help')}</p>}
+        {selecting && <p className="text-sm text-mist-300">{t(touch ? 'box.select.helpTouch' : 'box.select.help')}</p>}
         <Panel variant="frame" padded={false} className="flex flex-col gap-4 p-4" {...hintAnchor('box.filters')}>
           <div className="flex flex-wrap items-end gap-4">
             <label className="flex min-w-48 flex-1 flex-col gap-1.5 max-sm:basis-full">

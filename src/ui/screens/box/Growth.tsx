@@ -17,7 +17,8 @@ import { Button, HelpDot, IconButton, Panel, PixelIcon, ProgressBar, Sprite, toa
 import { emitHintEvent, hintAnchor } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
-import { fmtInt, fmtPct } from '../../lib/format'
+import { expProgress } from '../../lib/expProgress'
+import { fmtHours, fmtInt, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { navigate } from '../../router'
@@ -63,6 +64,7 @@ export function Candies({ view, locked }: { view: PokemonView; locked: string | 
   const cap = levelCap(player)
   const atCap = p.level >= cap
   const cost = candyDustCost(p.level)
+  const exp = expProgress(view, cfg.progression.maxLevel)
   const root = lineRoot(view.species)
   const kinds: { key: string; kind: CandyKind; have: number; exp: number; label: string }[] = [
     { key: 'species', kind: { kind: 'species' }, have: player.candies.chains[String(view.species.evolutionChainId)] ?? 0, exp: cfg.progression.candyExp, label: t('bag.lineCandy', { name: names.species(root.slug) }) },
@@ -76,10 +78,10 @@ export function Candies({ view, locked }: { view: PokemonView; locked: string | 
         <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
           <span className="text-mist-300">{t('candy.toNext', { level: p.level + 1 })}</span>
           <span className="font-num text-lg leading-none tabular">
-            {fmtInt(view.expIntoLevel, lng)}/{fmtInt(view.expForNextLevel, lng)}
+            {fmtInt(exp.value, lng)}/{fmtInt(exp.max, lng)}
           </span>
         </div>
-        <ProgressBar variant="exp" value={view.expIntoLevel} max={view.expForNextLevel} label={t('pokemon.expOf', { name })} />
+        <ProgressBar variant="exp" value={exp.value} max={exp.max} label={t('pokemon.expOf', { name })} />
       </div>
 
       {atCap ? (
@@ -349,7 +351,7 @@ export function EnergyBond({ view, inSession }: { view: PokemonView; inSession: 
         <HelpDot hint="detail.bond" />
       </h3>
       <div className="flex items-baseline justify-between text-sm">
-        <span className="text-mist-300">{t('bond.minutes', { hours: (p.bondMinutes / 60).toFixed(1) })}</span>
+        <span className="text-mist-300">{t('bond.minutes', { hours: fmtHours(p.bondMinutes, lng) })}</span>
         <span className="font-num text-xl leading-none text-leaf-400">+{fmtPct(bond, lng)}</span>
       </div>
       <ProgressBar className="mt-1" variant="volt" value={bond} max={cfg.bond.maxBonus} label={t('bond.title')} />

@@ -18,6 +18,11 @@ export function fmtNum(n: number, lng: string = i18n.language): string {
   return new Intl.NumberFormat(lng, { maximumFractionDigits: 2 }).format(n)
 }
 
+/** Minutes → hours with one decimal in the UI language: 90 → "1,5" (es) / "1.5" (en). */
+export function fmtHours(minutes: number, lng: string = i18n.language): string {
+  return new Intl.NumberFormat(lng, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(minutes / 60)
+}
+
 export function fmtPct(f: number, lng: string): string {
   return new Intl.NumberFormat(lng, { style: 'percent', maximumFractionDigits: 0 }).format(f)
 }

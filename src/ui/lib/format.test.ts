@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampMinutes, fmtNum } from './format'
+import { clampMinutes, fmtHours, fmtNum } from './format'
 
 describe('fmtNum (multipliers in the UI language)', () => {
   it('uses the decimal separator of the language, at most two decimals', () => {
@@ -26,5 +26,13 @@ describe('clampMinutes (custom session length field)', () => {
   })
   it('rounds decimals', () => {
     expect(clampMinutes('27.6', 40, 15, 120)).toBe(28)
+  })
+})
+
+describe('fmtHours (Bond and Mastery hours)', () => {
+  it('uses one decimal with the separator of the language', () => {
+    expect(fmtHours(90, 'es')).toBe('1,5')
+    expect(fmtHours(90, 'en')).toBe('1.5')
+    expect(fmtHours(0, 'es')).toBe('0,0')
   })
 })

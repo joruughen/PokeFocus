@@ -11,8 +11,13 @@ import { sfx } from '../lib/sound'
 import { EvolveMoment } from '../screens/box/EvolveMoment'
 import { phaseOf, useGame } from '../store/game'
 
-const SETTLE_MS = 1800
-const RETRY_MS = 1000
+/**
+ * The server's `game` event (SSE) already brings the arrival in at once, so this is only a short pause (the
+ * confirm dialog that triggered it is closing) and a quick re-check while another window is up. It was 1.8 s + 1 s
+ * retries (≈2.5 s felt slow); both are in-memory checks, no extra server load.
+ */
+export const ARRIVAL_SETTLE_MS = 450
+export const ARRIVAL_RETRY_MS = 350
 
 /** Arrivals already shown on this device (the server empties `pendingTrades` on `ackTrade`; until then they must not reopen). */
 const dismissed = new Set<string>()
@@ -53,9 +58,9 @@ export function TradeArrivalHost() {
       if (calm) {
         setEvolving(true)
         setQueue(pending)
-      } else timer = setTimeout(attempt, RETRY_MS)
+      } else timer = setTimeout(attempt, ARRIVAL_RETRY_MS)
     }
-    timer = setTimeout(attempt, SETTLE_MS)
+    timer = setTimeout(attempt, ARRIVAL_SETTLE_MS)
     return () => clearTimeout(timer)
   }, [idle, any, list, hintOpen])
 

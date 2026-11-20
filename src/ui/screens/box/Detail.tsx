@@ -5,6 +5,7 @@ import { Button, Dialog, DialogClose, EmptyState, IconButton, PixelIcon, Platfor
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
+import { expProgress } from '../../lib/expProgress'
 import { fmtInt } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
@@ -68,6 +69,7 @@ export function Detail({ uid }: { uid: string }) {
   const prev = idx > 0 ? order[idx - 1] : undefined
   const next = idx >= 0 && idx < order.length - 1 ? order[idx + 1] : undefined
   const nature = ctx.naturesBySlug.get(effectiveNature(p))
+  const exp = expProgress(view, cfg.progression.maxLevel)
   const fit = roleNatureFit(view.species.role, nature)
   const root = lineRoot(view.species)
   const releaseGain = cfg.progression.candiesOnRelease[view.species.stage - 1] ?? 1
@@ -141,10 +143,10 @@ export function Detail({ uid }: { uid: string }) {
             <div className="mt-3">
               <ProgressBar
                 variant="exp"
-                value={view.expIntoLevel}
-                max={view.expForNextLevel}
+                value={exp.value}
+                max={exp.max}
                 label={t('pokemon.expOf', { name })}
-                valueText={<span className="text-ink">{t('detail.expToNext', { exp: fmtInt(view.expForNextLevel - view.expIntoLevel, i18n.language) })}</span>}
+                valueText={<span className="text-ink">{exp.full ? t('detail.expFull') : t('detail.expToNext', { exp: fmtInt(exp.remaining, i18n.language) })}</span>}
               />
             </div>
             <div className="mt-4 flex flex-wrap gap-2" {...hintAnchor('detail.actions')}>
