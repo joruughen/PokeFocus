@@ -2973,6 +2973,9 @@
         "clear": "Quitar todos los cambios",
         "baseSlug": "Definición original",
         "copyBase": "Copiar de la base",
+        "copyJson": "Copiar JSON",
+        "copied": "Copiado.",
+        "copyFailed": "No se pudo copiar: selecciona el texto y cópialo a mano.",
         "unapplied": "Tienes texto que aún no se ha aplicado.",
         "syntax": "Eso no es JSON válido.",
         "object": "Tiene que ser un objeto JSON."

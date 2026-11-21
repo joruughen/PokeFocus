@@ -41,6 +41,7 @@ function RawEditor({ section, patch, issues, disabled, onPatch }: Props & { sect
   const [text, setText] = useState(external)
   const [syntax, setSyntax] = useState<'syntax' | 'object' | null>(null)
   const [base, setBase] = useState('')
+  const [note, setNote] = useState<'copied' | 'copyFailed' | null>(null)
   const baseDefs = useMemo(() => (section === 'techniques' ? baseContent().techniques : section === 'abilities' ? baseContent().abilities : null), [section])
   const slugs = useMemo(() => (baseDefs ? Object.keys(baseDefs).sort().map((s) => ({ value: s, label: s })) : []), [baseDefs])
   const mine: ContentIssue[] = [...issues.errors, ...issues.warnings].filter((i) => i.path === section || i.path.startsWith(`${section}.`))
@@ -69,6 +70,25 @@ function RawEditor({ section, patch, issues, disabled, onPatch }: Props & { sect
     const cur = r.ok ? r.value : {}
     setText(JSON.stringify({ ...cur, [base]: def }, null, 2))
     setSyntax(null)
+    setNote(null)
+  }
+
+  /** Missions are one whole object (no slugs): start from every field the override can replace. */
+  const copyMissionsBase = () => {
+    const { dailyCount, weeklyCount, pool, pokedex } = baseContent().missions
+    setText(JSON.stringify({ dailyCount, weeklyCount, pool, pokedex }, null, 2))
+    setSyntax(null)
+    setNote(null)
+  }
+
+  /** The text as it is now (also what is not applied yet), e.g. to paste it in a chat. */
+  const copyJson = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setNote('copied')
+    } catch {
+      setNote('copyFailed')
+    }
   }
 
   return (
@@ -77,7 +97,10 @@ function RawEditor({ section, patch, issues, disabled, onPatch }: Props & { sect
         <textarea
           id={id}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value)
+            setNote(null)
+          }}
           disabled={disabled}
           spellCheck={false}
           rows={Math.min(18, Math.max(4, text.split('\n').length))}
@@ -107,6 +130,11 @@ function RawEditor({ section, patch, issues, disabled, onPatch }: Props & { sect
           >
             {t('admin.content.advanced.clear')}
           </Button>
+          {section === 'missions' && (
+            <Button size="sm" variant="secondary" icon="copy" disabled={disabled} onClick={copyMissionsBase}>
+              {t('admin.content.advanced.copyBase')}
+            </Button>
+          )}
           {baseDefs && (
             <>
               <Combobox label={t('admin.content.advanced.baseSlug')} options={slugs} value={base} onChange={setBase} className="min-w-52" />
@@ -115,7 +143,15 @@ function RawEditor({ section, patch, issues, disabled, onPatch }: Props & { sect
               </Button>
             </>
           )}
+          <Button size="sm" variant="ghost" icon="copy" onClick={() => void copyJson()}>
+            {t('admin.content.advanced.copyJson')}
+          </Button>
         </div>
+        {note && (
+          <p role="status" className="text-sm text-mist-300">
+            {t(`admin.content.advanced.${note}`)}
+          </p>
+        )}
         {dirty && <p className="text-sm text-amber-400">{t('admin.content.advanced.unapplied')}</p>}
         {mine.length > 0 && (
           <ul className="flex flex-col gap-0.5 text-sm">
