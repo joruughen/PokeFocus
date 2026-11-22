@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cancelKeep, MINUTE_MS, validatedMinutes, waveCount } from '../../../engine'
-import { Button, Dialog, DialogClose, ProgressBar, Stage, StageTeam, toast } from '../../components'
+import { Button, Dialog, DialogClose, ProgressBar, Stage, StageTeam, teamStageHeight, toast } from '../../components'
 import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { fmtClock, fmtCountdown, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
+import { useMyTrainer } from '../../lib/useMyTrainer'
 import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
 import { useNow } from '../../store/clock'
 import { AutoDamageToggle } from './AutoDamageToggle'
@@ -29,6 +30,7 @@ export function FocusSession() {
   useHintScreen('session')
   const { t, i18n } = useTranslation()
   const names = useNames()
+  const trainer = useMyTrainer()
   const now = useNow()
   const player = usePlayer()
   const timerState = useGame((s) => s.timer)
@@ -63,21 +65,15 @@ export function FocusSession() {
     }
   })
 
+  const stageMembers = session.teamUids.flatMap((uid) => {
+    const p = player.pokemon[uid]
+    return p ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.pokemon(p), faded: session.asleepUids.includes(uid) }] : []
+  })
+
   return (
     <div className="flex flex-col gap-8">
-      <Stage time={scene.time} weather={scene.weather} variant="focus" className="h-72">
-        <StageTeam
-          className="h-full"
-          night={scene.time === 'night'}
-          bob={!paused}
-          dim
-          members={session.teamUids.flatMap((uid) => {
-            const p = player.pokemon[uid]
-            return p
-              ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.pokemon(p), faded: session.asleepUids.includes(uid) }]
-              : []
-          })}
-        />
+      <Stage time={scene.time} weather={scene.weather} variant="focus" className={teamStageHeight(stageMembers.length, trainer !== null)}>
+        <StageTeam className="h-full" trainer={trainer} night={scene.time === 'night'} bob={!paused} dim members={stageMembers} />
       </Stage>
 
       <section aria-labelledby="timer-title" className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">

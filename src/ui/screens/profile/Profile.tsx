@@ -11,6 +11,7 @@ import { useAuth } from '../../store/auth'
 import { useNow } from '../../store/clock'
 import { useContent } from '../../store/content'
 import { usePlayer } from '../../store/selectors'
+import { TrainerPicker } from './TrainerPicker'
 import { companionOf, lastDays, nextLevelReward, profileStats, streakStatus, trainerProgress, trainerUnlocks, weeklyMinutes } from './profileModel'
 
 /** Weeks the minutes chart covers. */
@@ -71,6 +72,7 @@ export default function Profile() {
         <p className="mt-1 text-mist-300">{t('profile.subtitle')}</p>
       </header>
       <TrainerCard player={player} />
+      <TrainerPicker />
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <LevelPanel player={player} />
         <StreakPanel player={player} />

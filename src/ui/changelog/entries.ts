@@ -29,6 +29,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.16.0',
+    date: '2026-11-22',
+    title: { es: 'Tu personaje y tu equipo en el grupo', en: 'Your character and team in the group' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'En «Estudiar con amigos» cada jugador aparece como una escena: su personaje junto a su líder, más grande, y los otros cinco Pokémon detrás, con sprites completos (los brillantes se ven brillantes). Tú sales siempre el primero. Se ve en la sala previa y durante la sesión; quien ya salió o terminó se ve atenuado. Tu personaje también aparece junto a tu equipo en el escenario de cualquier sesión, en solitario o en grupo.',
+          en: 'In «Study with friends» every player now appears as a scene: their character next to their leader, drawn bigger, with the other five Pokémon behind, all as full sprites (shinies look shiny). You always come first. You see it in the lobby and during the session; whoever left or finished is dimmed. Your character also stands next to your team on the stage of any session, solo or in a group.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Elige tu personaje en el Perfil entre 1500 entrenadores y entrenadoras: busca por nombre, recorre los grupos (destacados, clásicos, de otros juegos o de autores), prueba «Sorpréndeme» y mira cómo quedas junto a tu líder antes de confirmar. Si no eliges ninguno, se te asigna uno por defecto que no cambia.',
+          en: 'Pick your character in your Profile from 1500 trainers: search by name, browse the groups (featured, classic, older games or fan art), try «Surprise me» and see how you look next to your leader before you confirm. If you do not pick one, you get a default that never changes.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Si el grupo tiene más de cuatro jugadores, una flecha a la derecha pasa a los siguientes cuatro (el grupo puede ser de hasta ocho). El equipo solo lo ven quienes están en el grupo, mientras dura.',
+          en: 'If the group has more than four players, an arrow on the right moves on to the next four (a group can have up to eight). Only the people in the group see your team, and only while it lasts.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.15.0',
     date: '2026-11-17',
     title: { es: 'Caramelos de compañero', en: 'Partner candies' },

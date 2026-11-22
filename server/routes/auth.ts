@@ -161,6 +161,7 @@ export function authRoutes(deps: Deps) {
         ...(newName !== null && { trainerName: newName, trainerNameChangedAt: new Date(now) }),
         ...(newCountry !== null && { country: newCountry, countryChangedAt: new Date(now) }),
         ...(body.anonymousRankings !== undefined && { anonymousRankings: body.anonymousRankings }),
+        ...(body.trainerSprite !== undefined && { trainerSprite: body.trainerSprite }),
       }
       const [changed] = Object.keys(patch).length > 0 ? await tx.update(users).set(patch).where(eq(users.id, me.id)).returning() : []
       const u = changed ?? cur

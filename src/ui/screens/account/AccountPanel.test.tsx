@@ -24,6 +24,7 @@ function user(patch: Partial<PublicUser> = {}): PublicUser {
     nameChangedAt: null,
     countryChangedAt: null,
     anonymousRankings: false,
+    trainerSprite: null,
     role: 'player',
     ...patch,
   }

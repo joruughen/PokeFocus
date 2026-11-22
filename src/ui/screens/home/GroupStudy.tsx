@@ -7,10 +7,11 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { conditionTypes, MINUTE_MS, type SessionResult } from '../../../engine'
+import { conditionTypes, MINUTE_MS, toLocal, type SessionResult } from '../../../engine'
 import { fairyMultiplier, groupOverlap } from '../../../game/group'
 import type { StudyGroupMember, StudyGroupView } from '../../../game/protocol'
 import { Button, Panel, PixelIcon, toast, TypeBadge } from '../../components'
+import { timeOfDay } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
 import { fmtNum, fmtPct } from '../../lib/format'
 import { useNames } from '../../lib/names'
@@ -21,6 +22,7 @@ import { groupErrorText, useGroups } from '../../store/group'
 import { useFriends } from '../../store/social'
 import { usePlayer } from '../../store/selectors'
 import { useContent } from '../../store/content'
+import { GroupRoster, meFirst, type SceneState, type ScenePlayer } from './GroupScenes'
 
 const fail = (code: string | null) => {
   if (code) toast.add({ title: groupErrorText(code), type: 'danger' })
@@ -160,23 +162,42 @@ function minutesLeft(until: number, now: number) {
   return Math.max(0, Math.ceil((until - now) / MINUTE_MS))
 }
 
-function InviteList({ group }: { group: StudyGroupView }) {
+/** Sky of the scenes: the viewer's local time, like the route band of the home screen. */
+function useSceneTime() {
+  const player = usePlayer()
+  return timeOfDay(toLocal(useNow(), player.profile.timezone).hour)
+}
+
+/**
+ * The lobby: a scene for the host and everyone who accepted (mine first), and a short list for the invitees
+ * who have not answered or cannot come, whose team nobody sees.
+ */
+function LobbyRoster({ group }: { group: StudyGroupView }) {
   const { t } = useTranslation()
+  const meId = useAuth((s) => s.user?.id)
+  const time = useSceneTime()
+  const people: ScenePlayer[] = [
+    { userId: group.hostId, name: group.hostName, trainer: group.hostLook.trainer, team: group.hostLook.team, you: group.hostId === meId, host: true, state: 'ready', stateText: t('group.host') },
+    ...group.invites
+      .filter((i) => i.status === 'accepted' || i.status === 'joined')
+      .map((i): ScenePlayer => ({ userId: i.userId, name: i.trainerName, trainer: i.trainer, team: i.team, you: i.userId === meId, host: false, state: 'ready', stateText: t(`group.inviteStatus.${i.status}`) })),
+  ]
+  const waiting = group.invites.filter((i) => i.status !== 'accepted' && i.status !== 'joined')
   return (
-    <ul className="flex flex-col gap-1.5">
-      <li className="flex items-center gap-2 text-sm">
-        <PixelIcon name="crown" size={16} className="text-volt-400" />
-        <span className="flex-1 truncate">{group.hostName}</span>
-        <span className="text-xs text-mist-400">{t('group.host')}</span>
-      </li>
-      {group.invites.map((i) => (
-        <li key={i.userId} className="flex items-center gap-2 text-sm">
-          <PixelIcon name={i.status === 'accepted' ? 'check' : i.status === 'declined' || i.status === 'failed' ? 'close' : 'clock'} size={16} className={cx(i.status === 'accepted' ? 'text-leaf-400' : 'text-mist-400')} />
-          <span className="flex-1 truncate">{i.trainerName}</span>
-          <span className={cx('text-xs', i.status === 'accepted' ? 'text-leaf-400' : 'text-mist-400')}>{t(`group.inviteStatus.${i.status}`)}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-3">
+      <GroupRoster players={meFirst(people, meId)} time={time} label={t('group.scene.roster')} />
+      {waiting.length > 0 && (
+        <ul className="flex flex-col gap-1.5">
+          {waiting.map((i) => (
+            <li key={i.userId} className="flex items-center gap-2 text-sm">
+              <PixelIcon name={i.status === 'declined' || i.status === 'failed' ? 'close' : 'clock'} size={16} className="text-mist-400" />
+              <span className="flex-1 truncate">{i.trainerName}</span>
+              <span className="text-xs text-mist-400">{t(`group.inviteStatus.${i.status}`)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -196,7 +217,7 @@ function HostLobby({ group }: { group: StudyGroupView }) {
       <p className="text-sm text-mist-300">
         {t('group.lobbyHost', { minutes: group.minutes })} {t('group.expiresIn', { count: minutesLeft(group.expiresAt, now) })}
       </p>
-      <InviteList group={group} />
+      <LobbyRoster group={group} />
       {waiting > 0 && <p className="text-xs text-mist-400">{t('group.lateJoinNote')}</p>}
       {adding ? (
         <div className="flex flex-col gap-3">
@@ -244,7 +265,7 @@ function GuestLobby({ group }: { group: StudyGroupView }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-mist-300">{t('group.lobbyGuest', { name: group.hostName, minutes: group.minutes })}</p>
-      <InviteList group={group} />
+      <LobbyRoster group={group} />
       <p className="text-xs text-mist-400">{t('group.guestNote')}</p>
       <div>
         <Button size="sm" variant="ghost" icon="close" disabled={busy} onClick={async () => void fail(await leave())}>
@@ -276,6 +297,7 @@ export function GroupSessionStatus() {
   useEffect(() => {
     if (!loaded) void load()
   }, [loaded, load])
+  const time = useSceneTime()
   const session = player.activeSession
   const hasFairy = useTeamHasFairy(session?.startedAt ?? now)
   const g = current && current.me.member ? current : null
@@ -285,29 +307,30 @@ export function GroupSessionStatus() {
   }, [g, meId, now])
   if (!g || !meId || !stats?.sofar || !stats.projected) return null
   const me = g.members.find((m) => m.userId === meId)!
+  const players = meFirst(
+    g.members.map((m): ScenePlayer => {
+      const st = memberState(m, now)
+      return {
+        userId: m.userId,
+        name: m.trainerName,
+        trainer: m.trainer,
+        team: m.team,
+        you: m.userId === meId,
+        host: m.userId === g.hostId,
+        state: st satisfies SceneState,
+        stateText: st === 'in' ? t('group.session.studying') : st === 'done' ? t('group.session.done') : t('group.session.leftBecause', { reason: t(`group.reason.${m.leftReason ?? 'leave'}`) }),
+      }
+    }),
+    meId,
+  )
   const iLeft = memberState(me, now) === 'left'
   const othersIn = g.members.filter((m) => m.userId !== meId && memberState(m, now) === 'in')
   const x = Math.floor(stats.sofar.accompaniedMs / MINUTE_MS)
   const y = Math.round(stats.sofar.sessionMs / MINUTE_MS)
   const mult = fairyMultiplier(stats.projected.overlap, FAIRY)
   return (
-    <Panel variant="frame" title={t('group.session.title')} headingLevel={2} className="mx-auto w-full max-w-3xl">
-      <ul className="flex flex-wrap gap-x-5 gap-y-2" aria-label={t('group.session.members')}>
-        {g.members.map((m) => {
-          const st = memberState(m, now)
-          return (
-            <li key={m.userId} className="flex items-center gap-2 text-sm">
-              <span aria-hidden className={cx('size-2.5', st === 'in' ? 'bg-leaf-400' : st === 'done' ? 'bg-exp-400' : 'bg-dusk-500')} />
-              <span className={cx(st === 'left' && 'text-mist-400 line-through decoration-1')}>
-                {m.userId === meId ? t('group.session.you', { name: m.trainerName }) : m.trainerName}
-              </span>
-              <span className="text-xs text-mist-400">
-                {st === 'in' ? t('group.session.studying') : st === 'done' ? t('group.session.done') : t('group.session.leftBecause', { reason: t(`group.reason.${m.leftReason ?? 'leave'}`) })}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
+    <Panel variant="frame" title={t('group.session.title')} headingLevel={2} className="mx-auto w-full max-w-5xl">
+      <GroupRoster players={players} time={time} label={t('group.session.members')} />
       <p className="mt-4 flex flex-wrap items-center gap-2 text-mist-100">
         <TypeBadge type="fairy" />
         <span>{t('group.session.accompanied', { x, y })}</span>

@@ -1,10 +1,12 @@
 /** Integration tests for study groups (/api/groups + the game action hooks). */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
+import type { OwnedPokemon } from '../src/engine'
 import type { ActionResponse, GameAction, GameSnapshot, GroupsResponse, PublicUser, ServerEvent, StudyGroupView } from '../src/game/protocol'
 import { createApp } from './app'
 import { openDatabase, type Database } from './db/client'
-import { activeStudySessions, studyGroupMembers } from './db/schema'
+import { defaultTrainerSprite } from '../src/game/trainers'
+import { activeStudySessions, playerDocs, studyGroupMembers } from './db/schema'
 import { loadEnv } from './env'
 import { EventBus } from './events'
 
@@ -332,5 +334,191 @@ describe('study groups', () => {
     let last = 0
     for (let i = 0; i < 20; i++) last = (await call('POST', `/api/groups/${g.id}/invite`, a.cookie, { friendIds: [b.user.id] })).status
     expect(last).toBe(429)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Scenes: character + team of each participant (GDD §9.2)
+// ---------------------------------------------------------------------------
+
+let monSeq = 0
+/** Replace the saved team of `u` (the first Pokémon of the doc is the template for the rest). Fresh uids each time. */
+async function setTeam(u: U, team: { slug: string; shiny?: boolean }[]) {
+  const [row] = await database.db.select().from(playerDocs).where(eq(playerDocs.userId, u.user.id))
+  const player = row!.doc.player!
+  const template = Object.values(player.pokemon)[0] as OwnedPokemon
+  const pokemon: Record<string, OwnedPokemon> = {}
+  const uids = team.map((t, i) => {
+    const uid = `${u.user.id.slice(0, 8)}-m${++monSeq}-${i}`
+    pokemon[uid] = { ...template, uid, speciesSlug: t.slug, isShiny: t.shiny ?? false }
+    return uid
+  })
+  const doc = { ...row!.doc, player: { ...player, pokemon: { ...player.pokemon, ...pokemon }, team: uids } }
+  await database.db.update(playerDocs).set({ doc, version: row!.version + 1 }).where(eq(playerDocs.userId, u.user.id))
+}
+
+const SIX = [
+  { slug: 'pikachu', shiny: true },
+  { slug: 'charmander' },
+  { slug: 'squirtle' },
+  { slug: 'eevee' },
+  { slug: 'snorlax' },
+  { slug: 'gengar' },
+]
+const mon = (slug: string, shiny = false) => ({ slug, shiny })
+
+describe('group scenes: character and team', () => {
+  it('lobby: the host and the accepted guests see each other\'s team; a pending guest sees nobody\'s', async () => {
+    now = T0
+    const [a, b, c] = (await crew(3)) as [U, U, U]
+    await setTeam(a, SIX)
+    await setTeam(b, [{ slug: 'mew', shiny: true }, { slug: 'abra' }])
+    await setTeam(c, [{ slug: 'onix' }])
+    const g = await create(a, [b, c])
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+
+    // The host: own team (6, leader first, shiny flag), the accepted guest's, nothing of the pending one.
+    const va = (await groups(a)).current!
+    expect(va.hostLook.team).toEqual(SIX.map((t) => mon(t.slug, t.shiny)))
+    expect(va.hostLook.leader).toEqual(mon('pikachu', true))
+    expect(va.invites.find((i) => i.userId === b.user.id)).toMatchObject({ status: 'accepted', leader: mon('mew', true), team: [mon('mew', true), mon('abra')] })
+    expect(va.invites.find((i) => i.userId === c.user.id)).toMatchObject({ status: 'pending', leader: null, team: [] })
+
+    // The accepted guest sees the host and their own.
+    const vb = (await groups(b)).current!
+    expect(vb.hostLook.team).toHaveLength(6)
+    expect(vb.invites.find((i) => i.userId === b.user.id)?.team).toEqual([mon('mew', true), mon('abra')])
+    expect(vb.invites.find((i) => i.userId === c.user.id)?.team).toEqual([])
+
+    // The pending guest sees the invite (and the characters) but no team at all, not even the host's.
+    const vc = (await groups(c)).invites[0]!
+    expect(vc.id).toBe(g.id)
+    expect(vc.hostLook.team).toEqual([])
+    expect(vc.hostLook.leader).toBeNull()
+    expect(vc.invites.every((i) => i.team.length === 0)).toBe(true)
+    expect(vc.hostLook.trainer).toBe(defaultTrainerSprite(a.user.id))
+    const direct = await call('GET', `/api/groups/${g.id}`, c.cookie)
+    expect((direct.json as unknown as StudyGroupView).hostLook.team).toEqual([])
+  })
+
+  it('the team is read live (a change in the lobby shows at once) and the character follows the profile', async () => {
+    now = T0
+    const [a, b] = (await crew(2)) as [U, U]
+    const g = await create(a, [b])
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+    expect((await groups(a)).current!.hostLook.team).toEqual([mon('bulbasaur')])
+    expect((await groups(a)).current!.hostLook.trainer).toBe(defaultTrainerSprite(a.user.id))
+
+    await setTeam(a, [{ slug: 'eevee' }, { slug: 'jolteon' }])
+    expect((await groups(b)).current!.hostLook.team).toEqual([mon('eevee'), mon('jolteon')])
+
+    const p = await call('PATCH', '/api/auth/me', a.cookie, { trainerSprite: 'lass' })
+    expect(p.status).toBe(200)
+    expect((p.json as { user: PublicUser }).user.trainerSprite).toBe('lass')
+    expect((await groups(b)).current!.hostLook.trainer).toBe('lass')
+    const back = await call('PATCH', '/api/auth/me', a.cookie, { trainerSprite: null })
+    expect((back.json as { user: PublicUser }).user.trainerSprite).toBeNull()
+    expect((await groups(b)).current!.hostLook.trainer).toBe(defaultTrainerSprite(a.user.id))
+  })
+
+  it('started: members show the team of their session (a later team change does not alter it); six at most', async () => {
+    now = T0
+    const [a, b] = (await crew(2)) as [U, U]
+    await setTeam(a, [...SIX, { slug: 'mewtwo' }].slice(0, 6))
+    await setTeam(b, [{ slug: 'mew' }, { slug: 'abra', shiny: true }])
+    const g = await create(a, [b])
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+    const st = await call('POST', `/api/groups/${g.id}/start`, a.cookie)
+    expect(st.status, JSON.stringify(st.json)).toBe(200)
+
+    // After the start, the saved team is edited behind the session's back (e.g. a trade): the scene keeps the session team.
+    await setTeam(b, [{ slug: 'rattata' }])
+    now += 5 * MIN
+    const v = (await groups(a)).current!
+    expect(v.status).toBe('started')
+    const mb = v.members.find((m) => m.userId === b.user.id)!
+    expect(mb.team.map((m) => m.slug)).toEqual(['mew', 'abra'])
+    expect(mb.team[1]).toEqual(mon('abra', true))
+    expect(mb.leader).toEqual(mon('mew'))
+    const ma = v.members.find((m) => m.userId === a.user.id)!
+    expect(ma.team).toHaveLength(6)
+    expect(ma.trainer).toBe(defaultTrainerSprite(a.user.id))
+    // Same for the other member's view.
+    expect((await groups(b)).current!.members.find((m) => m.userId === a.user.id)!.team).toHaveLength(6)
+  })
+
+  it('teams are hidden once nobody is studying any more, and for people outside the group', async () => {
+    now = T0
+    const [a, b, c, d] = (await crew(4)) as [U, U, U, U]
+    const g = await create(a, [b, c])
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+    await call('POST', `/api/groups/${g.id}/decline`, c.cookie)
+    // A declined guest is out: no team (and the declined invite does not show one either).
+    const asC = await call('GET', `/api/groups/${g.id}`, c.cookie)
+    expect((asC.json as unknown as StudyGroupView).hostLook.team).toEqual([])
+    // A stranger gets nothing at all.
+    expect((await call('GET', `/api/groups/${g.id}`, d.cookie)).status).toBe(404)
+
+    await call('POST', `/api/groups/${g.id}/start`, a.cookie)
+    expect(((await call('GET', `/api/groups/${g.id}`, b.cookie)).json as unknown as StudyGroupView).members.every((m) => m.team.length > 0)).toBe(true)
+    // Everybody's session is over: a former member polling the group sees characters, no teams.
+    now += 26 * MIN
+    for (const who of [a, b]) {
+      const v = (await call('GET', `/api/groups/${g.id}`, who.cookie)).json as unknown as StudyGroupView
+      expect(v.members.every((m) => m.team.length === 0 && m.leader === null)).toBe(true)
+      expect(v.members.every((m) => m.trainer.length > 0)).toBe(true)
+    }
+  })
+
+  it('a member who left the group still sees it while the others study; a failed guest does not', async () => {
+    now = T0
+    const [a, b, c] = (await crew(3)) as [U, U, U]
+    const g = await create(a, [b, c])
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+    await call('POST', `/api/groups/${g.id}/accept`, c.cookie)
+    await database.db.insert(activeStudySessions).values({ userId: c.user.id, sessionId: 'elsewhere-2', startedAt: new Date(now) })
+    await call('POST', `/api/groups/${g.id}/start`, a.cookie)
+    now += 3 * MIN
+    // B leaves; the group still runs for A.
+    expect((await call('POST', `/api/groups/${g.id}/leave`, b.cookie)).status).toBe(204)
+    const vb = (await call('GET', `/api/groups/${g.id}`, b.cookie)).json as unknown as StudyGroupView
+    expect(vb.members.find((m) => m.userId === a.user.id)!.team.length).toBeGreaterThan(0)
+    // C's start failed: not in the group, so no team for them and none shown to them.
+    const vc = (await call('GET', `/api/groups/${g.id}`, c.cookie)).json as unknown as StudyGroupView
+    expect(vc.invites.find((i) => i.userId === c.user.id)?.status).toBe('failed')
+    expect(vc.members.every((m) => m.team.length === 0)).toBe(true)
+    expect(vc.hostLook.team).toEqual([])
+    await database.db.delete(activeStudySessions).where(eq(activeStudySessions.userId, c.user.id))
+  })
+
+  it('PATCH /auth/me only accepts the pack; the character and the group payload do not leak to friends or rankings', async () => {
+    now = T0
+    const [a, b] = (await crew(2)) as [U, U]
+    for (const bad of ['nope', '../x', 'Hilbert', 7, '']) {
+      const r = await call('PATCH', '/api/auth/me', a.cookie, { trainerSprite: bad })
+      expect(r.status, String(bad)).toBe(400)
+    }
+    expect((await call('PATCH', '/api/auth/me', a.cookie, { trainerSprite: 'hilbert' })).status).toBe(200)
+    const me = (await call('GET', '/api/auth/me', a.cookie)).json as { user: PublicUser }
+    expect(me.user.trainerSprite).toBe('hilbert')
+    // The whole catalogue is allowed, not only the featured 24: an older-game variant and a fan sprite.
+    for (const slug of ['acetrainer-gen3rs', 'aarune']) {
+      const r = await call('PATCH', '/api/auth/me', a.cookie, { trainerSprite: slug })
+      expect(r.status, slug).toBe(200)
+      expect((r.json as { user: PublicUser }).user.trainerSprite).toBe(slug)
+    }
+    expect((await call('PATCH', '/api/auth/me', a.cookie, { trainerSprite: 'hilbert' })).status).toBe(200)
+    // Choosing a character is not an "empty patch" and does not touch the name/country locks.
+    expect(me.user.nameChangedAt).toBeNull()
+
+    // B (a friend of A, never in a group with them) gets neither the character nor any group-scene field from
+    // the other routes. (Friends already see each other's team on the Friends screen and the boards show the leader's
+    // species: that is older than the scenes and not changed here.)
+    for (const path of ['/api/friends', '/api/leaderboard?scope=friends', '/api/groups']) {
+      const text = JSON.stringify((await call('GET', path, b.cookie)).json)
+      expect(text, path).not.toContain('hilbert')
+      expect(text, path).not.toContain('hostLook')
+      expect(text, path).not.toContain('trainerSprite')
+    }
   })
 })

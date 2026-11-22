@@ -292,7 +292,7 @@ export type ActionResponse<T extends GameActionType = GameActionType> = GameSnap
  *   whole request fails (nothing is applied): 409 `name_locked` or
  *   `country_locked`, with `{ unlockAt }` (epoch ms) in the body.
  * - A server running with DEV_TOOLS=1 ignores the locks (same as the time zone).
- * - `anonymousRankings` has no lock.
+ * - `anonymousRankings` and `trainerSprite` have no lock.
  */
 export const NAME_LOCK_DAYS = 30
 export const COUNTRY_LOCK_DAYS = 30
@@ -315,6 +315,11 @@ export interface PublicUser {
    * see "Anonymous trainer"). Friends' leaderboard and my own row always show it.
    */
   anonymousRankings: boolean
+  /**
+   * The character picked in the profile (a slug of the catalogue, src/game/trainerCatalog.ts); null = never
+   * chose, so everybody sees the default of `defaultTrainerSprite(id)`. PATCH /auth/me accepts a slug or null.
+   */
+  trainerSprite: string | null
   /** Admin panel access; players are 'player'. The server decides, the client only shows or hides the link. */
   role: UserRole
 }
@@ -465,7 +470,32 @@ export type GroupInviteStatus = 'pending' | 'accepted' | 'declined' | 'joined' |
 /** Why a member left: pausing or cancelling leaves the group; `finished` = claimed. */
 export type GroupLeaveReason = 'pause' | 'cancel' | 'leave' | 'finished'
 
-export interface StudyGroupMember {
+/** A Pokémon as the group scenes show it: its species and whether it is shiny. Nothing else of the team leaks. */
+export interface GroupMon {
+  slug: string
+  shiny: boolean
+}
+
+/**
+ * How a participant looks in the group scenes (GDD §9.2): the character they picked in their profile and their
+ * team. The team is private to the group:
+ * - `team` is filled only for the host, members and invitees who accepted (`accepted`/`joined`), and only when
+ *   the VIEWER is one of them too (a pending invitee sees nobody's team) and the group is still alive: a lobby
+ *   not yet lapsed, or a started group while any member's session is still running.
+ * - It is the team of the session they are studying (or, outside a session, their saved team): read live from
+ *   their player doc on every request, never copied, so it is always current and nothing outlives the group.
+ * - It is in no other payload (rankings, friends, profile of others…).
+ */
+export interface GroupLook {
+  /** Slug of their character (`trainerCatalog.ts`): their choice, else the stable default for their id. Always set. */
+  trainer: string
+  /** Slot 0 of the team (the leader); same as `team[0]`. null = no team to show. */
+  leader: GroupMon | null
+  /** Up to 6, leader first. Empty when the viewer may not see it (see above). */
+  team: GroupMon[]
+}
+
+export interface StudyGroupMember extends GroupLook {
   userId: string
   trainerName: string
   /** Start of their session in the group (game time, ms). */
@@ -476,7 +506,7 @@ export interface StudyGroupMember {
   leftReason: GroupLeaveReason | null
 }
 
-export interface StudyGroupInvite {
+export interface StudyGroupInvite extends GroupLook {
   userId: string
   trainerName: string
   status: GroupInviteStatus
@@ -486,6 +516,8 @@ export interface StudyGroupView {
   id: string
   hostId: string
   hostName: string
+  /** The host's character and team (the host has no member row while the group is a lobby). */
+  hostLook: GroupLook
   minutes: number
   status: StudyGroupStatus
   createdAt: number

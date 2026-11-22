@@ -24,6 +24,8 @@ export interface UpdateMeInput {
   trainerName?: string
   country?: string
   anonymousRankings?: boolean
+  /** A slug of the trainer catalogue (`trainerCatalog.ts`), or null for the default character. */
+  trainerSprite?: string | null
 }
 
 /** 409 codes of PATCH /auth/me for a field still inside its lock window. */

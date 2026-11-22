@@ -70,6 +70,34 @@
     "ballCount_other": "{{count}} left",
     "openProfile": "Open your profile"
   },
+  "trainers": {
+    "names": {
+      "hilbert": "Hilbert",
+      "hilda": "Hilda",
+      "nate": "Nate",
+      "rosa": "Rosa",
+      "ethan": "Ethan",
+      "lyra": "Lyra",
+      "lucas": "Lucas",
+      "dawn": "Dawn",
+      "red": "Red",
+      "acetrainer": "Ace Trainer (boy)",
+      "acetrainerf": "Ace Trainer (girl)",
+      "backpacker": "Backpacker (boy)",
+      "backpackerf": "Backpacker (girl)",
+      "youngster": "Youngster",
+      "lass": "Lass",
+      "bugcatcher": "Bug Catcher",
+      "beauty": "Beauty",
+      "blackbelt": "Black Belt",
+      "battlegirl": "Battle Girl",
+      "scientist": "Scientist",
+      "hiker": "Hiker",
+      "pokemonranger": "Pokémon Ranger (boy)",
+      "pokemonrangerf": "Pokémon Ranger (girl)",
+      "psychicf": "Psychic"
+    }
+  },
   "mascot": {
     "name": "Study Pikachu"
   },
@@ -2377,7 +2405,6 @@
     "session": {
       "title": "Group session",
       "members": "Group members",
-      "you": "{{name}} (you)",
       "studying": "studying",
       "done": "finished",
       "leftBecause": "out · {{reason}}",
@@ -2424,6 +2451,15 @@
       "session_active": "You already have a session running.",
       "no_player": "Choose your starter Pokémon first.",
       "not_found": "That group no longer exists."
+    },
+    "scene": {
+      "you": "You",
+      "roster": "Players in the group",
+      "pages": "Player pages",
+      "page": "Page {{page}} of {{pages}}",
+      "prev": "Previous players (page {{page}} of {{pages}})",
+      "next": "Next players (page {{page}} of {{pages}})",
+      "noTeam": "No team to show."
     }
   },
   "damage": {
@@ -4555,6 +4591,40 @@
       "weeksLabel": "Minutes studied in the last {{count}} weeks",
       "weekTip": "Week of {{date}}: {{minutes}} min",
       "weeksNote": "Each column is one week (Monday to Sunday); the last one is this week."
+    },
+    "character": {
+      "title": "Your character",
+      "body": "The trainer who stands next to your team when you study with friends. Everyone in your group sees them, together with your team. Choose from {{count}} trainers.",
+      "defaultTag": "Default",
+      "current": "Now: {{name}}",
+      "saved": "Character saved",
+      "saveError": "Could not save your character. Try again.",
+      "change": "Change character",
+      "dialogTitle": "Choose your character",
+      "search": "Search",
+      "searchPlaceholder": "A name: scientist, Lass, Hilbert…",
+      "groupLabel": "Group",
+      "genLabel": "Game",
+      "authorLabel": "Author",
+      "groups": {
+        "all": "All",
+        "featured": "Featured",
+        "classic": "Classic",
+        "older": "Older games",
+        "fan": "Fan art"
+      },
+      "allGens": "All",
+      "gen": "Gen {{n}}",
+      "allAuthors": "All authors ({{count}})",
+      "shown": "Showing {{shown}} of {{total}}",
+      "more": "Show {{count}} more",
+      "empty": "No trainer matches “{{q}}” in this group.",
+      "emptyAll": "See the {{count}} matches in all groups",
+      "random": "Surprise me",
+      "use": "Use this character",
+      "credit": "Sprite by {{author}}",
+      "currentTag": "Your character now",
+      "label": "Trainers"
     }
   },
   "gift": {

@@ -10,22 +10,25 @@
  * - At claim the server computes `friendOverlap` from those intervals
  *   (src/game/group.ts) and hands it to the reducer through `ActionEnv`.
  */
-import { and, eq, inArray, ne, or } from 'drizzle-orm'
+import { and, eq, inArray, ne, or, sql } from 'drizzle-orm'
 import { MINUTE_MS } from '../src/engine'
 import { groupOverlap } from '../src/game/group'
+import { resolveTrainerSprite } from '../src/game/trainerCatalog'
 import type {
   GameActionType,
   GameDoc,
   GroupEventKind,
   GroupInviteStatus,
   GroupLeaveReason,
+  GroupLook,
+  GroupMon,
   StudyGroupInvite,
   StudyGroupMember,
   StudyGroupStatus,
   StudyGroupView,
 } from '../src/game/protocol'
 import type { Db, Tx } from './db/client'
-import { studyGroupInvites, studyGroupMembers, studyGroups, users } from './db/schema'
+import { playerDocs, studyGroupInvites, studyGroupMembers, studyGroups, users } from './db/schema'
 import type { Deps } from './http'
 
 type Q = Db | Tx
@@ -214,24 +217,76 @@ export async function publishGroupEvents(
   }
 }
 
+/** In the group: the host, the members and the invitees that accepted (or already joined). */
+const inGroup = (i: InviteRow) => i.status === 'accepted' || i.status === 'joined'
+
+/**
+ * May `viewerId` see the teams of this group? Only people who are in it (host, member, accepted invitee: a pending
+ * or declined invitee sees nobody's team), and only while it is alive: a lobby that has not lapsed, or a started
+ * group while any member's session is still running (a started group never turns `ended` by itself, so without
+ * this window a former member could keep polling GET /groups/:id).
+ */
+export function teamsVisible(g: GroupRow, members: MemberRow[], invites: InviteRow[], viewerId: string, now: number): boolean {
+  if (effectiveStatus(g, now) === 'ended') return false
+  const entitled = g.hostId === viewerId || members.some((m) => m.userId === viewerId) || invites.some((i) => i.inviteeId === viewerId && inGroup(i))
+  if (!entitled) return false
+  return g.status === 'lobby' || members.some((m) => m.endsAt.getTime() > now)
+}
+
+/**
+ * The team of each user as the scenes show it: up to 6 `{slug, shiny}`, leader first. It is the team of the running
+ * session (`activeSession.teamUids`, a snapshot taken at start) or else the saved team, i.e. what `heals` also
+ * treats as "their team". Read live from the player doc, in SQL, so only these few fields leave the database.
+ */
+export async function teamsOf(q: Q, userIds: string[]): Promise<Map<string, GroupMon[]>> {
+  const out = new Map<string, GroupMon[]>()
+  if (userIds.length === 0) return out
+  const d = playerDocs.doc
+  const rows = await q
+    .select({
+      id: playerDocs.userId,
+      // `::text` so the driver does not decide how to parse the jsonb (postgres-js and PGlite differ).
+      team: sql<string | null>`(
+        select jsonb_agg(jsonb_build_object('slug', m.p ->> 'speciesSlug', 'shiny', coalesce((m.p ->> 'isShiny')::boolean, false)) order by t.ord)
+        from jsonb_array_elements_text(coalesce(${d} #> '{player,activeSession,teamUids}', ${d} #> '{player,team}', '[]'::jsonb)) with ordinality as t(uid, ord)
+        cross join lateral (select ${d} #> array['player', 'pokemon', t.uid] as p) m
+        where t.ord <= 6 and m.p is not null
+      )::text`,
+    })
+    .from(playerDocs)
+    .where(inArray(playerDocs.userId, userIds))
+  for (const r of rows) out.set(r.id, r.team ? (JSON.parse(r.team) as GroupMon[]) : [])
+  return out
+}
+
 /** Full view of a group for one viewer. */
 export async function groupView(q: Q, g: GroupRow, viewerId: string, now: number): Promise<StudyGroupView> {
   const members = await membersOf(q, g.id)
   const invites = await q.select().from(studyGroupInvites).where(eq(studyGroupInvites.groupId, g.id))
   const ids = [...new Set([g.hostId, ...members.map((m) => m.userId), ...invites.map((i) => i.inviteeId)])]
-  const people = await q.select({ id: users.id, name: users.trainerName }).from(users).where(inArray(users.id, ids))
-  const name = new Map(people.map((p) => [p.id, p.name]))
+  const people = await q.select({ id: users.id, name: users.trainerName, sprite: users.trainerSprite }).from(users).where(inArray(users.id, ids))
+  const person = new Map(people.map((p) => [p.id, p]))
+  const name = (id: string) => person.get(id)?.name ?? '?'
+  // Teams: only of people in the group, and only if the viewer may see them (see `teamsVisible`).
+  const showTeams = teamsVisible(g, members, invites, viewerId, now)
+  const inside = new Set([g.hostId, ...members.map((m) => m.userId), ...invites.filter(inGroup).map((i) => i.inviteeId)])
+  const teams = showTeams ? await teamsOf(q, [...inside]) : new Map<string, GroupMon[]>()
+  const look = (id: string): GroupLook => {
+    const team = inside.has(id) ? (teams.get(id) ?? []) : []
+    return { trainer: resolveTrainerSprite(id, person.get(id)?.sprite), leader: team[0] ?? null, team }
+  }
   const memberViews: StudyGroupMember[] = members
     .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime())
-    .map((m) => ({ ...toMemberSpan(m), trainerName: name.get(m.userId) ?? '?', leftReason: m.leftReason ?? null }))
+    .map((m) => ({ ...toMemberSpan(m), trainerName: name(m.userId), leftReason: m.leftReason ?? null, ...look(m.userId) }))
   const inviteViews: StudyGroupInvite[] = invites
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-    .map((i) => ({ userId: i.inviteeId, trainerName: name.get(i.inviteeId) ?? '?', status: i.status }))
+    .map((i) => ({ userId: i.inviteeId, trainerName: name(i.inviteeId), status: i.status, ...look(i.inviteeId) }))
   const myInvite = invites.find((i) => i.inviteeId === viewerId)
   return {
     id: g.id,
     hostId: g.hostId,
-    hostName: name.get(g.hostId) ?? '?',
+    hostName: name(g.hostId),
+    hostLook: look(g.hostId),
     minutes: g.minutes,
     status: effectiveStatus(g, now),
     createdAt: g.createdAt.getTime(),

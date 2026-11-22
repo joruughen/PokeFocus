@@ -32,6 +32,19 @@ afterEach(() => {
   Object.assign(useAuth.getInitialState(), { user: null, status: 'anon' })
 })
 
+describe('Profile: character picker', () => {
+  it('shows «Tu personaje» with a change button when signed in, and not without an account', async () => {
+    await i18n.changeLanguage('es')
+    load({}, { trainerSprite: null })
+    const html = renderToStaticMarkup(<Profile />)
+    expect(html).toContain('Tu personaje')
+    expect(html).toContain('Cambiar personaje')
+    expect(html.match(/<img[^>]*src="\/sprites\/trainers\//g)).toHaveLength(1) // only the current one: the catalogue opens in a dialog
+    load()
+    expect(renderToStaticMarkup(<Profile />)).not.toContain('Tu personaje')
+  })
+})
+
 describe('Profile screen', () => {
   for (const lng of ['es', 'en'] as const) {
     it(`renders every section of a new trainer without raw keys (${lng})`, async () => {

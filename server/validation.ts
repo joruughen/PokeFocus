@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import { ALL_TYPES, defaultContext, MAX_RELEASE_BATCH, STAT_KEYS, type StatKey, type TypeSlug } from '../src/engine'
 import { MAINTENANCE_MAX_MS, MAINTENANCE_NOTE_MAX, type GameAction } from '../src/game/protocol'
+import { isTrainerSprite } from '../src/game/trainerCatalog'
 import { PASSWORD_MAX, PASSWORD_MIN } from './auth/password'
 
 // ---------------------------------------------------------------------------
@@ -55,9 +56,20 @@ export const loginBody = z.object({
   password: z.string().min(1).max(PASSWORD_MAX),
 })
 
+/** A character of the catalogue (`trainerCatalog.ts`, all of Showdown's trainer sprites), or null to go back to the default. */
+export const trainerSpriteSchema = z
+  .string()
+  .refine(isTrainerSprite, 'unknown_trainer')
+  .nullable()
+
 export const patchMeBody = z
-  .object({ trainerName: trainerNameSchema.optional(), country: countrySchema.optional(), anonymousRankings: z.boolean().optional() })
-  .refine((v) => v.trainerName !== undefined || v.country !== undefined || v.anonymousRankings !== undefined, { message: 'empty patch' })
+  .object({
+    trainerName: trainerNameSchema.optional(),
+    country: countrySchema.optional(),
+    anonymousRankings: z.boolean().optional(),
+    trainerSprite: trainerSpriteSchema.optional(),
+  })
+  .refine((v) => v.trainerName !== undefined || v.country !== undefined || v.anonymousRankings !== undefined || v.trainerSprite !== undefined, { message: 'empty patch' })
 
 export const passwordBody = z.object({ current: z.string().min(1).max(PASSWORD_MAX), next: passwordSchema })
 

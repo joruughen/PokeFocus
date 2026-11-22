@@ -26,6 +26,8 @@ export const users = pgTable('users', {
   countryChangedAt: ts('country_changed_at'),
   /** Privacy: hide the name in the global and country leaderboards. */
   anonymousRankings: boolean('anonymous_rankings').notNull().default(false),
+  /** Character picked in the profile (slug of src/game/trainerCatalog.ts, validated on write); null = the stable default. */
+  trainerSprite: text('trainer_sprite'),
   /** Admin panel access (docs/admin-plan.md §4): player < support < admin. */
   role: text('role', { enum: ['player', 'support', 'admin'] }).notNull().default('player'),
 },

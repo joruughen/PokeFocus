@@ -17,7 +17,7 @@ export interface SegmentedProps<V extends string> {
   onChange: (value: V) => void
   /** Accessible name of the group. */
   label: string
-  size?: 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg'
   className?: string
   /** Data attribute passthrough for hint anchors. */
   anchor?: string
@@ -47,7 +47,7 @@ export function Segmented<V extends string>({ options, value, onChange, label, s
             'transition-[background-color,translate] duration-75 hover:bg-dusk-600',
             'data-pressed:translate-y-[3px] data-pressed:bg-volt-400 data-pressed:text-ink data-pressed:shadow-pressed',
             'data-disabled:opacity-40',
-            size === 'lg' ? 'min-h-14 min-w-16 px-4 text-2xl' : 'min-h-10 px-3 text-base',
+            size === 'lg' ? 'min-h-14 min-w-16 px-4 text-2xl' : size === 'sm' ? 'min-h-8 px-2 text-sm' : 'min-h-10 px-3 text-base',
           )}
         >
           {o.label}

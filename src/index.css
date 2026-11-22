@@ -343,6 +343,12 @@
 }
 
 /* --- Utilities shared by several components -------------------------------- */
+/** A thin scrollbar in the dusk palette, for inner scroll areas such as the trainer picker's grid. */
+@utility scroll-dusk {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-dusk-500) var(--color-dusk-900);
+}
+
 @utility pixelated {
   image-rendering: pixelated;
   image-rendering: crisp-edges;

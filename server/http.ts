@@ -15,6 +15,7 @@ import type { ContentService } from './content/service'
 import type { SimRunner } from './content/simRunner'
 import { hashToken, looksLikeToken, SESSION_COOKIE, SESSION_RENEW_AFTER_MS, SESSION_TTL_MS } from './auth/tokens'
 import { DEV_NOW_HEADER, type PublicUser, type UserRole } from '../src/game/protocol'
+import { isTrainerSprite } from '../src/game/trainerCatalog'
 
 export interface Deps {
   env: Env
@@ -105,6 +106,7 @@ export function toPublicUser(u: UserRow): PublicUser {
     nameChangedAt: u.trainerNameChangedAt?.getTime() ?? null,
     countryChangedAt: u.countryChangedAt?.getTime() ?? null,
     anonymousRankings: u.anonymousRankings,
+    trainerSprite: isTrainerSprite(u.trainerSprite) ? u.trainerSprite : null,
     role: u.role,
   }
 }

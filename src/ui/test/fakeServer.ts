@@ -41,6 +41,7 @@ function freshUser(trainerName: string): PublicUser {
     nameChangedAt: null,
     countryChangedAt: null,
     anonymousRankings: false,
+    trainerSprite: null,
     role: 'player',
   }
 }
@@ -95,7 +96,7 @@ export function installFakeServer(opts: { trainerName?: string; skewMs?: number 
     }
     if (path === '/api/auth/me' && method === 'GET') return json(200, { user: server.user })
     if (path === '/api/auth/me' && method === 'PATCH') {
-      const patch = (body ?? {}) as { trainerName?: string; country?: string; anonymousRankings?: boolean }
+      const patch = (body ?? {}) as { trainerName?: string; country?: string; anonymousRankings?: boolean; trainerSprite?: string | null }
       const at = serverNow()
       const u = server.user
       // A change is a different value; the same value is a no-op. Any locked change fails the whole request.
@@ -108,6 +109,7 @@ export function installFakeServer(opts: { trainerName?: string; skewMs?: number 
         ...(nameChange && { trainerName: patch.trainerName!, nameChangedAt: at }),
         ...(countryChange && { country: patch.country!, countryChangedAt: at }),
         ...(patch.anonymousRankings !== undefined && { anonymousRankings: patch.anonymousRankings }),
+        ...(patch.trainerSprite !== undefined && { trainerSprite: patch.trainerSprite }),
       }
       return json(200, { user: server.user })
     }

@@ -70,6 +70,34 @@
     "ballCount_other": "{{count}} disponibles",
     "openProfile": "Abrir tu perfil"
   },
+  "trainers": {
+    "names": {
+      "hilbert": "Hilbert",
+      "hilda": "Hilda",
+      "nate": "Nate",
+      "rosa": "Rosa",
+      "ethan": "Ethan",
+      "lyra": "Lyra",
+      "lucas": "Lucas",
+      "dawn": "Maya",
+      "red": "Rojo",
+      "acetrainer": "Entrenador guay",
+      "acetrainerf": "Entrenadora guay",
+      "backpacker": "Mochilero",
+      "backpackerf": "Mochilera",
+      "youngster": "Joven",
+      "lass": "Chica",
+      "bugcatcher": "Cazabichos",
+      "beauty": "Belleza",
+      "blackbelt": "Cinturón negro",
+      "battlegirl": "Luchadora",
+      "scientist": "Científico",
+      "hiker": "Montañero",
+      "pokemonranger": "Guardabosques (chico)",
+      "pokemonrangerf": "Guardabosques (chica)",
+      "psychicf": "Vidente"
+    }
+  },
   "mascot": {
     "name": "Pikachu estudioso"
   },
@@ -2377,7 +2405,6 @@
     "session": {
       "title": "Sesión en grupo",
       "members": "Miembros del grupo",
-      "you": "{{name}} (tú)",
       "studying": "estudiando",
       "done": "terminó",
       "leftBecause": "fuera · {{reason}}",
@@ -2424,6 +2451,15 @@
       "session_active": "Ya tienes una sesión en marcha.",
       "no_player": "Elige tu Pokémon inicial primero.",
       "not_found": "Ese grupo ya no existe."
+    },
+    "scene": {
+      "you": "Tú",
+      "roster": "Jugadores del grupo",
+      "pages": "Páginas de jugadores",
+      "page": "Página {{page}} de {{pages}}",
+      "prev": "Jugadores anteriores (página {{page}} de {{pages}})",
+      "next": "Siguientes jugadores (página {{page}} de {{pages}})",
+      "noTeam": "Sin equipo que mostrar."
     }
   },
   "damage": {
@@ -4555,6 +4591,40 @@
       "weeksLabel": "Minutos estudiados en las últimas {{count}} semanas",
       "weekTip": "Semana del {{date}}: {{minutes}} min",
       "weeksNote": "Cada columna es una semana (de lunes a domingo); la última es la actual."
+    },
+    "character": {
+      "title": "Tu personaje",
+      "body": "El entrenador que aparece junto a tu equipo cuando estudias con amigos. Todo tu grupo lo ve, junto con tu equipo. Elige entre {{count}} entrenadores.",
+      "defaultTag": "Por defecto",
+      "current": "Ahora: {{name}}",
+      "saved": "Personaje guardado",
+      "saveError": "No se pudo guardar tu personaje. Inténtalo de nuevo.",
+      "change": "Cambiar personaje",
+      "dialogTitle": "Elige tu personaje",
+      "search": "Buscar",
+      "searchPlaceholder": "Un nombre: científico, Lass, Hilbert…",
+      "groupLabel": "Grupo",
+      "genLabel": "Juego",
+      "authorLabel": "Autor",
+      "groups": {
+        "all": "Todos",
+        "featured": "Destacados",
+        "classic": "Clásicos",
+        "older": "Otros juegos",
+        "fan": "De autores"
+      },
+      "allGens": "Todos",
+      "gen": "Gen {{n}}",
+      "allAuthors": "Todos los autores ({{count}})",
+      "shown": "Mostrando {{shown}} de {{total}}",
+      "more": "Ver {{count}} más",
+      "empty": "Ningún entrenador coincide con «{{q}}» en este grupo.",
+      "emptyAll": "Ver las {{count}} coincidencias de todos los grupos",
+      "random": "Sorpréndeme",
+      "use": "Usar este personaje",
+      "credit": "Sprite de {{author}}",
+      "currentTag": "Tu personaje actual",
+      "label": "Entrenadores"
     }
   },
   "gift": {
