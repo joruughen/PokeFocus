@@ -7,6 +7,7 @@ import {
   ALL_TYPES,
   conditionEnvAt,
   conditionTypes,
+  copyTarget,
   defaultContext,
   isCold,
   isRainy,
@@ -47,7 +48,7 @@ export function conditionsNow(
   for (const uid of state.team) {
     const p = state.pokemon[uid]
     if (!p) continue
-    const types = conditionTypes(p, now, ctx)
+    const types = conditionTypes(p, now, ctx, copyTarget(state, p, ctx))
     types.forEach((t) => teamTypes.add(t))
     member[uid] = pokemonConditionMult(types, env, cfg)
   }
@@ -65,13 +66,13 @@ export function conditionsNow(
   return { env, rows, member }
 }
 
-/** Types the team plays for conditions at `at` (a Tera type replaces the species types while it lasts). */
+/** Types the team plays for conditions at `at` (a Tera type replaces the species types while it lasts; a Pokémon copying a teammate plays the teammate's). */
 export function teamConditionTypes(state: PlayerState, at: number): Set<TypeSlug> {
   const ctx = defaultContext()
   const out = new Set<TypeSlug>()
   for (const uid of state.team) {
     const p = state.pokemon[uid]
-    if (p) conditionTypes(p, at, ctx).forEach((t) => out.add(t))
+    if (p) conditionTypes(p, at, ctx, copyTarget(state, p, ctx)).forEach((t) => out.add(t))
   }
   return out
 }

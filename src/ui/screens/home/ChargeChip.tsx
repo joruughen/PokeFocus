@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { Charge, PlayerState } from '../../../engine'
 import { Button, Sprite, Tooltip } from '../../components'
+import { lookOfMon } from '../../lib/look'
 import { useNames } from '../../lib/names'
 
 /** Localized name of what produced a charge: the ability or the technique. */
@@ -41,7 +42,8 @@ export function ChargeChip({
   const { t } = useTranslation()
   const names = useNames()
   const label = useChargeLabel(player)(charge)
-  const slug = player.pokemon[charge.sourceUid]?.speciesSlug
+  const source = player.pokemon[charge.sourceUid]
+  const look = source ? lookOfMon(player, source) : null
   return (
     <Tooltip content={label}>
       <Button
@@ -56,7 +58,7 @@ export function ChargeChip({
             readers and in the tooltip. */}
         <span className="sr-only">{charge.kind === 'reroll' ? t('waves.charges.reroll') : t(`waves.charges.${charge.status ?? 'sleep'}`)}</span>
         <span className="text-sm">{chargeSourceName(charge, player, names)}</span>
-        {slug && <Sprite kind="icon" slug={slug} alt="" className="-my-3 -mr-2" />}
+        {look && <Sprite kind="icon" slug={look.slug} shiny={look.shiny} alt="" className="-my-3 -mr-2" />}
         <span className="sr-only">{` (${label})`}</span>
       </Button>
     </Tooltip>

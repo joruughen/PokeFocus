@@ -36,6 +36,7 @@ import { emitHintEvent, hintAnchor, useHintEvent, useHintScreen, useHints } from
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { fmtPct } from '../../lib/format'
+import { lookOfMon } from '../../lib/look'
 import { useNames } from '../../lib/names'
 import { sfx, sfxLater } from '../../lib/sound'
 import { useNow } from '../../store/clock'
@@ -554,13 +555,17 @@ export function Waves() {
 }
 
 /** Team members whose hits weakened wild `index` (effective hits of the wave), most hits first. */
-function hittersOf(hits: Wave['hits'], index: number): { uid: string; slug: string; hits: number }[] {
+function hittersOf(hits: Wave['hits'], index: number): { uid: string; slug: string; shiny?: boolean; hits: number }[] {
   if (!hits) return []
   const player = useGame.getState().player
   const by = new Map<string, number>()
   for (const h of hits) if (h.target === index) by.set(h.uid, (by.get(h.uid) ?? 0) + Math.max(1, Math.round(h.units)))
   return [...by.entries()]
-    .map(([uid, n]) => ({ uid, slug: player?.pokemon[uid]?.speciesSlug ?? '', hits: n }))
+    .map(([uid, n]) => {
+      const p = player?.pokemon[uid]
+      const look = player && p ? lookOfMon(player, p) : null
+      return { uid, slug: look?.slug ?? '', shiny: look?.shiny, hits: n }
+    })
     .filter((h) => h.slug)
     .sort((a, b) => b.hits - a.hits)
 }
@@ -656,8 +661,9 @@ function TokenButton({
   const lng = inst.language
   const names = useNames()
   const player = usePlayer()
-  const slug = player.pokemon[token.uid]?.speciesSlug ?? ''
-  const name = names.pokemon(player.pokemon[token.uid] ?? { speciesSlug: slug })
+  const mon = player.pokemon[token.uid]
+  const look = mon ? lookOfMon(player, mon) : null
+  const name = names.pokemon(mon ?? { speciesSlug: '' })
   const a = token.assigned
   const exhausted = a === null && !canAttack(player, token.uid)
   const attack = wave.attacks?.[token.uid]
@@ -705,7 +711,7 @@ function TokenButton({
           exhausted && 'opacity-50',
         )}
       >
-        <Sprite kind="icon" slug={slug} alt="" className="-my-2" />
+        <Sprite kind="icon" slug={look?.slug ?? ''} shiny={look?.shiny} alt="" className="-my-2" />
         <span className="font-num text-lg leading-none">×{token.hits}</span>
         {/* On phones the dashed outline alone says "unassigned", so three tokens fit per row. */}
         <span className={cx('ml-1 max-w-[9ch] truncate text-xs', picked ? 'text-dusk-800' : 'text-mist-300', !where && !exhausted && 'max-sm:hidden')}>
@@ -728,7 +734,7 @@ function counterLine(c: CounterResult, t: (k: string, o?: Record<string, unknown
  * "Hits" row of a wild card: every team member that hit it (up to 6). They wrap instead of
  * overflowing the 11.5 rem card.
  */
-export function HittersRow({ hitters }: { hitters: { uid: string; slug: string; hits: number }[] }) {
+export function HittersRow({ hitters }: { hitters: { uid: string; slug: string; shiny?: boolean; hits: number }[] }) {
   const { t } = useTranslation()
   const names = useNames()
   const team = useGame((s) => s.player?.pokemon)
@@ -740,7 +746,7 @@ export function HittersRow({ hitters }: { hitters: { uid: string; slug: string; 
       <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5" title={hitters.map((h) => `${nameOf(h)} ×${h.hits}`).join(', ')}>
         {hitters.map((h) => (
           <span key={h.uid} className="inline-flex min-w-0 items-center">
-            <Sprite kind="icon" slug={h.slug} alt={nameOf(h)} className="-my-2 -mx-2 shrink-0" />
+            <Sprite kind="icon" slug={h.slug} shiny={h.shiny} alt={nameOf(h)} className="-my-2 -mx-2 shrink-0" />
             <span className="font-num text-sm leading-none">×{h.hits}</span>
           </span>
         ))}
@@ -834,7 +840,7 @@ function WildCard({
   manual: boolean
   studyAvailable: boolean
   revealIvs: boolean
-  hitters: { uid: string; slug: string; hits: number }[]
+  hitters: { uid: string; slug: string; shiny?: boolean; hits: number }[]
   wild: WildPokemon
   index: number
   selected: boolean

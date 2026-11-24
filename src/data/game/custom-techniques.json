@@ -1270,21 +1270,12 @@
     "category": "passive",
     "effects": [
       {
-        "kind": "statMod",
-        "stat": "points",
-        "mult": 1.15,
-        "scope": "self"
-      },
-      {
-        "kind": "statMod",
-        "stat": "captureEnergy",
-        "mult": 1.15,
-        "scope": "self"
+        "kind": "copyTeammate"
       }
     ],
     "description": {
-      "es": "Imita a los salvajes: +15% de puntos y de Puntos de captura.",
-      "en": "Mimics wild Pokémon: +15% points and Capture Points."
+      "es": "Copia a un compañero del equipo: sus tipos y sus técnicas (tantas como huecos tiene), con el Dominio del compañero. Conserva sus propios stats. Si el copiado deja el equipo, vuelve a ser él mismo.",
+      "en": "Copies a teammate: its types and techniques (as many as it has slots), with the teammate's Mastery. Keeps its own stats. If the copied Pokémon leaves the team, it goes back to being itself."
     }
   }
 }

@@ -141,7 +141,7 @@ function MemberReport({ m, result, player }: { m: MemberResult; result: SessionR
     <li className="bg-dusk-900 inset-shadow-well">
       <details className="group">
         <summary className="flex cursor-pointer list-none items-center gap-3 p-3 outline-offset-2 [&::-webkit-details-marker]:hidden">
-          <Sprite kind="icon" slug={m.speciesSlug} alt="" className="-my-2" />
+          <Sprite kind="icon" slug={m.copy?.speciesSlug ?? m.speciesSlug} shiny={player?.pokemon[m.uid]?.isShiny} alt="" className="-my-2" />
           <span className="min-w-0 flex-1">
             <span className="block font-display text-lg leading-tight">{name}</span>
             <span className="block text-sm text-mist-300">{m.asleep ? t('results.asleep') : summary.join(' · ')}</span>
@@ -153,6 +153,14 @@ function MemberReport({ m, result, player }: { m: MemberResult; result: SessionR
           <PixelIcon name="next" size={16} className="shrink-0 transition-transform group-open:rotate-90" />
         </summary>
         <div className="flex flex-col gap-3 px-3 pb-3 text-sm">
+          {m.copy && (
+            <Block title={t('report.copy.title')}>
+              <p>{t('report.copy.line', { name, target: names.species(m.copy.speciesSlug) })}</p>
+              <p className={m.copy.moves.length > 0 ? undefined : 'text-mist-400'}>
+                {m.copy.moves.length > 0 ? t('report.copy.moves', { moves: m.copy.moves.map((mv) => names.move(mv)).join(' · ') }) : t('report.copy.noMoves')}
+              </p>
+            </Block>
+          )}
           {m.pointsStages && (
             <Block title={t('report.points.title')}>
               <PointsSteps steps={pointsBreakdown(m.pointsStages, result.rewardFactor, m.points)} />

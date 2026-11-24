@@ -53,6 +53,7 @@ import {
   useCandy,
   useHealItem,
   useMint,
+  setCopy,
   useTera,
   useTm,
   validatedMinutes,
@@ -390,6 +391,14 @@ function reduce(doc: GameDoc, a: GameAction, env: ActionEnv): Out {
     case 'setNickname': {
       const r = setNickname(p, a.uid, a.nickname ?? '')
       return r.ok ? withPlayer(r.value) : fail(r.error)
+    }
+
+    // ---- Transformación (Ditto) ---------------------------------------------------
+    case 'setCopy': {
+      const timer = timerOf(doc)
+      const atSessionEnd = Boolean(p.activeSession && timer && timer.pausedAt === null && t >= timer.endsAt)
+      const r = setCopy(p, a.uid, a.target, rng, ctx, { atSessionEnd })
+      return r.ok ? withPlayer(r.value, { copyOfUid: r.value.pokemon[a.uid]?.copyOfUid ?? null }) : fail(r.error)
     }
 
     // ---- Advanced items (F4) -------------------------------------------------

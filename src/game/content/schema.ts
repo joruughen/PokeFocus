@@ -175,6 +175,7 @@ export const effectSchemas = {
   counterNoFirst: effect('counterNoFirst', {}),
   nextThrowBonus: effect('nextThrowBonus', { mult: z.number().min(1).max(3) }),
   noSleepFromRest: effect('noSleepFromRest', {}),
+  copyTeammate: effect('copyTeammate', {}),
 } satisfies { [K in EffectKind]: z.ZodType }
 
 const effectList = Object.values(effectSchemas) as unknown as [

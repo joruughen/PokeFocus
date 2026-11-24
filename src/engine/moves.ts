@@ -46,6 +46,11 @@ export function techniqueSlots(level: number, ctx: EngineContext = defaultContex
   return Math.max(1, slots)
 }
 
+/** A technique with the `copyTeammate` effect (Ditto's Transformación): it is an ability of the species, never equipped in a slot. */
+export function isCopyMove(slug: string, ctx: EngineContext = defaultContext()): boolean {
+  return ctx.techniques[slug]?.effects.some((e) => e.kind === 'copyTeammate') ?? false
+}
+
 function uniq(list: string[]): string[] {
   return [...new Set(list)]
 }
@@ -113,7 +118,7 @@ export function equippableMoves(
   ctx: EngineContext = defaultContext(),
 ): string[] {
   const extras = p.level === undefined ? p.extraMoves : unlockedExtraMoves({ extraMoves: p.extraMoves, level: p.level }, ctx)
-  return uniq([...p.learnedMoves, ...extras]).filter((m) => isUsableMove(m, ctx))
+  return uniq([...p.learnedMoves, ...extras]).filter((m) => isUsableMove(m, ctx) && !isCopyMove(m, ctx))
 }
 
 /**
@@ -144,7 +149,7 @@ export function validateEquip(p: OwnedPokemon, moves: string[], ctx: EngineConte
   const known = new Set([...p.learnedMoves, ...p.extraMoves])
   const unlocked = new Set([...p.learnedMoves, ...unlockedExtraMoves(p, ctx)])
   for (const m of moves) {
-    if (!isUsableMove(m, ctx)) return 'move_not_usable'
+    if (!isUsableMove(m, ctx) || isCopyMove(m, ctx)) return 'move_not_usable'
     if (!known.has(m)) return 'move_not_known'
     if (!unlocked.has(m)) return 'move_locked'
   }

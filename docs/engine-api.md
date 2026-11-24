@@ -175,6 +175,25 @@ Queries: `unlockLevel(kind)`, `isUnlocked(state, kind)`, `activeTera(p, at)` (ty
 
 **Sources** (missions, editable as live content): Tera Shards drop from missions only from trainer level 15 (`weekly-days` +1, `weekly-techniques` +1, `weekly-evolve` +2; reward tier `minTrainerLevel: 15`; Pokédex milestones, level rewards and default events give none; the unlock gift of 2 comes at 20); `weekly-long-sessions` and `weekly-catch` 1 `choice-mint` ("Choice Mint", a mission-only placeholder item with its own SVG icon) from level 25 (the Mint unlock); `weekly-catch` +1 TM from level 15 and the Pokédex 25/50 TMs from level 15 (the TM unlock); `weekly-catch-type` +1 Ability Capsule from level 30. No daily or weekly mission gives Ultra Balls (they come from level rewards every 5 levels, the Pokédex 25/50 milestones and events) and no common mission gives Bottle Caps. Economy check: `npx tsx scripts/simulate-advanced.ts` (`docs/balance-report.md` §12).
 
+## Transformación (`transform.ts`, GDD §7.3)
+
+A Pokémon that **knows** a technique with the `copyTeammate` effect (Ditto: Transformación; `canTransform`) can copy one teammate. State: only `OwnedPokemon.copyOfUid?` (uid of the copied one); everything else is read from the teammate when needed, so it follows evolutions and technique changes.
+
+| Function | What it does |
+|---|---|
+| `copyCandidates(state, p, ctx?, teamUids?)` | The team without `p` and without any transformer (no copy of a copy) |
+| `copyTarget(state, p, ctx?, teamUids?)` | The teammate `p` copies now, or null (not copying, or the copied one is not in the team / is gone) |
+| `copiedMoves(p, target)` / `asCopyOf` / `effectiveMember(state, p)` | The first `techniqueSlots(p.level)` equipped techniques of the teammate (never `copyTeammate` ones); `effectiveMember` is `p` with those as `equippedMoves` and the teammate's `moveMasteryMinutes` for them. **Read-only: never write it back into the state** |
+| `bodyTypes(p, copy)` / `conditionTypes(p, at, ctx, copy?)` | Types it fights with: the teammate's species types (Tera still wins for conditions) |
+| `copySummary(state, p)` | `{ uid, speciesSlug, isShiny, types, techniques }` for the UI (`PokemonView.copy`; `fightTypes`, `canTransform` too) |
+| `pendingCopyUids(state)` | Team members that can copy, are not copying and have someone to copy: the end-of-session question |
+| `setCopy(state, uid, target, rng, ctx?, { atSessionEnd? })` | `target` = teammate uid, `'random'` (drawn with the action rng) or `null`. Errors: `unknown_pokemon`, `not_transformer`, `invalid_target`, `no_candidates`, `session_active`. Free and unlimited between sessions. A member of the active session is refused unless `atSessionEnd` (the reducer passes true once the timer ended and is not paused) **and** it is not copying yet: answering the question, never a change of mind |
+| `pruneCopies(state)` | Clears the copies whose teammate left the team (`setTeam` calls it; copying does not come back by itself) |
+
+**In sessions** (`completeSession`): each member with a valid copy (`copyTarget(state, p, ctx, session.teamUids)`) is replaced by `asCopyOf` before anything is computed. So passives (Amnesia included, which does not stack: it is "some member has it"), activables (with the teammate's Mastery and their own per-session limits), damage techniques (energy from Ditto's own Attack; STAB with the copied types), condition types, Bug count and the wild pool's team-type bonus (`teamTypes`) all use the copy; stats, ability, Bond and EXP stay its own. The own equipped techniques (not the copied ones) accrue Mastery minutes. `MemberResult.copy` reports `{ uid, speciesSlug, isShiny, moves }`. Wave-time counterattacks (`counter.ts`) use the copied passives and the defensive types too. Trading a Pokémon drops its `copyOfUid`.
+
+**Protocol.** `{ type: 'setCopy'; uid; target: string | null }` (`'random'` is a target value); result `{ copyOfUid }`.
+
 ## Energy (`energy.ts`)
 - `refreshEnergy(state, now)` — full refill when the local `dailyResetHour` (05:00) passed since `updatedAt`; box members regenerate `boxRecoverPctPerHour`·max per hour; team members don't regenerate. Also ends Rest sleep at the reset.
 - `energyAt(state, p, now)` (pure read), `energyFraction(p)`, `isAsleepAt(state, p, now)`.

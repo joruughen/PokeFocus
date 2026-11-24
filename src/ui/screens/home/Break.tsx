@@ -5,6 +5,7 @@ import { hintAnchor, useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { fmtCountdown, fmtPct } from '../../lib/format'
+import { lookOf } from '../../lib/look'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
@@ -109,7 +110,7 @@ export function Break() {
           night={scene.time === 'night'}
           bob={false}
           dim
-          members={views.map((v) => ({ uid: v.pokemon.uid, slug: v.pokemon.speciesSlug, shiny: v.pokemon.isShiny, name: names.pokemonFull(v.pokemon) }))}
+          members={views.map((v) => ({ uid: v.pokemon.uid, slug: lookOf(v).slug, shiny: lookOf(v).shiny, name: names.pokemonFull(v.pokemon) }))}
         />
       </Stage>
 
@@ -127,9 +128,10 @@ export function Break() {
         <ul className="mt-8 grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2 lg:grid-cols-3">
           {views.map((v) => {
             const after = Math.min(v.maxEnergy, v.energy + v.maxEnergy * pct)
+            const look = lookOf(v)
             return (
               <li key={v.pokemon.uid} className="flex items-center gap-3 bg-dusk-800 p-3 shadow-frame">
-                <Sprite kind="icon" slug={v.pokemon.speciesSlug} alt="" />
+                <Sprite kind="icon" slug={look.slug} shiny={look.shiny} alt="" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-display text-base">{names.pokemon(v.pokemon)}</span>
                   <ProgressBar size="sm" variant="energy" value={after} from={v.energy} max={v.maxEnergy} label={t('pokemon.energyOf', { name: names.pokemon(v.pokemon) })} />

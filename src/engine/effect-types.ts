@@ -58,6 +58,7 @@ export type Effect =
   | (Base & { kind: 'lateClaimImmune' })
   | (Base & { kind: 'focusFloor'; min: number })
   | (Base & { kind: 'focusLabelFloor'; labels: FocusLabel[]; value: number })
+  | (Base & { kind: 'copyTeammate' })
   | (Base & { kind: 'effectivenessFloor'; from: number; to: number })
   | (Base & { kind: 'encounterWeight'; match: { type: TypeSlug } | { natureOfSelf: true }; mult: number })
   | (Base & { kind: 'ballMult'; mult: number })
@@ -95,5 +96,5 @@ export const EFFECT_KINDS: readonly EffectKind[] = [
   'streakProtect', 'lateClaimImmune', 'focusFloor', 'focusLabelFloor', 'effectivenessFloor',
   'encounterWeight', 'ballMult', 'maxFailedThrows', 'revealWildIvs', 'counterImmuneType',
   'counterMinHp1', 'counterMiss', 'counterReflect', 'counterStatus', 'counterNoFirst',
-  'nextThrowBonus', 'noSleepFromRest',
+  'nextThrowBonus', 'noSleepFromRest', 'copyTeammate',
 ]

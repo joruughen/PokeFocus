@@ -496,6 +496,12 @@
     "cancelledNothing": "Sesión abandonada."
   },
   "claim": {
+    "copy": {
+      "title": "¿A quién copia {{name}}?",
+      "body_one": "Elige a quién copia antes de ver los resultados: usará sus tipos y sus técnicas en esta sesión y se quedará transformado.",
+      "body_other": "Elige a quién copia antes de ver los resultados: usará sus tipos y sus técnicas en esta sesión y se quedará transformado.",
+      "skip": "Sin copiar esta vez"
+    },
     "title": "¡Sesión completa!",
     "subtitle_one": "Estudiaste {{count}} minuto. Tu equipo trabajó contigo.",
     "subtitle_other": "Estudiaste {{count}} minutos. Tu equipo trabajó contigo.",
@@ -1685,6 +1691,59 @@
     },
     "toDex": "Ver la Pokédex"
   },
+  "transform": {
+    "panel": {
+      "mastery": "Dominio de {{name}}",
+      "title": "Transformación",
+      "isBase": "Es {{name}}",
+      "copying": "Copiando a {{name}}",
+      "types": "Tipos copiados",
+      "copiedFrom": "Técnicas copiadas de {{name}}",
+      "noTechniques": "{{name}} no tiene técnicas equipadas que copiar.",
+      "transform": "Transformarse",
+      "change": "Cambiar",
+      "lockedSession": "No se puede cambiar durante la sesión",
+      "noCandidates": "Necesita a otro Pokémon en el equipo",
+      "helpTitle": "Cómo funciona la Transformación",
+      "help": {
+        "types": "Copia los tipos de un compañero del equipo: cuentan para las condiciones, la ventaja de tipo y la defensa.",
+        "techniques_one": "Usa su primera técnica equipada (tiene 1 hueco).",
+        "techniques_other": "Usa sus {{count}} primeras técnicas equipadas (tiene {{count}} huecos).",
+        "mastery": "Las técnicas copiadas usan el Dominio (las estrellas) del compañero.",
+        "keeps": "Conserva sus propios stats, habilidad, nivel y Vínculo: sus puntos y su energía salen de ellos.",
+        "reverts": "Cambiar es gratis y solo entre sesiones. Si el copiado sale del equipo, vuelve a ser Ditto."
+      }
+    },
+    "pick": {
+      "title": "Elige a quién copiar",
+      "body_one": "Usará sus tipos y su primera técnica equipada. Solo cuenta mientras siga en tu equipo.",
+      "body_other": "Usará sus tipos y sus {{count}} primeras técnicas equipadas. Solo cuenta mientras siga en tu equipo.",
+      "random": "Aleatorio",
+      "randomBody_one": "Elige al azar entre el compañero disponible.",
+      "randomBody_other": "Elige al azar entre los {{count}} compañeros disponibles.",
+      "list": "Compañeros del equipo",
+      "current": "Copiando",
+      "movesAria": "Técnicas que copiaría de {{name}}",
+      "noMoves": "Sin técnicas equipadas: no copiaría ninguna.",
+      "stop": "Volver a ser {{name}}"
+    },
+    "moment": {
+      "whatTitle": "¡{{name}} se está transformando!",
+      "whatBody": "Algo está cambiando...",
+      "doneTitle": "¡Transformación completa!",
+      "doneBody": "¡{{name}} se transformó en {{to}}!",
+      "revertWhatTitle": "¡{{name}} está volviendo a su forma!",
+      "revertTitle": "¡De vuelta a la normalidad!",
+      "revertBody": "¡{{name}} volvió a ser {{to}}!"
+    },
+    "errors": {
+      "unknown_pokemon": "Ese Pokémon ya no está.",
+      "not_transformer": "Este Pokémon no sabe copiar a otros.",
+      "invalid_target": "Ese compañero ya no está en el equipo o no se puede copiar.",
+      "no_candidates": "Necesita a otro Pokémon en el equipo.",
+      "session_active": "No se puede cambiar durante la sesión."
+    }
+  },
   "evo": {
     "title": "Evolución",
     "button": "Evolucionar",
@@ -2137,7 +2196,16 @@
     },
     "connected": "¡Ya son amigos! Esa persona ya te había enviado una solicitud."
   },
+  "copyLook": {
+    "badge": "Copia a {{name}}"
+  },
   "report": {
+    "copy": {
+      "title": "Transformación",
+      "line": "{{name}} copió a {{target}}.",
+      "moves": "Técnicas usadas: {{moves}}",
+      "noMoves": "No usó técnicas de su compañero."
+    },
     "open": "Informe de la sesión",
     "title": "Informe de la sesión",
     "subtitle": "{{minutes}} min · Foco {{focus}}. Toca un Pokémon para ver qué hizo y qué se activó.",

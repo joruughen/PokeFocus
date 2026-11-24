@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { ALL_TYPES, isAsleepAt, typeEffectiveness, type PokemonView } from '../../../engine'
 import { HelpDot, IconButton, Panel, PixelIcon, Platform, PokemonCard, ProgressBar, RoleBadge, Sprite, Stage, toast, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
+import { CopyLookBadge } from '../../components/PokemonCard'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
+import { lookOf } from '../../lib/look'
 import { useNames } from '../../lib/names'
 import { useNow } from '../../store/clock'
 import { useGame } from '../../store/game'
@@ -143,6 +145,7 @@ function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp,
   const { t } = useTranslation()
   const names = useNames()
   const p = view.pokemon
+  const look = lookOf(view)
   const name = names.pokemon(p)
   const leader = index === 0
   const tired = !asleep && view.energy > 0 && (SESSION_MIN * 60) / view.actionIntervalSeconds > view.actionsLeft
@@ -168,7 +171,7 @@ function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp,
       </button>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Sprite kind="icon" slug={p.speciesSlug} alt="" />
+          <Sprite kind="icon" slug={look.slug} shiny={look.shiny} alt="" />
           <a href={`#/box/${p.uid}`} className="font-display text-lg leading-tight underline decoration-dusk-500 underline-offset-4 hover:text-volt-300">
             <span className="[overflow-wrap:anywhere]">{name}</span>
           </a>
@@ -177,10 +180,11 @@ function SlotRow({ view, asleep, index, count, selected, onSelect, locked, onUp,
             {t('pokemon.levelShort')}
             {p.level}
           </span>
-          {view.types.map((ty) => (
+          {view.fightTypes.map((ty) => (
             <TypeBadge key={ty} type={ty} />
           ))}
           <RoleBadge role={view.species.role} />
+          {view.copy && <CopyLookBadge speciesSlug={view.copy.speciesSlug} />}
         </div>
         <div className="mt-2 flex items-center gap-3">
           <ProgressBar className="max-w-64 flex-1" size="sm" variant="energy" value={view.energy} max={view.maxEnergy} label={t('pokemon.energyOf', { name })} />
@@ -211,15 +215,16 @@ function MemberPanel({ view, index }: { view: PokemonView; index: number }) {
   const ctx = useContent()
   const { t } = useTranslation()
   const names = useNames()
-  const weak = ALL_TYPES.filter((a) => typeEffectiveness(a, view.types, ctx.chart) > 1)
-  const resist = ALL_TYPES.filter((a) => typeEffectiveness(a, view.types, ctx.chart) < 1)
+  const weak = ALL_TYPES.filter((a) => typeEffectiveness(a, view.fightTypes, ctx.chart) > 1)
+  const resist = ALL_TYPES.filter((a) => typeEffectiveness(a, view.fightTypes, ctx.chart) < 1)
   const name = names.pokemon(view.pokemon)
+  const look = lookOf(view)
   const leader = index === 0
   return (
     <Panel title={leader ? t('team.leaderTitle') : t('team.memberTitle')} help={leader ? 'team.leader' : undefined} {...hintAnchor('team.leaderPanel')}>
       <div className="flex items-center gap-3">
         <span className="grid h-16 w-20 shrink-0 place-items-center bg-dusk-900 inset-shadow-well">
-          <Sprite kind="icon" slug={view.pokemon.speciesSlug} scale={2} alt="" />
+          <Sprite kind="icon" slug={look.slug} shiny={look.shiny} scale={2} alt="" />
         </span>
         <div>
           <p className="flex items-center gap-2 font-display text-xl">
@@ -230,6 +235,7 @@ function MemberPanel({ view, index }: { view: PokemonView; index: number }) {
           <p className="text-sm text-mist-300">{leader ? t('team.leaderWhy') : t('team.memberWhy', { n: index + 1 })}</p>
           <p className="mt-1 flex flex-wrap items-center gap-2">
             <RoleBadge role={view.species.role} />
+            {view.copy && <CopyLookBadge speciesSlug={view.copy.speciesSlug} />}
             <a href={`#/box/${view.pokemon.uid}`} className="text-sm underline decoration-dusk-500 underline-offset-4 hover:text-volt-300">
               {t('team.seeSheet')}
             </a>

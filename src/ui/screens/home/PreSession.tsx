@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  bodyTypes,
+  copyTarget,
   currentRank,
   currentMaxWaveSize,
-  defaultContext,
   isAsleepAt,
   MINUTE_MS,
   nextRankProgress,
@@ -243,7 +244,7 @@ function ConditionsPanel({ rows, minutes }: { rows: ReturnType<typeof conditions
   const player = usePlayer()
   const teamTypes = new Set(player.team.flatMap((u) => {
     const p = player.pokemon[u]
-    return p ? (defaultContext().speciesBySlug.get(p.speciesSlug)?.types ?? []) : []
+    return p ? bodyTypes(p, copyTarget(player, p)) : []
   }))
   const mine = rows.filter((r) => teamTypes.has(r.type))
   const others = rows.filter((r) => !teamTypes.has(r.type) && r.active && r.type !== 'normal')

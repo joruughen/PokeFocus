@@ -69,6 +69,17 @@ describe('releaseMany (validation)', () => {
   })
 })
 
+describe('setCopy (Transformación)', () => {
+  it('accepts a uid, random or null; rejects the rest', () => {
+    expect(ok({ type: 'setCopy', uid: 'p1', target: 'p2' })).toBe(true)
+    expect(ok({ type: 'setCopy', uid: 'p1', target: 'random' })).toBe(true)
+    expect(ok({ type: 'setCopy', uid: 'p1', target: null })).toBe(true)
+    expect(ok({ type: 'setCopy', uid: 'p1' })).toBe(false)
+    expect(ok({ type: 'setCopy', uid: '', target: 'p2' })).toBe(false)
+    expect(ok({ type: 'setCopy', uid: 'p1', target: 7 })).toBe(false)
+  })
+})
+
 describe('advanced item actions (validation, F4)', () => {
   it('accepts well-formed bodies', () => {
     expect(ok({ type: 'useTera', uid: 'p1', teraType: 'water' })).toBe(true)

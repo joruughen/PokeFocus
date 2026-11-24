@@ -144,7 +144,8 @@ export function Results() {
             night={scene.time === 'night'}
             members={result.members.map((m) => {
               const slug = player.pokemon[m.uid]?.speciesSlug ?? m.speciesSlug
-              return { uid: m.uid, slug, shiny: player.pokemon[m.uid]?.isShiny, name: names.pokemonFull(player.pokemon[m.uid], slug) }
+              // Copying Ditto: drawn as who it copied in the session (the shiny flag stays its own).
+              return { uid: m.uid, slug: m.copy?.speciesSlug ?? slug, shiny: player.pokemon[m.uid]?.isShiny, name: names.pokemonFull(player.pokemon[m.uid], slug) }
             })}
           />
         </div>
@@ -293,7 +294,7 @@ function MemberRow({ m, events, before, now }: { m: MemberResult; events: Progre
   return (
     <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 bg-dusk-900 p-3 inset-shadow-well">
       <div className="grid size-16 place-items-center">
-        <Sprite kind="icon" slug={view.pokemon.speciesSlug} scale={2} alt="" />
+        <Sprite kind="icon" slug={m.copy?.speciesSlug ?? view.pokemon.speciesSlug} shiny={view.pokemon.isShiny} scale={2} alt="" />
       </div>
       <div className="min-w-0">
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

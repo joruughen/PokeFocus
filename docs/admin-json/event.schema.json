@@ -3914,6 +3914,68 @@
                             "kind"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "copyTeammate"
+                            },
+                            "when": {
+                              "type": "object",
+                              "properties": {
+                                "sessionMinMinutes": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 600
+                                },
+                                "energyBelow": {
+                                  "type": "number",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 1
+                                },
+                                "energyFull": {
+                                  "type": "boolean"
+                                },
+                                "timeWindow": {
+                                  "type": "string",
+                                  "enum": [
+                                    "daylight",
+                                    "notDaylight",
+                                    "night",
+                                    "notNight",
+                                    "earlyMorning"
+                                  ]
+                                },
+                                "weather": {
+                                  "type": "string",
+                                  "enum": [
+                                    "rain",
+                                    "sun",
+                                    "cold"
+                                  ]
+                                },
+                                "weekend": {
+                                  "type": "boolean"
+                                },
+                                "noPauses": {
+                                  "type": "boolean"
+                                },
+                                "isLeader": {
+                                  "type": "boolean"
+                                },
+                                "targetLegendary": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     }
@@ -6018,6 +6080,68 @@
                             "kind": {
                               "type": "string",
                               "const": "noSleepFromRest"
+                            },
+                            "when": {
+                              "type": "object",
+                              "properties": {
+                                "sessionMinMinutes": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 600
+                                },
+                                "energyBelow": {
+                                  "type": "number",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 1
+                                },
+                                "energyFull": {
+                                  "type": "boolean"
+                                },
+                                "timeWindow": {
+                                  "type": "string",
+                                  "enum": [
+                                    "daylight",
+                                    "notDaylight",
+                                    "night",
+                                    "notNight",
+                                    "earlyMorning"
+                                  ]
+                                },
+                                "weather": {
+                                  "type": "string",
+                                  "enum": [
+                                    "rain",
+                                    "sun",
+                                    "cold"
+                                  ]
+                                },
+                                "weekend": {
+                                  "type": "boolean"
+                                },
+                                "noPauses": {
+                                  "type": "boolean"
+                                },
+                                "isLeader": {
+                                  "type": "boolean"
+                                },
+                                "targetLegendary": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "copyTeammate"
                             },
                             "when": {
                               "type": "object",

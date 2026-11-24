@@ -128,6 +128,8 @@ export interface GameState extends GameDoc {
   setLeader: (uid: string) => Promise<GameActionError | null>
   evolve: (uid: string, to: string) => Promise<{ ok: true; pokemon: OwnedPokemon } | { ok: false; error: GameActionError }>
   heal: (uid: string, item: string) => Promise<GameActionError | null>
+  /** Transformación: copy a teammate (uid), a random one (`'random'`) or none (`null`). Resolves with who it copies now. */
+  setCopy: (uid: string, target: string | null) => Promise<{ ok: true; copyOfUid: string | null } | { ok: false; error: GameActionError }>
   useTera: (uid: string, teraType: TypeSlug) => Promise<GameActionError | null>
   useTm: (uid: string, move: string) => Promise<GameActionError | null>
   useMint: (uid: string, nature: string) => Promise<GameActionError | null>
@@ -341,6 +343,10 @@ export const useGame = create<GameState>()((set, get) => {
       return { ok: true, pokemon: r.result.pokemon }
     },
     heal: async (uid, item) => errOf(await dispatch({ type: 'heal', uid, item })),
+    setCopy: async (uid, target) => {
+      const r = await dispatch({ type: 'setCopy', uid, target })
+      return r.ok ? { ok: true, copyOfUid: r.result.copyOfUid } : { ok: false, error: r.error }
+    },
     useTera: async (uid, teraType) => errOf(await dispatch({ type: 'useTera', uid, teraType })),
     useTm: async (uid, move) => errOf(await dispatch({ type: 'useTm', uid, move })),
     useMint: async (uid, nature) => errOf(await dispatch({ type: 'useMint', uid, nature })),

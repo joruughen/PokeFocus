@@ -6,6 +6,7 @@ import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { errorText } from '../../lib/errors'
 import { fmtClock, fmtCountdown, fmtPct } from '../../lib/format'
+import { lookOfMon } from '../../lib/look'
 import { useNames } from '../../lib/names'
 import { useMyTrainer } from '../../lib/useMyTrainer'
 import { cancelSessionEnd, scheduleSessionEnd } from '../../lib/sound'
@@ -67,7 +68,7 @@ export function FocusSession() {
 
   const stageMembers = session.teamUids.flatMap((uid) => {
     const p = player.pokemon[uid]
-    return p ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.pokemon(p), faded: session.asleepUids.includes(uid) }] : []
+    return p ? [{ uid, ...lookOfMon(player, p, session.teamUids), name: names.pokemon(p), faded: session.asleepUids.includes(uid) }] : []
   })
 
   return (

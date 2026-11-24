@@ -4,10 +4,11 @@
 import { defaultContext, getSpecies, type EngineContext } from './context'
 import type { BaseStats, Species, TypeSlug } from './data-types'
 import { energyAt } from './energy'
-import { equippableMoves, extraMoveUnlockLevel, getTechnique, lockedExtraMoves, techniqueSlots, type TechniqueInfo } from './moves'
+import { equippableMoves, extraMoveUnlockLevel, getTechnique, isCopyMove, lockedExtraMoves, techniqueSlots, type TechniqueInfo } from './moves'
 import { bondBonus, evolutionOptions, expForLevel, type EvolutionOption } from './progression'
 import { activeTera } from './advanced'
 import type { OwnedPokemon, PlayerState } from './state'
+import { canTransform, copySummary, type CopySummary } from './transform'
 import {
   actionIntervalSeconds,
   basePointsPerAction,
@@ -22,8 +23,14 @@ import {
 export interface PokemonView {
   pokemon: OwnedPokemon
   species: Species
-  /** Species types (the Tera type, when active, is in `tera`). */
+  /** Species types (the Tera type, when active, is in `tera`). Type candies and the Pokédex use these. */
   types: TypeSlug[]
+  /** Types it fights with: `types`, or those of the teammate it copies (Transformación). Show these on cards and in the weakness chart. */
+  fightTypes: TypeSlug[]
+  /** It can copy a teammate (Ditto). */
+  canTransform: boolean
+  /** The teammate it is copying right now (look, types, techniques it uses), or null. */
+  copy: CopySummary | null
   /** Active Terastallization at `now` (GDD §9.4): type, end time and time left (ms), sessions left; null = none. */
   tera: { type: TypeSlug; until: number; msLeft: number; sessionsLeft: number } | null
   stats: BaseStats
@@ -59,6 +66,7 @@ export function pokemonView(state: PlayerState, uid: string, now: number, ctx: E
   if (!p) return null
   const cfg = ctx.config
   const species = getSpecies(p.speciesSlug, ctx)
+  const copy = copySummary(state, p, ctx)
   const stats = computeStats(p, ctx)
   const info = (m: string) => getTechnique(m, ctx)
   const isInfo = (t: TechniqueInfo | null): t is TechniqueInfo => t !== null
@@ -73,6 +81,9 @@ export function pokemonView(state: PlayerState, uid: string, now: number, ctx: E
     pokemon: p,
     species,
     types: species.types,
+    fightTypes: copy?.types ?? species.types,
+    canTransform: canTransform(p, ctx),
+    copy,
     tera: teraOf(p, now),
     stats,
     energy,
@@ -85,7 +96,7 @@ export function pokemonView(state: PlayerState, uid: string, now: number, ctx: E
     actionsLeft: Math.ceil(energy / cost),
     bondBonus: bondBonus(p.bondMinutes, ctx),
     slots: techniqueSlots(p.level, ctx),
-    equipped: p.equippedMoves.map(info).filter(isInfo),
+    equipped: p.equippedMoves.filter((m) => !isCopyMove(m, ctx)).map(info).filter(isInfo),
     equippable: equippableMoves(p, ctx).map(info).filter(isInfo),
     lockedExtraMoves: lockedExtraMoves(p, ctx).flatMap(({ move, unlockLevel }) => {
       const t = info(move)

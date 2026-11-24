@@ -161,8 +161,10 @@ export function applyTrade(state: PlayerState, side: TradeSide, now: number, rng
 
   const uid = `p${state.counters.pokemon + 1}`
   // The nickname travels with the Pokémon (user decision 2026-11-15); the new trainer can change it.
+  // A copy (Transformación) points at a uid of the other player's team: it does not travel.
+  const { copyOfUid: _copy, ...incoming } = side.receive
   let mon: OwnedPokemon = {
-    ...side.receive,
+    ...incoming,
     uid,
     bondMinutes: 0,
     asleepNextSession: false,

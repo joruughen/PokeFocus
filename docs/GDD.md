@@ -454,6 +454,20 @@ Mult_Técnica = min(2.0, 0.5 + DefEsp / 100)                         // sube con
 - El Dominio pertenece al Pokémon: si desequipas una técnica, conserva su Dominio para cuando vuelvas a equiparla.
 - **Ejemplo:** Hipnosis (6%) en un Gengar de nivel 50 (Def. Esp. ≈ 80, `Mult_Técnica` 1.3) con ★★★ → 6% × 1.3 × 1.3 ≈ **10% por acción**. En unas 12 acciones por sesión, eso son de media ~1.2 activaciones, hasta el límite de 2.
 
+### 7.3 Transformación (Ditto, decidido el 2026-11-23)
+
+**Ditto** (cualquier Pokémon que conozca una técnica con el efecto `copyTeammate`, `docs/effects.md`) puede **copiar a un compañero del equipo**. Sustituye al antiguo «+15 % de puntos y de Puntos de captura».
+
+- **Cómo se elige.** En la **ficha** de Ditto, «Transformación»: se elige a un compañero del **equipo actual** (o «Aleatorio») y sale la animación de transformación (como la de evolución; si el Ditto es shiny, se ve la versión shiny del copiado). Es **gratis, ilimitado y solo entre sesiones**; también puede hacerlo un Ditto de la Caja. Se puede volver a ser Ditto cuando se quiera.
+- **Si no lo elegiste antes.** Al terminar una sesión (individual o con amigos) con un Ditto del equipo **sin transformar** y con alguien a quien copiar, antes de los resultados aparece Ditto con la pregunta «¿a quién copia?» (un compañero o aleatorio) y la animación; la copia cuenta **para esa sesión** y **se queda** para las siguientes. No se puede cambiar de opinión una vez terminada la sesión: solo responder la pregunta.
+- **Se deshace sola.** Si el copiado sale del equipo (o desaparece), Ditto vuelve a ser Ditto; no se vuelve a transformar solo si el compañero regresa. Un Ditto no puede copiar a otro Ditto; si va solo, es Ditto sin más y sin bonus.
+- **Qué copia.** Sus **tipos** (condiciones de tipo, STAB, el ×1.25 del tipo compartido con el equipo en los encuentros, y la defensa contra contraataques; si Ditto tiene Tera activa, la Tera manda en las condiciones) y sus **primeras técnicas equipadas, tantas como huecos de técnica tiene Ditto por su nivel** (§7: 1, 2, 3 o 4), con el **Dominio del compañero** (§7.2). La técnica Transformación no ocupa hueco. Las técnicas de daño producen energía de su tipo con STAB; las activables tiran su probabilidad con la Técnica (Def. Esp.) de Ditto y sus **límites por sesión propios** (un Ditto que copia a un Gengar con Hipnosis es otra Hipnosis más); las pasivas se aplican. Amnesia no se acumula (la protección es «algún miembro la tiene»).
+- **Qué conserva.** Sus **stats** (Ritmo, Rendimiento, Captura, Técnica, Aguante y Energía son los de Ditto: los puntos y la energía salen de ellos), su habilidad (Flexibilidad / Impostor, que mejora la bonificación por condición de los tipos copiados), su nivel, EXP y Vínculo. Solo entrena con minutos de sesión sus propias técnicas, no las copiadas.
+- **Aspecto.** En la ficha, el equipo, la pantalla previa, el escenario de la sesión, las oleadas, el informe y las **escenas de los grupos de estudio** (los amigos lo ven ya transformado), Ditto se ve como su copia. En la Caja, la Pokédex y los intercambios sigue siendo Ditto. El informe de sesión dice a quién copió y qué técnicas usó.
+- **Intercambio.** Un Ditto intercambiado llega sin copia.
+- **Aleatorio** no da ningún bonus por arriesgar: es comodidad y revelación.
+- **Para tener en cuenta (balance).** Antes Ditto solo llevaba una pasiva, sin técnica de daño, y su energía era Normal al 50 %; con la copia puede rendir como un especialista con sus propios stats bajos (base 48 en casi todo). Ditto es raro (≈0,3 % de los salvajes de Liga Base).
+
 ---
 
 ## 8. Vínculo

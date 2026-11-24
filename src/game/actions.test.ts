@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createRng, defaultContext, MINUTE_MS, trainerExpForLevel, trainerLevelRewards, weeklyPoints } from '../engine'
+import { makeMon } from '../engine/test-helpers'
 import { applyAction, type ActionEnv } from './actions'
 import { EMPTY_DOC, type GameAction, type GameDoc } from './protocol'
 
@@ -487,5 +488,51 @@ describe('advanced items (F4)', () => {
     doc = must(doc, { type: 'useBottleCap', uid: 'p1', stat }, env(T0))
     expect(doc.player?.pokemon.p1?.ivs[stat]).toBe(31)
     expect(applyAction(doc, { type: 'useTm', uid: 'p1', move: 'not-a-move' }, env(T0))).toEqual({ ok: false, error: 'move_not_compatible' })
+  })
+})
+
+describe('Transformación (Ditto)', () => {
+  /** Charmander (p1, leader), Ditto and Squirtle in the team. */
+  function withDitto(): GameDoc {
+    const doc = newPlayer()
+    const p = doc.player!
+    const ditto = makeMon('ditto', 20, { uid: 'ditto' })
+    const squ = makeMon('squirtle', 20, { uid: 'squ' })
+    return { ...doc, player: { ...p, pokemon: { ...p.pokemon, ditto, squ }, team: [...p.team, 'ditto', 'squ'] } }
+  }
+
+  it('copies a teammate between sessions, with the drawn one for random, and undoes it when the team changes', () => {
+    let doc = must(withDitto(), { type: 'setCopy', uid: 'ditto', target: 'squ' }, env(T0))
+    expect(doc.player?.pokemon.ditto?.copyOfUid).toBe('squ')
+    const random = applyAction(doc, { type: 'setCopy', uid: 'ditto', target: 'random' }, env(T0))
+    expect(random.ok && ['p1', 'squ']).toContain(random.ok ? random.result.copyOfUid : null)
+    doc = must(doc, { type: 'setTeam', uids: ['p1', 'ditto'] }, env(T0))
+    expect(doc.player?.pokemon.ditto?.copyOfUid).toBeUndefined()
+    expect(applyAction(doc, { type: 'setCopy', uid: 'ditto', target: 'squ' }, env(T0))).toEqual({ ok: false, error: 'invalid_target' })
+    expect(applyAction(doc, { type: 'setCopy', uid: 'p1', target: 'ditto' }, env(T0))).toEqual({ ok: false, error: 'not_transformer' })
+  })
+
+  it('is locked while the session runs and answers the question once the timer ended', () => {
+    let doc = must(withDitto(), { type: 'start', minutes: 25 }, env(T0))
+    expect(applyAction(doc, { type: 'setCopy', uid: 'ditto', target: 'squ' }, env(T0 + 5 * MINUTE_MS))).toEqual({ ok: false, error: 'session_active' })
+    const end = T0 + 25 * MINUTE_MS + 1000
+    doc = must(doc, { type: 'setCopy', uid: 'ditto', target: 'random' }, env(end))
+    const copied = doc.player?.pokemon.ditto?.copyOfUid
+    expect(['p1', 'squ']).toContain(copied)
+    // Not a change of mind afterwards.
+    expect(applyAction(doc, { type: 'setCopy', uid: 'ditto', target: copied === 'squ' ? 'p1' : 'squ' }, env(end))).toEqual({ ok: false, error: 'session_active' })
+    const claimed = applyAction(doc, { type: 'claim' }, env(end + 1000))
+    expect(claimed.ok).toBe(true)
+    if (!claimed.ok) return
+    const m = claimed.result.outcome.result.members.find((x) => x.uid === 'ditto')
+    expect(m?.copy?.uid).toBe(copied)
+    // Still transformed afterwards, between sessions.
+    expect(claimed.doc.player?.pokemon.ditto?.copyOfUid).toBe(copied)
+  })
+
+  it('is refused while the timer is paused', () => {
+    let doc = must(withDitto(), { type: 'start', minutes: 25 }, env(T0))
+    doc = must(doc, { type: 'pause' }, env(T0 + 10 * MINUTE_MS))
+    expect(applyAction(doc, { type: 'setCopy', uid: 'ditto', target: 'squ' }, env(T0 + 40 * MINUTE_MS))).toEqual({ ok: false, error: 'session_active' })
   })
 })

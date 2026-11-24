@@ -70,6 +70,7 @@ Todas las claves presentes deben cumplirse (AND). Sin `when`, el efecto siempre 
 | `counterNoFirst` | — | Equipo: el primer fallo de cada salvaje no provoca contraataque |
 | `nextThrowBonus` | `mult`, `when?` | Tras recibir un contraataque, el siguiente lanzamiento multiplica su probabilidad |
 | `noSleepFromRest` | `when?` | Descanso no le marca `asleepNextSession` |
+| `copyTeammate` | — | Marca la técnica de transformación (Ditto, **Transformación**): quien la **conoce** puede copiar a un compañero del equipo (`setCopy`, `src/engine/transform.ts`, GDD §7.3). No pasa por el flujo de pasivas ni ocupa hueco: copiado el compañero, usa sus **tipos** (condiciones, STAB, bonus de tipos del equipo, defensa), sus **primeras N técnicas equipadas** (N = huecos de técnica por nivel del copiador) con el Dominio del compañero, y su aspecto. Conserva sus stats, habilidad, nivel y Vínculo. Un transformador no puede copiar a otro |
 
 ### Quién recibe el contraataque
 

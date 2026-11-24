@@ -12,14 +12,19 @@ import { evaluateWhen, type WhenContext } from './conditions'
 import type { TypeSlug } from './data-types'
 import { ofKind, passiveEffects, selfStatMult, teamCaptureMods, type TeamCaptureMods } from './effects'
 import { chance, type Rng } from './rng'
+import { bodyTypes, copyTarget, effectiveMember } from './transform'
 import type { CounterResult, EncounterState, OwnedPokemon, PlayerState, WildPokemon } from './state'
 import { computeStats } from './stats'
 import { hpFractionAfter, typeEffectiveness } from './waves'
 
 export type { CounterResult } from './state'
 
-function teamMembers(state: PlayerState): OwnedPokemon[] {
-  return state.team.map((u) => state.pokemon[u]).filter((p): p is OwnedPokemon => Boolean(p))
+/** The team as it fights: a member copying a teammate (Transformación) holds the copied techniques. Read-only. */
+function teamMembers(state: PlayerState, ctx: EngineContext = defaultContext()): OwnedPokemon[] {
+  return state.team
+    .map((u) => state.pokemon[u])
+    .filter((p): p is OwnedPokemon => Boolean(p))
+    .map((p) => effectiveMember(state, p, ctx))
 }
 
 function counterWc(enc: EncounterState | null, p: OwnedPokemon, isLeader: boolean, ctx: EngineContext): WhenContext {
@@ -38,7 +43,7 @@ function counterWc(enc: EncounterState | null, p: OwnedPokemon, isLeader: boolea
 
 /** Team capture modifiers from the current team (ballMult, extra throws, counterNoFirst, revealWildIvs). */
 export function encounterModifiers(state: PlayerState, ctx: EngineContext = defaultContext()): TeamCaptureMods & { maxFailedThrows: number } {
-  const team = teamMembers(state)
+  const team = teamMembers(state, ctx)
   const mods = teamCaptureMods(team, (p) => counterWc(state.encounter, p, state.team[0] === p.uid, ctx), ctx)
   return { ...mods, maxFailedThrows: ctx.config.capture.maxFailedThrows + mods.extraFailedThrows }
 }
@@ -67,7 +72,7 @@ export function counterDamage(
 
 /** Who a failed ball hits: the leader, or the next member with Energy; null when everyone is at 0. */
 export function ballCounterTarget(state: PlayerState): string | null {
-  return teamMembers(state).find((p) => p.energy.current > 0)?.uid ?? null
+  return state.team.find((u) => (state.pokemon[u]?.energy.current ?? 0) > 0) ?? null
 }
 
 /**
@@ -87,7 +92,8 @@ export function resolveCounterOn(
   if (!target) return null
   const isLeader = state.team[0] === target.uid
   const stats = computeStats(target, ctx)
-  const targetTypes = getSpecies(target.speciesSlug, ctx).types
+  const copied = copyTarget(state, target, ctx)
+  const targetTypes = bodyTypes(target, copied, ctx)
   const wildTypes = getSpecies(wild.speciesSlug, ctx).types
   let attackType = wildTypes[0] as TypeSlug
   let eff = -1
@@ -98,7 +104,7 @@ export function resolveCounterOn(
       attackType = t
     }
   }
-  const effects = passiveEffects(target, ctx)
+  const effects = passiveEffects(effectiveMember(state, target, ctx), ctx)
   const wc = counterWc(state.encounter, target, isLeader, ctx)
   const active = effects.filter((e) => evaluateWhen(e.effect.when, wc, cfg))
   const counter: CounterResult = {

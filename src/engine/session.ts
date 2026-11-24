@@ -3,7 +3,7 @@
  * session, and apply its result to the player state.
  */
 import type { GameConfig, LeagueId, WildStatus } from './config'
-import { defaultContext, getSpecies, type EngineContext } from './context'
+import { defaultContext, type EngineContext } from './context'
 import {
   activeConditionTypes,
   dominantSound,
@@ -56,6 +56,7 @@ import {
 } from './stats'
 import { addDays, daysBetween, MINUTE_MS, monthKeyOf, toLocal, weekKeyOf } from './time'
 import { activeTera } from './advanced'
+import { asCopyOf, bodyTypes, copyTarget } from './transform'
 import { toManualWave } from './damage'
 import { rollEventDrops } from './spawn'
 import { studyCandyDue, studyCandyGrants } from './studyCandy'
@@ -65,11 +66,18 @@ import { blockIndexAt, damageFromHits, fullBlocks, hpFractionAfter, rollWaveSize
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Types used for conditions: the Tera type while active, else the species types. */
-export function conditionTypes(p: OwnedPokemon, at: number, ctx: EngineContext = defaultContext()): TypeSlug[] {
+/**
+ * Types used for conditions: the Tera type while active, else the species types
+ * (those of the teammate it copies, when `copy` is given: Transformación, transform.ts).
+ */
+export function conditionTypes(p: OwnedPokemon, at: number, ctx: EngineContext = defaultContext(), copy?: Pick<OwnedPokemon, 'speciesSlug'> | null): TypeSlug[] {
   const tera = activeTera(p, at)
   if (tera) return [tera]
-  return getSpecies(p.speciesSlug, ctx).types
+  return bodyTypes(p, copy, ctx)
+}
+
+function copyOfReport(target: OwnedPokemon, moves: string[]): NonNullable<MemberResult['copy']> {
+  return { uid: target.uid, speciesSlug: target.speciesSlug, isShiny: target.isShiny, moves }
 }
 
 const LABEL_ALIASES: Record<string, string> = {
@@ -410,6 +418,8 @@ export interface MemberResult {
   masteryMinutes: Record<string, number>
   /** Rest was used: asleep next session. */
   rested: boolean
+  /** Transformación: the teammate this member copied and the techniques it used from it (absent = not copying). */
+  copy?: { uid: string; speciesSlug: string; isShiny: boolean; moves: string[] }
   // --- Session report (absent in results saved before it) ---
   damageMoves?: MoveUse[]
   activables?: ActivableLog[]
@@ -650,7 +660,19 @@ export function completeSession(
   const nWaves = cancelled ? fullBlocks(minutes, cfg) : waveCount(minutes, cfg)
 
   // --- Team --------------------------------------------------------------
-  const members = session.teamUids.map((u) => state.pokemon[u]).filter((p): p is OwnedPokemon => Boolean(p))
+  // Transformación (transform.ts): a member copying a teammate fights with its techniques, Mastery and types.
+  const copies = new Map<string, OwnedPokemon>()
+  const members = session.teamUids
+    .map((u) => state.pokemon[u])
+    .filter((p): p is OwnedPokemon => Boolean(p))
+    .map((p) => {
+      const target = copyTarget(state, p, ctx, session.teamUids)
+      if (!target) return p
+      copies.set(p.uid, target)
+      return asCopyOf(p, target, ctx)
+    })
+  const speciesTypesOf = (p: OwnedPokemon) => bodyTypes(p, copies.get(p.uid), ctx)
+  const condTypesOf = (p: OwnedPokemon) => conditionTypes(p, session.startedAt, ctx, copies.get(p.uid))
   const streakProtectAvailable =
     state.streak.protectUsedWeek !== weekKey &&
     members.some((p) => !session.asleepUids.includes(p.uid) && passiveEffects(p, ctx).some((e) => e.effect.kind === 'streakProtect'))
@@ -669,7 +691,7 @@ export function completeSession(
     streakDays: streak.current,
     missedDaysBeforeToday: streak.missedDaysBeforeToday,
     yesterdayFirstStartMinute: state.days[addDays(dayKey, -1)]?.firstStartMinute ?? null,
-    bugCount: members.filter((p) => conditionTypes(p, session.startedAt, ctx).includes('bug')).length,
+    bugCount: members.filter((p) => condTypesOf(p).includes('bug')).length,
   }
   const baseWc: WhenContext = {
     sessionMinutes: minutes,
@@ -718,8 +740,8 @@ export function completeSession(
       max: stats.hp,
       energy: energyStart,
       energyStart,
-      types: conditionTypes(p, session.startedAt, ctx),
-      stabTypes: [...new Set([...getSpecies(p.speciesSlug, ctx).types, ...conditionTypes(p, session.startedAt, ctx)])],
+      types: condTypesOf(p),
+      stabTypes: [...new Set([...speciesTypesOf(p), ...condTypesOf(p)])],
       asleep: session.asleepUids.includes(p.uid),
       passives,
       activated: [],
@@ -1061,8 +1083,10 @@ export function completeSession(
       focusEffective: s.focusEff,
       exp: rewarded ? Math.round(cfg.rewards.expPerMinute * minutes * s.focusEff * expMult * rewardFactor) : 0,
       bondMinutes: rewarded ? minutes * bondMult : 0,
-      masteryMinutes: rewarded && !s.asleep ? Object.fromEntries(s.p.equippedMoves.map((m) => [m, minutes])) : {},
+      // The own techniques: a copy never trains the copied ones (their Mastery is the teammate's).
+      masteryMinutes: rewarded && !s.asleep ? Object.fromEntries((state.pokemon[s.uid] ?? s.p).equippedMoves.map((m) => [m, minutes])) : {},
       rested: s.rested,
+      ...(copies.has(s.uid) && { copy: copyOfReport(copies.get(s.uid) as OwnedPokemon, s.p.equippedMoves) }),
       damageMoves: [...s.logMoves].map(([move, count]) => ({ move, count })),
       activables: [...s.logAct].map(([move, a]) => ({
         move,
@@ -1123,7 +1147,7 @@ export function completeSession(
     focus,
     trainerLevel: state.trainer.level,
     soundDominant: dominantSound(soundProfile),
-    teamTypes: [...new Set(members.flatMap((p) => getSpecies(p.speciesSlug, ctx).types))],
+    teamTypes: [...new Set(members.flatMap(speciesTypesOf))],
     typeWeightMults,
     syncNature: sync,
     rank: { league: rank.league, sub: rank.sub },

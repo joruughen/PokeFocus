@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { PokemonView, TypeSlug } from '../../engine'
 import { cx } from '../lib/cx'
 import { fmtNum } from '../lib/format'
+import { lookOf } from '../lib/look'
 import { useNames } from '../lib/names'
 import { PixelIcon } from './PixelIcon'
 import { ProgressBar } from './ProgressBar'
@@ -43,6 +44,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
   const p = view.pokemon
   const name = names.pokemon(p)
   const fullName = names.pokemonFull(p)
+  const look = lookOf(view)
   const e = energy ?? view.energy
   const exhausted = e <= 0
   const plate = (
@@ -62,7 +64,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
         </span>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-1.5">
-        {view.types.map((ty) => (
+        {view.fightTypes.map((ty) => (
           <TypeBadge key={ty} type={ty} />
         ))}
         {view.tera && <TeraBadge tera={view.tera} />}
@@ -74,6 +76,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
           </Tooltip>
         )}
       </div>
+      {view.copy && <CopyLookBadge speciesSlug={view.copy.speciesSlug} onLight className="mt-1.5" />}
       <div className="mt-2">
         <div className="mb-1 flex items-baseline justify-between gap-2">
           <span className="font-display text-sm text-dusk-600">{t('stats.hp.name')}</span>
@@ -92,7 +95,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
     return (
       <div className={cx('relative flex items-center gap-2', shake && 'animate-shake', className)}>
         <div className="relative grid size-14 shrink-0 place-items-center bg-dusk-900 inset-shadow-well">
-          <Sprite kind="icon" slug={p.speciesSlug} scale={1} alt="" />
+          <Sprite kind="icon" slug={look.slug} shiny={look.shiny} scale={1} alt="" />
           {leader && <LeaderMark />}
         </div>
         {plate}
@@ -107,8 +110,8 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
         <Platform width={120} night={night} className="absolute bottom-0" />
         <Sprite
           kind="showdown"
-          slug={p.speciesSlug}
-          shiny={p.isShiny}
+          slug={look.slug}
+          shiny={look.shiny}
           scale={2}
           maxHeight={128}
           maxWidth={160}
@@ -125,6 +128,26 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
       </div>
       <div className="mt-2 w-full">{plate}</div>
     </div>
+  )
+}
+
+/** "Copia a {{name}}": small outlined tag for a Pokémon that is copying a teammate (Ditto). Truncates instead of overflowing its card. */
+export function CopyLookBadge({ speciesSlug, onLight, className }: { speciesSlug: string; onLight?: boolean; className?: string }) {
+  const { t } = useTranslation()
+  const names = useNames()
+  const label = t('copyLook.badge', { name: names.species(speciesSlug) })
+  return (
+    <span
+      title={label}
+      className={cx(
+        'inline-flex w-fit max-w-full items-center gap-1 border-2 px-1.5 py-0.5 font-display text-sm leading-none',
+        onLight ? 'border-dusk-700 text-dusk-800' : 'border-mist-300 text-mist-100',
+        className,
+      )}
+    >
+      <PixelIcon name="sparkle" size={10} className="shrink-0" />
+      <span className="min-w-0 truncate">{label}</span>
+    </span>
   )
 }
 

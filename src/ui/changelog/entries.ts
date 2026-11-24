@@ -29,6 +29,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.17.0',
+    date: '2026-11-23',
+    title: { es: 'Ditto se transforma en tu equipo', en: 'Ditto transforms into your teammates' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Transformación de Ditto: desde su ficha elige a un compañero de tu equipo y Ditto se transforma con una animación (en versión brillante si tu Ditto es brillante). Mientras ese compañero siga en el equipo, Ditto usa sus tipos (condiciones, ventaja de tipo y bonus de tipos del equipo) y sus técnicas, tantas como huecos tenga Ditto, con el Dominio del compañero. Sus puntos, su Energía y su Captura siguen saliendo de sus propios stats. Si sacas al copiado del equipo, Ditto vuelve a ser Ditto.',
+          en: "Ditto's Transform: from its sheet, pick a teammate and Ditto transforms with an animation (shiny if your Ditto is shiny). While that teammate stays in the team, Ditto uses its types (conditions, type advantage and the team-type bonus) and its techniques, as many as Ditto has slots, with the teammate's Mastery. Its points, Energy and Catch still come from its own stats. If you take the copied Pokémon out of the team, Ditto goes back to being Ditto.",
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'Si empiezas una sesión (sola o con amigos) con un Ditto sin transformar, antes de ver los resultados te pregunta a quién copiar (un compañero o al azar) y se transforma con su animación; después queda transformado. En el escenario, el equipo y las escenas de grupo, tu Ditto se ve ya como su copia.',
+          en: 'If you start a session (solo or with friends) with an untransformed Ditto, before the results it asks who to copy (a teammate or a random one) and transforms with its animation; after that it stays transformed. On the stage, in the team and in the group scenes, your Ditto already looks like its copy.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Transformación ya no da «+15 % de puntos y de Puntos de captura»: ahora Ditto copia de verdad (antes solo llevaba una técnica pasiva, sin ataques, y sacaba energía Normal al 50 %). En el informe de sesión ves a quién copió y qué técnicas usó.',
+          en: 'Transform no longer gives «+15% points and Capture Points»: Ditto now really copies (before it only carried one passive technique, no attacks, and produced Normal energy at 50%). The session report shows who it copied and which techniques it used.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.16.0',
     date: '2026-11-22',
     title: { es: 'Tu personaje y tu equipo en el grupo', en: 'Your character and team in the group' },

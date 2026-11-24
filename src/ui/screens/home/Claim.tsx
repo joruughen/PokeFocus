@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MINUTE_MS } from '../../../engine'
+import { MINUTE_MS, pendingCopyUids } from '../../../engine'
 import { Button, ProgressBar, Stage, StageTeam, toast } from '../../components'
 import { hintAnchor, useHintScreen } from '../../hints'
 import { claimErrorText } from '../../lib/errors'
 import { fmtCountdown, fmtPct } from '../../lib/format'
+import { lookOfMon } from '../../lib/look'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
 import { useNow } from '../../store/clock'
@@ -13,10 +14,12 @@ import { timerOf, useGame } from '../../store/game'
 import { usePrefs } from '../../store/prefs'
 import { usePlayer, useScene } from '../../store/selectors'
 import { useContent } from '../../store/content'
+import { CopyQuestion } from './CopyQuestion'
 
 /** Timer done: claim within the window for full rewards (GDD §3.2). */
 export function Claim({ late }: { late: boolean }) {
-  const cfg = useContent().config
+  const ctx = useContent()
+  const cfg = ctx.config
   useHintScreen('claim')
   const { t, i18n } = useTranslation()
   const names = useNames()
@@ -25,13 +28,29 @@ export function Claim({ late }: { late: boolean }) {
   const timerState = useGame((s) => s.timer)
   const claim = useGame((s) => s.claim)
   const [busy, setBusy] = useState(false)
+  // Ditto not copying anyone yet: asked once, before the results (GDD §7.3).
+  const [asking, setAsking] = useState(false)
+  const [asked, setAsked] = useState(false)
+  const [askUids, setAskUids] = useState<readonly string[]>([])
   const session = player.activeSession!
   const timer = timerOf({ player, timer: timerState })!
   const windowMs = cfg.session.claimWindowMinutes * MINUTE_MS
   const left = timer.endsAt + windowMs - now
   const scene = useScene(player, now)
 
+  const pending = useMemo(() => pendingCopyUids(player, ctx), [player, ctx])
+
   const onClaim = async () => {
+    if (busy) return
+    if (pending.length > 0 && !asked) {
+      setAskUids(pending) // fixed: answering shrinks `pending` while the question runs
+      setAsking(true)
+      return
+    }
+    await onClaimNow()
+  }
+
+  const onClaimNow = async () => {
     if (busy) return
     setBusy(true)
     // Idempotent: the server claims an active session once; a second claim is refused.
@@ -52,7 +71,9 @@ export function Claim({ late }: { late: boolean }) {
           night={scene.time === 'night'}
           members={session.teamUids.flatMap((uid) => {
             const p = player.pokemon[uid]
-            return p ? [{ uid, slug: p.speciesSlug, shiny: p.isShiny, name: names.pokemonFull(p) }] : []
+            if (!p) return []
+            const look = lookOfMon(player, p, session.teamUids)
+            return [{ uid, slug: look.slug, shiny: look.shiny, name: names.pokemonFull(p) }]
           })}
         />
       </Stage>
@@ -77,6 +98,17 @@ export function Claim({ late }: { late: boolean }) {
         </Button>
         <AutoDamageToggle disabled={busy} />
       </section>
+      {asking && (
+        <CopyQuestion
+          uids={askUids}
+          teamUids={session.teamUids}
+          onDone={() => {
+            setAsking(false)
+            setAsked(true)
+            void onClaimNow()
+          }}
+        />
+      )}
     </div>
   )
 }

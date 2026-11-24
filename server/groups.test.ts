@@ -343,7 +343,7 @@ describe('study groups', () => {
 
 let monSeq = 0
 /** Replace the saved team of `u` (the first Pokémon of the doc is the template for the rest). Fresh uids each time. */
-async function setTeam(u: U, team: { slug: string; shiny?: boolean }[]) {
+async function setTeam(u: U, team: { slug: string; shiny?: boolean; copyOf?: number | string }[]) {
   const [row] = await database.db.select().from(playerDocs).where(eq(playerDocs.userId, u.user.id))
   const player = row!.doc.player!
   const template = Object.values(player.pokemon)[0] as OwnedPokemon
@@ -352,6 +352,10 @@ async function setTeam(u: U, team: { slug: string; shiny?: boolean }[]) {
     const uid = `${u.user.id.slice(0, 8)}-m${++monSeq}-${i}`
     pokemon[uid] = { ...template, uid, speciesSlug: t.slug, isShiny: t.shiny ?? false }
     return uid
+  })
+  // `copyOf`: the index of the teammate it copies, or a raw uid (e.g. one that is not in the team).
+  team.forEach((t, i) => {
+    if (t.copyOf !== undefined) pokemon[uids[i]!]!.copyOfUid = typeof t.copyOf === 'number' ? uids[t.copyOf]! : t.copyOf
   })
   const doc = { ...row!.doc, player: { ...player, pokemon: { ...player.pokemon, ...pokemon }, team: uids } }
   await database.db.update(playerDocs).set({ doc, version: row!.version + 1 }).where(eq(playerDocs.userId, u.user.id))
@@ -419,6 +423,37 @@ describe('group scenes: character and team', () => {
     const back = await call('PATCH', '/api/auth/me', a.cookie, { trainerSprite: null })
     expect((back.json as { user: PublicUser }).user.trainerSprite).toBeNull()
     expect((await groups(b)).current!.hostLook.trainer).toBe(defaultTrainerSprite(a.user.id))
+  })
+
+  it('a Ditto copying a teammate is drawn as that teammate (its own shiny flag); the payload carries nothing else', async () => {
+    now = T0
+    const [a, b] = (await crew(2)) as [U, U]
+    // Ditto (shiny) copies the Pikachu (not shiny); the second Ditto copies the shiny Charmander but is not shiny itself.
+    await setTeam(a, [{ slug: 'pikachu' }, { slug: 'ditto', shiny: true, copyOf: 0 }, { slug: 'charmander', shiny: true }, { slug: 'ditto', copyOf: 2 }])
+    await setTeam(b, [{ slug: 'abra' }])
+    const g = await create(a, [b])
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+    const look = (await groups(b)).current!.hostLook
+    expect(look.team).toEqual([mon('pikachu'), mon('pikachu', true), mon('charmander', true), mon('charmander')])
+    for (const m of look.team) expect(Object.keys(m).sort()).toEqual(['shiny', 'slug'])
+    expect(JSON.stringify(look)).not.toMatch(/copyOf|"uid"/)
+    expect(look.leader).toEqual(mon('pikachu'))
+  })
+
+  it('a Ditto whose copied Pokémon is no longer in the team looks like Ditto again', async () => {
+    now = T0
+    const [a, b] = (await crew(2)) as [U, U]
+    await setTeam(a, [{ slug: 'ditto', shiny: true, copyOf: 'left-the-team' }, { slug: 'squirtle' }])
+    const g = await create(a, [b])
+    await call('POST', `/api/groups/${g.id}/accept`, b.cookie)
+    expect((await groups(b)).current!.hostLook.team).toEqual([mon('ditto', true), mon('squirtle')])
+    // Copied Pokémon in the box (not in the team) does not count either.
+    const [row] = await database.db.select().from(playerDocs).where(eq(playerDocs.userId, a.user.id))
+    const player = row!.doc.player!
+    const [dittoUid, squirtleUid] = player.team as [string, string]
+    const doc = { ...row!.doc, player: { ...player, team: [dittoUid], pokemon: { ...player.pokemon, [dittoUid]: { ...player.pokemon[dittoUid]!, copyOfUid: squirtleUid } } } }
+    await database.db.update(playerDocs).set({ doc, version: row!.version + 1 }).where(eq(playerDocs.userId, a.user.id))
+    expect((await groups(b)).current!.hostLook.team).toEqual([mon('ditto', true)])
   })
 
   it('started: members show the team of their session (a later team change does not alter it); six at most', async () => {

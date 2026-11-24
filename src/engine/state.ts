@@ -88,6 +88,11 @@ export interface OwnedPokemon extends IndividualCore {
   metLevel: number
   /** Trade record (GDD §12.8, trade.ts). Absent = never traded. */
   traded?: TradeRecord
+  /**
+   * Transformación (GDD §7.3, transform.ts): uid of the teammate this Pokémon copies. Absent = not copying.
+   * Only meaningful while that Pokémon is in the team; `pruneCopies` clears it when it leaves.
+   */
+  copyOfUid?: string
 }
 
 /** Where a traded Pokémon comes from (shown on its sheet). */

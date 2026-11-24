@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { PokemonView } from '../../../engine'
 import { PixelIcon, ProgressBar, Sprite, TeraBadge } from '../../components'
 import { cx } from '../../lib/cx'
+import { lookOf } from '../../lib/look'
 import { useNames } from '../../lib/names'
 
 export interface TeamEnergyHit {
@@ -62,6 +63,7 @@ export function TeamEnergy({
           const out = e <= 0
           const isHit = hit?.uid === uid
           const isTarget = target === uid
+          const look = lookOf(v)
           return (
             <li
               key={isHit ? `${uid}-${hit.key}` : uid}
@@ -71,7 +73,7 @@ export function TeamEnergy({
                 isHit && 'motion-safe:animate-shake',
               )}
             >
-              <Sprite kind="icon" slug={v.pokemon.speciesSlug} shiny={v.pokemon.isShiny} alt="" className={cx('-my-2 shrink-0', out && 'opacity-50 grayscale')} />
+              <Sprite kind="icon" slug={look.slug} shiny={look.shiny} alt="" className={cx('-my-2 shrink-0', out && 'opacity-50 grayscale')} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-baseline justify-between gap-1">
                   <span className="flex min-w-0 items-center gap-1">

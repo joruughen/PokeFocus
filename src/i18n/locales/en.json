@@ -496,6 +496,12 @@
     "cancelledNothing": "Session given up."
   },
   "claim": {
+    "copy": {
+      "title": "Who does {{name}} copy?",
+      "body_one": "Pick who it copies before the results: it will use their types and techniques this session and stay transformed.",
+      "body_other": "Pick who it copies before the results: it will use their types and techniques this session and stay transformed.",
+      "skip": "Don't copy this time"
+    },
     "title": "Session complete!",
     "subtitle_one": "You studied {{count}} minute. Your team worked with you.",
     "subtitle_other": "You studied {{count}} minutes. Your team worked with you.",
@@ -1685,6 +1691,59 @@
     },
     "toDex": "Open the Pokédex"
   },
+  "transform": {
+    "panel": {
+      "mastery": "{{name}}'s Mastery",
+      "title": "Transform",
+      "isBase": "It is {{name}}",
+      "copying": "Copying {{name}}",
+      "types": "Copied types",
+      "copiedFrom": "Techniques copied from {{name}}",
+      "noTechniques": "{{name}} has no equipped techniques to copy.",
+      "transform": "Transform",
+      "change": "Change",
+      "lockedSession": "Can't change during the session",
+      "noCandidates": "Needs another Pokémon in the team",
+      "helpTitle": "How Transform works",
+      "help": {
+        "types": "Copies a teammate's types: they count for conditions, type advantage and defence.",
+        "techniques_one": "Uses its first equipped technique (it has 1 slot).",
+        "techniques_other": "Uses its first {{count}} equipped techniques (it has {{count}} slots).",
+        "mastery": "Copied techniques use the teammate's Mastery (the stars).",
+        "keeps": "Keeps its own stats, ability, level and Bond: its points and energy come from them.",
+        "reverts": "Changing is free and only between sessions. If the copied Pokémon leaves the team, it goes back to being Ditto."
+      }
+    },
+    "pick": {
+      "title": "Choose who to copy",
+      "body_one": "It will use their types and their first equipped technique. It only counts while they stay in your team.",
+      "body_other": "It will use their types and their first {{count}} equipped techniques. It only counts while they stay in your team.",
+      "random": "Random",
+      "randomBody_one": "Picks at random from the available teammate.",
+      "randomBody_other": "Picks at random from the {{count}} available teammates.",
+      "list": "Team members",
+      "current": "Copying",
+      "movesAria": "Techniques it would copy from {{name}}",
+      "noMoves": "No equipped techniques: it would copy none.",
+      "stop": "Go back to being {{name}}"
+    },
+    "moment": {
+      "whatTitle": "{{name}} is transforming!",
+      "whatBody": "Something is changing...",
+      "doneTitle": "Transformation complete!",
+      "doneBody": "{{name}} transformed into {{to}}!",
+      "revertWhatTitle": "{{name}} is changing back!",
+      "revertTitle": "Back to normal!",
+      "revertBody": "{{name}} turned back into {{to}}!"
+    },
+    "errors": {
+      "unknown_pokemon": "That Pokémon is gone.",
+      "not_transformer": "This Pokémon can't copy others.",
+      "invalid_target": "That teammate is no longer in the team or can't be copied.",
+      "no_candidates": "Needs another Pokémon in the team.",
+      "session_active": "Can't change during the session."
+    }
+  },
   "evo": {
     "title": "Evolution",
     "button": "Evolve",
@@ -2137,7 +2196,16 @@
     },
     "connected": "You're friends now! They had already sent you a request."
   },
+  "copyLook": {
+    "badge": "Copying {{name}}"
+  },
   "report": {
+    "copy": {
+      "title": "Transformation",
+      "line": "{{name}} copied {{target}}.",
+      "moves": "Techniques used: {{moves}}",
+      "noMoves": "It used none of its teammate's techniques."
+    },
     "open": "Session report",
     "title": "Session report",
     "subtitle": "{{minutes}} min · Focus {{focus}}. Tap a Pokémon to see what it did and what fired.",

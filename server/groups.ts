@@ -247,7 +247,7 @@ export async function teamsOf(q: Q, userIds: string[]): Promise<Map<string, Grou
       id: playerDocs.userId,
       // `::text` so the driver does not decide how to parse the jsonb (postgres-js and PGlite differ).
       team: sql<string | null>`(
-        select jsonb_agg(jsonb_build_object('slug', m.p ->> 'speciesSlug', 'shiny', coalesce((m.p ->> 'isShiny')::boolean, false)) order by t.ord)
+        select jsonb_agg(jsonb_build_object('uid', t.uid, 'slug', m.p ->> 'speciesSlug', 'shiny', coalesce((m.p ->> 'isShiny')::boolean, false), 'copyOf', m.p ->> 'copyOfUid') order by t.ord)
         from jsonb_array_elements_text(coalesce(${d} #> '{player,activeSession,teamUids}', ${d} #> '{player,team}', '[]'::jsonb)) with ordinality as t(uid, ord)
         cross join lateral (select ${d} #> array['player', 'pokemon', t.uid] as p) m
         where t.ord <= 6 and m.p is not null
@@ -255,8 +255,27 @@ export async function teamsOf(q: Q, userIds: string[]): Promise<Map<string, Grou
     })
     .from(playerDocs)
     .where(inArray(playerDocs.userId, userIds))
-  for (const r of rows) out.set(r.id, r.team ? (JSON.parse(r.team) as GroupMon[]) : [])
+  for (const r of rows) out.set(r.id, r.team ? lookOfTeam(JSON.parse(r.team) as TeamRow[]) : [])
   return out
+}
+
+/** A team member as read from the player doc: `uid` and `copyOf` are internal and never leave `teamsOf`. */
+interface TeamRow extends GroupMon {
+  uid: string
+  copyOf: string | null
+}
+
+/**
+ * A Pokémon copying a teammate (Ditto, `copyOfUid`) is drawn as that teammate, but keeps its own shiny flag. The copy
+ * only counts while the copied Pokémon is in this same team (the engine ensures it is never a transformer itself).
+ * Returns only `{slug, shiny}`: nothing else of the team leaks.
+ */
+function lookOfTeam(team: TeamRow[]): GroupMon[] {
+  const slugOf = new Map(team.map((m) => [m.uid, m.slug]))
+  return team.map((m) => {
+    const copied = m.copyOf && m.copyOf !== m.uid ? slugOf.get(m.copyOf) : undefined
+    return { slug: copied ?? m.slug, shiny: m.shiny }
+  })
 }
 
 /** Full view of a group for one viewer. */

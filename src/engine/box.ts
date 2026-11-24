@@ -20,6 +20,7 @@ import {
 import type { Rng } from './rng'
 import { err, ok, type OwnedPokemon, type PlayerState, type Result } from './state'
 import { maxEnergyOf } from './stats'
+import { pruneCopies } from './transform'
 import type { TimeZoneSpec } from './time'
 
 export interface NewPlayerInput {
@@ -325,7 +326,8 @@ export function setTeam(state: PlayerState, uids: string[], now: number, ctx: En
   if (new Set(uids).size !== uids.length) return err('duplicate_in_team')
   if (uids.some((u) => !state.pokemon[u])) return err('unknown_pokemon')
   const s = refreshEnergy(state, now, ctx)
-  return ok({ ...s, team: [...uids] })
+  // A copy only holds while the copied teammate is in the team (Transformación, transform.ts).
+  return ok(pruneCopies({ ...s, team: [...uids] }, ctx))
 }
 
 /** Move a team member to slot 0 (leader). */

@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { conditionTypes, MINUTE_MS, toLocal, type SessionResult } from '../../../engine'
+import { conditionTypes, copyTarget, MINUTE_MS, toLocal, type SessionResult } from '../../../engine'
 import { fairyMultiplier, groupOverlap } from '../../../game/group'
 import type { StudyGroupMember, StudyGroupView } from '../../../game/protocol'
 import { Button, Panel, PixelIcon, toast, TypeBadge } from '../../components'
@@ -35,7 +35,7 @@ function useTeamHasFairy(at: number): boolean {
   const player = usePlayer()
   return player.team.some((uid) => {
     const p = player.pokemon[uid]
-    return p ? conditionTypes(p, at, ctx).includes('fairy') : false
+    return p ? conditionTypes(p, at, ctx, copyTarget(player, p, ctx)).includes('fairy') : false
   })
 }
 

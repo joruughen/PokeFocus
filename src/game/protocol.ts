@@ -142,6 +142,12 @@ export type GameAction =
   | { type: 'heal'; uid: string; item: string }
   /** Nickname: up to 12 graphemes, trimmed; empty text or null removes it. Allowed at any time. */
   | { type: 'setNickname'; uid: string; nickname: string | null }
+  /**
+   * Transformación (Ditto): copy the teammate `target` (its uid), a random one (`'random'`) or stop copying (`null`).
+   * Free and unlimited between sessions. For a member of the active session it is only accepted once the timer
+   * ended and only if it is not copying yet: the answer to the question shown before the results.
+   */
+  | { type: 'setCopy'; uid: string; target: string | null }
   // Advanced items (F4; refused for members of the active session)
   /** Terastallize: spend Tera Shards to set the type of its conditions for a while (trainer level `advanced.tera`). */
   | { type: 'useTera'; uid: string; teraType: TypeSlug }
@@ -216,6 +222,8 @@ export interface ActionResults {
   evolve: { pokemon: OwnedPokemon }
   heal: null
   setNickname: null
+  /** The teammate it copies now (the drawn one for `'random'`), or null. */
+  setCopy: { copyOfUid: string | null }
   useTera: null
   useTm: null
   useMint: null

@@ -168,6 +168,7 @@ export const gameActionBody = z.discriminatedUnion('type', [
   act('heal', { uid: id, item: slug }),
   // Raw text only bounded here; the reducer trims and counts graphemes (nickname 12, preset name 20).
   act('setNickname', { uid: id, nickname: z.string().max(200).nullable() }),
+  act('setCopy', { uid: id, target: id.nullable() }),
   act('useTera', { uid: id, teraType: typeSlug }),
   act('useTm', { uid: id, move: slug }),
   act('useMint', { uid: id, nature: slug }),
