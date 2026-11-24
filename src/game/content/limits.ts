@@ -123,6 +123,12 @@ export const CONFIG_LIMITS: readonly ConfigLimit[] = [
     scalar(E, `encounters.leagueStageWeights.${l}.stage3.to`, b('mult', 0, 5)),
     scalar(E, `encounters.leagueStageWeights.${l}.legendary`, b('mult', 0, 5)),
   ]),
+  ...LEAGUES.flatMap((l) => [
+    scalar(E, `encounters.leagueQuality.${l}.ivFloor.from`, b('int', 0, 31)),
+    scalar(E, `encounters.leagueQuality.${l}.ivFloor.to`, b('int', 0, 31)),
+    scalar(E, `encounters.leagueQuality.${l}.hiddenAbilityChance.from`, b('prob', 0, 1, '%')),
+    scalar(E, `encounters.leagueQuality.${l}.hiddenAbilityChance.to`, b('prob', 0, 1, '%')),
+  ]),
   scalar(E, 'encounters.roamingSessions', b('int', 1, 10)),
   scalar(E, 'encounters.roamingChance', b('prob', 0, 1, '%')),
   scalar(E, 'encounters.studyBallMaxLevel', b('int', 1, 100, 'lv')),

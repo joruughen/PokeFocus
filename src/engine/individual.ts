@@ -15,10 +15,10 @@ export function isLegendarySpecies(sp: Species): boolean {
 }
 
 /** IVs 0..ivMax; legendaries/mythicals get `legendaryPerfectIvs` random stats at ivMax. */
-export function rollIvs(rng: Rng, legendary: boolean, ctx: EngineContext = defaultContext()): BaseStats {
+export function rollIvs(rng: Rng, legendary: boolean, ctx: EngineContext = defaultContext(), floor = 0): BaseStats {
   const max = ctx.config.progression.ivMax
   const ivs = {} as BaseStats
-  for (const k of STAT_KEYS) ivs[k] = randInt(rng, 0, max)
+  for (const k of STAT_KEYS) ivs[k] = randInt(rng, Math.min(max, Math.max(0, floor)), max)
   if (legendary) for (const k of sample(rng, STAT_KEYS, ctx.config.progression.legendaryPerfectIvs)) ivs[k] = max
   return ivs
 }
@@ -33,12 +33,12 @@ export function definedAbilities(sp: Species, ctx: EngineContext = defaultContex
 }
 
 /** Ability roll among defined ones; the hidden one with `hiddenAbilityChance` (if defined). */
-export function rollAbility(sp: Species, rng: Rng, ctx: EngineContext = defaultContext()): string | null {
+export function rollAbility(sp: Species, rng: Rng, ctx: EngineContext = defaultContext(), hiddenChance = ctx.config.progression.hiddenAbilityChance): string | null {
   const defined = definedAbilities(sp, ctx)
   if (defined.length === 0) return null
   const normal = defined.filter((a) => !a.isHidden)
   const hidden = defined.filter((a) => a.isHidden)
-  if (hidden.length > 0 && (normal.length === 0 || chance(rng, ctx.config.progression.hiddenAbilityChance))) {
+  if (hidden.length > 0 && (normal.length === 0 || chance(rng, hiddenChance))) {
     return pick(rng, hidden).slug
   }
   return pick(rng, normal).slug
@@ -52,6 +52,10 @@ export function rollExtraMoves(sp: Species, rng: Rng, ctx: EngineContext = defau
 export interface CreateIndividualOptions {
   shiny?: boolean
   nature?: string
+  /** Lowest IV of every stat (wilds of a league: `wildQualityForRank`). Default 0. */
+  ivFloor?: number
+  /** Chance of the hidden ability. Default `progression.hiddenAbilityChance`. */
+  hiddenAbilityChance?: number
 }
 
 /** Roll a new individual of a species at a level. */
@@ -63,9 +67,9 @@ export function createIndividual(
   ctx: EngineContext = defaultContext(),
 ): IndividualCore {
   const sp = getSpecies(speciesSlug, ctx)
-  const ivs = rollIvs(rng, isLegendarySpecies(sp), ctx)
+  const ivs = rollIvs(rng, isLegendarySpecies(sp), ctx, opts.ivFloor)
   const nature = opts.nature ?? rollNature(rng, ctx)
-  const ability = rollAbility(sp, rng, ctx)
+  const ability = rollAbility(sp, rng, ctx, opts.hiddenAbilityChance)
   const extraMoves = rollExtraMoves(sp, rng, ctx)
   return { speciesSlug, level, ivs, nature, ability, isShiny: opts.shiny ?? false, extraMoves }
 }

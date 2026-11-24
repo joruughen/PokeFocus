@@ -5,7 +5,7 @@ import type { BallSlug, GameConfig } from './config'
 import { defaultContext, getSpecies, getSpeciesById, type EngineContext } from './context'
 import type { Species, TypeChart, TypeSlug } from './data-types'
 import { createIndividual, isLegendarySpecies } from './individual'
-import { stageWeight, stageWeightsForRank, waveSizeForRank, type LeagueRank } from './league'
+import { stageWeight, stageWeightsForRank, waveSizeForRank, wildQualityForRank, type LeagueRank } from './league'
 import { chance, pick, randInt, weightedPick, type Rng } from './rng'
 import type { EnergyContribution, IndividualCore, WaveGenParams, WaveHit, WildPokemon } from './state'
 import { legendaryChanceFor, shinyChanceFor, spawnMultiplier, spawnWeatherOf, type SpawnEnv } from './spawn'
@@ -293,7 +293,9 @@ export function rollWild(rng: Rng, p: RollWildParams, ctx: EngineContext = defau
   }
   const isShiny = chance(rng, shinyChanceFor(sp, ctx) * (0.5 + p.gen.focus))
   const nature = p.gen.syncNature && chance(rng, p.gen.syncNature.chance) ? p.gen.syncNature.nature : undefined
-  const core = createIndividual(sp.slug, level, rng, { shiny: isShiny, nature }, ctx)
+  // A higher league rolls better wilds (IV floor, hidden ability); encounters saved without a rung roll as before.
+  const quality = p.gen.rank ? wildQualityForRank(p.gen.rank, cfg) : null
+  const core = createIndividual(sp.slug, level, rng, { shiny: isShiny, nature, ...(quality && { ivFloor: quality.ivFloor, hiddenAbilityChance: quality.hiddenAbilityChance }) }, ctx)
   const legendary = isLegendarySpecies(sp)
   const maxHp = computeStats(core, ctx).hp
   const damage = p.hits ? damageFromHits(p.hits, p.slot ?? 0, core, legendary, ctx) : computeDamage(p.contributions, sp.types, legendary, ctx.chart)

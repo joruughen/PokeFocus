@@ -29,6 +29,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.18.0',
+    date: '2026-11-23',
+    title: { es: 'Mejores salvajes al subir de liga', en: 'Better wilds as you climb leagues' },
+    items: [
+      {
+        kind: 'new',
+        text: {
+          es: 'Cada rango de liga que subes mejora a los Pokémon salvajes: sus IVs salen con un mínimo cada vez más alto (de 0 en Liga Base 1 a 18 en Liga Maestra) y la habilidad oculta aparece con más frecuencia (del 5 % al 20 %). Subir de liga ya no es solo más salvajes y más evolucionados: también salen mejores.',
+          en: 'Every league rank you climb improves the wild Pokémon: their IVs roll with a higher and higher minimum (from 0 in Base League 1 to 18 in Master League) and the hidden ability shows up more often (from 5% to 20%). Climbing leagues is no longer just more and more evolved wilds: they are better too.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Al subir de rango, el aviso te dice que tus salvajes mejoran, y en la pantalla de Liga ves cuánto mejoran en cada liga.',
+          en: 'When you rank up, the notice tells you your wilds got better, and the League screen shows how much better they get in each league.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.17.0',
     date: '2026-11-23',
     title: { es: 'Ditto se transforma en tu equipo', en: 'Ditto transforms into your teammates' },

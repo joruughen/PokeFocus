@@ -170,6 +170,21 @@ export function stageWeightsForRank(rank: Pick<LeagueRank, 'league' | 'sub'>, cf
   return { stage2: ramp(w.stage2, rank.sub, cfg), stage3: ramp(w.stage3, rank.sub, cfg), legendary: w.legendary }
 }
 
+/** How good the wilds of a rung are (GDD §10.2): the IV floor of every stat and the hidden-ability chance. */
+export interface WildQuality {
+  ivFloor: number
+  hiddenAbilityChance: number
+}
+
+export function wildQualityForRank(rank: Pick<LeagueRank, 'league' | 'sub'>, cfg: GameConfig): WildQuality {
+  const q = cfg.encounters.leagueQuality?.[rank.league]
+  if (!q) return { ivFloor: 0, hiddenAbilityChance: cfg.progression.hiddenAbilityChance }
+  return {
+    ivFloor: Math.min(cfg.progression.ivMax, Math.max(0, Math.round(ramp(q.ivFloor, rank.sub, cfg)))),
+    hiddenAbilityChance: Math.min(1, Math.max(0, ramp(q.hiddenAbilityChance, rank.sub, cfg))),
+  }
+}
+
 /** Weight multiplier of a species stage under some stage weights (stage 1: always 1; 3 and beyond: `stage3`). */
 export function stageWeight(stage: number, w: StageWeights | null | undefined): number {
   if (!w || stage <= 1) return 1

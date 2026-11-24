@@ -10,6 +10,7 @@ import {
   rankForPoints,
   rankUpDust,
   stageWeightsForRank,
+  wildQualityForRank,
   toLocal,
   waveSizeForRank,
   weekKey,
@@ -171,6 +172,13 @@ export default function League() {
                   {waveFrom === waveTo ? t('league.wavesFlat', { to: waveTo }) : t('league.waves', { from: waveFrom, to: waveTo })}
                   <br />
                   {t(`league.stages.${stagesKey(id, rungs.length, cfg)}`)}
+                  <br />
+                  {t('league.quality', {
+                    from: wildQualityForRank({ league: id, sub: 1 }, cfg).ivFloor,
+                    to: wildQualityForRank({ league: id, sub: rungs.length }, cfg).ivFloor,
+                    hFrom: fmtPct(wildQualityForRank({ league: id, sub: 1 }, cfg).hiddenAbilityChance, lng),
+                    hTo: fmtPct(wildQualityForRank({ league: id, sub: rungs.length }, cfg).hiddenAbilityChance, lng),
+                  })}
                 </p>
               </li>
             )

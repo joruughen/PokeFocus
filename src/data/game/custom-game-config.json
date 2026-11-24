@@ -155,6 +155,12 @@
       "ultra": { "stage2": { "from": 2, "to": 2 }, "stage3": { "from": 0.25, "to": 1 }, "legendary": 0 },
       "master": { "stage2": { "from": 2, "to": 2 }, "stage3": { "from": 1, "to": 1.5 }, "legendary": 1 }
     },
+    "leagueQuality": {
+      "base": { "ivFloor": { "from": 0, "to": 3 }, "hiddenAbilityChance": { "from": 0.05, "to": 0.06 } },
+      "super": { "ivFloor": { "from": 4, "to": 8 }, "hiddenAbilityChance": { "from": 0.07, "to": 0.09 } },
+      "ultra": { "ivFloor": { "from": 9, "to": 13 }, "hiddenAbilityChance": { "from": 0.1, "to": 0.13 } },
+      "master": { "ivFloor": { "from": 14, "to": 18 }, "hiddenAbilityChance": { "from": 0.15, "to": 0.2 } }
+    },
     "legendaryChance": 0.00136,
     "longSessionLegendaryMult": [
       1,

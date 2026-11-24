@@ -277,6 +277,8 @@ function checkConfig(issues: Issues, cfg: GameConfig, touched: ContentPatch['con
   if (caps[0] && caps[0].species !== 0) issues.error('table_first_row', 'config.progression.levelCaps.0.species', 'first level cap must start at 0 species')
   const e = cfg.encounters
   for (const l of order) {
+    const q = e.leagueQuality?.[l]
+    if (q && q.ivFloor.to < q.ivFloor.from) issues.error('quality_range', `config.encounters.leagueQuality.${l}.ivFloor.to`, 'the IV floor goes down inside the league', { league: l })
     const w = e.leagueWaveSize[l]
     if (w.to < w.from) issues.error('wave_size_range', `config.encounters.leagueWaveSize.${l}.to`, 'wave size goes down inside the league', { league: l })
   }

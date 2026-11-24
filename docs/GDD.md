@@ -615,6 +615,19 @@ Para cada hueco del grupo:
    - ×1.25 si comparte tipo con algún miembro del equipo.
 3. **Shiny:** `0.9/512 × (0.5 + Foco)` (Foco de la sesión: con 1.0 da lo mismo que 1/512 con el antiguo 0.85).
 
+**Calidad de los salvajes por liga (decidido el 2026-11-23).** Subir de liga no solo trae formas más evolucionadas: también salvajes **mejores**. El rango de la semana al empezar la sesión fija (`encounters.leagueQuality`, interpolado del subrango 1 al 5 como el tamaño de oleada; el piso se redondea y el último subrango de cada liga se mantiene):
+- un **piso de IVs**: cada stat del salvaje sale entre `piso` y 31 en vez de entre 0 y 31 (los legendarios siguen con sus 3 stats perfectos);
+- la **probabilidad de habilidad oculta** (5 % en la base del juego).
+
+| Liga | Piso de IVs (subrango 1 → 5) | Habilidad oculta |
+|---|---|---|
+| Base | 0 → 3 | 5 % → 6 % |
+| Super | 4 → 8 | 7 % → 9 % |
+| Ultra | 9 → 13 | 10 % → 13 % |
+| Maestra | 14 → 18 (se mantiene hasta Maestra 25) | 15 % → 20 % |
+
+Así subir de liga se siente como un premio y no como un castigo por perder la Ball de Estudio (que solo asegura bases de nivel bajo). Al subir de rango, el aviso (la ventana de nueva liga y el aviso de cada subrango) lo dice: «¡Ahora tus salvajes son mejores!». Las partidas guardadas con un encuentro sin rango no tienen piso. La naturaleza, las técnicas extra y el shiny no cambian con la liga.
+
 La Pokédex usa el rango de la semana del jugador: una forma que su nivel ya alcanza pero su liga todavía no dice «Aparece en salvajes desde la Liga Super/Ultra», y un legendario fuera de Maestra «solo aparece en la Liga Maestra».
 
 **Contenido en vivo y eventos** (`docs/admin-plan.md` §6): el admin puede desactivar una especie, limitarla a unas horas, a un clima o a un nivel de entrenador, y multiplicar su peso. Una especie limitada por hora o clima **no aparece si la hora o el clima son desconocidos**. Los eventos activos al **empezar** la sesión (contenido fijado) añaden:

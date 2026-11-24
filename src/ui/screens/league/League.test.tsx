@@ -31,6 +31,8 @@ describe('League screen', () => {
       expect(html).toContain(i18n.t('league.waves', { from: 2, to: 4 }))
       expect(html).toContain(i18n.t('league.waves', { from: 7, to: 10 }))
       for (const k of ['s1', 's12', 's123', 'all']) expect(html).toContain(i18n.t(`league.stages.${k}`))
+      // Each league says how its wilds improve with the rungs (minimum IVs and hidden ability).
+      expect(html).toContain(i18n.t('league.quality', { from: 0, to: 3, hFrom: lng === 'es' ? '5 %' : '5%', hTo: lng === 'es' ? '6 %' : '6%' }).split(':')[0])
       // One pip per rank: 5 + 5 + 5 + 25.
       expect(html.match(/aria-current="step"/g)).toHaveLength(1)
       expect(defaultContext().config.leagues.subranks.master).toBe(25)

@@ -457,8 +457,11 @@
       "added": "El Polvo ya está en tu cuenta.",
       "gotIt": "¡Genial!",
       "toast": "Subiste a {{rank}}",
-      "toastDust": "+{{dust}} de Polvo"
-    }
+      "toastDust": "+{{dust}} de Polvo",
+      "quality": "¡Ahora tus salvajes son mejores! Sus IVs salen desde {{floor}} como mínimo y la habilidad oculta aparece con un {{pct}} de probabilidad.",
+      "toastQuality": "Más chances de salvajes mejores (IVs desde {{floor}})"
+    },
+    "quality": "Salvajes cada vez mejores: IVs mínimos de {{from}} a {{to}} y habilidad oculta de {{hFrom}} a {{hTo}}."
   },
   "session": {
     "title_one": "Sesión de {{count}} minuto",
@@ -3389,6 +3392,48 @@
               "to": "Peso de 3.ª etapa: Liga Master, rango tope"
             },
             "legendary": "Multiplicador de legendarios: Liga Master"
+          }
+        },
+        "leagueQuality": {
+          "base": {
+            "ivFloor": {
+              "from": "IVs mínimos de los salvajes: Liga Base, primer rango",
+              "to": "IVs mínimos de los salvajes: Liga Base, rango tope"
+            },
+            "hiddenAbilityChance": {
+              "from": "Habilidad oculta de los salvajes: Liga Base, primer rango",
+              "to": "Habilidad oculta de los salvajes: Liga Base, rango tope"
+            }
+          },
+          "super": {
+            "ivFloor": {
+              "from": "IVs mínimos de los salvajes: Liga Super, primer rango",
+              "to": "IVs mínimos de los salvajes: Liga Super, rango tope"
+            },
+            "hiddenAbilityChance": {
+              "from": "Habilidad oculta de los salvajes: Liga Super, primer rango",
+              "to": "Habilidad oculta de los salvajes: Liga Super, rango tope"
+            }
+          },
+          "ultra": {
+            "ivFloor": {
+              "from": "IVs mínimos de los salvajes: Liga Ultra, primer rango",
+              "to": "IVs mínimos de los salvajes: Liga Ultra, rango tope"
+            },
+            "hiddenAbilityChance": {
+              "from": "Habilidad oculta de los salvajes: Liga Ultra, primer rango",
+              "to": "Habilidad oculta de los salvajes: Liga Ultra, rango tope"
+            }
+          },
+          "master": {
+            "ivFloor": {
+              "from": "IVs mínimos de los salvajes: Liga Master, primer rango",
+              "to": "IVs mínimos de los salvajes: Liga Master, rango tope"
+            },
+            "hiddenAbilityChance": {
+              "from": "Habilidad oculta de los salvajes: Liga Master, primer rango",
+              "to": "Habilidad oculta de los salvajes: Liga Master, rango tope"
+            }
           }
         }
       },

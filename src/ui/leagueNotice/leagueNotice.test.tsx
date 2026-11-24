@@ -66,5 +66,13 @@ describe('LeagueNoticeBody', () => {
       expect(html).toContain(lng === 'es' ? 'puesto 2 de Liga Super 3 en tu país' : 'place 2 of Super League 3 in your country')
       expect(html).toContain(`+${news.dust}`)
     })
+
+    it(`tells that the wilds get better after a climb (${lng})`, async () => {
+      await i18n.changeLanguage(lng)
+      const html = renderToStaticMarkup(<LeagueNoticeBody news={mergeLeagueNotices([climb(3, 6)])!} />)
+      // Rung 6 = Super League 2: IV floor 5, hidden ability 7,5 % of the time.
+      expect(html).toContain(lng === 'es' ? 'Ahora tus salvajes son mejores' : 'Your wilds are better now')
+      expect(html).not.toMatch(/\{\{/)
+    })
   }
 })

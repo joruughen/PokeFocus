@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { defaultContext, waveSizeForRank, weekKey } from '../../engine'
+import { defaultContext, waveSizeForRank, weekKey, wildQualityForRank } from '../../engine'
 import { leaderboardApi } from '../api/endpoints'
 import { whatsNewDue } from '../changelog/WhatsNewDialog'
 import { Button, Dialog, Mascot, PixelIcon, toast } from '../components'
 import { setHintsHeld, useHints } from '../hints'
 import { cx } from '../lib/cx'
 import { errorText } from '../lib/errors'
-import { fmtInt } from '../lib/format'
+import { fmtInt, fmtPct } from '../lib/format'
 import { sfx } from '../lib/sound'
 import { owedLevelUps } from '../levelUp/owed'
 import { LEAGUE_STYLE, rankName } from '../screens/league/rank'
@@ -86,7 +86,9 @@ export function LeagueNoticeHost() {
       if (d === 'dialog') setShown(news)
       else {
         const rank = news.climb ? rankName(t, news.climb.to) : ''
-        toast.add({ title: t('league.notice.toast', { rank }), description: news.dust > 0 ? t('league.notice.toastDust', { dust: fmtInt(news.dust, i18n.language) }) : undefined, type: 'success' })
+        const floor = news.climb ? wildQualityForRank(news.climb.to, defaultContext().config).ivFloor : 0
+        const better = t('league.notice.toastQuality', { floor })
+        toast.add({ title: t('league.notice.toast', { rank }), description: news.dust > 0 ? `${better} · ${t('league.notice.toastDust', { dust: fmtInt(news.dust, i18n.language) })}` : better, type: 'success' })
         void ack()
       }
     }
@@ -143,6 +145,7 @@ export function LeagueNoticeBody({ news }: { news: LeagueNews }) {
   const { t, i18n } = useTranslation()
   const cfg = defaultContext().config
   const { climb, podiums } = news
+  const quality = wildQualityForRank(climb?.to ?? { league: 'base', sub: 1 }, cfg)
   return (
     <div className="flex flex-col items-center gap-4" aria-label={t('league.notice.label')}>
       <Mascot pose="cheer" size={96} />
@@ -162,6 +165,9 @@ export function LeagueNoticeBody({ news }: { news: LeagueNews }) {
             {climb.to.index > climb.from.index + 1 ? t('league.notice.fromTo', { from: rankName(t, climb.from), to: rankName(t, climb.to) }) : t('league.notice.reached', { rank: rankName(t, climb.to) })}
           </p>
           <p className="text-center text-sm text-mist-300">{t('league.notice.waves', { count: waveSizeForRank(climb.to, cfg) })}</p>
+          <p className="w-full bg-dusk-900 p-3 text-center text-sm text-volt-300 inset-shadow-well">
+            {t('league.notice.quality', { floor: quality.ivFloor, pct: fmtPct(quality.hiddenAbilityChance, i18n.language) })}
+          </p>
         </div>
       )}
       {news.dust > 0 && (

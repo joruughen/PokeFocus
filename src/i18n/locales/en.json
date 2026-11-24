@@ -457,8 +457,11 @@
       "added": "The Dust is already in your account.",
       "gotIt": "Great!",
       "toast": "You reached {{rank}}",
-      "toastDust": "+{{dust}} Dust"
-    }
+      "toastDust": "+{{dust}} Dust",
+      "quality": "Your wilds are better now! Their IVs roll from {{floor}} at the least and the hidden ability shows up {{pct}} of the time.",
+      "toastQuality": "Better wilds more often (IVs from {{floor}})"
+    },
+    "quality": "Ever better wilds: minimum IVs from {{from}} to {{to}} and hidden ability from {{hFrom}} to {{hTo}}."
   },
   "session": {
     "title_one": "{{count}}-minute session",
@@ -3389,6 +3392,48 @@
               "to": "3rd-stage weight: Master League, top rank"
             },
             "legendary": "Legendary multiplier: Master League"
+          }
+        },
+        "leagueQuality": {
+          "base": {
+            "ivFloor": {
+              "from": "Wild minimum IVs: Base League, first rank",
+              "to": "Wild minimum IVs: Base League, top rank"
+            },
+            "hiddenAbilityChance": {
+              "from": "Wild hidden ability: Base League, first rank",
+              "to": "Wild hidden ability: Base League, top rank"
+            }
+          },
+          "super": {
+            "ivFloor": {
+              "from": "Wild minimum IVs: Super League, first rank",
+              "to": "Wild minimum IVs: Super League, top rank"
+            },
+            "hiddenAbilityChance": {
+              "from": "Wild hidden ability: Super League, first rank",
+              "to": "Wild hidden ability: Super League, top rank"
+            }
+          },
+          "ultra": {
+            "ivFloor": {
+              "from": "Wild minimum IVs: Ultra League, first rank",
+              "to": "Wild minimum IVs: Ultra League, top rank"
+            },
+            "hiddenAbilityChance": {
+              "from": "Wild hidden ability: Ultra League, first rank",
+              "to": "Wild hidden ability: Ultra League, top rank"
+            }
+          },
+          "master": {
+            "ivFloor": {
+              "from": "Wild minimum IVs: Master League, first rank",
+              "to": "Wild minimum IVs: Master League, top rank"
+            },
+            "hiddenAbilityChance": {
+              "from": "Wild hidden ability: Master League, first rank",
+              "to": "Wild hidden ability: Master League, top rank"
+            }
           }
         }
       },

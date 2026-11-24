@@ -760,6 +760,164 @@
                       },
                       "additionalProperties": false
                     },
+                    "leagueQuality": {
+                      "type": "object",
+                      "properties": {
+                        "base": {
+                          "type": "object",
+                          "properties": {
+                            "ivFloor": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                },
+                                "to": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "hiddenAbilityChance": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "to": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "super": {
+                          "type": "object",
+                          "properties": {
+                            "ivFloor": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                },
+                                "to": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "hiddenAbilityChance": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "to": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "ultra": {
+                          "type": "object",
+                          "properties": {
+                            "ivFloor": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                },
+                                "to": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "hiddenAbilityChance": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "to": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "master": {
+                          "type": "object",
+                          "properties": {
+                            "ivFloor": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                },
+                                "to": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 31
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "hiddenAbilityChance": {
+                              "type": "object",
+                              "properties": {
+                                "from": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "to": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
                     "roamingSessions": {
                       "type": "integer",
                       "minimum": 1,

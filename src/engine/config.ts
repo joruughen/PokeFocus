@@ -145,6 +145,11 @@ export interface GameConfig {
      * appear), interpolated like the wave size, and the multiplier of the legendary roll.
      */
     leagueStageWeights: Record<LeagueId, { stage2: { from: number; to: number }; stage3: { from: number; to: number }; legendary: number }>
+    /**
+     * Quality of the wilds by league (GDD §10.2): the lowest IV every stat of a wild can roll (`ivFloor`) and the
+     * chance of its hidden ability, interpolated like the wave size (the floor rounded). A higher rung = better wilds.
+     */
+    leagueQuality: Record<LeagueId, { ivFloor: { from: number; to: number }; hiddenAbilityChance: { from: number; to: number } }>
     legendaryChance: number
     longSessionLegendaryMult: number[]
     longSessionRareBoost: number[]
