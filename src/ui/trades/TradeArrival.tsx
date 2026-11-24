@@ -10,6 +10,7 @@ import { useNames } from '../lib/names'
 import { sfx } from '../lib/sound'
 import { EvolveMoment } from '../screens/box/EvolveMoment'
 import { phaseOf, useGame } from '../store/game'
+import { SHOWCASE_GAMMA } from '../lib/spriteSize'
 
 /**
  * The server's `game` event (SSE) already brings the arrival in at once, so this is only a short pause (the
@@ -125,7 +126,7 @@ export function TradeArrivalBody({ arrival }: { arrival: TradeArrival }) {
       <div className="relative flex h-48 items-end justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,var(--color-dusk-700),var(--color-dusk-950)_70%)] shadow-plate">
         <span className="absolute inset-0 m-auto size-48 motion-safe:animate-burst bg-[radial-gradient(circle,var(--color-volt-200)_0_30%,transparent_31%)]" aria-hidden />
         <Platform width={170} night className="absolute bottom-4" />
-        <Sprite kind="showdown" slug={arrival.toSpecies} shiny={arrival.shiny} scale={2} maxHeight={130} maxWidth={200} alt={names.species(arrival.toSpecies)} className="relative mb-8 motion-safe:animate-pop-in" />
+        <Sprite kind="showdown" slug={arrival.toSpecies} shiny={arrival.shiny} box={{ height: 130, width: 200, gamma: SHOWCASE_GAMMA }} alt={names.species(arrival.toSpecies)} className="relative mb-8 motion-safe:animate-pop-in" />
         <Mascot pose="cheer" size={48} className="absolute right-2 bottom-1" />
       </div>
       <p className="text-sm text-mist-300">{t('trades.arrival.note')}</p>

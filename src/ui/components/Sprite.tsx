@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react'
 import { defaultContext } from '../../engine'
 import { cx } from '../lib/cx'
+import { fitSpriteSize, type SpriteBox } from '../lib/spriteSize'
 
 export type SpriteKind = 'showdown' | 'icon' | 'item'
 
@@ -21,6 +22,12 @@ export interface SpriteProps {
   maxHeight?: number
   /** Same for the width: wide sprites (Moltres is 217 px at ×1) must not push past their box either. Combines with `maxHeight`. */
   maxWidth?: number
+  /**
+   * Showdown sprites only: draw the Pokémon in this box with the shared size rule (`lib/spriteSize.ts`):
+   * the biggest species fills the height, the others keep their real order and are never tiny. The size
+   * comes from the sprite table, so it is right on the first paint. Replaces `scale`/`maxHeight`/`maxWidth`.
+   */
+  box?: SpriteBox
   alt: string
   className?: string
   style?: CSSProperties
@@ -58,14 +65,19 @@ export function spriteUrl(kind: SpriteKind, slug: string, shiny = false): string
  * The size is set from the image's natural size × `scale` once it loads, so a
  * 45×49 GIF at scale 2 is exactly 90×98 CSS px.
  */
-export function Sprite({ kind, slug, shiny = false, scale = 1, fit, maxHeight, maxWidth, alt, className, style, flip }: SpriteProps) {
+export function Sprite({ kind, slug, shiny = false, scale = 1, fit, maxHeight, maxWidth, box, alt, className, style, flip }: SpriteProps) {
   const src = spriteUrl(kind, slug, shiny)
+  const id = kind === 'showdown' && box ? (defaultContext().speciesBySlug.get(slug)?.id ?? 0) : 0
+  const table = id > 0 && box ? fitSpriteSize(id, box) : null
   const [size, setSize] = useState<{ src: string; w: number; h: number } | null>(null)
   const [failed, setFailed] = useState<string | null>(null)
   const known = size?.src === src ? size : null
   let w: number | undefined
   let h: number | undefined
-  if (known) {
+  if (table) {
+    w = table.w
+    h = table.h
+  } else if (known) {
     const big = fit !== undefined && Math.max(known.w, known.h) > fit
     const s = big ? fit / Math.max(known.w, known.h) : spriteScale(known.h, scale, maxHeight, known.w, maxWidth)
     w = Math.round(known.w * s)
@@ -91,7 +103,7 @@ export function Sprite({ kind, slug, shiny = false, scale = 1, fit, maxHeight, m
       decoding="async"
       onLoad={(e) => setSize({ src, w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
       onError={() => setFailed(src)}
-      className={cx('pixelated max-w-none select-none', !known && 'opacity-0', className)}
+      className={cx('pixelated max-w-none select-none', !known && !table && 'opacity-0', className)}
       style={{ transform: flip ? 'scaleX(-1)' : undefined, ...style }}
     />
   )

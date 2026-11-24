@@ -16,6 +16,7 @@ import { errorText } from '../../lib/errors'
 import { fmtInt } from '../../lib/format'
 import { useNames } from '../../lib/names'
 import { offerOptions, type OfferBlock, type TradeWarning } from './eligibility'
+import { SHOWCASE_GAMMA } from '../../lib/spriteSize'
 
 /** Text for a refused trade request: `errors.trades.<code>` (or `<code>_partner` when the rule failed for the other player). */
 export function tradeErrorText(e: unknown): string {
@@ -82,9 +83,7 @@ function StageSpot({ side, facing }: { side: StageSide; facing: 'left' | 'right'
           kind="showdown"
           slug={mon.speciesSlug}
           shiny={mon.isShiny}
-          scale={2}
-          maxHeight={110}
-          maxWidth={140}
+          box={{ height: 110, width: 140, gamma: SHOWCASE_GAMMA }}
           flip={facing === 'right'}
           alt={names.species(mon.speciesSlug)}
           className={cx('relative mb-3', mon.missing && 'opacity-30 grayscale')}

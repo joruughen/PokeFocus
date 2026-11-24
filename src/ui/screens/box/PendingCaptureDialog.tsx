@@ -11,6 +11,7 @@ import { sfx } from '../../lib/sound'
 import { useGame } from '../../store/game'
 import { useBusy } from '../../store/selectors'
 import { boxHasRoom, candyOf, isLegendarySlug, pendingOf, riskOf, swapCandidates, usePendingUi, type SwapSort } from './pendingCapture'
+import { SHOWCASE_GAMMA } from '../../lib/spriteSize'
 
 type Confirming = 'swap' | 'convert' | null
 
@@ -71,7 +72,7 @@ function CaptureCard({ capture, risks }: { capture: OwnedPokemon; risks: Release
       )}
     >
       <span className="grid h-24 w-24 shrink-0 place-items-center sm:h-28 sm:w-28">
-        <Sprite kind="showdown" slug={capture.speciesSlug} shiny={capture.isShiny} scale={2} maxHeight={88} maxWidth={88} alt="" />
+        <Sprite kind="showdown" slug={capture.speciesSlug} shiny={capture.isShiny} box={{ height: 88, width: 88, gamma: SHOWCASE_GAMMA }} alt="" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <p className="font-display text-sm text-mist-300">{t('box.pending.capture')}</p>

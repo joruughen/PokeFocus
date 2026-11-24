@@ -19,6 +19,11 @@ export interface StageProps {
   sky?: ReactNode
   /** Draw the sun or moon (off for small repeated stages). */
   celestial?: boolean
+  /**
+   * Height class of the grass (default 30 %, 42 % for `field`). A stage whose platforms sit above their name
+   * plates (the team cards) raises it so the Pokémon stand on grass, not in the sky.
+   */
+  ground?: string
 }
 
 const SKY: Record<TimeOfDay, string> = {
@@ -38,7 +43,7 @@ const TUFTS =
 const STARS =
   '12px 14px var(--color-mist-50), 64px 38px var(--color-mist-50), 140px 22px var(--color-mist-300), 220px 54px var(--color-mist-50), 310px 18px var(--color-mist-300), 420px 44px var(--color-mist-50), 520px 12px var(--color-mist-50), 610px 60px var(--color-mist-300), 700px 26px var(--color-mist-50), 812px 48px var(--color-mist-50), 905px 16px var(--color-mist-300), 1010px 40px var(--color-mist-50), 1120px 20px var(--color-mist-50), 1230px 58px var(--color-mist-300)'
 
-export function Stage({ time, weather, variant = 'route', className, children, sky, celestial = true }: StageProps) {
+export function Stage({ time, weather, variant = 'route', className, children, sky, celestial = true, ground }: StageProps) {
   const night = time === 'night'
   const groundStyle: CSSProperties = {
     backgroundImage: `linear-gradient(to bottom, rgb(255 255 255 / 0.2) 0 4px, transparent 4px), url("${TUFTS}")`,
@@ -88,7 +93,7 @@ export function Stage({ time, weather, variant = 'route', className, children, s
       {/* Ground */}
       <div
         aria-hidden
-        className={cx('absolute inset-x-0 bottom-0 -z-10', variant === 'field' ? 'h-[42%]' : 'h-[30%]', night ? 'bg-grass-night' : 'bg-grass-500', variant === 'focus' && 'brightness-[0.62]')}
+        className={cx('absolute inset-x-0 bottom-0 -z-10', ground ?? (variant === 'field' ? 'h-[42%]' : 'h-[30%]'), night ? 'bg-grass-night' : 'bg-grass-500', variant === 'focus' && 'brightness-[0.62]')}
         style={groundStyle}
       />
       {variant === 'field' && <TallGrass night={night} />}

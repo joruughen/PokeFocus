@@ -106,15 +106,13 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
 
   return (
     <div className={cx('relative flex w-full flex-col items-center', shake && 'animate-shake', className)}>
-      <div className="relative flex h-36 w-full items-end justify-center">
+      <div className="relative flex h-56 w-full items-end justify-center">
         <Platform width={120} night={night} className="absolute bottom-0" />
         <Sprite
           kind="showdown"
           slug={look.slug}
           shiny={look.shiny}
-          scale={2}
-          maxHeight={128}
-          maxWidth={160}
+          box={{ height: 210, width: 180 }}
           flip
           alt={fullName}
           className={cx('relative mb-3', exhausted && 'grayscale', dim && 'brightness-75')}

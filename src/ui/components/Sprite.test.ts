@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { defaultContext } from '../../engine'
+import { fitSpriteSize, SHOWCASE_GAMMA } from '../lib/spriteSize'
 import { spriteScale, spriteUrl } from './Sprite'
 
 describe('spriteScale', () => {
@@ -25,5 +27,38 @@ describe('spriteUrl', () => {
     expect(spriteUrl('item', 'tera-shard')).toBe('/sprites/items/tera-shard.svg')
     expect(spriteUrl('item', 'technical-machine')).toBe('/sprites/items/technical-machine.svg')
     expect(spriteUrl('item', 'potion')).toBe('/sprites/items/potion.png')
+  })
+})
+
+describe('fitSpriteSize (shared size rule)', () => {
+  const box = { height: 136, width: 128 }
+  const size = (slug: string) => {
+    const id = defaultContext().speciesBySlug.get(slug)!.id
+    return fitSpriteSize(id, box)!
+  }
+  it('keeps the real order of sizes and never exceeds the box', () => {
+    const order = ['pidgey', 'dratini', 'snorlax', 'dragonite', 'charizard', 'moltres'].map((s) => ({ s, ...size(s) }))
+    for (const o of order) {
+      expect(o.h).toBeLessThanOrEqual(136)
+      expect(o.w).toBeLessThanOrEqual(128)
+    }
+    const area = order.map((o) => o.w * o.h)
+    for (let i = 1; i < area.length; i++) expect(area[i]!).toBeGreaterThan(area[i - 1]!)
+    // Charizard is clearly bigger than Pidgey and Dratini (it used to be barely bigger).
+    expect(size("charizard").h).toBeGreaterThan(size("pidgey").h * 1.4)
+    expect(size('charizard').h).toBeGreaterThan(size('dratini').h * 1.3)
+  })
+  it('an unknown species falls back to null', () => {
+    expect(fitSpriteSize(99999, box)).toBeNull()
+  })
+})
+
+describe('fitSpriteSize showcase', () => {
+  it('a flatter exponent keeps a medium Pokémon bigger than the shared rule does', () => {
+    const id = defaultContext().speciesBySlug.get('venusaur')!.id
+    const shared = fitSpriteSize(id, { height: 190, width: 300 })!
+    const showcase = fitSpriteSize(id, { height: 190, width: 300, gamma: SHOWCASE_GAMMA })!
+    expect(showcase.h).toBeGreaterThan(shared.h * 1.05)
+    expect(showcase.h).toBeLessThanOrEqual(190)
   })
 })

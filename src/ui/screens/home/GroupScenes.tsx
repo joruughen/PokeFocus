@@ -67,8 +67,6 @@ export function PlayerScene({ player, time }: { player: ScenePlayer; time: TimeO
   const [leader, ...others] = player.team
   const dim = player.state === 'left' || player.state === 'done'
   const monName = (m: GroupMon) => (m.shiny ? `${names.species(m.slug)} (${t('pokemon.shiny')})` : names.species(m.slug))
-  // Natural scale in a narrow scene, double in a wide one; the leader is always the biggest.
-  const otherScale = wide ? 2 : 1
   const otherPlatform = wide ? 84 : 50
   return (
     <li ref={ref} className="min-w-0 bg-dusk-800 shadow-frame">
@@ -89,7 +87,7 @@ export function PlayerScene({ player, time }: { player: ScenePlayer; time: TimeO
             </Standing>
             {leader && (
               <Standing width={wide ? 144 : 112} className="-ml-3">
-                <Sprite kind="showdown" slug={leader.slug} shiny={leader.shiny} scale={2} maxHeight={wide ? 168 : 132} maxWidth={wide ? 150 : 116} flip alt={monName(leader)} className="relative mb-3 motion-safe:animate-bob" style={{ animationDuration: '0.7s' }} />
+                <Sprite kind="showdown" slug={leader.slug} shiny={leader.shiny} box={{ height: wide ? 168 : 132, width: wide ? 150 : 116 }} flip alt={monName(leader)} className="relative mb-3 motion-safe:animate-bob" style={{ animationDuration: '0.7s' }} />
               </Standing>
             )}
           </div>
@@ -101,9 +99,7 @@ export function PlayerScene({ player, time }: { player: ScenePlayer; time: TimeO
                     kind="showdown"
                     slug={m.slug}
                     shiny={m.shiny}
-                    scale={otherScale}
-                    maxHeight={wide ? 104 : 64}
-                    maxWidth={otherPlatform + (wide ? 8 : 14)}
+                    box={{ height: wide ? 104 : 64, width: otherPlatform + (wide ? 8 : 14) }}
                     flip
                     alt={monName(m)}
                     className="relative mb-2 motion-safe:animate-bob"

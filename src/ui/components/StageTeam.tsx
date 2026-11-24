@@ -63,9 +63,7 @@ export function StageTeam({ members, night = false, bob = true, dim = false, tra
             kind="showdown"
             slug={m.slug}
             shiny={m.shiny}
-            scale={2}
-            maxHeight={136}
-            maxWidth={128}
+            box={wide ? { height: 204, width: 184 } : { height: 140, width: 112 }}
             flip
             alt={m.name}
             className={cx('relative mb-3', bob && 'motion-safe:animate-bob', dim && 'brightness-90', m.faded && 'opacity-60')}

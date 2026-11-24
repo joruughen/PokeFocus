@@ -10,6 +10,7 @@ import { EvoLine } from '../shared/EvoLine'
 import { useMemo, useState } from 'react'
 import { useContent } from '../../store/content'
 import { SpawnLine } from './SpawnLine'
+import { SHOWCASE_GAMMA } from '../../lib/spriteSize'
 
 type Show = 'all' | 'caught' | 'missing'
 
@@ -131,9 +132,9 @@ function DexEntry({ slug, state, owned, trainerLevel, known }: { slug: string; s
   return (
     <aside className="xl:sticky xl:top-6 xl:self-start" aria-live="polite">
       <Panel padded={false} className="overflow-hidden">
-        <div className="relative flex h-44 items-end justify-center bg-[linear-gradient(to_bottom,var(--color-dusk-700),var(--color-dusk-900))]">
+        <div className="relative flex h-56 items-end justify-center bg-[linear-gradient(to_bottom,var(--color-dusk-700),var(--color-dusk-900))]">
           <Platform width={150} night className="absolute bottom-4" />
-          <Sprite kind="showdown" slug={slug} scale={2} maxHeight={132} maxWidth={260} alt={hidden ? t('dex.unknownName') : names.species(slug)} className={cx('relative mb-7', hidden && 'brightness-0 opacity-60', state === 'seen' && 'grayscale-[.6]')} />
+          <Sprite kind="showdown" slug={slug} box={{ height: 190, width: 300, gamma: SHOWCASE_GAMMA }} alt={hidden ? t('dex.unknownName') : names.species(slug)} className={cx('relative mb-7', hidden && 'brightness-0 opacity-60', state === 'seen' && 'grayscale-[.6]')} />
           <span className="absolute top-3 left-4 font-num text-2xl leading-none text-mist-400">#{String(sp.id).padStart(3, '0')}</span>
           {(sp.isLegendary || sp.isMythical) && !hidden && <span className="absolute top-3 right-4 bg-type-psychic px-1.5 py-0.5 font-display text-sm text-ink shadow-frame">{t(sp.isMythical ? 'dex.mythical' : 'dex.legendary')}</span>}
         </div>

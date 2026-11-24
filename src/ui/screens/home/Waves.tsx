@@ -894,16 +894,14 @@ function WildCard({
         statusTaken && 'opacity-60',
       )}
     >
-      <div className="relative flex h-40 w-full items-end justify-center">
+      <div className="relative flex h-52 w-full items-end justify-center">
         <Platform width={128} night={night} className="absolute bottom-0" />
         {!(anim && (anim.stage === 'wobble' || (anim.stage === 'result' && result === 'caught'))) && (
           <Sprite
             kind="showdown"
             slug={wild.speciesSlug}
             shiny={wild.isShiny}
-            scale={2}
-            maxHeight={148}
-            maxWidth={160}
+            box={{ height: 196, width: 172 }}
             alt=""
             className={cx(
               'relative mb-3 transition-opacity',

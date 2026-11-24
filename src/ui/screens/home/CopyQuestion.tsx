@@ -8,6 +8,7 @@ import { usePlayer } from '../../store/selectors'
 import { useContent } from '../../store/content'
 import { copyErrorText } from '../box/TransformPanel'
 import { TransformMoment } from '../box/TransformMoment'
+import { SHOWCASE_GAMMA } from '../../lib/spriteSize'
 
 /**
  * The question before the results (GDD §7.3): each Ditto of the finished session that is not copying yet asks
@@ -69,7 +70,7 @@ export function CopyQuestion({ uids, teamUids, onDone }: { uids: readonly string
       <div className="flex flex-col gap-4">
         <div className="relative mx-auto flex h-32 w-48 items-end justify-center">
           <Platform width={150} className="absolute bottom-2" />
-          <Sprite kind="showdown" slug={p.speciesSlug} shiny={p.isShiny} scale={2} maxHeight={96} alt={names.species(p.speciesSlug)} className="relative mb-6 motion-safe:animate-bob" />
+          <Sprite kind="showdown" slug={p.speciesSlug} shiny={p.isShiny} box={{ height: 96, gamma: SHOWCASE_GAMMA }} alt={names.species(p.speciesSlug)} className="relative mb-6 motion-safe:animate-bob" />
         </div>
         <CopyPicker candidates={copyCandidates(player, p, ctx, teamUids)} slots={techniqueSlots(p.level, ctx)} onPick={(t2) => void pick(t2)} busy={busy} baseSlug={p.speciesSlug} />
       </div>

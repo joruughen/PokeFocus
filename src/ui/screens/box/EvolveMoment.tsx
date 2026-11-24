@@ -6,6 +6,7 @@ import { Button, Platform, Sprite } from '../../components'
 import { cx } from '../../lib/cx'
 import { useNames } from '../../lib/names'
 import { sfx } from '../../lib/sound'
+import { SHOWCASE_GAMMA } from '../../lib/spriteSize'
 
 /** Alternation times (ms): the two silhouettes swap faster and faster, like the handheld games. */
 const SWAPS = [0, 420, 780, 1080, 1320, 1520, 1680, 1810, 1910, 1990, 2050, 2100, 2140, 2180, 2210]
@@ -66,9 +67,7 @@ export function EvolveMoment({ from, to, shiny, nickname, onClose }: { from: str
                 kind="showdown"
                 slug={slug}
                 shiny={shiny}
-                scale={3}
-                maxHeight={208}
-                maxWidth={300}
+                box={{ height: 208, width: 300, gamma: SHOWCASE_GAMMA }}
                 alt={names.species(slug)}
                 className={cx('relative mb-12', !done && 'brightness-0 invert', done && 'motion-safe:animate-pop-in')}
               />

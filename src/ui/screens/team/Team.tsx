@@ -74,7 +74,7 @@ export default function Team() {
         </p>
       )}
 
-      <Stage time={scene.time} weather={scene.weather} className="px-4 pt-8 pb-5">
+      <Stage time={scene.time} weather={scene.weather} className="px-4 pt-8 pb-5" ground="h-[52%]">
         <ol className="flex flex-wrap justify-center gap-x-3 gap-y-6 xl:justify-start" aria-label={t('team.title')}>
           {views.map((v, i) => (
             <li
@@ -87,7 +87,7 @@ export default function Team() {
           ))}
           {Array.from({ length: 6 - views.length }, (_, i) => (
             <li key={`g${i}`} className="flex w-[10.5rem] flex-col items-center max-sm:hidden">
-              <div className="flex h-36 w-full items-end justify-center">
+              <div className="flex h-56 w-full items-end justify-center">
                 <Platform width={112} ghost night={scene.time === 'night'} />
               </div>
               <p className="mt-2 grid min-h-[6.75rem] w-full place-items-center bg-ink/25 px-3 py-4 text-center font-display text-base text-mist-50/85 outline-2 -outline-offset-2 outline-mist-50/40 outline-dashed">{t('team.slotFree', { n: views.length + i + 1 })}</p>

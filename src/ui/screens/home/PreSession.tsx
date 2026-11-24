@@ -107,7 +107,7 @@ export function PreSession() {
 
       <PendingBanner className="-mt-4" />
 
-      <Stage time={scene.time} weather={scene.weather} className="px-4 pt-10 pb-5" sky={null}>
+      <Stage time={scene.time} weather={scene.weather} className="px-4 pt-10 pb-5" sky={null} ground="h-[52%]">
         <h2 className="sr-only">{t('team.title')}</h2>
         <div {...hintAnchor('home.team')} className="flex flex-wrap justify-center gap-x-3 gap-y-6 xl:justify-start">
           {views.map((v, i) => (
@@ -209,7 +209,7 @@ function EmptySlots({ count, night }: { count: number; night: boolean }) {
       <>
         {Array.from({ length: count }, (_, i) => (
           <div key={i} className="flex w-[10.5rem] flex-col items-center">
-            <div className="flex h-36 w-full items-end justify-center">
+            <div className="flex h-56 w-full items-end justify-center">
               <Platform width={112} ghost night={night} className="opacity-80" />
             </div>
             <a
@@ -226,7 +226,7 @@ function EmptySlots({ count, night }: { count: number; night: boolean }) {
   }
   return (
     <div className="flex min-w-[15rem] flex-1 flex-col">
-      <div className="flex h-36 items-end justify-around overflow-hidden">
+      <div className="flex h-56 items-end justify-around overflow-hidden">
         {Array.from({ length: count }, (_, i) => (
           <Platform key={i} width={112} ghost night={night} className={cx('shrink-0 opacity-80', i >= 2 && 'max-xl:hidden', i >= 1 && 'max-sm:hidden')} />
         ))}
