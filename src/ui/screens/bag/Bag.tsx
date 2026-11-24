@@ -6,14 +6,12 @@ import { useHintScreen } from '../../hints'
 import { cx } from '../../lib/cx'
 import { fmtInt } from '../../lib/format'
 import { asLocale } from '../../lib/names'
-import { hrefTo } from '../../router'
 import { useNow } from '../../store/clock'
 import { useContent } from '../../store/content'
 import { usePlayer } from '../../store/selectors'
-import { BAG_CATEGORIES, bagCounts, buildBagEntries, filterBag, sortBag, type BagEntry, type BagFilter, type BagSort, type BagUser } from './bagItems'
+import { BAG_CATEGORIES, bagCounts, buildBagEntries, filterBag, sortBag, type BagEntry, type BagFilter, type BagSort } from './bagItems'
 
 /** How many Pokémon links a card shows before "+N more". */
-const USERS_SHOWN = 5
 
 /** `#/bag`: Study Dust, Balls, healing items, evolution items, candies and event items, with search and filters. */
 export default function Bag() {
@@ -159,8 +157,14 @@ function BagCard({ entry: e }: { entry: BagEntry }) {
           </span>
         </div>
         <p className="text-sm text-mist-300 [overflow-wrap:anywhere]">{e.description}</p>
-        {/* Candies show only their description: the list of Pokémon of that line looked cluttered (user feedback). */}
-        {e.category !== 'ball' && e.category !== 'event' && e.category !== 'other' && e.category !== 'candy' && <Users entry={e} />}
+        {/* Only the description: the lists of Pokémon that can use an item looked cluttered (user feedback), so the Bag
+            stays clean and only says when something is still locked by trainer level. */}
+        {e.lockedLevel !== undefined && (
+          <p className="flex items-center gap-1.5 text-xs text-amber-400">
+            <PixelIcon name="lock" size={10} className="shrink-0" />
+            {t('bag.lockedAt', { level: e.lockedLevel })}
+          </p>
+        )}
       </div>
     </article>
   )
@@ -170,62 +174,4 @@ function EntryIcon({ entry: e, ctx }: { entry: BagEntry; ctx: ReturnType<typeof 
   if (e.kind === 'typeCandy') return <PixelIcon name="candy" size={30} className={cx(TYPE_TEXT[e.slug as TypeSlug])} />
   if (e.kind === 'chainCandy') return ctx.speciesBySlug.has(e.slug) ? <Sprite kind="icon" slug={e.slug} alt="" /> : <PixelIcon name="candy" size={30} className="text-exp-400" />
   return <Sprite kind="item" slug={e.slug} fit={40} alt="" />
-}
-
-/** Links to the sheets of the Pokémon that can use the entry (those that can right now first). */
-function Users({ entry: e }: { entry: BagEntry }) {
-  const { t } = useTranslation()
-  const [all, setAll] = useState(false)
-  const kind = e.usersKey ?? (e.kind === 'item' ? e.category : e.kind)
-  if (e.lockedLevel !== undefined) {
-    return (
-      <p className="flex items-center gap-1.5 text-xs text-amber-400">
-        <PixelIcon name="lock" size={10} className="shrink-0" />
-        {t('bag.lockedAt', { level: e.lockedLevel })}
-      </p>
-    )
-  }
-  if (e.users.length === 0) return <p className="text-xs text-mist-400">{t(`bag.noUsers.${kind}`)}</p>
-  const list = all ? e.users : e.users.slice(0, USERS_SHOWN)
-  const hidden = e.users.length - list.length
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="text-xs text-mist-400">{t(`bag.users.${kind}`)}</p>
-      <ul className="flex flex-wrap gap-1.5">
-        {list.map((u) => (
-          <li key={u.uid}>
-            <UserLink user={u} evolution={e.category === 'evolution'} />
-          </li>
-        ))}
-        {(hidden > 0 || all) && e.users.length > USERS_SHOWN && (
-          <li>
-            <button
-              type="button"
-              aria-expanded={all}
-              onClick={() => setAll((v) => !v)}
-              className="inline-flex min-h-9 items-center px-2 text-sm text-volt-300 underline underline-offset-2 hover:text-volt-200"
-            >
-              {all ? t('bag.users.less') : t('bag.users.more', { count: hidden })}
-            </button>
-          </li>
-        )}
-      </ul>
-    </div>
-  )
-}
-
-function UserLink({ user: u, evolution }: { user: BagUser; evolution: boolean }) {
-  const { t } = useTranslation()
-  const waiting = evolution && !u.ready
-  return (
-    <a
-      href={hrefTo('box', u.uid)}
-      title={waiting ? t('bag.users.notReady') : undefined}
-      aria-label={waiting ? `${u.name}. ${t('bag.users.notReady')}` : u.name}
-      className={cx('inline-flex min-h-9 items-center gap-1 bg-dusk-900 pr-2.5 pl-1 text-sm shadow-frame hover:bg-dusk-700', waiting ? 'text-mist-400' : 'text-mist-50')}
-    >
-      <Sprite kind="icon" slug={u.speciesSlug} alt="" className={cx(waiting && 'opacity-60')} />
-      <span className="max-w-32 truncate">{u.name}</span>
-    </a>
-  )
 }

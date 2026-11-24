@@ -34,12 +34,11 @@ describe('Bag page', () => {
       expect(html).toContain(lng === 'es' ? 'Piedra Lunar' : 'Moon Stone')
       expect(html).toContain(lng === 'es' ? 'Caramelos de Pikachu' : 'Pikachu candies')
       expect(html).toContain(i18n.t('bag.desc.evolution').replace("'", '&#x27;'))
-      // The Pokémon that evolves with the stone links to its sheet, by nickname.
-      expect(html).toContain('href="#/box/clef"')
-      expect(html).toContain('Hada')
-      // Candies show only their description, no list of the line's Pokémon.
-      expect(html).not.toContain(i18n.t('bag.users.chainCandy'))
+      // Items show only their description: no list of the Pokémon that can use them (stones, potions, candies…).
+      expect(html).not.toContain('href="#/box/clef"')
       expect(html).not.toContain('href="#/box/pika"')
+      expect(html).not.toContain(i18n.t('bag.users.evolution'))
+      expect(html).not.toContain(i18n.t('bag.users.chainCandy'))
     })
 
     it(`shows a teaching empty state for an empty bag (${lng})`, async () => {
