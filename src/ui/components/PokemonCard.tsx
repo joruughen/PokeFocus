@@ -35,10 +35,12 @@ export interface PokemonCardProps {
   className?: string
   /** Extra line under the nameplate. */
   footer?: ReactNode
+  /** Selected: a yellow outline around the nameplate only (not around the sprite). */
+  selected?: boolean
 }
 
 /** A team member: sprite + nameplate (name, level, types, Energy, leader crown). */
-export function PokemonCard({ view, variant = 'stage', leader, condition, energyFrom, energy, floating, shake, dim, night, className, footer }: PokemonCardProps) {
+export function PokemonCard({ view, variant = 'stage', leader, condition, energyFrom, energy, floating, shake, dim, night, className, footer, selected }: PokemonCardProps) {
   const { t } = useTranslation()
   const names = useNames()
   const p = view.pokemon
@@ -48,7 +50,7 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
   const e = energy ?? view.energy
   const exhausted = e <= 0
   const plate = (
-    <div className={cx('relative w-full bg-mist-50 px-3 pt-2 pb-2.5 text-ink shadow-raised', dim && 'opacity-70')}>
+    <div className={cx('relative w-full bg-mist-50 px-3 pt-2 pb-2.5 text-ink shadow-raised', dim && 'opacity-70', selected && 'outline-3 outline-offset-2 outline-volt-400')}>
       <div className="flex items-baseline justify-between gap-2">
         <span title={p.nickname ? fullName : undefined} className={cx('min-w-0 truncate font-display leading-tight', variant === 'stage' ? 'text-base' : 'text-lg')}>
           {name}
@@ -117,14 +119,17 @@ export function PokemonCard({ view, variant = 'stage', leader, condition, energy
           alt={fullName}
           className={cx('relative mb-3', exhausted && 'grayscale', dim && 'brightness-75')}
         />
-        {leader && (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2">
-            <LeaderMark large />
-          </div>
-        )}
         {floating && <div className="pointer-events-none absolute top-6 left-1/2 -translate-x-1/2 animate-float-up font-num text-3xl text-cheek-400 [text-shadow:0_2px_0_var(--color-ink)]">{floating}</div>}
       </div>
-      <div className="mt-2 w-full">{plate}</div>
+      <div className="relative mt-2 w-full">
+        {/* The leader tag is a tab on the nameplate's top-left corner, not a label floating over the scene. */}
+        {leader && (
+          <div className="absolute bottom-full left-0 z-10">
+            <LeaderMark large tab />
+          </div>
+        )}
+        {plate}
+      </div>
     </div>
   )
 }
@@ -149,7 +154,7 @@ export function CopyLookBadge({ speciesSlug, onLight, className }: { speciesSlug
   )
 }
 
-function LeaderMark({ large }: { large?: boolean }) {
+function LeaderMark({ large, tab }: { large?: boolean; tab?: boolean }) {
   const { t } = useTranslation()
   return (
     <Tooltip content={t('team.leaderTip')}>
@@ -158,6 +163,8 @@ function LeaderMark({ large }: { large?: boolean }) {
         className={cx(
           'inline-flex items-center gap-1 bg-volt-400 text-ink shadow-frame',
           large ? 'px-1.5 py-0.5 font-display text-sm' : 'absolute -top-1 -left-1 p-0.5',
+          // Ink frame on top, left and right (the bottom is the nameplate's own top edge).
+          tab && 'px-2 shadow-[0_-2px_0_0_var(--color-ink),-2px_0_0_0_var(--color-ink),2px_0_0_0_var(--color-ink)]',
         )}
       >
         <PixelIcon name="crown" size={large ? 14 : 12} />

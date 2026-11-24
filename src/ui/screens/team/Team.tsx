@@ -79,10 +79,10 @@ export default function Team() {
           {views.map((v, i) => (
             <li
               key={v.pokemon.uid}
-              className={cx('w-[10.5rem] cursor-pointer', selected?.pokemon.uid === v.pokemon.uid && 'outline-2 outline-offset-2 outline-volt-400')}
+              className="w-[10.5rem] cursor-pointer"
               onClick={() => setSelectedUid(v.pokemon.uid)}
             >
-              <PokemonCard view={v} leader={i === 0} night={scene.time === 'night'} dim={asleep(v)} />
+              <PokemonCard view={v} leader={i === 0} night={scene.time === 'night'} dim={asleep(v)} selected={selected?.pokemon.uid === v.pokemon.uid} />
             </li>
           ))}
           {Array.from({ length: 6 - views.length }, (_, i) => (
