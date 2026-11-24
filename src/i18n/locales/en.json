@@ -4739,7 +4739,8 @@
       "use": "Use this character",
       "credit": "Sprite by {{author}}",
       "currentTag": "Your character now",
-      "label": "Trainers"
+      "label": "Trainers",
+      "help": "What your character is for"
     }
   },
   "gift": {

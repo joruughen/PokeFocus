@@ -19,6 +19,7 @@ import { GroupFairyNote } from './GroupStudy'
 import { PartnerCandies } from './PartnerCandies'
 import { StudyStyleLine } from './SoundStyle'
 import { useContent } from '../../store/content'
+import { useMyTrainer } from '../../lib/useMyTrainer'
 
 /** "120 Study Dust, 3× Poké Ball, …" for the trainer level-up line (the window shows them with sprites). */
 function levelUpRewardsText(e: Extract<ProgressEvent, { type: 'trainerLevelUp' }>, t: TFunction, names: ReturnType<typeof useNames>, lng: string): string {
@@ -35,6 +36,7 @@ export function Results() {
   const { t, i18n } = useTranslation()
   const lng = i18n.language
   const names = useNames()
+  const trainer = useMyTrainer()
   const player = usePlayer()
   const now = useNow()
   const outcome = useGame((s) => s.outcome)!
@@ -141,6 +143,7 @@ export function Results() {
           </div>
           <StageTeam
             className="max-w-full justify-start px-0 pb-1 sm:gap-x-4 sm:px-0"
+            trainer={trainer}
             night={scene.time === 'night'}
             members={result.members.map((m) => {
               const slug = player.pokemon[m.uid]?.speciesSlug ?? m.speciesSlug

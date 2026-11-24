@@ -42,38 +42,41 @@ afterEach(() => {
   Object.assign(useAuth.getInitialState(), { status: 'loading', user: null })
 })
 
-describe('Profile panel', () => {
+describe('Profile character row', () => {
   it('renders nothing while signed out', () => {
     expect(panel(null)).toBe('')
   })
 
-  it('shows only your character and the button; the chooser stays closed (no wall of sprites)', () => {
+  it('shows only your character name and the button; the chooser stays closed (no wall of sprites)', () => {
     const html = panel(user('hilbert'))
     expect(html).toContain('Your character')
-    expect(html).toContain('Now: Hilbert')
+    expect(html).toContain('Hilbert')
     expect(html).toContain('Change character')
-    expect(html).toContain(`Choose from ${TRAINER_CATALOG.length} trainers`)
-    expect(html.match(/<img[^>]*src="\/sprites\/trainers\//g)).toHaveLength(1)
+    expect(html).toContain('What your character is for')
+    // The sprite itself is drawn by the hero card, not by this row.
+    expect(html).not.toMatch(/<img[^>]*src="\/sprites\/trainers\//)
     expect(html).not.toContain('type="search"')
     expect(html).not.toMatch(/\b(profile|trainers)\.[a-zA-Z]/)
   })
 
   it('names fan art by its author, and credits them', () => {
     const html = panel(user('aarune'))
-    expect(html).toContain('Now: Aarune')
+    expect(html).toContain('Aarune')
     expect(html).toContain('Sprite by kyledove')
   })
 
   it('without a choice, the default of the account is the current one', () => {
     const html = panel(user(null))
-    expect(html).toContain(`/sprites/trainers/${defaultTrainerSprite('u-picker')}.png`)
+    expect(html).toContain('Your character')
+    expect(html).toContain('Change character')
+    expect(defaultTrainerSprite('u-picker')).toBeTruthy()
   })
 
   it('speaks Spanish too', async () => {
     await i18n.changeLanguage('es')
     const html = panel(user('lass'))
     expect(html).toContain('Tu personaje')
-    expect(html).toContain('Ahora: Chica')
+    expect(html).toContain('Chica')
     expect(html).toContain('Cambiar personaje')
   })
 })

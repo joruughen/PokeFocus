@@ -15,6 +15,7 @@ import { useState } from 'react'
 import { MuteMusicButton } from './MuteMusicButton'
 import { SoundUnlockChip } from './SoundUnlockChip'
 import { useContent } from '../../store/content'
+import { useMyTrainer } from '../../lib/useMyTrainer'
 
 export const BREAK_OPTIONS = ['5', '10', '15'] as const
 /** How long after a claim the break is still offered (minutes of game time). */
@@ -76,6 +77,7 @@ export function Break() {
   useHintScreen('break')
   const { t, i18n } = useTranslation()
   const names = useNames()
+  const trainer = useMyTrainer()
   const now = useNow()
   const player = usePlayer()
   const b = useGame((s) => s.breakTimer)!
@@ -107,6 +109,7 @@ export function Break() {
       <Stage time={scene.time} weather={scene.weather} variant="focus">
         <StageTeam
           className="min-h-64"
+          trainer={trainer}
           night={scene.time === 'night'}
           bob={false}
           dim

@@ -15,6 +15,7 @@ import { usePrefs } from '../../store/prefs'
 import { usePlayer, useScene } from '../../store/selectors'
 import { useContent } from '../../store/content'
 import { CopyQuestion } from './CopyQuestion'
+import { useMyTrainer } from '../../lib/useMyTrainer'
 
 /** Timer done: claim within the window for full rewards (GDD §3.2). */
 export function Claim({ late }: { late: boolean }) {
@@ -23,6 +24,7 @@ export function Claim({ late }: { late: boolean }) {
   useHintScreen('claim')
   const { t, i18n } = useTranslation()
   const names = useNames()
+  const trainer = useMyTrainer()
   const now = useNow()
   const player = usePlayer()
   const timerState = useGame((s) => s.timer)
@@ -68,6 +70,7 @@ export function Claim({ late }: { late: boolean }) {
       <Stage time={scene.time} weather={scene.weather}>
         <StageTeam
           className="min-h-64"
+          trainer={trainer}
           night={scene.time === 'night'}
           members={session.teamUids.flatMap((uid) => {
             const p = player.pokemon[uid]

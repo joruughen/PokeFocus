@@ -24,9 +24,10 @@ import {
   type TrainerGroup,
 } from '../../../game/trainerCatalog'
 import { defaultTrainerSprite } from '../../../game/trainers'
-import { Button, Dialog, Mascot, Panel, PixelIcon, Platform, Segmented, Select, Sprite, TextField, toast, TrainerSprite } from '../../components'
+import { Button, Dialog, Mascot, PixelIcon, Platform, Segmented, Select, Sprite, TextField, toast, Tooltip, TrainerSprite } from '../../components'
 import { cx } from '../../lib/cx'
 import { useMinWidth } from '../../lib/useMinWidth'
+import { SHOWCASE_GAMMA } from '../../lib/spriteSize'
 import { useAuth } from '../../store/auth'
 import { useGame } from '../../store/game'
 
@@ -57,9 +58,9 @@ export function TrainerPreview({ slug, leader, big = true, className }: { slug: 
         <TrainerSprite slug={slug} scale={scale} flip alt={name(slug)} className="relative -mb-1" />
       </div>
       {leader && (
-        <div className="relative -ml-2 flex shrink-0 flex-col items-center" style={{ width: 56 * scale }}>
-          <Platform width={56 * scale} night className="absolute bottom-0 left-1/2 -translate-x-1/2" />
-          <Sprite kind="showdown" slug={leader.slug} shiny={leader.shiny} scale={scale} maxHeight={big ? 120 : 64} maxWidth={big ? 110 : 56} flip alt="" className="relative mb-2" />
+        <div className="relative -ml-2 flex shrink-0 flex-col items-center" style={{ width: 62 * scale }}>
+          <Platform width={62 * scale} night className="absolute bottom-0 left-1/2 -translate-x-1/2" />
+          <Sprite kind="showdown" slug={leader.slug} shiny={leader.shiny} box={{ height: big ? 156 : 72, width: big ? 124 : 62, gamma: SHOWCASE_GAMMA }} flip alt="" className="relative mb-2" />
         </div>
       )}
     </div>
@@ -294,7 +295,10 @@ export function TrainerChooser({ current, defaultSlug, chosen, leader, saving = 
   )
 }
 
-/** The Profile panel: your character now, and the button that opens the chooser. */
+/**
+ * Your character in the Profile hero card (next to your partner, drawn by the card itself): the name of the
+ * current one, a short «?» about where it shows up, and the button that opens the chooser.
+ */
 export function TrainerPicker({ initialOpen = false, chooser }: { initialOpen?: boolean; chooser?: Pick<TrainerChooserProps, 'initialGroup' | 'initialSub' | 'initialQuery' | 'initialPending'> }) {
   const { t } = useTranslation()
   const { name } = useTrainerName()
@@ -324,18 +328,23 @@ export function TrainerPicker({ initialOpen = false, chooser }: { initialOpen?: 
   }
 
   return (
-    <Panel title={t('profile.character.title')}>
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-        <TrainerPreview slug={current} leader={leader} className="h-52 w-full sm:w-72" />
-        <div className="min-w-0">
-          <p className="font-display text-2xl text-volt-300 [overflow-wrap:anywhere]">{t('profile.character.current', { name: name(current) })}</p>
-          {credit && <p className="mt-1 text-sm text-mist-400">{t('profile.character.credit', { author: credit })}</p>}
-          <p className="mt-2 max-w-[60ch] text-mist-300">{t('profile.character.body', { count: TRAINER_CATALOG.length })}</p>
-          <Button className="mt-4" variant="secondary" icon="search" onClick={() => setOpen(true)}>
-            {t('profile.character.change')}
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2" aria-label={t('profile.character.title')}>
+      <p className="min-w-0 text-sm text-mist-100">
+        <span className="font-display text-base text-volt-300">{t('profile.character.title')}</span> <span className="[overflow-wrap:anywhere]">{name(current)}</span>
+        {credit && <span className="text-mist-400"> · {t('profile.character.credit', { author: credit })}</span>}
+      </p>
+      <Button size="sm" variant="secondary" icon="search" onClick={() => setOpen(true)}>
+        {t('profile.character.change')}
+      </Button>
+      <Tooltip variant="help" side="bottom" content={t('profile.character.body', { count: TRAINER_CATALOG.length })}>
+        <button
+          type="button"
+          aria-label={t('profile.character.help')}
+          className="inline-grid size-6 shrink-0 place-items-center bg-dusk-600 text-volt-300 shadow-frame transition-colors hover:bg-volt-400 hover:text-ink focus-visible:bg-volt-400 focus-visible:text-ink"
+        >
+          <PixelIcon name="help" size={10} />
+        </button>
+      </Tooltip>
       <Dialog open={open} onOpenChange={(o) => !saving && setOpen(o)} title={t('profile.character.dialogTitle')} size="lg">
         <TrainerChooser
           current={current}
@@ -348,6 +357,6 @@ export function TrainerPicker({ initialOpen = false, chooser }: { initialOpen?: 
           {...chooser}
         />
       </Dialog>
-    </Panel>
+    </div>
   )
 }

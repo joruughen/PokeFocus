@@ -8,11 +8,12 @@ import {
   isAsleepAt,
   MINUTE_MS,
   nextRankProgress,
+  toLocal,
   waveCount,
   weeklyPoints,
   type PokemonView,
 } from '../../../engine'
-import { Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Segmented, Stage, toast, TypeBadge } from '../../components'
+import { Panel, PixelIcon, Platform, PokemonCard, ProgressBar, Segmented, Stage, toast, TrainerSprite, TypeBadge } from '../../components'
 import { hintAnchor, useHintEvent, useHintScreen } from '../../hints'
 import { conditionsNow } from '../../lib/conditions'
 import { cx } from '../../lib/cx'
@@ -23,6 +24,8 @@ import { primeSignals } from '../../lib/notify'
 import { scheduleSessionEnd, sfx } from '../../lib/sound'
 import { EventBanner } from '../events/EventBanner'
 import { rankName } from '../league/rank'
+import { streakStatus } from '../profile/profileModel'
+import { hrefTo } from '../../router'
 import { AutoDamageToggle } from './AutoDamageToggle'
 import { BreakOffer, useBreakOffer } from './Break'
 import { PendingBanner } from '../box/PendingCaptureDialog'
@@ -41,6 +44,7 @@ import { MicToggle } from './SoundStyle'
 import { WeatherPicker } from './WeatherPicker'
 import { useSessionWeather } from '../../lib/weather'
 import { useContent } from '../../store/content'
+import { useMyTrainer } from '../../lib/useMyTrainer'
 
 export function PreSession() {
   const cfg = useContent().config
@@ -56,6 +60,8 @@ export function PreSession() {
   const inGroup = useGroups((s) => s.current?.status === 'lobby')
   const trainerName = useAuth((s) => s.user?.trainerName)
   const views = useTeamViews(player, now)
+  const trainer = useMyTrainer()
+  const streak = streakStatus(player.streak, toLocal(now, player.profile.timezone).dayKey).current
   const scene = useScene(player, now)
   const [choice, setChoice] = useState<string>('25')
   const [custom, setCustom] = useState(40)
@@ -110,6 +116,35 @@ export function PreSession() {
       <Stage time={scene.time} weather={scene.weather} className="px-4 pt-10 pb-5" sky={null} ground="h-[52%]">
         <h2 className="sr-only">{t('team.title')}</h2>
         <div {...hintAnchor('home.team')} className="flex flex-wrap justify-center gap-x-3 gap-y-6 xl:justify-start">
+          {/* Your character stands in front of the team, on the same ground line as the cards' platforms. */}
+          {trainer && (
+            <div className="flex w-24 shrink-0 flex-col items-center self-start">
+              <div className="relative flex h-56 w-full items-end justify-center">
+                <Platform width={100} night={scene.time === 'night'} className="absolute bottom-0" />
+                <TrainerSprite slug={trainer} scale={2} flip alt="" className="relative -mb-1 shrink-0" />
+              </div>
+              {/* Its own nameplate, like the team's: name, trainer level and streak (opens the Profile). */}
+              <a
+                href={hrefTo('profile')}
+                title={t('trainer.openProfile')}
+                className="mt-2 block w-full bg-mist-50 px-2 pt-1.5 pb-2 text-ink shadow-raised transition-colors hover:bg-mist-100"
+              >
+                <span className="block truncate font-display text-base leading-tight">{trainerName ?? player.profile.trainerName}</span>
+                <span className="mt-0.5 flex items-center justify-between gap-1">
+                  <span className="font-num text-lg leading-none">
+                    {t('pokemon.levelShort')}
+                    {player.trainer.level}
+                  </span>
+                  {streak > 0 && (
+                    <span className="inline-flex items-center gap-0.5 font-num text-sm leading-none text-ink/80" title={t('trainer.streak', { count: streak })}>
+                      <PixelIcon name="bolt" size={10} />
+                      {streak}
+                    </span>
+                  )}
+                </span>
+              </a>
+            </div>
+          )}
           {views.map((v, i) => (
             <div key={v.pokemon.uid} className="w-[10.5rem]">
               <PokemonCard view={v} leader={i === 0} night={scene.time === 'night'} condition={cond.member[v.pokemon.uid]} />

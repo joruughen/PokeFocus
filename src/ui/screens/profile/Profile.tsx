@@ -11,8 +11,10 @@ import { useAuth } from '../../store/auth'
 import { useNow } from '../../store/clock'
 import { useContent } from '../../store/content'
 import { usePlayer } from '../../store/selectors'
-import { TrainerPicker } from './TrainerPicker'
+import { TrainerPicker, TrainerPreview } from './TrainerPicker'
+import { resolveTrainerSprite } from '../../../game/trainerCatalog'
 import { companionOf, lastDays, nextLevelReward, profileStats, streakStatus, trainerProgress, trainerUnlocks, weeklyMinutes } from './profileModel'
+import { SHOWCASE_GAMMA } from '../../lib/spriteSize'
 
 /** Weeks the minutes chart covers. */
 const CHART_WEEKS = 8
@@ -72,7 +74,6 @@ export default function Profile() {
         <p className="mt-1 text-mist-300">{t('profile.subtitle')}</p>
       </header>
       <TrainerCard player={player} />
-      <TrainerPicker />
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <LevelPanel player={player} />
         <StreakPanel player={player} />
@@ -109,9 +110,14 @@ export function TrainerCard({ player }: { player: PlayerState }) {
   const isLeader = Boolean(mon && player.team[0] === mon.uid)
   const name = user?.trainerName ?? player.profile.trainerName
   const since = user?.createdAt ?? player.profile.createdAt
+  // Your character and your partner stand together in the card (the same scene as in the study groups).
+  const character = user ? resolveTrainerSprite(user.id, user.trainerSprite) : null
   return (
     <Panel padded={false} className="overflow-hidden" aria-label={t('profile.hero.label')}>
-      <div className="grid grid-cols-1 sm:grid-cols-[13rem_minmax(0,1fr)]">
+      <div className={cx('grid grid-cols-1', character ? 'sm:grid-cols-[19rem_minmax(0,1fr)]' : 'sm:grid-cols-[13rem_minmax(0,1fr)]')}>
+        {character ? (
+          <TrainerPreview slug={character} leader={mon ? { slug: mon.speciesSlug, shiny: mon.isShiny } : null} className="h-52 w-full sm:h-auto sm:min-h-52" />
+        ) : (
         <div className="relative flex h-44 items-end justify-center bg-[linear-gradient(to_bottom,var(--color-dusk-700),var(--color-dusk-900))] sm:h-auto sm:min-h-48">
           {mon ? (
             <>
@@ -120,9 +126,7 @@ export function TrainerCard({ player }: { player: PlayerState }) {
                 kind="showdown"
                 slug={mon.speciesSlug}
                 shiny={mon.isShiny}
-                scale={2}
-                maxHeight={120}
-                maxWidth={150}
+                box={{ height: 120, width: 150, gamma: SHOWCASE_GAMMA }}
                 alt={names.pokemonFull(mon)}
                 className="relative mb-7"
               />
@@ -131,6 +135,7 @@ export function TrainerCard({ player }: { player: PlayerState }) {
             <Mascot pose="idle" size={96} className="mb-4" />
           )}
         </div>
+        )}
         <div className="flex min-w-0 flex-col justify-between gap-5 p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
             <div className="min-w-0">
@@ -149,6 +154,11 @@ export function TrainerCard({ player }: { player: PlayerState }) {
                 </p>
               )}
               <p className="mt-1 text-mist-300">{t('profile.hero.since', { date: fmtLongDate(since, player.profile.timezone, lng) })}</p>
+              {user && (
+                <div className="mt-3">
+                  <TrainerPicker />
+                </div>
+              )}
               {user?.anonymousRankings && (
                 <p className="mt-3">
                   <Tooltip variant="help" content={t('profile.hero.anonymousTip')}>

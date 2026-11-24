@@ -4739,7 +4739,8 @@
       "use": "Usar este personaje",
       "credit": "Sprite de {{author}}",
       "currentTag": "Tu personaje actual",
-      "label": "Entrenadores"
+      "label": "Entrenadores",
+      "help": "Para qué sirve tu personaje"
     }
   },
   "gift": {
