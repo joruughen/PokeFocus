@@ -29,6 +29,55 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.18.1',
+    date: '2026-11-23',
+    title: { es: 'Tamaños de Pokémon más fieles y menú lateral ocultable', en: 'More faithful Pokémon sizes and a hideable side menu' },
+    items: [
+      {
+        kind: 'fixed',
+        text: {
+          es: 'Los Pokémon ya se ven con su tamaño relativo real: un Charizard, un Snorlax o un Moltres se ven claramente más grandes que un Pidgey o un Dratini (antes los grandes se encogían para caber y quedaban casi igual de altos que los pequeños). Ninguno se sale de su cuadro, y los cuadros del equipo y de las oleadas son más altos para que quepan los grandes.',
+          en: 'Pokémon now show their real relative size: a Charizard, a Snorlax or a Moltres look clearly bigger than a Pidgey or a Dratini (before, big ones were shrunk to fit and ended up almost as tall as small ones). None sticks out of its frame, and the team and wave frames are taller so big ones fit.',
+        },
+      },
+      {
+        kind: 'new',
+        text: {
+          es: 'El menú lateral se puede ocultar con el botón de hamburguesa (☰): el menú se desliza hacia un lado, el botón se mueve con él y sus rayas se convierten en una ✕ mientras está abierto. Para volver a mostrarlo, el botón queda arriba a la izquierda; se recuerda tu elección. En el móvil la barra inferior sigue igual.',
+          en: 'The side menu can be hidden with the hamburger button (☰): the menu slides aside, the button moves with it and its bars turn into a ✕ while it is open. To show it again the button stays at the top left; your choice is remembered. On phones the bottom bar stays as it was.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'La Mochila está más limpia: cada objeto muestra solo su descripción, sin la lista de Pokémon que pueden usarlo.',
+          en: 'The Bag is cleaner: each item only shows its description, without the list of Pokémon that can use it.',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Tu personaje ahora también aparece junto a tu equipo en el Inicio, al descansar, al reclamar la sesión y en los resultados (antes solo salía durante la sesión).',
+          en: 'Your character now also stands next to your team on Home, during the break, when you claim the session and in the results (before it only showed during the session).',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'En el Perfil, tu personaje y tu compañero aparecen juntos en la tarjeta de arriba, y el botón «Cambiar personaje» está ahí mismo (se quitó el panel repetido de abajo).',
+          en: 'In the Profile, your character and your partner now stand together in the top card, with the «Change character» button right there (the repeated panel below is gone).',
+        },
+      },
+      {
+        kind: 'improved',
+        text: {
+          es: 'Iconos del menú más claros: la Caja ahora es un PC, la Mochila una mochila, el Equipo una Poké Ball, la Pokédex un aparato con pantalla y los Eventos un calendario. En el menú de iconos ves el nombre al pasar el cursor.',
+          en: 'Clearer menu icons: the Box is now a PC, the Bag a backpack, the Team a Poké Ball, the Pokédex a device with a screen and Events a calendar. In the icon-only menu you see the name on hover.',
+        },
+      },
+    ],
+  },
+  {
     version: '0.18.0',
     date: '2026-11-23',
     title: { es: 'Mejores salvajes al subir de liga', en: 'Better wilds as you climb leagues' },

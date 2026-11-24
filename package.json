@@ -1,7 +1,7 @@
 {
   "name": "pokefocus",
   "private": true,
-  "version": "0.18.0",
+  "version": "0.18.1",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n client,server -c cyan,magenta \"npm:dev:client\" \"npm:dev:server\"",
@@ -16,6 +16,7 @@
     "build:data": "tsx scripts/build-data.ts",
     "download:sprites": "tsx scripts/download-sprites.ts",
     "download:trainers": "tsx scripts/download-trainers.ts",
+    "sprites:sizes": "tsx scripts/sprite-sizes.ts",
     "simulate": "tsx scripts/simulate.ts",
     "simulate:damage": "tsx scripts/simulate-damage.ts",
     "db:generate": "drizzle-kit generate",
