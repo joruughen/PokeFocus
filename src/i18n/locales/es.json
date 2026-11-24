@@ -59,7 +59,9 @@
       "trades_other": "{{count}} intercambios te esperan"
     },
     "trades": "Intercambios",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "hide": "Ocultar el menú",
+    "show": "Mostrar el menú"
   },
   "trainer": {
     "level": "Entrenador nv. {{level}}",

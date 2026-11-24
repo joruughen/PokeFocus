@@ -47,7 +47,7 @@ export const ROUTES: RouteDef[] = [
   { id: 'friends', labelKey: 'nav.friends', icon: 'friends', component: lazy(loaders.friends), nav: true, preload: loaders.friends },
   { id: 'trades', labelKey: 'nav.trades', icon: 'trade', component: lazy(loaders.trades), nav: true, preload: loaders.trades },
   { id: 'missions', labelKey: 'nav.missions', icon: 'missions', component: lazy(loaders.missions), nav: true, preload: loaders.missions },
-  { id: 'events', labelKey: 'nav.events', icon: 'sparkle', component: lazy(loaders.events), nav: true, preload: loaders.events },
+  { id: 'events', labelKey: 'nav.events', icon: 'calendar', component: lazy(loaders.events), nav: true, preload: loaders.events },
   { id: 'settings', labelKey: 'nav.settings', icon: 'settings', component: lazy(loaders.settings), nav: true, preload: loaders.settings },
   // Reachable from the trainer card in the side rail and from «More» on phones (MoreNav.splitNav), not as a rail section.
   { id: 'profile', labelKey: 'nav.profile', icon: 'user', component: lazy(loaders.profile), nav: false, preload: loaders.profile },

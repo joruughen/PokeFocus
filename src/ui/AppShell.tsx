@@ -6,6 +6,7 @@ import { streakStatus } from './screens/profile/profileModel'
 import { DevToggle } from './dev/DevPanel'
 import { StageBadge } from './changelog/StageBadge'
 import { WhatsNewDialog } from './changelog/WhatsNewDialog'
+import { NavToggle } from './NavToggle'
 import { MoreNav, PRIMARY_NAV, splitNav, type NavBadges } from './MoreNav'
 import { LevelUpHost } from './levelUp/LevelUpDialog'
 import { LeagueNoticeHost } from './leagueNotice/LeagueNoticeDialog'
@@ -24,6 +25,8 @@ import { fmtCountdown, fmtInt } from './lib/format'
 import { hrefTo, useRoute, useRouteParams } from './router'
 import { findRoute, ROUTES } from './routes'
 import { useNow } from './store/clock'
+import { usePrefs } from './store/prefs'
+import { useMinWidth } from './lib/useMinWidth'
 import { useAuth } from './store/auth'
 import { timerOf, useGame } from './store/game'
 import { useIncomingCount } from './store/social'
@@ -44,6 +47,10 @@ export function AppShell() {
   const phase = usePhase()
   const focusing = phase === 'focus' || phase === 'paused'
   useFocusMainOnNavigate(route)
+  // sm and up: the side navigation can be hidden (the phone's bottom bar always stays).
+  const navHidden = usePrefs((s) => s.navHidden)
+  const setNavHidden = usePrefs((s) => s.setNavHidden)
+  const { t } = useTranslation()
   // Prefetch the other screens once the browser is idle (they are small chunks).
   useEffect(() => {
     const go = () => ROUTES.forEach((r) => void r.preload?.())
@@ -52,8 +59,15 @@ export function AppShell() {
     else setTimeout(go, 1500)
   }, [])
   return (
-    <div className="min-h-dvh xl:grid xl:grid-cols-[15rem_minmax(0,1fr)] max-xl:sm:grid max-xl:sm:grid-cols-[5rem_minmax(0,1fr)]">
-      <Rail route={route} focusing={focusing} />
+    // `--rail` is the width of the side menu; the column and the toggle follow it, so hiding it slides everything.
+    <div
+      className={cx(
+        'min-h-dvh sm:grid sm:grid-cols-[var(--rail)_minmax(0,1fr)] sm:transition-[grid-template-columns] sm:duration-300 sm:ease-out motion-reduce:sm:transition-none',
+        navHidden ? '[--rail:0rem]' : 'max-xl:[--rail:5rem] xl:[--rail:15rem]',
+      )}
+    >
+      <Rail route={route} focusing={focusing} hidden={navHidden} />
+      <NavToggle hidden={navHidden} onToggle={() => setNavHidden(!navHidden)} label={t(navHidden ? 'nav.show' : 'nav.hide')} />
       <GroupInviteNotice />
       <GroupHealNotice />
       <WhatsNewDialog />
@@ -64,7 +78,7 @@ export function AppShell() {
       <PendingCaptureDialog />
       <TradeArrivalHost />
       <EventPopupHost />
-      <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 sm:px-8 sm:pb-12 xl:px-10', focusing && route === 'home' && 'pixel-grid')}>
+      <main id="main" tabIndex={-1} className={cx('min-w-0 outline-none px-4 pt-6 pb-24 transition-[padding] duration-300 sm:px-8 sm:pb-12 xl:px-10 motion-reduce:transition-none', navHidden && 'sm:pt-16', focusing && route === 'home' && 'pixel-grid')}>
         <div className="mx-auto max-w-[76rem]">
           <ContentNotice className="mb-6" />
           <MaintenanceBanner className="mb-6" />
@@ -120,8 +134,9 @@ function useMoreBadges(): NavBadges {
   return { friends, trades, events }
 }
 
-function Rail({ route, focusing }: { route: string; focusing: boolean }) {
+function Rail({ route, focusing, hidden }: { route: string; focusing: boolean; hidden: boolean }) {
   const { t } = useTranslation()
+  const wide = useMinWidth(1280)
   const role = useAuth((s) => s.user?.role)
   const badges = useMoreBadges()
   const { more } = splitNav(ROUTES, role)
@@ -132,7 +147,10 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
         'z-30 bg-dusk-900 shadow-[2px_0_0_0_var(--color-ink)] transition-opacity',
         'max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:shadow-[0_-2px_0_0_var(--color-ink)]',
         // Short desktop windows: the rail scrolls instead of cutting off sections or the trainer card.
-        'sm:sticky sm:top-0 sm:flex sm:h-dvh sm:flex-col sm:overflow-y-auto sm:overscroll-contain',
+        'sm:sticky sm:top-0 sm:flex sm:h-dvh sm:w-20 sm:flex-col sm:overflow-y-auto sm:overscroll-contain xl:w-60',
+        // Slides out to the left (and leaves the tab order once it is gone) instead of vanishing.
+        'sm:transition-[translate,opacity,visibility] sm:duration-300 sm:ease-out motion-reduce:sm:transition-none',
+        hidden && 'sm:invisible sm:-translate-x-full sm:opacity-0',
       )}
     >
       <div className="hidden px-5 pt-6 pb-5 xl:flex xl:flex-col xl:items-start xl:gap-1">
@@ -141,8 +159,8 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
         </a>
         <StageBadge />
       </div>
-      {/* Icon-only rail (sm–xl): just the stage. Hidden in the phone's bottom bar (it is in Settings) and at xl (it sits under the logo). */}
-      <div className="mt-3 hidden justify-center sm:flex xl:hidden">
+      {/* Icon-only rail (sm–xl): just the stage (the menu toggle floats above it). Hidden in the phone's bottom bar (it is in Settings) and at xl (it sits under the logo). */}
+      <div className="mt-3 hidden justify-center sm:flex sm:pt-9 xl:hidden">
         <StageBadge compact />
       </div>
       <ul className="flex justify-around gap-1 p-2 sm:flex-col sm:justify-start sm:px-3 sm:py-4 xl:pt-0">
@@ -154,6 +172,7 @@ function Rail({ route, focusing }: { route: string; focusing: boolean }) {
               <a
                 href={hrefTo(r.id)}
                 aria-current={active ? 'page' : undefined}
+                title={wide ? undefined : t(r.labelKey)}
                 {...hintAnchor(`nav.${r.id}`)}
                 className={cx(
                   'group flex items-center gap-3 px-3 py-2.5 max-sm:px-1 font-display text-lg transition-colors max-xl:justify-center',

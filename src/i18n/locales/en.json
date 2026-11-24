@@ -59,7 +59,9 @@
       "trades_other": "{{count}} trades waiting"
     },
     "trades": "Trades",
-    "profile": "Profile"
+    "profile": "Profile",
+    "hide": "Hide the menu",
+    "show": "Show the menu"
   },
   "trainer": {
     "level": "Trainer lv. {{level}}",

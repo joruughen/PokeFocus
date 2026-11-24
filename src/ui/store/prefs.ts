@@ -49,6 +49,8 @@ export interface PrefsState {
   micEnabled: boolean
   /** Newest changelog version the player has looked at (null = never recorded: no "new" dot yet). */
   lastSeenVersion: string | null
+  /** The side navigation is hidden (sm and up; the phone's bottom bar is not): the hamburger shows it again. */
+  navHidden: boolean
   dev: DevSettings
   setLocale: (l: Locale) => void
   setTipsEnabled: (on: boolean) => void
@@ -57,6 +59,7 @@ export interface PrefsState {
   setChecklistDismissed: (v: boolean) => void
   setMicEnabled: (on: boolean) => void
   setLastSeenVersion: (version: string) => void
+  setNavHidden: (hidden: boolean) => void
   markHintSeen: (id: string) => void
   resetHints: () => void
   setDev: (patch: Partial<DevSettings>) => void
@@ -110,6 +113,7 @@ export const usePrefs = create<PrefsState>()(
       seenHints: {},
       micEnabled: false,
       lastSeenVersion: null,
+      navHidden: false,
       dev: DEFAULT_DEV,
       setLocale: (locale) => {
         void i18n.changeLanguage(locale)
@@ -121,6 +125,7 @@ export const usePrefs = create<PrefsState>()(
       setChecklistDismissed: (checklistDismissed) => set({ checklistDismissed }),
       setMicEnabled: (micEnabled) => set({ micEnabled }),
       setLastSeenVersion: (lastSeenVersion) => set({ lastSeenVersion }),
+      setNavHidden: (navHidden) => set({ navHidden }),
       markHintSeen: (id) => set((s) => ({ seenHints: { ...s.seenHints, [id]: Date.now() } })),
       resetHints: () => set({ seenHints: {}, tipsEnabled: true }),
       setDev: (patch) => set((s) => ({ dev: { ...s.dev, ...patch } })),
@@ -149,7 +154,7 @@ export const usePrefs = create<PrefsState>()(
       name: STORAGE_KEYS.prefs,
       storage: jsonStorage,
       version: 1,
-      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, seenHints, micEnabled, lastSeenVersion, dev }) => ({
+      partialize: ({ locale, tipsEnabled, audio, milestones, checklistDismissed, seenHints, micEnabled, lastSeenVersion, navHidden, dev }) => ({
         locale,
         tipsEnabled,
         audio,
@@ -158,6 +163,7 @@ export const usePrefs = create<PrefsState>()(
         seenHints,
         micEnabled,
         lastSeenVersion,
+        navHidden,
         dev,
       }),
       merge: (persisted, current) => {
@@ -171,7 +177,7 @@ export const usePrefs = create<PrefsState>()(
         void _hp
         void _offered
         void _tz
-        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, micEnabled: p.micEnabled === true, lastSeenVersion: typeof p.lastSeenVersion === 'string' ? p.lastSeenVersion : null, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
+        return { ...current, ...rest, audio, milestones: p.milestones ?? {}, micEnabled: p.micEnabled === true, lastSeenVersion: typeof p.lastSeenVersion === 'string' ? p.lastSeenVersion : null, navHidden: p.navHidden === true, dev: { ...DEFAULT_DEV, ...(p.dev ?? {}) } }
       },
     },
   ),
